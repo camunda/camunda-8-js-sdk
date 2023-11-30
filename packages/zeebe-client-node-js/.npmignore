@@ -1,0 +1,10 @@
+.github
+.circleci
+guide
+src
+design
+docs
+.env
+*.env
+.vscode
+.husky

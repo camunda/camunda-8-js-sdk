@@ -1,0 +1,21 @@
+{
+  "name": "c8-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "publish": "lerna run build && lerna publish"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "workspaces": [
+    "./packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.9.4",
+    "lerna": "^7.4.2",
+    "typescript": "^4.9.5"
+  }
+}

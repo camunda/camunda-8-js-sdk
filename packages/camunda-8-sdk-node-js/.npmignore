@@ -1,0 +1,10 @@
+.github
+.gitignore
+tsconfig*
+src
+.env
+*.env
+.vscode
+.husky
+docs
+exported-dashboard.json

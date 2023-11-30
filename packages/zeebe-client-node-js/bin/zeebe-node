@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+const ZB = require('../dist')
+
+const workflowFile = Array.from(process.argv)[2]
+console.log(workflowFile)
+;(async () => {
+	console.log(await ZB.BpmnParser.scaffold(workflowFile))
+})()

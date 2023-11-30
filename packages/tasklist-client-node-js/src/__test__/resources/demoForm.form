@@ -1,0 +1,28 @@
+{
+  "components": [
+    {
+      "label": "Name",
+      "type": "textfield",
+      "id": "Field_1w8kq0n",
+      "key": "field_1dqp4e0",
+      "defaultValue": "name",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "text": "=someVariable",
+      "type": "text",
+      "id": "Field_04fgmak"
+    }
+  ],
+  "schemaVersion": 7,
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "a41f9f3"
+  },
+  "type": "default",
+  "id": "DemoForm",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.1.0"
+}

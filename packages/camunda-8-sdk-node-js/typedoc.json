@@ -1,0 +1,10 @@
+{
+    "visibilityFilters": {
+        "protected": false,
+        "private": false,
+        "inherited": false,
+        "external": true,
+        "@alpha": false,
+        "@beta": false
+    }
+}

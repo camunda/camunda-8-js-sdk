@@ -1,0 +1,1612 @@
+[
+  {
+    "id": "e3bbc312-7501-420d-9ed5-9fde401bf793",
+    "exportEntityType": "single_process_report",
+    "name": "Which process steps take too much time? (To Do: Add Target values for these process steps)",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          },
+          {
+            "type": "percentile",
+            "value": 50
+          },
+          {
+            "type": "max",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "flowNode",
+        "properties": [
+          "duration"
+        ]
+      },
+      "groupBy": {
+        "type": "flowNodes",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "heat",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "a26f20fe-0080-4c72-8fc8-e4392d5ff5b6",
+    "exportEntityType": "single_process_report",
+    "name": "Is my process within control?",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "min",
+            "value": null
+          },
+          {
+            "type": "avg",
+            "value": null
+          },
+          {
+            "type": "percentile",
+            "value": 50
+          },
+          {
+            "type": "max",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "processInstance",
+        "properties": [
+          "duration"
+        ]
+      },
+      "groupBy": {
+        "type": "startDate",
+        "value": {
+          "unit": "automatic"
+        }
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "line",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "c0b51752-efa8-4b55-bfc1-7bd2ba5984b4",
+    "exportEntityType": "single_process_report",
+    "name": "Running Process Instances",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [
+        {
+          "type": "runningInstancesOnly",
+          "data": null,
+          "filterLevel": "instance",
+          "appliedTo": [
+            "all"
+          ]
+        }
+      ],
+      "view": {
+        "entity": "processInstance",
+        "properties": [
+          "frequency"
+        ]
+      },
+      "groupBy": {
+        "type": "none",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "number",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "5bbf3d5f-6885-4708-8580-077be301dada",
+    "exportEntityType": "single_process_report",
+    "name": "How often is each process step run?",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "flowNode",
+        "properties": [
+          "frequency"
+        ]
+      },
+      "groupBy": {
+        "type": "flowNodes",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "heat",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "9a3fe0d0-6672-499c-bde7-e37159790101",
+    "exportEntityType": "single_process_report",
+    "name": "Total Completed Process Instances",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [
+        {
+          "type": "completedInstancesOnly",
+          "data": null,
+          "filterLevel": "instance",
+          "appliedTo": [
+            "all"
+          ]
+        }
+      ],
+      "view": {
+        "entity": "processInstance",
+        "properties": [
+          "frequency"
+        ]
+      },
+      "groupBy": {
+        "type": "none",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "number",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "efe23571-b2af-4a6d-9dd4-1f4ce80dee39",
+    "exportEntityType": "single_process_report",
+    "name": "How frequently is this process run?",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "Process Instance Count",
+        "xLabel": "Start Date"
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "processInstance",
+        "properties": [
+          "frequency"
+        ]
+      },
+      "groupBy": {
+        "type": "startDate",
+        "value": {
+          "unit": "automatic"
+        }
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "bar",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "2d248745-4a87-4aae-983d-d4d4ba239260",
+    "exportEntityType": "single_process_report",
+    "name": "Aggregated Process Duration (To Do: View alternate duration aggregations)",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": 3,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "processInstance",
+        "properties": [
+          "duration"
+        ]
+      },
+      "groupBy": {
+        "type": "none",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "number",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "f2c61c74-ebe5-43e0-855d-0ca3126007ea",
+    "exportEntityType": "single_process_report",
+    "name": "Are we improving incident handling?",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [
+        {
+          "type": "includesResolvedIncident",
+          "data": null,
+          "filterLevel": "instance",
+          "appliedTo": [
+            "all"
+          ]
+        }
+      ],
+      "view": {
+        "entity": "processInstance",
+        "properties": [
+          "frequency",
+          "duration"
+        ]
+      },
+      "groupBy": {
+        "type": "startDate",
+        "value": {
+          "unit": "automatic"
+        }
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "barLine",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "94f7273f-75ba-40d4-9195-490777cf241b",
+    "exportEntityType": "single_process_report",
+    "name": "Active Incidents",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [
+        {
+          "type": "includesOpenIncident",
+          "data": null,
+          "filterLevel": "view",
+          "appliedTo": [
+            "all"
+          ]
+        }
+      ],
+      "view": {
+        "entity": "incident",
+        "properties": [
+          "frequency"
+        ]
+      },
+      "groupBy": {
+        "type": "none",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "number",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "a568a2ff-b4ae-4e0e-94da-688905e46ac6",
+    "exportEntityType": "single_process_report",
+    "name": "Where are the active incidents?",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "incident",
+        "properties": [
+          "frequency"
+        ]
+      },
+      "groupBy": {
+        "type": "flowNodes",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "heat",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "00cd3d55-74a5-4dc4-a7ef-d55773bda5ff",
+    "exportEntityType": "single_process_report",
+    "name": "Where are the worst incidents",
+    "sourceIndexVersion": 9,
+    "collectionId": null,
+    "data": {
+      "configuration": {
+        "color": "#1991c8",
+        "aggregationTypes": [
+          {
+            "type": "avg",
+            "value": null
+          },
+          {
+            "type": "percentile",
+            "value": 50
+          },
+          {
+            "type": "max",
+            "value": null
+          }
+        ],
+        "userTaskDurationTimes": [
+          "total"
+        ],
+        "showInstanceCount": false,
+        "pointMarkers": true,
+        "precision": null,
+        "hideRelativeValue": false,
+        "hideAbsoluteValue": false,
+        "alwaysShowRelative": false,
+        "alwaysShowAbsolute": false,
+        "showGradientBars": true,
+        "xml": "string",
+        "tableColumns": {
+          "includeNewVariables": true,
+          "excludedColumns": [],
+          "includedColumns": [],
+          "columnOrder": []
+        },
+        "targetValue": {
+          "countChart": {
+            "isBelow": false,
+            "value": "100"
+          },
+          "durationProgress": {
+            "baseline": {
+              "unit": "hours",
+              "value": "0"
+            },
+            "target": {
+              "unit": "hours",
+              "value": "2",
+              "isBelow": false
+            }
+          },
+          "active": false,
+          "countProgress": {
+            "baseline": "0",
+            "target": "100",
+            "isBelow": false
+          },
+          "durationChart": {
+            "unit": "hours",
+            "isBelow": false,
+            "value": "2"
+          },
+          "isKpi": null
+        },
+        "heatmapTargetValue": {
+          "active": false,
+          "values": {}
+        },
+        "groupByDateVariableUnit": "automatic",
+        "distributeByDateVariableUnit": "automatic",
+        "customBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "distributeByCustomBucket": {
+          "active": false,
+          "bucketSize": "10.0",
+          "bucketSizeUnit": "minute",
+          "baseline": "0.0",
+          "baselineUnit": "minute"
+        },
+        "sorting": null,
+        "processPart": null,
+        "measureVisualizations": {
+          "frequency": "bar",
+          "duration": "line"
+        },
+        "stackedBar": false,
+        "logScale": false,
+        "yLabel": "",
+        "xLabel": ""
+      },
+      "definitions": [
+        {
+          "identifier": "definition",
+          "key": "customer_onboarding_en",
+          "name": "Customer Onboarding",
+          "displayName": "Customer Onboarding",
+          "versions": [
+            "all"
+          ],
+          "tenantIds": [
+            null
+          ]
+        }
+      ],
+      "filter": [],
+      "view": {
+        "entity": "incident",
+        "properties": [
+          "duration"
+        ]
+      },
+      "groupBy": {
+        "type": "flowNodes",
+        "value": null
+      },
+      "distributedBy": {
+        "type": "none",
+        "value": null
+      },
+      "visualization": "heat",
+      "managementReport": false,
+      "userTaskReport": false
+    }
+  },
+  {
+    "id": "8a7103a7-c086-48f8-b5b7-a7f83e864688",
+    "exportEntityType": "dashboard",
+    "name": "Process performance overview",
+    "sourceIndexVersion": 6,
+    "reports": [
+      {
+        "id": "9a3fe0d0-6672-499c-bde7-e37159790101",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "dimensions": {
+          "width": 4,
+          "height": 2
+        },
+        "configuration": null
+      },
+      {
+        "id": "c0b51752-efa8-4b55-bfc1-7bd2ba5984b4",
+        "position": {
+          "x": 4,
+          "y": 0
+        },
+        "dimensions": {
+          "width": 4,
+          "height": 2
+        },
+        "configuration": null
+      },
+      {
+        "id": "2d248745-4a87-4aae-983d-d4d4ba239260",
+        "position": {
+          "x": 8,
+          "y": 0
+        },
+        "dimensions": {
+          "width": 6,
+          "height": 2
+        },
+        "configuration": null
+      },
+      {
+        "id": "94f7273f-75ba-40d4-9195-490777cf241b",
+        "position": {
+          "x": 14,
+          "y": 0
+        },
+        "dimensions": {
+          "width": 4,
+          "height": 2
+        },
+        "configuration": null
+      },
+      {
+        "id": "e3bbc312-7501-420d-9ed5-9fde401bf793",
+        "position": {
+          "x": 0,
+          "y": 2
+        },
+        "dimensions": {
+          "width": 9,
+          "height": 5
+        },
+        "configuration": null
+      },
+      {
+        "id": "a26f20fe-0080-4c72-8fc8-e4392d5ff5b6",
+        "position": {
+          "x": 9,
+          "y": 2
+        },
+        "dimensions": {
+          "width": 9,
+          "height": 5
+        },
+        "configuration": null
+      },
+      {
+        "id": "5bbf3d5f-6885-4708-8580-077be301dada",
+        "position": {
+          "x": 0,
+          "y": 7
+        },
+        "dimensions": {
+          "width": 9,
+          "height": 5
+        },
+        "configuration": null
+      },
+      {
+        "id": "efe23571-b2af-4a6d-9dd4-1f4ce80dee39",
+        "position": {
+          "x": 9,
+          "y": 7
+        },
+        "dimensions": {
+          "width": 9,
+          "height": 5
+        },
+        "configuration": null
+      },
+      {
+        "id": "a568a2ff-b4ae-4e0e-94da-688905e46ac6",
+        "position": {
+          "x": 0,
+          "y": 12
+        },
+        "dimensions": {
+          "width": 9,
+          "height": 5
+        },
+        "configuration": null
+      },
+      {
+        "id": "00cd3d55-74a5-4dc4-a7ef-d55773bda5ff",
+        "position": {
+          "x": 9,
+          "y": 12
+        },
+        "dimensions": {
+          "width": 9,
+          "height": 5
+        },
+        "configuration": null
+      },
+      {
+        "id": "f2c61c74-ebe5-43e0-855d-0ca3126007ea",
+        "position": {
+          "x": 0,
+          "y": 17
+        },
+        "dimensions": {
+          "width": 18,
+          "height": 5
+        },
+        "configuration": null
+      }
+    ],
+    "availableFilters": [],
+    "collectionId": null
+  }
+]

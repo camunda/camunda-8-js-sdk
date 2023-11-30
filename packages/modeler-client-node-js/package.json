@@ -1,0 +1,23 @@
+{
+  "name": "modeler-client-node",
+  "version": "1.0.0",
+  "description": "Node.js client for Web Modeler",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests implemented yet\" && exit 0",
+    "build": "npm run clean && npm run compile",
+		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+		"compile": "tsc --build tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camunda-community-hub/modeler-client-node-js.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/camunda-community-hub/modeler-client-node-js/issues"
+  },
+  "homepage": "https://github.com/camunda-community-hub/modeler-client-node-js#readme"
+}
