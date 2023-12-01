@@ -121,9 +121,9 @@ export class OAuthProviderImpl {
             .then(t => {
                     const token = {...t, audience}
                     if (this.useFileCache) {
-                        this.sendToFileCache(token, audience);
+                        this.sendToFileCache({ audience, token });
                     }
-                    this.sendToMemoryCache(audience, token)
+                    this.sendToMemoryCache({ audience, token })
                     trace(`Got token from endpoint: \n${token.access_token}`)
                     trace(`Token expires in ${token.expires_in} seconds`)
                     return token.access_token;
@@ -131,7 +131,7 @@ export class OAuthProviderImpl {
             );
     }
 
-    private sendToMemoryCache(audience: TokenGrantAudiences, token: Token) {
+    private sendToMemoryCache({ audience, token }: { audience: TokenGrantAudiences; token: Token; }) {
         const key = this.getCacheKey(audience)
         const d = new Date()
         token.expiry = d.setSeconds(d.getSeconds()) + (token.expires_in * 1000)
@@ -162,14 +162,14 @@ export class OAuthProviderImpl {
             if (this.isExpired(token)) {
                 return null;
             }
-            this.sendToMemoryCache(audience, token)
+            this.sendToMemoryCache({ audience, token })
             return token;
         } catch (_) {
             return null;
         }
     }
 
-    private sendToFileCache(token: Token, audience: TokenGrantAudiences) {
+    private sendToFileCache({ audience, token }: { audience: TokenGrantAudiences; token: Token; }) {
         const d = new Date();
         const file = this.getCachedTokenFileName(this.clientId, audience);
 
