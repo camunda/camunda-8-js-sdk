@@ -24,7 +24,6 @@ export class OAuthProviderImpl {
     private failureCount = 0;
     private userAgentString: string;
     private audience: string;
-    private expiryTimer?: NodeJS.Timeout;
 
     constructor({
         /** OAuth Endpoint URL */
@@ -58,29 +57,34 @@ export class OAuthProviderImpl {
         }
     }
 
-    public close() {
-        if (this.expiryTimer) {
-            clearTimeout(this.expiryTimer)
-        }
-    }
-
     public async getToken(audience: TokenGrantAudiences): Promise<string> {
         const key = this.getCacheKey(audience)
 
         if (this.tokenCache[key]) {
-            return this.tokenCache[key].access_token;
+            const token = this.tokenCache[key]
+            // check expiry and evict in-memory and file cache if expired
+            if (this.isExpired(token)) {
+                this.evictFromMemoryCache(audience)
+            } else {
+                return this.tokenCache[key].access_token;
+            }
         }
         if (this.useFileCache) {
-            const cachedToken = this.fromFileCache(this.clientId, audience);
+            const cachedToken = this.retrieveFromFileCache(this.clientId, audience);
             if (cachedToken) {
-                return cachedToken.access_token;
+                // check expiry and evict in-memory and file cache if expired
+                if (this.isExpired(cachedToken)) {
+                    this.evictFromFileCache(audience)
+                } else {
+                    return cachedToken.access_token;
+                }
             }
         }
 
         return new Promise((resolve, reject) => {
             setTimeout(
                 () => {
-                    this.debouncedTokenRequest(audience)
+                    this.makeDebouncedTokenRequest(audience)
                         .then(res => {
                             this.failed = false;
                             this.failureCount = 0;
@@ -97,7 +101,7 @@ export class OAuthProviderImpl {
         });
     }
 
-    private debouncedTokenRequest(audience: TokenGrantAudiences) {
+    private makeDebouncedTokenRequest(audience: TokenGrantAudiences) {
         const form = {
             audience: this.getAudience(audience),
             client_id: this.clientId,
@@ -117,13 +121,9 @@ export class OAuthProviderImpl {
             .then(t => {
                     const token = {...t, audience}
                     if (this.useFileCache) {
-                        this.toFileCache(token, audience);
+                        this.sendToFileCache(token, audience);
                     }
-                    const key = this.getCacheKey(audience)
-                    const d = new Date()
-					token.expiry = d.setSeconds(d.getSeconds()) + (token.expires_in * 1000)
-                    this.tokenCache[key] = token;
-                    this.startExpiryTimer(token, audience);
+                    this.sendToMemoryCache(audience, token)
                     trace(`Got token from endpoint: \n${token.access_token}`)
                     trace(`Token expires in ${token.expires_in} seconds`)
                     return token.access_token;
@@ -131,8 +131,15 @@ export class OAuthProviderImpl {
             );
     }
 
+    private sendToMemoryCache(audience: TokenGrantAudiences, token: Token) {
+        const key = this.getCacheKey(audience)
+        const d = new Date()
+        token.expiry = d.setSeconds(d.getSeconds()) + (token.expires_in * 1000)
+        this.tokenCache[key] = token;
+    }
+
     private safeJSONParse(thing: any): Promise<Token> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {   
             try {
                 resolve(JSON.parse(thing));
             } catch (e) {
@@ -141,7 +148,7 @@ export class OAuthProviderImpl {
         });
     }
 
-    private fromFileCache(clientId: string, audience: TokenGrantAudiences) {
+    private retrieveFromFileCache(clientId: string, audience: TokenGrantAudiences) {
         let token: Token;
         const tokenCachedInFile = fs.existsSync(this.getCachedTokenFileName(clientId, audience));
         if (!tokenCachedInFile) {
@@ -155,14 +162,14 @@ export class OAuthProviderImpl {
             if (this.isExpired(token)) {
                 return null;
             }
-            this.startExpiryTimer(token, audience);
+            this.sendToMemoryCache(audience, token)
             return token;
         } catch (_) {
             return null;
         }
     }
 
-    private toFileCache(token: Token, audience: TokenGrantAudiences) {
+    private sendToFileCache(token: Token, audience: TokenGrantAudiences) {
         const d = new Date();
         const file = this.getCachedTokenFileName(this.clientId, audience);
 
@@ -189,24 +196,16 @@ export class OAuthProviderImpl {
         return token.expiry <= d.setSeconds(d.getSeconds());
     }
 
-    private startExpiryTimer(token: Token, audience: TokenGrantAudiences) {
-        const d = new Date();
-        const current = d.setSeconds(d.getSeconds());
-        const validityPeriod = token.expiry - current;
-        const minimumCacheLifetime = 0; // Minimum cache lifetime in milliseconds
-		const renewTokenAfterMs = Math.max(validityPeriod - 1000, minimumCacheLifetime) // 1s before expiry
-        const cacheKey = this.getCacheKey(audience)
-        if (validityPeriod <= 0) {
-            delete this.tokenCache[cacheKey];
-            return;
+    private evictFromMemoryCache(audience: TokenGrantAudiences) {
+        const key = this.getCacheKey(audience)
+        delete this.tokenCache[key]
+    }
+
+    private evictFromFileCache(audience: TokenGrantAudiences) {
+        const filename = this.getCachedTokenFileName(this.clientId, audience)
+        if (this.useFileCache && fs.existsSync(filename)) {
+            fs.unlinkSync(filename)
         }
-        this.expiryTimer = setTimeout(() => {
-            const filename = this.getCachedTokenFileName(this.clientId, audience)
-            delete this.tokenCache[cacheKey]
-            if (this.useFileCache && fs.existsSync(filename)) {
-				fs.unlinkSync(filename)
-			}
-        }, renewTokenAfterMs);
     }
 
     private getCacheKey = (audience: TokenGrantAudiences) => `${this.clientId}-${audience}`

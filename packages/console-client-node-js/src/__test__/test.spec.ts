@@ -2,10 +2,6 @@ import {ConsoleApiClient} from '../index'
 
 jest.setTimeout(10000)
 
-let c: ConsoleApiClient
-beforeEach(() => (c = new ConsoleApiClient()))
-afterEach(() => c && c.close())
-
 test('getParameters', async () => {
     const c = new ConsoleApiClient()
     const res = await c.getParameters()
