@@ -1,6 +1,5 @@
 import { getOptimizeCredentials } from "camunda-8-credentials-from-env"
 import { OAuthProviderImpl } from "./OAuthProviderImpl"
-import { instances } from "./Instances"
 
 let optimiseOAuthProvider: OAuthProviderImpl
 
@@ -14,7 +13,6 @@ export function getOptimizeToken(userAgentString: string) {
             clientSecret: creds.ZEEBE_CLIENT_SECRET,
             authServerUrl: creds.CAMUNDA_OAUTH_URL
         })
-        instances.push(optimiseOAuthProvider)
     }
     return optimiseOAuthProvider.getToken('OPTIMIZE')
 }

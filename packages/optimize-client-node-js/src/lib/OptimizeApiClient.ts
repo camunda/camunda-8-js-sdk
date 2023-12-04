@@ -1,4 +1,4 @@
-import { getOptimizeToken, _close } from "camunda-saas-oauth";
+import { getOptimizeToken } from "camunda-saas-oauth";
 import { getOptimizeCredentials } from "camunda-8-credentials-from-env"
 import got from 'got';
 import { DashboardCollection, DashboardDefinition, EntityImportResponse, ReportCollection, ReportDataExporter, SingleProcessReport, Variable, VariableLabels } from "./APIObjects";
@@ -57,10 +57,6 @@ export class OptimizeApiClient {
             'accept': '*/*',
             ...authHeader
         }
-    }
-
-    close() {
-        _close()
     }
 
     /**

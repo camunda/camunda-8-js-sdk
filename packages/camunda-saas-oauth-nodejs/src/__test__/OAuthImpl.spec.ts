@@ -3,6 +3,8 @@ import { OAuthProviderImpl } from '../lib/OAuthProviderImpl'
 
 // Added test for https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs/issues/8
 // "Can not renew expired token"
+// Updated test for https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/3
+// "Remove expiry timer from oAuth token implementation"
 test('In-memory cache is populated and evicted after timeout', done => {
 	const delay = (timeout: number) =>
 		new Promise(res => setTimeout(() => res(null), timeout))
@@ -14,6 +16,7 @@ test('In-memory cache is populated and evicted after timeout', done => {
 		authServerUrl: 'http://127.0.0.1:3002',
         userAgentString: 'test'
 	})
+	let requestCount = 0 
 	const server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
@@ -26,11 +29,8 @@ test('In-memory cache is populated and evicted after timeout', done => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
 					let expires_in = 2 // seconds
 					res.end(
-						'{"access_token": "something", "expires_in": ' +
-							expires_in +
-							'}'
+						`{"access_token": "${requestCount++}", "expires_in": ${expires_in}}`
 					)
-					server.close()
 					expect(body).toEqual(
 						'audience=token&client_id=clientId&client_secret=clientSecret&grant_type=client_credentials'
 					)
@@ -39,15 +39,15 @@ test('In-memory cache is populated and evicted after timeout', done => {
 		})
 		.listen(3002)
 
-        const key = 'clientId-CONSOLE'
-
-	o.getToken('CONSOLE').then(async _ => {
-		expect(o.tokenCache[key]).toBeDefined()
+	o.getToken('CONSOLE').then(async token => {
+		expect(token).toBe('0')
 		await delay(500)
-		expect(o.tokenCache[key]).toBeDefined()
+		const token2 = await o.getToken('CONSOLE')
+		expect(token2).toBe('0')
 		await delay(1600)
-		expect(o.tokenCache[key]).not.toBeDefined()
-		o.close()
+		const token3 = await o.getToken('CONSOLE')
+		expect(token3).toBe('1')
+		server.close()
 		done()
 	})
 })

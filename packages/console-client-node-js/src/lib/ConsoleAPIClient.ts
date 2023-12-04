@@ -1,4 +1,4 @@
-import { getConsoleToken, _close } from "camunda-saas-oauth";
+import { getConsoleToken } from "camunda-saas-oauth";
 import { getConsoleCredentials } from "camunda-8-credentials-from-env"
 import got from 'got';
 import { Cluster, ClusterClient, ClusterClientConnectionDetails, CreateClusterBody, CreatedClusterClient, Member, OrganizationRole, Parameters } from "./APIObjects";
@@ -32,10 +32,6 @@ export class ConsoleApiClient {
             'accept': '*/*'
         }    
         return headers   
-    }
-
-    close() {
-        _close()
     }
 
     /**
