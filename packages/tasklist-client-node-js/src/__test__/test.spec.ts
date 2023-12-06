@@ -2,6 +2,7 @@ import { TaskState } from "../lib/Types"
 import {TasklistApiClient} from "./../index"
 import { join } from 'path'
 import { CreateProcessInstanceResponse, DeployProcessResponse, ZBClient } from 'zeebe-node'
+import 'dotenv/config'
 
 jest.setTimeout(25000) // increase timeout to allow Tasklist application to create tasks
 
