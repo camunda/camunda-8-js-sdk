@@ -56,13 +56,13 @@ describe('TasklistRESTClient', () => {
         expect(tasks.length).toBeGreaterThan(0)
     })
 
-    it('can request tasks with fields', async () => {
+    it('gets all fields for a task', async () => {
         const tasklist = new TasklistRESTClient()
         const tasks = await tasklist.getTasks({
             state: TaskStateREST.CREATED,
         })
         expect(tasks.length).toBeGreaterThan(0)
-        expect(tasks[0].name).not.toBeDefined()
+        expect(tasks[0].name).toBeTruthy()
         expect(tasks[0].processName).toBeTruthy()
     })
 
