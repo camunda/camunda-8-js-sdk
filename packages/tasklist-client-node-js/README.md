@@ -1,7 +1,6 @@
 # Camunda 8 Tasklist API client for Node.js
 
-
-[![NPM](https://nodei.co/npm/camunda-tasklist-client.png)](https://npmjs.org/package/camunda-tasklist-client) 
+[![NPM](https://nodei.co/npm/camunda-tasklist-client.png)](https://npmjs.org/package/camunda-tasklist-client)
 
 ![Community Extension](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)
 
@@ -19,7 +18,7 @@ npm i camunda-tasklist-client
 
 ## Usage
 
-Set the credential for Camunda SaaS in the environment, then: 
+Set the credential for Camunda SaaS in the environment, then:
 
 ```typescript
 import { TasklistApiClient } from 'camunda-tasklist-client'
@@ -27,13 +26,14 @@ import { TasklistApiClient } from 'camunda-tasklist-client'
 const tasklist = new TasklistApiClient()
 
 async function main() {
-    const { tasks } = await tasklist.getTasks({state: TaskState.CREATED})
+    const { tasks } = await tasklist.getTasks({ state: TaskState.CREATED })
     const task = tasks[0]
     console.log('Task', JSON.stringify(task, null, 0))
     const taskid = task.id
-    const task = await tasklist.claimTask(taskid,"jwulf")
+    const task = await tasklist.claimTask(taskid, 'jwulf')
 }
 
 main()
 ```
+
 Full API documentation available [here](https://camunda-community-hub.github.io/tasklist-client-node-js/).
