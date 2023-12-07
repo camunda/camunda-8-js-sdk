@@ -7,6 +7,12 @@ class TTaskState {
     CANCELED = literal`CANCELED`
 }
 
+export enum TaskStateREST {
+    COMPLETED = 'COMPLETED',
+    CREATED = 'CREATED',
+    CANCELED = 'CANCELED',
+}
+
 export const TaskState = new TTaskState()
 
 export interface Variable {
@@ -18,7 +24,7 @@ export interface Variable {
 }
 
 export interface TaskQuery {
-    state: LiteralObject
+    state: LiteralObject | TaskStateREST
     assigned: boolean
     assignee: string
     candidateGroup: string
