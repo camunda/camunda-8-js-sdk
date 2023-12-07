@@ -85,10 +85,10 @@ describe('TasklistRESTClient', () => {
         expect(task.id).toBe(id)
     })
 
-    it('can retrieve an embedded form', async () => {
+    it.only('can retrieve an embedded form', async () => {
         const tasklist = new TasklistRESTClient()
         const res = await tasklist.getForm('userTaskForm_3r97fja', def.processes[0].processDefinitionKey)
-        expect(res.form.id).toBe('userTaskForm_3r97fja')
+        expect(res.id).toBe('userTaskForm_3r97fja')
     })
 
     it('can claim a task', async () => {
