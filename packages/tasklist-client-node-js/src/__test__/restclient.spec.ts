@@ -20,9 +20,7 @@ describe('TasklistRESTClient', () => {
         console.log(`Deploying ${bpmnFilePath}...`)
         def = await zbc.deployProcess(bpmnFilePath)
         console.log(`Deployed ${def.processes[0].bpmnProcessId}`)
-    })
 
-    beforeEach(async () => {
         p = await zbc.createProcessInstance({
             bpmnProcessId: 'TasklistTestProcess',
             variables: {
@@ -36,13 +34,12 @@ describe('TasklistRESTClient', () => {
         await delay(10000) // we wait here to allow Tasklist to do its thing
     })
 
-    afterEach(async () => {
+    afterAll(async () => {
         if (p && p.processInstanceKey) {
             await zbc.cancelProcessInstance(p.processInstanceKey)
         }
+        zbc.close()
     })
-
-    afterAll(() => zbc.close())
 
     it('can request all tasks', async () => {
         const tasklist = new TasklistRESTClient()
