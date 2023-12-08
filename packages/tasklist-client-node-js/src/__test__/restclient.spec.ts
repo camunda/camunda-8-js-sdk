@@ -141,33 +141,8 @@ describe('TasklistRESTClient', () => {
             expect(tasks.length).toBeGreaterThan(0)
             const completeTask = await tasklist.completeTask(taskid, { outcome: 'approved', fruits: ['apple', 'orange'] })
             expect(completeTask.id).toBe(taskid)
+            expect(completeTask.taskState).toEqual(TaskStateREST.COMPLETED)
             p = null as any
-        })
-
-        it('can complete a task with variables', (done) => {
-            const tasklist = new TasklistRESTClient()
-            zbc.createProcessInstanceWithResult({
-                bpmnProcessId: 'TasklistTestProcess',
-                variables: {
-                    name: 'Joe Bloggs',
-                    age: 42,
-                    interests: ['golf', 'frisbee'],
-                },
-            }).then((res) => {
-                console.log(res)
-                p = null as any
-                done()
-            })
-            delay(10000)
-                .then(() => tasklist.getTasks({ state: TaskStateREST.CREATED }))
-                .then((tasks) =>
-                    tasks.forEach((task) =>
-                        tasklist.completeTask(task.id, {
-                            outcome: 'approved',
-                            fruits: ['apple', 'orange'],
-                        })
-                    )
-                )
         })
     })
 })
