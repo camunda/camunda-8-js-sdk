@@ -81,7 +81,9 @@ describe('TasklistRESTClient', () => {
             const res = await tasklist.getForm('userTaskForm_3r97fja', def.processes[0].processDefinitionKey)
             expect(res.id).toBe('userTaskForm_3r97fja')
         })
+    })
 
+    describe('Write operations', () => {
         it('can claim a task', async () => {
             const tasklist = new TasklistRESTClient()
             const tasks = await tasklist.getTasks({ state: TaskStateREST.CREATED })
@@ -90,9 +92,7 @@ describe('TasklistRESTClient', () => {
             const claimTask = await tasklist.assignTask({ taskId: taskid, assignee: 'jwulf' })
             expect(claimTask.id).toBe(taskid)
         })
-    })
 
-    describe('Write operations', () => {
         it('will not allow a task to be claimed twice', async () => {
             const tasklist = new TasklistRESTClient()
             const tasks = await tasklist.getTasks({ state: TaskStateREST.CREATED })
