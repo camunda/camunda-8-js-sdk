@@ -37,9 +37,7 @@ describe('TasklistRESTClient', () => {
         }
     })
 
-    afterAll(() => {
-        zbc.close()
-    })
+    afterAll(() => zbc.close())
 
     describe('Read operations', () => {
         it('can request all tasks', async () => {

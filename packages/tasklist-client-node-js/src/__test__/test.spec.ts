@@ -15,7 +15,7 @@ describe('TasklistApiClient', () => {
         loglevel: 'NONE',
     })
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         const bpmnFilePath = join(process.cwd(), 'src', '__test__', 'resources', 'TasklistTestProcess.bpmn')
         def = await zbc.deployProcess(bpmnFilePath)
 
@@ -30,12 +30,13 @@ describe('TasklistApiClient', () => {
         await delay(10000) // we wait here to allow Tasklist to do its thing
     })
 
-    afterAll(async () => {
+    afterEach(async () => {
         if (p && p.processInstanceKey) {
             await zbc.cancelProcessInstance(p.processInstanceKey)
         }
-        zbc.close()
     })
+
+    afterAll(() => zbc.close())
 
     it('can request all tasks', async () => {
         const tasklist = new TasklistApiClient()
