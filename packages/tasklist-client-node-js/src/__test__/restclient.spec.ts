@@ -18,10 +18,7 @@ describe('TasklistRESTClient', () => {
 
     beforeEach(async () => {
         const bpmnFilePath = join(process.cwd(), 'src', '__test__', 'resources', 'TasklistTestProcess.bpmn')
-        console.log(`Deploying ${bpmnFilePath}...`)
         def = await zbc.deployProcess(bpmnFilePath)
-        console.log('def', def)
-        console.log(`Deployed ${def.processes[0].bpmnProcessId}`)
 
         p = await zbc.createProcessInstance({
             bpmnProcessId: 'TasklistTestProcess',
@@ -31,8 +28,6 @@ describe('TasklistRESTClient', () => {
                 interests: ['golf', 'frisbee'],
             },
         })
-        console.log(`Created instance ${p.processInstanceKey}`)
-        console.log(`Waiting for 10s for Tasklist to do its thing`)
         await delay(10000) // we wait here to allow Tasklist to do its thing
     })
 
@@ -134,11 +129,8 @@ describe('TasklistRESTClient', () => {
                 threw = true
             }
             expect(threw).toBe(true)
-            console.log("can't assign twice")
             await tasklist.unassignTask(taskId)
-            console.log('unassigned')
             const claimTask = await tasklist.assignTask({ taskId, assignee: 'jwulf0', allowOverrideAssignment: false })
-            console.log('re-assigned')
             expect(claimTask.id).toEqual(taskId)
         })
 
@@ -152,7 +144,7 @@ describe('TasklistRESTClient', () => {
             p = null as any
         })
 
-        xit('can complete a task with variables', (done) => {
+        it('can complete a task with variables', (done) => {
             const tasklist = new TasklistRESTClient()
             zbc.createProcessInstanceWithResult({
                 bpmnProcessId: 'TasklistTestProcess',
