@@ -15,10 +15,12 @@ describe('TasklistApiClient', () => {
         loglevel: 'NONE',
     })
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         const bpmnFilePath = join(process.cwd(), 'src', '__test__', 'resources', 'TasklistTestProcess.bpmn')
         def = await zbc.deployProcess(bpmnFilePath)
+    })
 
+    beforeEach(async () => {
         p = await zbc.createProcessInstance({
             bpmnProcessId: 'TasklistTestProcess',
             variables: {
