@@ -1,14 +1,13 @@
-import { literal } from "gotql";
-import { LiteralObject } from "gotql/dist/types/Literal";
+import { literal } from 'gotql'
+import { LiteralObject } from 'gotql/dist/types/Literal'
 
 class TTaskState {
-    COMPLETED = literal`COMPLETED` 
+    COMPLETED = literal`COMPLETED`
     CREATED = literal`CREATED`
     CANCELED = literal`CANCELED`
 }
 
 export const TaskState = new TTaskState()
-
 
 export interface Variable {
     id: string
@@ -29,7 +28,7 @@ export interface TaskQuery {
     searchAfterOrEqual: string[]
     searchBefore: string[]
     searchBeforeOrEqual: string[]
-  }
+}
 
 interface TaskBase {
     id: string
@@ -52,7 +51,7 @@ export interface Task extends TaskBase {
     variables: Variable[]
 }
 
-export interface TaskWithVariables<T = {[key: string]: any}> extends TaskBase {
+export interface TaskWithVariables<T = { [key: string]: any }> extends TaskBase {
     variables: T
 }
 
@@ -60,35 +59,35 @@ export type TaskFields = Partial<keyof Task>[]
 
 export interface GraphQLTasksQuery {
     operation: {
-        name: 'tasks',
+        name: 'tasks'
         args: {
             query: Partial<TaskQuery>
-        },
+        }
         fields: TaskFields
-    } 
+    }
 }
 
 export interface GraphQLTaskQuery {
     operation: {
-        name: 'task',
+        name: 'task'
         args: {
             query: { id: string }
-        },
+        }
         fields: TaskFields
-    } 
+    }
 }
 
 export interface GraphQLFormQuery {
     operation: {
-        name: 'form',
+        name: 'form'
         args: {
-            query: { 
-                id: string,
+            query: {
+                id: string
                 processDefinitionId: string
-             },
-        },
+            }
+        }
         fields: string[]
-    } 
+    }
 }
 
 export interface VariableInput {
@@ -108,4 +107,4 @@ export interface Form {
     id: string
     processDefinitionId: string
     schema: string
-  }
+}
