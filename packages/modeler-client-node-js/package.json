@@ -1,23 +1,37 @@
 {
-  "name": "modeler-client-node",
+  "name": "@jwulf/modeler",
   "version": "1.0.0",
-  "description": "Node.js client for Web Modeler",
-  "main": "index.js",
+  "description": "JavaScript client for Camunda 8 Web Modeler",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"No tests implemented yet\" && exit 0",
+    "test": "jest",
     "build": "npm run clean && npm run compile",
-		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-		"compile": "tsc --build tsconfig.json"
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+    "compile": "tsc --build tsconfig.json"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/camunda-community-hub/modeler-client-node-js.git"
+    "url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@jwulf"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/camunda-community-hub/modeler-client-node-js/issues"
+    "url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
   },
-  "homepage": "https://github.com/camunda-community-hub/modeler-client-node-js#readme"
+  "homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
+  "dependencies": {
+    "camunda-8-credentials-from-env": "^1.1.1",
+    "camunda-saas-oauth": "^1.2.4",
+    "debug": "^4.3.4",
+    "isomorphic-fetch": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/isomorphic-fetch": "^0.0.39",
+    "@types/node": "^20.10.3",
+    "dotenv": "^16.3.1"
+  }
 }
