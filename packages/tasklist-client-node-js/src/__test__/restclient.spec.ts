@@ -1,4 +1,3 @@
-import { TaskStateREST } from '../lib/Types'
 import { TasklistRESTClient } from './../index'
 import { join } from 'path'
 import { CreateProcessInstanceResponse, DeployProcessResponse, ZBClient } from 'zeebe-node'
@@ -51,7 +50,7 @@ describe('TasklistRESTClient', () => {
         it('can request a task with parameters', async () => {
             const tasklist = new TasklistRESTClient()
             const tasks = await tasklist.getTasks({
-                state: TaskStateREST.CREATED,
+                state: 'CREATED',
             })
             expect(tasks.length).toBeGreaterThan(0)
         })
@@ -59,7 +58,7 @@ describe('TasklistRESTClient', () => {
         it('gets all fields for a task', async () => {
             const tasklist = new TasklistRESTClient()
             const tasks = await tasklist.getTasks({
-                state: TaskStateREST.CREATED,
+                state: 'CREATED',
             })
             expect(tasks.length).toBeGreaterThan(0)
             expect(tasks[0].name).toBeTruthy()
@@ -69,7 +68,7 @@ describe('TasklistRESTClient', () => {
         it('can request a specific task', async () => {
             const tasklist = new TasklistRESTClient()
             const tasks = await tasklist.getTasks({
-                state: TaskStateREST.CREATED,
+                state: 'CREATED',
             })
             const id = tasks[0].id
             const task = await tasklist.getTask(id)
@@ -86,7 +85,7 @@ describe('TasklistRESTClient', () => {
     describe('Write operations', () => {
         it('can claim a task', async () => {
             const tasklist = new TasklistRESTClient()
-            const tasks = await tasklist.getTasks({ state: TaskStateREST.CREATED })
+            const tasks = await tasklist.getTasks({ state: 'CREATED' })
             const taskid = tasks[0].id
             expect(tasks.length).toBeGreaterThan(0)
             const claimTask = await tasklist.assignTask({ taskId: taskid, assignee: 'jwulf' })
@@ -95,7 +94,7 @@ describe('TasklistRESTClient', () => {
 
         it('will not allow a task to be claimed twice', async () => {
             const tasklist = new TasklistRESTClient()
-            const tasks = await tasklist.getTasks({ state: TaskStateREST.CREATED })
+            const tasks = await tasklist.getTasks({ state: 'CREATED' })
             const task = await tasklist.assignTask({ taskId: tasks[0].id, assignee: 'jwulf' })
             expect(task).toBeTruthy()
             let threw = false
@@ -109,7 +108,7 @@ describe('TasklistRESTClient', () => {
 
         it('can unclaim task', async () => {
             const tasklist = new TasklistRESTClient()
-            const tasks = await tasklist.getTasks({ state: TaskStateREST.CREATED })
+            const tasks = await tasklist.getTasks({ state: 'CREATED' })
             const taskId = tasks[0].id
             const task = await tasklist.assignTask({ taskId: taskId, assignee: 'jwulf', allowOverrideAssignment: false })
             expect(task).toBeTruthy()
@@ -127,12 +126,12 @@ describe('TasklistRESTClient', () => {
 
         it('can complete a Task', async () => {
             const tasklist = new TasklistRESTClient()
-            const tasks = await tasklist.getTasks({ state: TaskStateREST.CREATED })
+            const tasks = await tasklist.getTasks({ state: 'CREATED' })
             const taskid = tasks[0].id
             expect(tasks.length).toBeGreaterThan(0)
             const completeTask = await tasklist.completeTask(taskid, { outcome: 'approved', fruits: ['apple', 'orange'] })
             expect(completeTask.id).toBe(taskid)
-            expect(completeTask.taskState).toEqual(TaskStateREST.COMPLETED)
+            expect(completeTask.taskState).toEqual('COMPLETED')
             p = null as any
         })
     })

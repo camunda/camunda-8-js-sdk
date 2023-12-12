@@ -7,11 +7,7 @@ class TTaskState {
     CANCELED = literal`CANCELED`
 }
 
-export enum TaskStateREST {
-    COMPLETED = 'COMPLETED',
-    CREATED = 'CREATED',
-    CANCELED = 'CANCELED',
-}
+export type TaskStateREST = 'COMPLETED' | 'CREATED' | 'CANCELED'
 
 export const TaskState = new TTaskState()
 
