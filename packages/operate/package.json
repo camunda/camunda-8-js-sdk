@@ -1,5 +1,5 @@
 {
-  "name": "operate-api-client",
+  "name": "operate",
   "version": "1.2.4",
   "description": "A Node.js client for interacting with the Camunda 8 Operate API",
   "main": "dist/index.js",
@@ -12,7 +12,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/camunda-community-hub/operate-client-node-js.git"
+    "url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@jwulf"
   },
   "keywords": [
     "Camunda"

@@ -1,5 +1,5 @@
 {
-	"name": "zeebe-node",
+	"name": "zeebe",
 	"version": "8.3.1",
 	"description": "The Node.js client library for the Zeebe Workflow Automation Engine.",
 	"keywords": [
@@ -18,13 +18,16 @@
 		"Uber",
 		"Cadence"
 	],
-	"homepage": "https://camunda-community-hub.github.io/zeebe-client-node-js/",
+	"homepage": "https://camunda-community-hub.github.io/camunda-8-js-sdk/",
 	"bugs": {
-		"url": "https://github.com/camunda-community-hub/zeebe-client-node-js/issues"
+		"url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/camunda-community-hub/zeebe-client-node-js"
+		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com/@jwulf"
 	},
 	"main": "dist/index.js",
 	"bin": {

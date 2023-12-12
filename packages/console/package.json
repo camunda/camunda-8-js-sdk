@@ -1,5 +1,5 @@
 {
-  "name": "camunda-console-client",
+  "name": "console",
   "version": "0.9.2",
   "description": "A Node.js Camunda 8 Web Console API client",
   "main": "dist/index.js",
@@ -13,15 +13,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/camunda-community-hub/console-client-node-js.git"
+    "url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@jwulf"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/camunda-community-hub/console-client-node-js/issues"
+    "url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
   },
-  "homepage": "https://camunda-community-hub.github.io/console-client-node-js/",
+  "homepage": "https://camunda-community-hub.github.io/camunda-8-js-sdk/",
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "jest": "^29.5.0",

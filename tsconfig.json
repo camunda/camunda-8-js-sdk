@@ -28,11 +28,11 @@
 		],
 		"baseUrl": "./packages",
 		"paths": {
-			"operate-api-client": ["operate-client-node-js"],
+			"@jwulf/operate": ["operate"],
 			"camunda-saas-oauth": ["camunda-saas-oauth-nodejs"],
 			"camunda-8-credentials-from-env": ["camunda-8-credentials-from-env"],
 			"camunda-tasklist-client": ["tasklist-client-node-js"],
-			"zeebe-node": ["zeebe-client-node-js"]
+			"@jwulf/zeebe-node": ["zeebe"]
 		}
 	},
     "exclude": [
