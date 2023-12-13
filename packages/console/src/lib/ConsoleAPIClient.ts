@@ -1,5 +1,4 @@
-import { getConsoleToken } from "camunda-saas-oauth";
-import { getConsoleCredentials } from "camunda-8-credentials-from-env"
+import { getConsoleToken, getConsoleCredentials } from "@jwulf/oauth";
 import got from 'got';
 import { Cluster, ClusterClient, ClusterClientConnectionDetails, CreateClusterBody, CreatedClusterClient, Member, OrganizationRole, Parameters } from "./APIObjects";
 const pkg = require('../../package.json')

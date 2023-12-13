@@ -1,5 +1,5 @@
 {
-  "name": "optimize-api-client",
+  "name": "@jwulf/optimize",
   "version": "1.0.4",
   "description": "A Node.js client for interacting with the Camunda 8 Optimize API",
   "main": "dist/index.js",
@@ -10,29 +10,27 @@
     "compile": "tsc",
     "docs": "typedoc src/index.ts"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/camunda-community-hub/optimize-client-node-js.git"
-  },
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com/@jwulf"
+	},
   "keywords": [
     "Camunda"
   ],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/camunda-community-hub/optimize-client-node-js/issues"
+    "url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
   },
-  "homepage": "https://github.com/camunda-community-hub/optimize-client-node-js#readme",
+  "homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
   "devDependencies": {
-    "@types/jest": "^29.2.4",
-    "jest": "^29.3.1",
-    "ts-jest": "^29.0.3",
-    "typedoc": "^0.23.21",
-    "typescript": "^4.9.3"
+    "typedoc": "^0.23.21"
   },
   "dependencies": {
-    "camunda-8-credentials-from-env": "^1.1.1",
-    "camunda-saas-oauth": "^1.2.4",
+    "@jwulf/oauth": "^1.2.4",
     "debug": "^4.3.4",
     "got": "^11.8.5"
   }

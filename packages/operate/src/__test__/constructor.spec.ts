@@ -1,6 +1,6 @@
 import { ProcessDefinition, Query } from "../lib/APIObjects";
 import { OperateApiClient } from "../";
-import { OAuthProviderImpl } from "camunda-saas-oauth";
+import { OAuthProviderImpl } from "@jwulf/oauth";
 
 /**
  * In order to test:

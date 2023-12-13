@@ -1,5 +1,4 @@
-import { OAuthProviderImpl, getOperateToken } from "camunda-saas-oauth";
-import { getOperateCredentials } from "camunda-8-credentials-from-env"
+import { OAuthProviderImpl, getOperateToken, getOperateCredentials } from "@jwulf/oauth";
 import got from 'got';
 import { ChangeStatus, FlownodeInstance, Incident, ProcessDefinition, ProcessInstance, Query, SearchResults, Variable } from "./APIObjects";
 

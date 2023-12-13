@@ -1,4 +1,4 @@
-import { getConsoleToken } from "camunda-saas-oauth";
+import { getConsoleToken } from "@jwulf/oauth";
 const pkg = require('../../package.json')
 const debug = require('debug')('modelerapi')
 import * as _ from 'isomorphic-fetch'

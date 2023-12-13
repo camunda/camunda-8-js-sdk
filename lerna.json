@@ -3,5 +3,11 @@
   "version": "independent",
   "packages": [
     "packages/*"
-  ]
+  ],
+  "command": {
+    "publish": {
+      "registry": "https://npm.pkg.github.com"
+    }
+  },
+  "npmClient": "npm"
 }

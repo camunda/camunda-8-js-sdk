@@ -1,5 +1,4 @@
-import { getOptimizeToken } from "camunda-saas-oauth";
-import { getOptimizeCredentials } from "camunda-8-credentials-from-env"
+import { getOptimizeToken, getOptimizeCredentials } from "@jwulf/oauth";
 import got from 'got';
 import { DashboardCollection, DashboardDefinition, EntityImportResponse, ReportCollection, ReportDataExporter, SingleProcessReport, Variable, VariableLabels } from "./APIObjects";
 import { ReportResults } from "./ReportResults";

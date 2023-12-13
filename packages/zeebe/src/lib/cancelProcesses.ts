@@ -1,4 +1,4 @@
-import { OperateApiClient } from 'operate-api-client'
+import { OperateApiClient } from '@jwulf/operate'
 
 const operate = createClient()
 
