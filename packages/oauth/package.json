@@ -1,0 +1,33 @@
+{
+  "name": "@jwulf/oauth",
+  "version": "1.2.4",
+  "description": "A library to exchange a set of Camunda 8 SaaS API credentials for a token",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest --detectOpenHandles --testPathIgnorePatterns integration",
+    "test:integration": "jest --runInBand --detectOpenHandles --verbose true",
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+    "compile": "tsc --project tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@jwulf"
+  },
+  "keywords": [],
+  "author": "josh.wulf@camunda.com",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs/issues"
+  },
+  "homepage": "https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs#readme",
+  "dependencies": {
+    "@types/debug": "^4.1.12",
+    "debug": "^4.3.4",
+    "got": "^11.8.5",
+    "neon-env": "^0.1.1"
+  }
+}
