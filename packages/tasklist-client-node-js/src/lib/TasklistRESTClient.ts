@@ -108,7 +108,7 @@ export class TasklistRESTClient {
      * @param formId
      * @param processDefinitionKey
      */
-    public async getForm(formId: string, processDefinitionKey: string): Promise<{ form: Form }> {
+    public async getForm(formId: string, processDefinitionKey: string): Promise<Form> {
         const headers = await this.getHeaders()
         return this.rest
             .get(`forms/${formId}`, {
