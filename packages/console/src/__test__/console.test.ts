@@ -19,9 +19,8 @@ test('createClient', async () => {
     const clusters = await c.getClusters()
     const clusterUuid = clusters[0].uuid
     const res = await c.createClient({clusterUuid, clientName: 'testors', permissions: ["Zeebe"]})
-    console.log('res', res)
     const client = await c.getClient(clusterUuid, res.clientId)
-    console.log('client', client)
+    expect(client.ZEEBE_ADDRESS).toBeTruthy()
     await c.deleteClient(clusterUuid, res.clientId)
     expect(c).toBeTruthy()
 })
