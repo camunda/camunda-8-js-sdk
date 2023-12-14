@@ -26,11 +26,11 @@ import { TasklistApiClient } from 'camunda-tasklist-client'
 const tasklist = new TasklistApiClient()
 
 async function main() {
-    const { tasks } = await tasklist.getTasks({ state: TaskState.CREATED })
+    const { tasks } = await tasklist.getTasks({ state: 'CREATED' })
     const task = tasks[0]
     console.log('Task', JSON.stringify(task, null, 0))
     const taskid = task.id
-    const task = await tasklist.claimTask(taskid, 'jwulf')
+    const assignedTask = await tasklist.assignTask({ taskId: taskId, assignee: 'jwulf', allowOverrideAssignment: false })
 }
 
 main()
