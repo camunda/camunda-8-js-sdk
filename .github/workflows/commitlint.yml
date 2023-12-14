@@ -1,0 +1,22 @@
+name: Commitlint
+on: [push, pull_request]
+
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Ensures commit history is fetched
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint last commit
+        run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.head_ref }} --verbose
