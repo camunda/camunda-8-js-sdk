@@ -1,6 +1,7 @@
 import http from 'http'
 import { OAuthProviderImpl } from '../lib/OAuthProviderImpl'
 
+jest.setTimeout(10000)
 // Added test for https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs/issues/8
 // "Can not renew expired token"
 // Updated test for https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/3
@@ -47,7 +48,6 @@ test('In-memory cache is populated and evicted after timeout', done => {
 		await delay(1600)
 		const token3 = await o.getToken('CONSOLE')
 		expect(token3).toBe('1')
-		server.close()
-		done()
+		server.close(() => done())
 	})
 })
