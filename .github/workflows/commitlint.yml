@@ -6,19 +6,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Ensures commit history is fetched
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Specify a Node.js version
+          node-version: '18'  # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
         env:
           GH_NPM_TOKEN: ${{ secrets.GH_NPM_TOKEN }}
-          
+
       - name: Lint last commit
         run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.head_ref }} --verbose
