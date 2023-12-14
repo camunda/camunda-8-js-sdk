@@ -5,6 +5,7 @@
     "main": "dist/index.js",
     "scripts": {
         "test": "jest --detectOpenHandles  --runInBand",
+        "test:integration": "jest --detectOpenHandles  --runInBand",
         "build": "npm run clean && npm run compile",
         "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
         "compile": "tsc",
@@ -16,7 +17,7 @@
     },
     "publishConfig": {
         "registry": "https://npm.pkg.github.com/@jwulf"
-      },
+    },
     "keywords": [
         "Camunda",
         "Tasklist"
@@ -28,14 +29,14 @@
     },
     "homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
     "devDependencies": {
-        "typedoc": "^0.23.25",
-        "@jwulf/zeebe": "^8.3.0"
+        "@jwulf/zeebe": "^8.3.0",
+        "typedoc": "^0.23.25"
     },
     "dependencies": {
-        "@types/debug": "^4.1.12",
         "@jwulf/oauth": "^8.3.0",
+        "@types/debug": "^4.1.12",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",
-        "gotql": "^2.1.0-alpha1"
+        "got": "^11.8.6"
     }
 }

@@ -1,15 +1,4 @@
-import { literal } from 'gotql'
-import { LiteralObject } from 'gotql/dist/types/Literal'
-
-class TTaskState {
-    COMPLETED = literal`COMPLETED`
-    CREATED = literal`CREATED`
-    CANCELED = literal`CANCELED`
-}
-
-export type TaskStateREST = 'COMPLETED' | 'CREATED' | 'CANCELED'
-
-export const TaskState = new TTaskState()
+export type TaskState = 'COMPLETED' | 'CREATED' | 'CANCELED'
 
 export interface Variable {
     id: string
@@ -20,7 +9,7 @@ export interface Variable {
 }
 
 export interface TaskQuery {
-    state: LiteralObject | TaskStateREST
+    state: TaskState
     assigned: boolean
     assignee: string
     candidateGroup: string
@@ -58,39 +47,6 @@ export interface TaskWithVariables<T = { [key: string]: any }> extends TaskBase 
 }
 
 export type TaskFields = Partial<keyof Task>[]
-
-export interface GraphQLTasksQuery {
-    operation: {
-        name: 'tasks'
-        args: {
-            query: Partial<TaskQuery>
-        }
-        fields: TaskFields
-    }
-}
-
-export interface GraphQLTaskQuery {
-    operation: {
-        name: 'task'
-        args: {
-            query: { id: string }
-        }
-        fields: TaskFields
-    }
-}
-
-export interface GraphQLFormQuery {
-    operation: {
-        name: 'form'
-        args: {
-            query: {
-                id: string
-                processDefinitionId: string
-            }
-        }
-        fields: string[]
-    }
-}
 
 export interface VariableInput {
     name: string
