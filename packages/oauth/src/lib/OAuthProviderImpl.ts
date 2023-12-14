@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import got from 'got';
+import 'isomorphic-fetch'
 import { Token, OAuthProviderConfig } from '../index';
 import * as os from 'os'
 import { debug } from 'debug'
@@ -102,33 +102,34 @@ export class OAuthProviderImpl {
     }
 
     private makeDebouncedTokenRequest(audience: TokenGrantAudiences) {
-        const form = {
-            audience: this.getAudience(audience),
-            client_id: this.clientId,
-            client_secret: this.clientSecret,
-            grant_type: 'client_credentials',
-        };
+        // const form = {
+        //     audience: this.getAudience(audience),
+        //     client_id: this.clientId,
+        //     client_secret: this.clientSecret,
+        //     grant_type: 'client_credentials',
+        // };
 
-        return got
-            .post(this.authServerUrl, {
-                form,
+        const body = `audience=${this.getAudience(audience)}&client_id=${this.clientId}&client_secret=${this.clientSecret}&grant_type=client_credentials`
+        return fetch(this.authServerUrl, {
+                method: 'POST',
+                body,
                 headers: {
                     'content-type': 'application/x-www-form-urlencoded',
                     'user-agent': this.userAgentString,
                 },
             })
-            .then(res => this.safeJSONParse(res.body)
-            .then(t => {
-                    const token = {...t, audience}
-                    if (this.useFileCache) {
-                        this.sendToFileCache({ audience, token });
-                    }
-                    this.sendToMemoryCache({ audience, token })
-                    trace(`Got token from endpoint: \n${token.access_token}`)
-                    trace(`Token expires in ${token.expires_in} seconds`)
-                    return token.access_token;
-                })
-            );
+            .then(res => res.json())
+            // .then(res => this.safeJSONParse(res)
+            .then((t: any) => {
+                const token = {...t, audience}
+                if (this.useFileCache) {
+                    this.sendToFileCache({ audience, token });
+                }
+                this.sendToMemoryCache({ audience, token })
+                trace(`Got token from endpoint: \n${token.access_token}`)
+                trace(`Token expires in ${token.expires_in} seconds`)
+                return token.access_token;
+            })
     }
 
     private sendToMemoryCache({ audience, token }: { audience: TokenGrantAudiences; token: Token; }) {
@@ -138,15 +139,18 @@ export class OAuthProviderImpl {
         this.tokenCache[key] = token;
     }
 
-    private safeJSONParse(thing: any): Promise<Token> {
-        return new Promise((resolve, reject) => {   
-            try {
-                resolve(JSON.parse(thing));
-            } catch (e) {
-                reject(e);
-            }
-        });
-    }
+    // private safeJSONParse(thing: any): Promise<Token> {
+    //     // tslint:disable-next-line: no-console
+    //     console.log(thing); // @DEBUG
+        
+    //     return new Promise((resolve, reject) => {   
+    //         try {
+    //             resolve(JSON.parse(thing));
+    //         } catch (e) {
+    //             reject(e);
+    //         }
+    //     });
+    // }
 
     private retrieveFromFileCache(clientId: string, audience: TokenGrantAudiences) {
         let token: Token;

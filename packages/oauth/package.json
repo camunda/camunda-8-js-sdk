@@ -25,9 +25,11 @@
   },
   "homepage": "https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs#readme",
   "dependencies": {
-    "@types/debug": "^4.1.12",
     "debug": "^4.3.4",
-    "got": "^11.8.5",
+    "isomorphic-fetch": "^3.0.0",
     "neon-env": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12"
   }
 }
