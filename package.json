@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "publish": "lerna run build && lerna publish"
+    "publish": "lerna run build && lerna publish",
+    "commit": "cz",
+    "publish:canary": "lerna run build && lerna run test && lerna publish --canary"
   },
   "keywords": [],
   "author": "",
@@ -14,11 +16,22 @@
     "./packages/*"
   ],
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.9.4",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
     "jest": "^29.7.0",
     "lerna": "^7.4.2",
+    "semantic-release": "^22.0.12",
+    "semantic-release-lerna": "^2.1.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.3.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }

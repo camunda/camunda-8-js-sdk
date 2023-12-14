@@ -1,6 +1,6 @@
 {
   "name": "@jwulf/operate",
-  "version": "1.2.4",
+  "version": "8.3.0",
   "description": "A Node.js client for interacting with the Camunda 8 Operate API",
   "main": "dist/index.js",
   "scripts": {

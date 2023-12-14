@@ -1,0 +1,16 @@
+{
+  "branches": ["main"],
+  "repositoryUrl": "https://github.com/camunda-community-hub/camunda-8-js-sdk.git",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    "@semantic-release/npm",
+    {
+      "path": "semantic-release-lerna",
+      "generateNotes": false
+    },
+    "@semantic-release/github",
+    "@semantic-release/git"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "@jwulf/sdk",
-  "version": "0.15.0",
+  "version": "8.3.0",
   "description": "The Camunda Platform 8 SDK for Node.js",
   "main": "dist/index.js",
   "scripts": {

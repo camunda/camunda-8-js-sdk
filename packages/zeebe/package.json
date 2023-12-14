@@ -1,6 +1,6 @@
 {
 	"name": "@jwulf/zeebe",
-	"version": "8.3.1",
+	"version": "8.3.0",
 	"description": "The Node.js client library for the Zeebe Workflow Automation Engine.",
 	"keywords": [
 		"zeebe",

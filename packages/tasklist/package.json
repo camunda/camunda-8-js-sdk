@@ -1,6 +1,6 @@
 {
     "name": "@jwulf/tasklist",
-    "version": "0.9.5",
+    "version": "8.3.0",
     "description": "A Camunda 8 Tasklist API client for Node.js",
     "main": "dist/index.js",
     "scripts": {
