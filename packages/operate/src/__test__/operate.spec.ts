@@ -1,5 +1,5 @@
 import { ProcessDefinition, ProcessInstance, Query } from "../lib/APIObjects";
-import { OperateApiClient } from "../";
+import { OperateApiClient } from "..";
 
 const c = new OperateApiClient();
 jest.setTimeout(15000)
