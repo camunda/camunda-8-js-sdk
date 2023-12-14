@@ -21,4 +21,4 @@ jobs:
           GH_NPM_TOKEN: ${{ secrets.GH_NPM_TOKEN }}
 
       - name: Lint last commit
-        run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.head_ref }} --verbose
+        run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.event.pull_request.head.sha }} --verbose
