@@ -34,11 +34,11 @@
     "typescript": "^4.9.4"
   },
   "dependencies": {
-    "@jwulf/console": "^0.9.2",
-    "@jwulf/tasklist": "0.9.5",
-    "@jwulf/operate": "1.2.4",
-    "@jwulf/optimize": "1.0.4",
-    "@jwulf/zeebe": "^8.3.1",
-    "@jwulf/modeler": "^1.0.0"
+    "@jwulf/console": "^8.3.0",
+    "@jwulf/tasklist": "8.3.0",
+    "@jwulf/operate": "8.3.0",
+    "@jwulf/optimize": "8.3.0",
+    "@jwulf/zeebe": "^8.3.0",
+    "@jwulf/modeler": "^8.3.0"
   }
 }

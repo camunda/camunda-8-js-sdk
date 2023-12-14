@@ -30,7 +30,7 @@
     "typedoc": "^0.23.21"
   },
   "dependencies": {
-    "@jwulf/oauth": "^1.2.4",
+    "@jwulf/oauth": "^8.3.0",
     "debug": "^4.3.4",
     "got": "^11.8.5"
   }
