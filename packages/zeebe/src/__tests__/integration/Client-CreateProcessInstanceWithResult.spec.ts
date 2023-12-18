@@ -11,7 +11,9 @@ let test3: DeployProcessResponse
 
 beforeAll(async () => {
 	test1 = await zbc.deployProcess('./src/__tests__/testdata/await-outcome.bpmn')
-	test2 = await zbc.deployProcess('./src/__tests__/testdata/await-outcome-long.bpmn')
+	test2 = await zbc.deployProcess(
+		'./src/__tests__/testdata/await-outcome-long.bpmn'
+	)
 	test3 = await zbc.deployProcess('./src/__tests__/testdata/await-outcome.bpmn')
 	await cancelProcesses(test1.processes[0].bpmnProcessId)
 	await cancelProcesses(test2.processes[0].bpmnProcessId)
@@ -30,8 +32,8 @@ test('Awaits a process outcome', async () => {
 	const result = await zbc.createProcessInstanceWithResult({
 		bpmnProcessId: processId,
 		variables: {
-		sourceValue: 5
-		}
+			sourceValue: 5,
+		},
 	})
 	expect(result.variables.sourceValue).toBe(5)
 })
@@ -44,7 +46,7 @@ test('can override the gateway timeout', async () => {
 		variables: {
 			otherValue: 'rome',
 			sourceValue: 5,
-		}
+		},
 	})
 	expect(result.variables.sourceValue).toBe(5)
 })

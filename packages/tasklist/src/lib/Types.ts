@@ -1,3 +1,5 @@
+import { JSONDoc } from './utils'
+
 export type TaskState = 'COMPLETED' | 'CREATED' | 'CANCELED'
 
 export interface Variable {
@@ -42,7 +44,7 @@ export interface Task extends TaskBase {
     variables: Variable[]
 }
 
-export interface TaskWithVariables<T = { [key: string]: any }> extends TaskBase {
+export interface TaskWithVariables<T = JSONDoc> extends TaskBase {
     variables: T
 }
 

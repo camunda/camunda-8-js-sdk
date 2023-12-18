@@ -1,5 +1,5 @@
-import { cancelProcesses } from '../../lib/cancelProcesses'
 import { ZBClient } from '../..'
+import { cancelProcesses } from '../../lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../lib/interfaces-grpc-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
@@ -17,102 +17,111 @@ afterEach(async () => {
 		if (wf?.processInstanceKey) {
 			await zbc.cancelProcessInstance(wf.processInstanceKey)
 		}
-	} catch (e: any) {
+	} catch (e: unknown) {
 		// console.log('Caught NOT FOUND') // @DEBUG
 	} finally {
 		await zbc.close() // Makes sure we don't forget to close connection
 	}
 })
 
-test('Decrements the retries count by default', () =>
-	new Promise(async done => {
-		const res = await zbc.deployProcess('./src/__tests__/testdata/Worker-Failure-Retries.bpmn')
-		await cancelProcesses(res.processes[0].bpmnProcessId)
-		wf = await zbc.createProcessInstance({
-			bpmnProcessId: 'worker-failure-retries',
-			variables: {
-			conditionVariable: true
-			}
-		})
-		let called = false
+test('Decrements the retries count by default', async () => {
+	const res = await zbc.deployProcess(
+		'./src/__tests__/testdata/Worker-Failure-Retries.bpmn'
+	)
+	await cancelProcesses(res.processes[0].bpmnProcessId)
+	wf = await zbc.createProcessInstance({
+		bpmnProcessId: 'worker-failure-retries',
+		variables: {
+			conditionVariable: true,
+		},
+	})
+	let called = false
 
+	await new Promise((resolve) => {
 		const worker = zbc.createWorker({
 			taskType: 'service-task-worker-failure-retries',
-			taskHandler: job => {
+			taskHandler: (job) => {
 				if (!called) {
 					expect(job.retries).toBe(100)
 					called = true
 					return job.fail('Some reason')
 				}
 				expect(job.retries).toBe(99)
-				done(null)
-				return job.complete().then(async res => {
+				resolve(null)
+				return job.complete().then(async (res) => {
 					await worker.close()
 					return res
 				})
-			}
+			},
 		})
 	})
-)
+})
 
-test('Set the retries to a specific number when provided with one via simple signature', () =>
-	new Promise(async done => {
-		const res = await zbc.deployProcess('./src/__tests__/testdata/Worker-Failure-Retries.bpmn')
-		cancelProcesses(res.processes[0].bpmnProcessId)
-		wf = await zbc.createProcessInstance({
-			bpmnProcessId: 'worker-failure-retries',
-			variables: {
-			conditionVariable: true
-			}
-		})
-		let called = false
+test('Set the retries to a specific number when provided with one via simple signature', async () => {
+	const res = await zbc.deployProcess(
+		'./src/__tests__/testdata/Worker-Failure-Retries.bpmn'
+	)
+	cancelProcesses(res.processes[0].bpmnProcessId)
+	wf = await zbc.createProcessInstance({
+		bpmnProcessId: 'worker-failure-retries',
+		variables: {
+			conditionVariable: true,
+		},
+	})
+	let called = false
 
+	await new Promise((resolve) => {
 		const worker = zbc.createWorker({
 			taskType: 'service-task-worker-failure-retries',
-			taskHandler: job => {
+			taskHandler: (job) => {
 				if (!called) {
 					expect(job.retries).toBe(100)
 					called = true
 					return job.fail('Some reason', 101)
 				}
 				expect(job.retries).toBe(101)
-				done(null)
-				return job.complete().then(async res => {
+				resolve(null)
+				return job.complete().then(async (res) => {
 					await worker.close()
 					return res
 				})
-			}
+			},
 		})
 	})
-)
+})
 
-test('Set the retries to a specific number when provided with one via object signature', () =>
-	new Promise(async done => {
-		const res = await zbc.deployProcess('./src/__tests__/testdata/Worker-Failure-Retries.bpmn')
-		await cancelProcesses(res.processes[0].bpmnProcessId)
-		wf = await zbc.createProcessInstance({
-			bpmnProcessId: 'worker-failure-retries',
-			variables: {
-				conditionVariable: true
-			}
-		})
-		let called = false
+test('Set the retries to a specific number when provided with one via object signature', async () => {
+	const res = await zbc.deployProcess(
+		'./src/__tests__/testdata/Worker-Failure-Retries.bpmn'
+	)
+	await cancelProcesses(res.processes[0].bpmnProcessId)
+	wf = await zbc.createProcessInstance({
+		bpmnProcessId: 'worker-failure-retries',
+		variables: {
+			conditionVariable: true,
+		},
+	})
+	let called = false
 
+	await new Promise((resolve) => {
 		const worker = zbc.createWorker({
 			taskType: 'service-task-worker-failure-retries',
-			taskHandler: job => {
+			taskHandler: (job) => {
 				if (!called) {
 					expect(job.retries).toBe(100)
 					called = true
-					return job.fail({ errorMessage: 'Some reason', retries: 101})
+					return job.fail({
+						errorMessage: 'Some reason',
+						retries: 101,
+					})
 				}
 				expect(job.retries).toBe(101)
-				done(null)
-				return job.complete().then(async res => {
+				resolve(null)
+				return job.complete().then(async (res) => {
 					await worker.close()
 					return res
 				})
-			}
+			},
 		})
 	})
-)
+})

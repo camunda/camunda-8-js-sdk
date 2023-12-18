@@ -1,12 +1,17 @@
 import * as fs from 'fs'
-import got from 'got'
 import * as os from 'os'
 import { clearTimeout } from 'timers'
+
+import d from 'debug'
+import got from 'got'
 import uuid = require('uuid')
+
 import { packageVersion } from './GetPackageVersion'
+
 const homedir = os.homedir()
-const debug = require('debug')('oauth')
-const trace = require('debug')('oauth:trace')
+
+const debug = d('oauth')
+const trace = d('oauth:trace')
 
 const BACKOFF_TOKEN_ENDPOINT_MAX = 60000 // 60 seconds
 
@@ -44,7 +49,7 @@ export class OAuthProvider {
 	public clientSecret: string
 	public customRootCert?: Buffer
 	public useFileCache: boolean
-	public tokenCache = {}
+	public tokenCache: { [key: string]: Token } = {}
 	userAgentString: string
 	private currentBackoffTime: number = 1
 	private inflightTokenRequest?: Promise<string>
@@ -92,7 +97,7 @@ export class OAuthProvider {
 					fs.mkdirSync(this.cacheDir)
 				}
 				fs.accessSync(this.cacheDir, fs.constants.W_OK)
-			} catch (e: any) {
+			} catch (e: unknown) {
 				throw new Error(
 					`FATAL: Cannot write to OAuth cache dir ${cacheDir}\n` +
 						'If you are running on AWS Lambda, set the HOME environment variable of your lambda function to /tmp'
@@ -103,38 +108,38 @@ export class OAuthProvider {
 
 	public async getToken(): Promise<string> {
 		if (this.tokenCache[this.clientId]) {
-			debug(`Using cached token from memory...`)
+			debug('Using cached token from memory...')
 			return this.tokenCache[this.clientId].access_token
 		}
 		if (this.useFileCache) {
 			const cachedToken = this.fromFileCache(this.clientId)
 			if (cachedToken) {
-				debug(`Using cached token from file...`)
+				debug('Using cached token from file...')
 				return cachedToken.access_token
 			}
 		}
 
 		if (!this.inflightTokenRequest) {
-		 	this.inflightTokenRequest = new Promise((resolve, reject) => {
-				setTimeout(
-					() => {
-						this.debouncedTokenRequest()
-							.then(res => {
-								this.currentBackoffTime = 1
-								this.inflightTokenRequest = undefined
-								resolve(res)
-							})
-							.catch(e => {
-								if (this.currentBackoffTime === 1) {
-									this.currentBackoffTime = 1000
-								}
-								this.currentBackoffTime = Math.min(this.currentBackoffTime * 2, BACKOFF_TOKEN_ENDPOINT_MAX)
-								this.inflightTokenRequest = undefined
-								reject(e)
-							})
-					},
-					this.currentBackoffTime
-				)
+			this.inflightTokenRequest = new Promise((resolve, reject) => {
+				setTimeout(() => {
+					this.debouncedTokenRequest()
+						.then((res) => {
+							this.currentBackoffTime = 1
+							this.inflightTokenRequest = undefined
+							resolve(res)
+						})
+						.catch((e) => {
+							if (this.currentBackoffTime === 1) {
+								this.currentBackoffTime = 1000
+							}
+							this.currentBackoffTime = Math.min(
+								this.currentBackoffTime * 2,
+								BACKOFF_TOKEN_ENDPOINT_MAX
+							)
+							this.inflightTokenRequest = undefined
+							reject(e)
+						})
+				}, this.currentBackoffTime)
 			})
 		}
 		return this.inflightTokenRequest
@@ -155,7 +160,7 @@ export class OAuthProvider {
 			grant_type: 'client_credentials',
 		}
 
-		debug(`Requesting token from token endpoint...`)
+		debug('Requesting token from token endpoint...')
 		return got
 			.post(this.url, {
 				form,
@@ -164,15 +169,15 @@ export class OAuthProvider {
 					'user-agent': this.userAgentString,
 				},
 				https: {
-					certificateAuthority: this.customRootCert
-				}
+					certificateAuthority: this.customRootCert,
+				},
 			})
-			.then(res => {
-				return this.safeJSONParse(res.body).then(token => {
-					debug(`Received token from token endpoint.`)
+			.then((res) => {
+				return this.safeJSONParse(res.body).then((token) => {
+					debug('Received token from token endpoint.')
 
 					const d = new Date()
-					token.expiry = d.setSeconds(d.getSeconds()) + (token.expires_in * 1000)
+					token.expiry = d.setSeconds(d.getSeconds()) + token.expires_in * 1000
 					if (this.useFileCache) {
 						this.toFileCache(token)
 					}
@@ -183,11 +188,11 @@ export class OAuthProvider {
 			})
 	}
 
-	private safeJSONParse(thing: any): Promise<Token> {
+	private safeJSONParse(thing: string): Promise<Token> {
 		return new Promise((resolve, reject) => {
 			try {
 				resolve(JSON.parse(thing))
-			} catch (e: any) {
+			} catch (e: unknown) {
 				reject(e)
 			}
 		})
@@ -196,9 +201,9 @@ export class OAuthProvider {
 	private fromFileCache(clientId: string) {
 		let token: Token
 		const tokenCachedInFile = fs.existsSync(this.cachedTokenFile(clientId))
-		debug(`Checking token cache file...`)
+		debug('Checking token cache file...')
 		if (!tokenCachedInFile) {
-			debug(`No token cache file found...`)
+			debug('No token cache file found...')
 			return null
 		}
 		try {
@@ -208,14 +213,16 @@ export class OAuthProvider {
 			)
 
 			if (this.isExpired(token)) {
-				debug(`Cached token is expired...`)
+				debug('Cached token is expired...')
 				return null
 			}
 			this.tokenCache[this.clientId] = token
 			this.startExpiryTimer(token)
 			return token
-		} catch (e:any) {
-			debug(`Failed to load cached token: ${e.message}`)
+		} catch (e: unknown) {
+			debug(
+				`Failed to load cached token: ${(e as { message: string }).message}`
+			)
 			return null
 		}
 	}
@@ -223,19 +230,15 @@ export class OAuthProvider {
 	private toFileCache(token: Token) {
 		const file = this.cachedTokenFile(this.clientId)
 
-		fs.writeFile(
-			file,
-			JSON.stringify(token),
-			e => {
-				if (!e) {
-					return
-				}
-				// tslint:disable-next-line
-				console.error('Error writing OAuth token to file' + file)
-				// tslint:disable-next-line
-				console.error(e)
+		fs.writeFile(file, JSON.stringify(token), (e) => {
+			if (!e) {
+				return
 			}
-		)
+			// tslint:disable-next-line
+			console.error('Error writing OAuth token to file' + file)
+			// tslint:disable-next-line
+			console.error(e)
+		})
 	}
 
 	private isExpired(token: Token) {
@@ -254,12 +257,18 @@ export class OAuthProvider {
 		// renew token 1s before it expires to avoid race conditions on the wire
 		// evict disk cache at same time as in-memory cache
 		// See: https://github.com/camunda-community-hub/zeebe-client-node-js/issues/336
-		const minimumCacheLifetime = 0; // Minimum cache lifetime in milliseconds
-		const renewTokenAfterMs = Math.max(validityPeriod - 1000, minimumCacheLifetime)
+		const minimumCacheLifetime = 0 // Minimum cache lifetime in milliseconds
+		const renewTokenAfterMs = Math.max(
+			validityPeriod - 1000,
+			minimumCacheLifetime
+		)
 		this.expiryTimer = setTimeout(() => {
 			trace(`${this.uuid} token expired`)
 			delete this.tokenCache[this.clientId]
-			if (this.useFileCache && fs.existsSync(this.cachedTokenFile(this.clientId))) {
+			if (
+				this.useFileCache &&
+				fs.existsSync(this.cachedTokenFile(this.clientId))
+			) {
 				fs.unlinkSync(this.cachedTokenFile(this.clientId))
 			}
 		}, renewTokenAfterMs)

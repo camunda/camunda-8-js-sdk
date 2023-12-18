@@ -3,14 +3,14 @@ import { MockStdOut } from '../lib/MockStdOut'
 
 jest.setTimeout(15000)
 
-test('uses an injected stdout', done => {
+test('uses an injected stdout', (done) => {
 	const mockStd = new MockStdOut()
 	const z = new ZBClient({ stdout: mockStd, eagerConnection: false })
 
 	// tslint:disable-next-line: no-console
 	z.createWorker({
 		taskType: 'test',
-		taskHandler: job => {
+		taskHandler: (job) => {
 			return job.complete()
 		},
 	})

@@ -1,28 +1,32 @@
-import {ConsoleApiClient} from '../index'
+import { ConsoleApiClient } from '../index'
 
 jest.setTimeout(10000)
 
 test('getParameters', async () => {
-    const c = new ConsoleApiClient()
-    const res = await c.getParameters()
-    expect(res).toBeTruthy()
+	const c = new ConsoleApiClient()
+	const res = await c.getParameters()
+	expect(res).toBeTruthy()
 })
 
 test('getClusters', async () => {
-    const c = new ConsoleApiClient()
-    const res = await c.getClusters()
-    expect(res).toBeTruthy()
+	const c = new ConsoleApiClient()
+	const res = await c.getClusters()
+	expect(res).toBeTruthy()
 })
 
 test('createClient', async () => {
-    const c = new ConsoleApiClient()
-    const clusters = await c.getClusters()
-    const clusterUuid = clusters[0].uuid
-    const res = await c.createClient({clusterUuid, clientName: 'testors', permissions: ["Zeebe"]})
-    const client = await c.getClient(clusterUuid, res.clientId)
-    expect(client.ZEEBE_ADDRESS).toBeTruthy()
-    await c.deleteClient(clusterUuid, res.clientId)
-    expect(c).toBeTruthy()
+	const c = new ConsoleApiClient()
+	const clusters = await c.getClusters()
+	const clusterUuid = clusters[0].uuid
+	const res = await c.createClient({
+		clusterUuid,
+		clientName: 'testors',
+		permissions: ['Zeebe'],
+	})
+	const client = await c.getClient(clusterUuid, res.clientId)
+	expect(client.ZEEBE_ADDRESS).toBeTruthy()
+	await c.deleteClient(clusterUuid, res.clientId)
+	expect(c).toBeTruthy()
 })
 
 // xtest('transform client credentials', () => {

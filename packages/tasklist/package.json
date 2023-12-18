@@ -9,7 +9,9 @@
         "build": "npm run clean && npm run compile",
         "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
         "compile": "tsc",
-        "docs": "typedoc --options typedoc.json src/index.ts"
+        "docs": "typedoc --options typedoc.json src/index.ts",
+        "prettify": "prettier --write 'src/**/*.ts'",
+        "lint": "eslint . --ext .ts,.tsx"
     },
     "repository": {
         "type": "git",

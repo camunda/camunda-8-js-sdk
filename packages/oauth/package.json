@@ -8,7 +8,9 @@
     "test:integration": "jest --runInBand --detectOpenHandles --verbose true",
     "build": "npm run clean && npm run compile",
     "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-    "compile": "tsc --project tsconfig.json"
+    "compile": "tsc --project tsconfig.json",
+    "prettify": "prettier --write 'src/**/*.ts'",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "repository": {
     "type": "git",

@@ -1,30 +1,25 @@
 import { ZBBatchWorker } from '../zb/ZBBatchWorker'
-import {
-	BatchedJob,
-	ICustomHeaders,
-	IInputVariables,
-	IOutputVariables,
-	ZBBatchWorkerTaskHandler,
-} from './interfaces-1.0'
+
+import { BatchedJob, ZBBatchWorkerTaskHandler } from './interfaces-1.0'
 import { Queue } from './Queue'
 
-export class JobBatcher {
-	private batchedJobs: Queue<BatchedJob> = new Queue()
-	private handler: ZBBatchWorkerTaskHandler<any, any, any>
+export class JobBatcher<T, V, P> {
+	private batchedJobs: Queue<BatchedJob<T, V, P>> = new Queue()
+	private handler: ZBBatchWorkerTaskHandler<T, V, P>
 	private timeout: number
 	private batchSize: number
-	private worker: ZBBatchWorker<any, any, any>
-	private batchExecutionTimerHandle: any
+	private worker: ZBBatchWorker<T, V, P>
+	private batchExecutionTimerHandle?: NodeJS.Timeout
 	constructor({
 		handler,
 		timeout,
 		batchSize,
 		worker,
 	}: {
-		handler: ZBBatchWorkerTaskHandler<any, any, any>
+		handler: ZBBatchWorkerTaskHandler<T, V, P>
 		timeout: number
 		batchSize: number
-		worker: ZBBatchWorker<any, any, any>
+		worker: ZBBatchWorker<T, V, P>
 	}) {
 		this.handler = handler
 		this.timeout = timeout
@@ -32,11 +27,7 @@ export class JobBatcher {
 		this.worker = worker
 	}
 
-	public batch(
-		batch: Array<
-			BatchedJob<IInputVariables, ICustomHeaders, IOutputVariables>
-		>
-	) {
+	public batch(batch: BatchedJob<T, V, P>[]) {
 		if (!this.batchExecutionTimerHandle) {
 			this.batchExecutionTimerHandle = setTimeout(
 				() => this.execute(),
@@ -57,12 +48,13 @@ export class JobBatcher {
 		)
 		try {
 			this.handler(this.batchedJobs.drain(), this.worker)
-		} catch (e: any) {
+		} catch (err: unknown) {
+			const e = err as Error
 			this.worker.error(
-				`An unhandled exception occurred in the worker task handler!`
+				'An unhandled exception occurred in the worker task handler!'
 			)
 			this.worker.error(e.message)
-			this.worker.error(e)
+			this.worker.error(e.toString())
 		}
 	}
 }

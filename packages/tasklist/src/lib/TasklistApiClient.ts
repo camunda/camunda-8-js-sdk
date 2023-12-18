@@ -1,11 +1,15 @@
-import { OAuthProviderImpl, getTasklistToken, getTasklistCredentials } from '@jwulf/oauth'
-import got from 'got'
-import { Form, Task, TaskQuery, Variable } from './Types'
-import { encodeTaskVariablesForAPIRequest, JSONDoc } from './utils'
+import { OAuthProviderImpl, getTasklistCredentials, getTasklistToken } from '@jwulf/oauth'
 import { debug } from 'debug'
+import got from 'got'
+
+import { Form, Task, TaskQuery, Variable } from './Types'
+import { JSONDoc, encodeTaskVariablesForAPIRequest } from './utils'
+
 const trace = debug('tasklist:rest')
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pkg = require('../../package.json')
+
 const TASKLIST_API_VERSION = 'v1'
 
 /**

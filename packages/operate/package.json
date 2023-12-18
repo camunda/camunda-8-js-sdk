@@ -5,10 +5,12 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "jest --detectOpenHandles",
-		"build": "npm run clean && npm run compile",
-		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-		"compile": "tsc",
-    "docs": "typedoc src/index.ts"
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+    "compile": "tsc",
+    "docs": "typedoc src/index.ts",
+    "prettify": "prettier --write 'src/**/*.ts'",
+    "lint": "eslint . --ext .ts,.tsx --fix"
   },
   "repository": {
     "type": "git",

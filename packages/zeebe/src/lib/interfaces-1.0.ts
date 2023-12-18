@@ -1,32 +1,37 @@
+import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
 import { MaybeTimeDuration } from 'typed-duration'
+
 import { ZBBatchWorker } from '../zb/ZBBatchWorker'
 import { ZBWorker } from '../zb/ZBWorker'
+
 import { GrpcClient } from './GrpcClient'
 import {
+	ActivateJobsRequest,
+	BroadcastSignalRequest,
+	BroadcastSignalResponse,
+	CompleteJobRequest,
 	CreateProcessInstanceRequest,
 	CreateProcessInstanceResponse,
 	CreateProcessInstanceWithResultRequest,
-	CreateProcessInstanceWithResultResponse,
+	CreateProcessInstanceWithResultResponseOnWire,
 	DeployProcessResponse,
-	FailJobRequest,
-	ProcessRequestObject,
-	PublishMessageRequest,
-	PublishMessageResponse,
-	SetVariablesRequest,
-	ThrowErrorRequest,
-	TopologyResponse,
-	UpdateJobRetriesRequest,
-	ResolveIncidentRequest,
 	DeployResourceRequest,
 	DeployResourceResponse,
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
+	FailJobRequest,
 	ModifyProcessInstanceRequest,
 	ModifyProcessInstanceResponse,
 	ProcessInstanceCreationStartInstruction,
-	BroadcastSignalResponse,
-	BroadcastSignalRequest,
+	ProcessRequestObject,
+	PublishMessageRequest,
+	PublishMessageResponse,
+	ResolveIncidentRequest,
+	SetVariablesRequestOnTheWire,
+	ThrowErrorRequest,
+	TopologyResponse,
+	UpdateJobRetriesRequest,
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
@@ -44,10 +49,6 @@ export interface ZBLogMessage {
 	time: string
 }
 
-export interface KeyedObject {
-	[key: string]: any
-}
-
 export type DeployProcessFiles = string | string[]
 
 export interface DeployProcessBuffer {
@@ -56,19 +57,25 @@ export interface DeployProcessBuffer {
 }
 
 export interface CreateProcessBaseRequest<V extends JSONDoc> {
-		/** the BPMN process ID of the process definition */
-		bpmnProcessId: string
-		/** the version of the process; if not specified it will use the latest version */
-		version?: number
-		/** JSON document that will instantiate the variables for the root variable scope of the
-		   * process instance.
-		 */
-		variables: V,
-		/** The tenantId for a multi-tenant enabled cluster. */
-		tenantId?: string
+	/**
+	 * the BPMN process ID of the process definition
+	 */
+	bpmnProcessId: string
+	/**
+	 * the version of the process; if not specified it will use the latest version
+	 */
+	version?: number
+	/**
+	 * JSON document that will instantiate the variables for the root variable scope of the
+	 * process instance.
+	 */
+	variables: V
+	/** The tenantId for a multi-tenant enabled cluster. */
+	tenantId?: string
 }
 
-export interface CreateProcessInstanceReq<V extends JSONDoc> extends CreateProcessBaseRequest<V> {
+export interface CreateProcessInstanceReq<V extends JSONDoc>
+	extends CreateProcessBaseRequest<V> {
 	/**
 	 * List of start instructions. If empty (default) the process instance
 	 * will start at the start event. If non-empty the process instance will apply start
@@ -77,12 +84,15 @@ export interface CreateProcessInstanceReq<V extends JSONDoc> extends CreateProce
 	startInstructions?: ProcessInstanceCreationStartInstruction[]
 }
 
-export interface CreateProcessInstanceWithResultReq<T extends JSONDoc> extends CreateProcessBaseRequest<T> {
-	/** timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
+export interface CreateProcessInstanceWithResultReq<T extends JSONDoc>
+	extends CreateProcessBaseRequest<T> {
+	/**
+	 * timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
 	 * if requestTimeout = 0, uses the generic requestTimeout configured in the gateway.
 	 */
 	requestTimeout?: number
-	/** list of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
+	/**
+	 * list of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
 	 * If empty, all visible variables in the root scope will be returned.
 	 */
 	fetchVariables?: string[]
@@ -110,18 +120,18 @@ export interface JSONDoc {
 }
 
 export interface IInputVariables {
-	[key: string]: any
+	[key: string]: JSON
 }
 
 export interface IProcessVariables {
-	[key: string]: any
+	[key: string]: JSON
 }
 
 export interface IOutputVariables {
-	[key: string]: any
+	[key: string]: JSON
 }
 export interface ICustomHeaders {
-	[key: string]: any
+	[key: string]: string | number
 }
 
 export interface JobFailureConfiguration {
@@ -146,8 +156,8 @@ declare function FailureHandler(
 ): Promise<JOB_ACTION_ACKNOWLEDGEMENT>
 
 export interface ErrorJobWithVariables {
-	variables: JSONDoc,
-	errorCode: string,
+	variables: JSONDoc
+	errorCode: string
 	errorMessage?: string
 }
 
@@ -190,19 +200,17 @@ export interface JobCompletionInterface<WorkerOutputVariables> {
 	error: ErrorJobOutcome
 }
 
-
 export interface ZeebeJob<
 	WorkerInputVariables = IInputVariables,
 	CustomHeaderShape = ICustomHeaders,
-	WorkerOutputVariables = IOutputVariables
->
-	extends Job<WorkerInputVariables, CustomHeaderShape>,
+	WorkerOutputVariables = IOutputVariables,
+> extends Job<WorkerInputVariables, CustomHeaderShape>,
 		JobCompletionInterface<WorkerOutputVariables> {}
 
 export type ZBWorkerTaskHandler<
 	WorkerInputVariables = IInputVariables,
 	CustomHeaderShape = ICustomHeaders,
-	WorkerOutputVariables = IOutputVariables
+	WorkerOutputVariables = IOutputVariables,
 > = (
 	job: Readonly<
 		ZeebeJob<WorkerInputVariables, CustomHeaderShape, WorkerOutputVariables>
@@ -216,7 +224,7 @@ export type ZBWorkerTaskHandler<
 
 export interface ZBLoggerOptions {
 	loglevel?: Loglevel
-	stdout?: any
+	stdout?: ZBCustomLogger
 	color?: Chalk
 	longPoll?: MaybeTimeDuration
 	namespace: string | string[]
@@ -230,11 +238,11 @@ export interface ZBLoggerConfig extends ZBLoggerOptions {
 	_tag: 'ZBCLIENT' | 'ZBWORKER'
 }
 
-export type ConnectionErrorHandler = (error?: any) => void
+export type ConnectionErrorHandler = (error?: unknown) => void
 
 export interface Job<
 	Variables = IInputVariables,
-	CustomHeaderShape = ICustomHeaders
+	CustomHeaderShape = ICustomHeaders,
 > {
 	/** The key, a unique identifier for the job */
 	readonly key: string
@@ -249,8 +257,6 @@ export interface Job<
 	readonly bpmnProcessId: string
 	/** The version of the job process definition */
 	readonly processDefinitionVersion: number
-	/** The key of the job process definition */
-	readonly processKey: string
 	/** The associated task element ID */
 	readonly elementId: string
 	/**
@@ -315,11 +321,11 @@ export interface ZBWorkerOptions<InputVars = IInputVariables> {
 export type BatchedJob<
 	Variables = IInputVariables,
 	Headers = ICustomHeaders,
-	Output = IOutputVariables
+	Output = IOutputVariables,
 > = Job<Variables, Headers> & JobCompletionInterface<Output>
 
 export const JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT' as const
-type JOB_ACTION_ACKNOWLEDGEMENT = typeof JOB_ACTION_ACKNOWLEDGEMENT
+export type JOB_ACTION_ACKNOWLEDGEMENT = typeof JOB_ACTION_ACKNOWLEDGEMENT
 export type MustReturnJobActionAcknowledgement =
 	| JOB_ACTION_ACKNOWLEDGEMENT
 	| Promise<JOB_ACTION_ACKNOWLEDGEMENT>
@@ -335,7 +341,7 @@ export type ZBBatchWorkerTaskHandler<V, H, O> = (
 export interface ZBBatchWorkerConfig<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 > extends ZBWorkerBaseConfig<WorkerInputVariables> {
 	/**
 	 * A job handler - this must return an array of job actions (eg: job.complete(..), job.error(..)) in all code paths.
@@ -401,7 +407,7 @@ export interface ZBWorkerBaseConfig<T> extends ZBWorkerOptions<T> {
 export interface ZBWorkerConfig<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 > extends ZBWorkerBaseConfig<WorkerInputVariables> {
 	/**
 	 * A job handler - this must return a job action - e.g.: job.complete(), job.error() - in all code paths.
@@ -421,11 +427,11 @@ export interface ZBWorkerConfig<
 
 export interface BroadcastSignalReq {
 	// The name of the signal
-	signalName: string;
+	signalName: string
 
 	// the signal variables as a JSON document; to be valid, the root of the document must be an
-  	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
-	variables?: JSONDoc;
+	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
+	variables?: JSONDoc
 }
 
 export interface BroadcastSignalRes {
@@ -434,8 +440,10 @@ export interface BroadcastSignalRes {
 }
 
 export interface ZBGrpc extends GrpcClient {
-	completeJobSync: any
-	activateJobsStream: any
+	completeJobSync: (req: CompleteJobRequest) => Promise<void>
+	activateJobsStream: (
+		req: ActivateJobsRequest
+	) => ClientReadableStream<unknown>
 	publishMessageSync(
 		publishMessageRequest: PublishMessageRequest
 	): Promise<PublishMessageResponse>
@@ -457,16 +465,20 @@ export interface ZBGrpc extends GrpcClient {
 	createProcessInstanceSync(
 		createProcessInstanceRequest: CreateProcessInstanceRequest
 	): Promise<CreateProcessInstanceResponse>
-	createProcessInstanceWithResultSync<Result>(
+	createProcessInstanceWithResultSync(
 		createProcessInstanceWithResultRequest: CreateProcessInstanceWithResultRequest
-	): Promise<CreateProcessInstanceWithResultResponse<Result>>
+	): Promise<CreateProcessInstanceWithResultResponseOnWire>
 	cancelProcessInstanceSync(processInstanceKey: {
 		processInstanceKey: string | number
 	}): Promise<void>
-	modifyProcessInstanceSync(request: ModifyProcessInstanceRequest): Promise<ModifyProcessInstanceResponse>
-	setVariablesSync(request: SetVariablesRequest): Promise<void>
+	modifyProcessInstanceSync(
+		request: ModifyProcessInstanceRequest
+	): Promise<ModifyProcessInstanceResponse>
+	setVariablesSync(request: SetVariablesRequestOnTheWire): Promise<void>
 	resolveIncidentSync(
 		resolveIncidentRequest: ResolveIncidentRequest
 	): Promise<void>
-	broadcastSignalSync(signal: BroadcastSignalRequest): Promise<BroadcastSignalResponse>
+	broadcastSignalSync(
+		signal: BroadcastSignalRequest
+	): Promise<BroadcastSignalResponse>
 }

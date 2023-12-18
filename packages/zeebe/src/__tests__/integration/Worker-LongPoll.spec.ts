@@ -1,4 +1,5 @@
 import * as uuid from 'uuid'
+
 import { ZBClient } from '../..'
 import { cancelProcesses } from '../../lib/cancelProcesses'
 
@@ -18,15 +19,17 @@ afterAll(async () => {
 })
 
 beforeAll(async () => {
-	const res = await zbcLongPoll.deployProcess('./src/__tests__/testdata/Worker-LongPoll.bpmn')
+	const res = await zbcLongPoll.deployProcess(
+		'./src/__tests__/testdata/Worker-LongPoll.bpmn'
+	)
 	processId = res.processes[0].bpmnProcessId
 	await cancelProcesses(processId)
 })
 
-test('Does long poll by default', done => {
+test('Does long poll by default', (done) => {
 	const worker = zbcLongPoll.createWorker({
 		taskType: uuid.v4(),
-		taskHandler: job => job.complete(job.variables),
+		taskHandler: (job) => job.complete(job.variables),
 		loglevel: 'NONE',
 		debug: true,
 	})

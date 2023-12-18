@@ -1,6 +1,9 @@
-import { cancelProcesses } from '../../lib/cancelProcesses'
 import { ZBClient } from '../..'
-import { CreateProcessInstanceResponse, DeployProcessResponse } from '../../lib/interfaces-grpc-1.0'
+import { cancelProcesses } from '../../lib/cancelProcesses'
+import {
+	CreateProcessInstanceResponse,
+	DeployProcessResponse,
+} from '../../lib/interfaces-grpc-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(60000)
@@ -32,40 +35,40 @@ afterEach(async () => {
 		if (wf?.processInstanceKey) {
 			await zbc.cancelProcessInstance(wf.processInstanceKey)
 		}
-	} catch (e: any) {
+	} catch (e: unknown) {
 		// console.log('Caught NOT FOUND') // @DEBUG
 	}
 })
 
-afterAll(async() => {
+afterAll(async () => {
 	await zbc.close()
 	await cancelProcesses(bpmnProcessId1)
 	await cancelProcesses(bpmnProcessId2)
 	await cancelProcesses(bpmnProcessId3)
 })
 
-test('Causes a retry with complete.failure()', () =>
-	new Promise(async resolve => {
-		wf = await zbc.createProcessInstance({
-			bpmnProcessId: bpmnProcessId1,
-			variables: {
-			conditionVariable: true
-			}
-		})
-		const wfi = wf.processInstanceKey
-		expect(wfi).toBeTruthy()
+test('Causes a retry with complete.failure()', async () => {
+	wf = await zbc.createProcessInstance({
+		bpmnProcessId: bpmnProcessId1,
+		variables: {
+			conditionVariable: true,
+		},
+	})
+	const wfi = wf.processInstanceKey
+	expect(wfi).toBeTruthy()
 
-		await zbc.setVariables({
-			elementInstanceKey: wfi,
-			local: false,
-			variables: {
-				conditionVariable: false,
-			},
-		})
+	await zbc.setVariables({
+		elementInstanceKey: wfi,
+		local: false,
+		variables: {
+			conditionVariable: false,
+		},
+	})
 
+	await new Promise((resolve) =>
 		zbc.createWorker({
 			taskType: 'wait-worker-failure',
-			taskHandler: async job => {
+			taskHandler: async (job) => {
 				// Succeed on the third attempt
 				if (job.retries === 1) {
 					const res1 = await job.complete()
@@ -80,25 +83,26 @@ test('Causes a retry with complete.failure()', () =>
 			},
 			loglevel: 'NONE',
 		})
-	}))
+	)
+})
 
-test('Does not fail a process when the handler throws, by default', () =>
-	new Promise(async done => {
-		wf = await zbc.createProcessInstance({
-			bpmnProcessId: bpmnProcessId2,
-			variables: {}
-		})
+test('Does not fail a process when the handler throws, by default', async () => {
+	wf = await zbc.createProcessInstance({
+		bpmnProcessId: bpmnProcessId2,
+		variables: {},
+	})
 
-		let alreadyFailed = false
+	let alreadyFailed = false
 
+	await new Promise((resolve) => {
 		// Faulty worker - throws an unhandled exception in task handler
 		const w = zbc.createWorker({
 			taskType: 'console-log-worker-failure-2',
-			taskHandler: async job => {
+			taskHandler: async (job) => {
 				if (alreadyFailed) {
 					await zbc.cancelProcessInstance(wf!.processInstanceKey) // throws if not found. Should NOT throw in this test
 					job.complete()
-					return w.close().then(() => done(null))
+					return w.close().then(() => resolve(null))
 				}
 				alreadyFailed = true
 				throw new Error(
@@ -109,31 +113,29 @@ test('Does not fail a process when the handler throws, by default', () =>
 			loglevel: 'NONE',
 			pollInterval: 10000,
 		})
-	}))
+	})
+})
 
-test('Fails a process when the handler throws and options.failProcessOnException is set', () =>
-	new Promise(async done => {
+test('Fails a process when the handler throws and options.failProcessOnException is set', async () => {
+	wf = await zbc.createProcessInstance({
+		bpmnProcessId: bpmnProcessId3,
+		variables: {},
+	})
 
-		wf = await zbc.createProcessInstance({
-			bpmnProcessId: bpmnProcessId3,
-			variables: {}
-		})
+	let alreadyFailed = false
 
-		let alreadyFailed = false
-
+	await new Promise((resolve) => {
 		// Faulty worker
 		const w = zbc.createWorker({
 			taskType: 'console-log-worker-failure-3',
-			taskHandler: job => {
+			taskHandler: (job) => {
 				if (alreadyFailed) {
 					// It polls multiple times a second, and we need it to only throw once
 					return job.forward()
 				}
 				alreadyFailed = true
 				testProcessInstanceExists() // waits 1000ms then checks
-				throw new Error(
-					'Unhandled exception in task handler for test purposes'
-				) // Will be caught in the library
+				throw new Error('Unhandled exception in task handler for test purposes') // Will be caught in the library
 			},
 			failProcessOnException: true,
 			loglevel: 'NONE',
@@ -143,9 +145,10 @@ test('Fails a process when the handler throws and options.failProcessOnException
 			setTimeout(async () => {
 				try {
 					await zbc.cancelProcessInstance(wf!.processInstanceKey) // throws if not found. SHOULD throw in this test
-				} catch (e: any) {
-					w.close().then(() => done(null))
+				} catch (e: unknown) {
+					w.close().then(() => resolve(null))
 				}
 			}, 1500)
 		}
-	}))
+	})
+})

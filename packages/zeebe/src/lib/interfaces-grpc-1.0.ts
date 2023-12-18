@@ -1,4 +1,5 @@
 import { MaybeTimeDuration } from 'typed-duration'
+
 import { IInputVariables, IProcessVariables, JSONDoc } from './interfaces-1.0'
 
 export interface StreamActivatedJobsRequest {
@@ -24,7 +25,7 @@ export interface StreamActivatedJobsRequest {
 	 * a list of identifiers of tenants for which to stream jobs
 	 */
 	tenantIds: string[]
-  }
+}
 
 /**
  * Request object to send the broker to request jobs for the worker.
@@ -110,7 +111,7 @@ export interface ActivatedJob {
 	/**
 	 * the id of the tenant that owns the job
 	 */
-	readonly tenantId : string;
+	readonly tenantId: string
 }
 
 export interface ActivateJobsResponse {
@@ -122,8 +123,9 @@ export interface CreateProcessInstanceBaseRequest {
 	bpmnProcessId: string
 	/** the version of the process; if not specified it will use the latest version */
 	version?: number
-	/** JSON document that will instantiate the variables for the root variable scope of the
-  	 * process instance.
+	/**
+	 * JSON document that will instantiate the variables for the root variable scope of the
+	 * process instance.
 	 */
 	variables: string
 	/**
@@ -132,7 +134,8 @@ export interface CreateProcessInstanceBaseRequest {
 	tenantId?: string
 }
 
-export interface CreateProcessInstanceRequest extends CreateProcessInstanceBaseRequest {
+export interface CreateProcessInstanceRequest
+	extends CreateProcessInstanceBaseRequest {
 	/**
 	 * List of start instructions. If empty (default) the process instance
 	 * will start at the start event. If non-empty the process instance will apply start
@@ -142,13 +145,14 @@ export interface CreateProcessInstanceRequest extends CreateProcessInstanceBaseR
 }
 
 export interface ProcessInstanceCreationStartInstruction {
-  /** future extensions might include
-   * - different types of start instructions
-   * - ability to set local variables for different flow scopes
-   * for now, however, the start instruction is implicitly a
-   * "startBeforeElement" instruction
-   */
-	elementId: string;
+	/**
+	 * future extensions might include
+	 * - different types of start instructions
+	 * - ability to set local variables for different flow scopes
+	 * for now, however, the start instruction is implicitly a
+	 * "startBeforeElement" instruction
+	 */
+	elementId: string
 }
 
 export interface CreateProcessInstanceResponse {
@@ -176,22 +180,24 @@ export interface CreateProcessInstanceResponse {
 	/**
 	 * the tenant identifier of the created process instance
 	 */
-	readonly tenantId: string;
+	readonly tenantId: string
 }
 
 export interface CreateProcessInstanceWithResultRequest {
 	request: CreateProcessInstanceBaseRequest
-	/** timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
+	/**
+	 * timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
 	 * if requestTimeout = 0, uses the generic requestTimeout configured in the gateway.
 	 */
 	requestTimeout: number
-	/** list of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
+	/**
+	 * list of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
 	 * If empty, all visible variables in the root scope will be returned.
 	 */
 	fetchVariables?: string[]
 }
 
-export interface CreateProcessInstanceWithResultResponse<Result> {
+interface CreateProcessInstanceWithResultResponseBase {
 	/**
 	 * the key of the process definition which was used to create the process instance
 	 */
@@ -211,23 +217,39 @@ export interface CreateProcessInstanceWithResultResponse<Result> {
 	 */
 	readonly processInstanceKey: string
 	/**
-	 * consisting of all visible variables to the root scope
-	 */
-	readonly variables: Result
-	/**
 	 * the tenant identifier of the process definition
 	 */
 	readonly tenantId: string
 }
 
-// Describes the Raft role of the broker for a given partition
+export interface CreateProcessInstanceWithResultResponse<Result>
+	extends CreateProcessInstanceWithResultResponseBase {
+	/**
+	 * consisting of all visible variables to the root scope
+	 */
+	readonly variables: Result
+}
+
+export interface CreateProcessInstanceWithResultResponseOnWire
+	extends CreateProcessInstanceWithResultResponseBase {
+	/**
+	 * consisting of all visible variables to the root scope
+	 */
+	readonly variables: string
+}
+
+/**
+ * Describes the Raft role of the broker for a given partition
+ */
 export enum PartitionBrokerRole {
 	LEADER = 0,
 	BROKER = 1,
 	INACTIVE = 2,
 }
 
-// Describes the current health of the partition
+/**
+ * Describes the current health of the partition
+ */
 export enum PartitionBrokerHealth {
 	HEALTHY = 0,
 	UNHEALTHY = 1,
@@ -236,9 +258,9 @@ export enum PartitionBrokerHealth {
 
 export interface Partition {
 	partitionId: number
-	// the role of the broker for this partition
+	/** the role of the broker for this partition */
 	role: PartitionBrokerRole
-	// the health of this partition
+	/** the health of this partition */
 	health: PartitionBrokerHealth
 }
 
@@ -263,8 +285,10 @@ export interface ProcessRequestObject {
 }
 
 export interface ProcessMetadata {
-	/** the bpmn process ID, as parsed during deployment; together with the version forms a
-	 * unique identifier for a specific process definition */
+	/**
+	 * the bpmn process ID, as parsed during deployment; together with the version forms a
+	 * unique identifier for a specific process definition
+	 */
 	readonly bpmnProcessId: string
 	/** the assigned process version */
 	readonly version: number
@@ -282,41 +306,55 @@ export interface ProcessMetadata {
 }
 
 export interface DecisionMetadata {
-	// the dmn decision ID, as parsed during deployment; together with the
-	// versions forms a unique identifier for a specific decision
+	/**
+	 * the dmn decision ID, as parsed during deployment; together with the
+	 * versions forms a unique identifier for a specific decision
+	 */
 	dmnDecisionId: string
-	// the dmn name of the decision, as parsed during deployment
+	/** the dmn name of the decision, as parsed during deployment */
 	dmnDecisionName: string
-	// the assigned decision version
+	/** the assigned decision version */
 	version: number
-	// the assigned decision key, which acts as a unique identifier for this
-	// decision
+	/**
+	 * the assigned decision key, which acts as a unique identifier for this
+	 * decision
+	 */
 	decisionKey: number
-	// the dmn ID of the decision requirements graph that this decision is part
-	// of, as parsed during deployment
+	/**
+	 * the dmn ID of the decision requirements graph that this decision is part
+	 * of, as parsed during deployment
+	 */
 	dmnDecisionRequirementsId: string
-	// the assigned key of the decision requirements graph that this decision is
-	// part of
+	/**
+	 * the assigned key of the decision requirements graph that this decision is
+	 * part of
+	 */
 	decisionRequirementsKey: number
 	/** the tenant id of the deployed decision */
 	tenantId: string
 }
 
 export interface DecisionRequirementsMetadata {
-	// the dmn decision requirements ID, as parsed during deployment; together
-	// with the versions forms a unique identifier for a specific decision
+	/**
+	 * the dmn decision requirements ID, as parsed during deployment; together
+	 * with the versions forms a unique identifier for a specific decision
+	 */
 	dmnDecisionRequirementsId: string
-	// the dmn name of the decision requirements, as parsed during deployment
+	/** the dmn name of the decision requirements, as parsed during deployment */
 	dmnDecisionRequirementsName: string
-	// the assigned decision requirements version
+	/** the assigned decision requirements version */
 	version: number
-	// the assigned decision requirements key, which acts as a unique identifier
-	// for this decision requirements
+	/**
+	 * the assigned decision requirements key, which acts as a unique identifier
+	 * for this decision requirements
+	 */
 	decisionRequirementsKey: number
-	// the resource name (see: Resource.name) from which this decision
-	// requirements was parsed
+	/**
+	 * the resource name (see: Resource.name) from which this decision
+	 * requirements was parsed
+	 */
 	resourceName: string
-	//** the tenant id of the deployed decision requirements */
+	/** the tenant id of the deployed decision requirements */
 	tenantId: string
 }
 
@@ -325,15 +363,15 @@ export interface FormMetadata {
 	 * the form ID, as parsed during deployment; together with the
 	 * versions forms a unique identifier for a specific form
 	 */
-  	readonly formId: string
-  	/** the assigned form version */
-   	readonly version: number
+	readonly formId: string
+	/** the assigned form version */
+	readonly version: number
 	/** the assigned key, which acts as a unique identifier for this form */
 	readonly formKey: number
-  	/** the resource name */
-  	readonly resourceName: string
- 	/** the tenant id of the deployed form */
-  	readonly tenantId: string
+	/** the resource name */
+	readonly resourceName: string
+	/** the tenant id of the deployed form */
+	readonly tenantId: string
 }
 
 export interface ProcessDeployment {
@@ -357,16 +395,16 @@ export type Deployment =
 	| FormDeployment
 
 export interface DeployResourceResponse<T> {
-	// the unique key identifying the deployment
+	/** the unique key identifying the deployment */
 	readonly key: number
-	// a list of deployed resources, e.g. processes
+	/** a list of deployed resources, e.g. processes */
 	readonly deployments: T[]
 	/** the tenant id of the deployed resources */
 	tenantId: string
 }
 
 export interface DeployResourceRequest {
-	// list of resources to deploy
+	/** list of resources to deploy */
 	resources: Resource[]
 	/**
 	 * the tenant id of the resources to deploy
@@ -375,9 +413,9 @@ export interface DeployResourceRequest {
 }
 
 export interface Resource {
-	// the resource name, e.g. myProcess.bpmn or myDecision.dmn
+	/** the resource name, e.g. myProcess.bpmn or myDecision.dmn */
 	name: string
-	// the file content as a UTF8-encoded string
+	/** the file content as a UTF8-encoded string */
 	content: Buffer
 }
 
@@ -421,7 +459,10 @@ export interface PublishMessageResponse {
 export interface PublishStartMessageRequest<Variables = IProcessVariables> {
 	/** Should match the "Message Name" in a BPMN Message Catch  */
 	name: string
-	/** The number of seconds for the message to buffer on the broker, awaiting correlation. Omit or set to zero for no buffering. */
+	/**
+	 * The number of seconds for the message to buffer on the broker, awaiting correlation.
+	 * Omit or set to zero for no buffering.
+	 */
 	timeToLive: MaybeTimeDuration
 	/** Unique ID for this message */
 	messageId?: string
@@ -444,11 +485,11 @@ export interface FailJobRequest {
 }
 
 export interface ThrowErrorRequest {
-	// the unique job identifier, as obtained when activating the job
+	/** the unique job identifier, as obtained when activating the job */
 	jobKey: string
-	// the error code that will be matched with an error catch event
+	/** the error code that will be matched with an error catch event */
 	errorCode: string
-	// an optional error message that provides additional context
+	/** an optional error message that provides additional context */
 	errorMessage?: string
 	/**
 	 * JSON document that will instantiate the variables at the local scope of the error catch
@@ -465,14 +506,13 @@ export interface CompleteJobRequest<Variables = IProcessVariables> {
 	variables: Variables
 }
 
-export interface SetVariablesRequest<Variables = IProcessVariables> {
+interface SetVariablesRequestBase {
 	/*
 	The unique identifier of a particular element; can be the process instance key (as
 	obtained during instance creation), or a given element, such as a service task (see
 	elementInstanceKey on the Job message)
 	*/
 	readonly elementInstanceKey: string
-	variables: Partial<Variables>
 	/**
 	 *  if true, the variables will be merged strictly into the local scope (as indicated by
 	 *  elementInstanceKey); this means the variables is not propagated to upper scopes.
@@ -484,190 +524,214 @@ export interface SetVariablesRequest<Variables = IProcessVariables> {
 	 */
 	local: boolean
 }
+export interface SetVariablesRequest<Variables = IProcessVariables>
+	extends SetVariablesRequestBase {
+	variables: Partial<Variables>
+}
+
+export interface SetVariablesRequestOnTheWire extends SetVariablesRequestBase {
+	variables: string
+}
 
 export interface ResolveIncidentRequest {
 	readonly incidentKey: string
 }
 
-export interface ActivateInstruction  {
+export interface ActivateInstruction {
 	/** the id of the element that should be activated */
-	elementId: string;
-	/** the key of the ancestor scope the element instance should be created in;
+	elementId: string
+	/**
+	 * the key of the ancestor scope the element instance should be created in;
 	 * set to -1 to create the new element instance within an existing element
 	 * instance of the flow scope
 	 */
-	ancestorElementInstanceKey: string;
+	ancestorElementInstanceKey: string
 	/** instructions describing which variables should be created */
-	variableInstructions: VariableInstruction[];
+	variableInstructions: VariableInstruction[]
 }
 
 export interface VariableInstruction {
-	/** JSON document that will instantiate the variables for the root variable scope of the
+	/**
+	 * JSON document that will instantiate the variables for the root variable scope of the
 	 * process instance; it must be a JSON object, as variables will be mapped in a
 	 * key-value fashion. e.g. { "a": 1, "b": 2 } will create two variables, named "a" and
 	 * "b" respectively, with their associated values. [{ "a": 1, "b": 2 }] would not be a
 	 * valid argument, as the root of the JSON document is an array and not an object.
 	 */
-	variables: JSONDoc;
-	/** the id of the element in which scope the variables should be created;
+	variables: JSONDoc
+	/**
+	 * the id of the element in which scope the variables should be created;
 	 * leave empty to create the variables in the global scope of the process instance
 	 */
-	scopeId: string;
+	scopeId: string
 }
 
 export interface TerminateInstruction {
 	/** the id of the element that should be terminated */
-	elementInstanceKey: string;
+	elementInstanceKey: string
 }
 
 export interface ModifyProcessInstanceRequest {
 	/** the key of the process instance that should be modified */
-	processInstanceKey: string;
-	/** instructions describing which elements should be activated in which scopes,
+	processInstanceKey: string
+	/**
+	 * instructions describing which elements should be activated in which scopes,
 	 * and which variables should be created
 	 */
-	activateInstructions?: ActivateInstruction[];
+	activateInstructions?: ActivateInstruction[]
 	/** instructions describing which elements should be terminated */
-	terminateInstructions?: TerminateInstruction[];
+	terminateInstructions?: TerminateInstruction[]
 }
 
-export interface ModifyProcessInstanceResponse {
-}
+export type ModifyProcessInstanceResponse = Record<string, never>
 
-
-export type EvaluateDecisionRequest = {
-	/** the unique key identifying the decision to be evaluated (e.g. returned
-	 * from a decision in the DeployResourceResponse message)
-	 */
-	decisionKey: string;
-	/** JSON document that will instantiate the variables for the decision to be
-	 * 	evaluated; it must be a JSON object, as variables will be mapped in a
-	 *  key-value fashion, e.g. { "a": 1, "b": 2 } will create two variables,
-	 *  named "a" and "b" respectively, with their associated values.
-	 *  [{ "a": 1, "b": 2 }] would not be a valid argument, as the root of the
-	 *  JSON document is an array and not an object.
-	 */
-	variables: JSONDoc;
-	/**
-	 * the tenant identifier of the decision
-	 */
-	tenantId?: string
-} | {
-	/** the ID of the decision to be evaluated */
-	decisionId: string;
-	/** JSON document that will instantiate the variables for the decision to be
-	 * 	evaluated; it must be a JSON object, as variables will be mapped in a
-	 *  key-value fashion, e.g. { "a": 1, "b": 2 } will create two variables,
-	 *  named "a" and "b" respectively, with their associated values.
-	 *  [{ "a": 1, "b": 2 }] would not be a valid argument, as the root of the
-	 *  JSON document is an array and not an object.
-	 */
-	variables: JSONDoc;
-	/**
-	 * the tenant identifier of the decision
-	 */
-	tenantId?: string
-}
+export type EvaluateDecisionRequest =
+	| {
+			/**
+			 * the unique key identifying the decision to be evaluated (e.g. returned
+			 * from a decision in the DeployResourceResponse message)
+			 */
+			decisionKey: string
+			/**
+			 * JSON document that will instantiate the variables for the decision to be
+			 * evaluated; it must be a JSON object, as variables will be mapped in a
+			 * key-value fashion, e.g. { "a": 1, "b": 2 } will create two variables,
+			 * named "a" and "b" respectively, with their associated values.
+			 * [{ "a": 1, "b": 2 }] would not be a valid argument, as the root of the
+			 * JSON document is an array and not an object.
+			 */
+			variables: JSONDoc
+			/**
+			 * the tenant identifier of the decision
+			 */
+			tenantId?: string
+	  }
+	| {
+			/** the ID of the decision to be evaluated */
+			decisionId: string
+			/**
+			 * JSON document that will instantiate the variables for the decision to be
+			 * evaluated; it must be a JSON object, as variables will be mapped in a
+			 * key-value fashion, e.g. { "a": 1, "b": 2 } will create two variables,
+			 * named "a" and "b" respectively, with their associated values.
+			 * [{ "a": 1, "b": 2 }] would not be a valid argument, as the root of the
+			 * JSON document is an array and not an object.
+			 */
+			variables: JSONDoc
+			/**
+			 * the tenant identifier of the decision
+			 */
+			tenantId?: string
+	  }
 
 export interface EvaluateDecisionResponse {
-	/** the unique key identifying the decision which was evaluated (e.g. returned
+	/**
+	 * the unique key identifying the decision which was evaluated (e.g. returned
 	 * from a decision in the DeployResourceResponse message)
 	 */
-	decisionKey: string;
+	decisionKey: string
 	/** the ID of the decision which was evaluated */
-	decisionId: string;
+	decisionId: string
 	/** the name of the decision which was evaluated */
-	decisionName: string;
+	decisionName: string
 	/** the version of the decision which was evaluated */
-	decisionVersion: number;
-	/** the ID of the decision requirements graph that the decision which was
+	decisionVersion: number
+	/**
+	 * the ID of the decision requirements graph that the decision which was
 	 * evaluated is part of.
 	 */
-	decisionRequirementsId: string;
-	/** the unique key identifying the decision requirements graph that the
+	decisionRequirementsId: string
+	/**
+	 * the unique key identifying the decision requirements graph that the
 	 * decision which was evaluated is part of.
 	 */
-	decisionRequirementsKey: string;
-	/** JSON document that will instantiate the result of the decision which was
+	decisionRequirementsKey: string
+	/**
+	 * JSON document that will instantiate the result of the decision which was
 	 * evaluated; it will be a JSON object, as the result output will be mapped
 	 * in a key-value fashion, e.g. { "a": 1 }.
 	 */
-	decisionOutput: string;
+	decisionOutput: string
 	/** a list of decisions that were evaluated within the requested decision evaluation */
-	evaluatedDecisions: EvaluatedDecision[];
-	/** an optional string indicating the ID of the decision which
+	evaluatedDecisions: EvaluatedDecision[]
+	/**
+	 * an optional string indicating the ID of the decision which
 	 * failed during evaluation
 	 */
-	failedDecisionId: string;
+	failedDecisionId: string
 	/** an optional message describing why the decision which was evaluated failed */
-	failureMessage: string;
+	failureMessage: string
 	/** the tenant identifier of the decision */
 	tenantId?: string
 }
 
 export interface EvaluatedDecision {
-	/** the unique key identifying the decision which was evaluated (e.g. returned
+	/**
+	 * the unique key identifying the decision which was evaluated (e.g. returned
 	 * from a decision in the DeployResourceResponse message)
 	 */
-	decisionKey: string;
+	decisionKey: string
 	/** the ID of the decision which was evaluated */
-	decisionId: string;
+	decisionId: string
 	/** the name of the decision which was evaluated */
-	decisionName: string;
+	decisionName: string
 	/** the version of the decision which was evaluated */
-	decisionVersion: number;
+	decisionVersion: number
 	/** the type of the decision which was evaluated */
-	decisionType: string;
-	/** JSON document that will instantiate the result of the decision which was
+	decisionType: string
+	/**
+	 * JSON document that will instantiate the result of the decision which was
 	 * evaluated; it will be a JSON object, as the result output will be mapped
 	 * in a key-value fashion, e.g. { "a": 1 }.
 	 */
-	decisionOutput: string;
+	decisionOutput: string
 	/** the decision rules that matched within this decision evaluation */
-	matchedRules: MatchedDecisionRule[];
+	matchedRules: MatchedDecisionRule[]
 	/** the decision inputs that were evaluated within this decision evaluation */
-	evaluatedInputs: EvaluatedDecisionInput[];
+	evaluatedInputs: EvaluatedDecisionInput[]
 	/** the tenant identifier of the evaluated decision */
 	tenantId: string
 }
 
 export interface EvaluatedDecisionInput {
 	/** the id of the evaluated decision input */
-	inputId: string;
+	inputId: string
 	/** the name of the evaluated decision input */
-	inputName: string;
+	inputName: string
 	/** the value of the evaluated decision input */
-	inputValue: string;
+	inputValue: string
 }
 
 export interface EvaluatedDecisionOutput {
 	/** the id of the evaluated decision output */
-	outputId: string;
+	outputId: string
 	/** the name of the evaluated decision output */
-	outputName: string;
+	outputName: string
 	/** the value of the evaluated decision output */
-	outputValue: string;
+	outputValue: string
 }
 
 export interface MatchedDecisionRule {
 	/** the id of the matched rule */
-	ruleId: string;
+	ruleId: string
 	/** the index of the matched rule */
-	ruleIndex: number;
+	ruleIndex: number
 	/** the evaluated decision outputs */
-	evaluatedOutputs: EvaluatedDecisionOutput[];
+	evaluatedOutputs: EvaluatedDecisionOutput[]
 }
 
 export interface BroadcastSignalRequest {
-	// The name of the signal
-	signalName: string;
+	/** The name of the signal */
+	signalName: string
 
-	// the signal variables as a JSON document; to be valid, the root of the document must be an
-  	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
-	variables: string;
+	/**
+	 * the signal variables as a JSON document; to be valid, the root of the document must be an
+	 * object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
+	 */
+	variables: string
 }
 
 export interface BroadcastSignalResponse {
-  	// the unique ID of the signal that was broadcasted.
+	/** the unique ID of the signal that was broadcasted. */
 	key: string
 }

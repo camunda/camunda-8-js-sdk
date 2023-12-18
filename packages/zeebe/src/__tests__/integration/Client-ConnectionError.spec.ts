@@ -3,8 +3,8 @@ import { ZBClient } from '../..'
 jest.setTimeout(10000)
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 
-test(`Calls the onConnectionError handler if there is no broker and eagerConnection: true`, () =>
-	new Promise(async done => {
+test('Calls the onConnectionError handler if there is no broker and eagerConnection: true', () =>
+	new Promise((done) => {
 		let called = false
 		const zbc2 = new ZBClient('localtoast: 267890', {
 			eagerConnection: true,
@@ -19,8 +19,8 @@ test(`Calls the onConnectionError handler if there is no broker and eagerConnect
 		}, 7000)
 	}))
 
-test(`Sets connected:false if there is no broker and no setting of eagerConnection`, () =>
-	new Promise(async done => {
+test('Sets connected:false if there is no broker and no setting of eagerConnection', () =>
+	new Promise((done) => {
 		const zbc2 = new ZBClient('localtoast: 267890') // Broker doesn't exist!!!
 		setTimeout(async () => {
 			expect(zbc2.connected).toBe(false)
@@ -29,7 +29,7 @@ test(`Sets connected:false if there is no broker and no setting of eagerConnecti
 		}, 5000)
 	}))
 
-test(`Sets connected:false if there is no broker and eagerConnection: true`, done => {
+test('Sets connected:false if there is no broker and eagerConnection: true', (done) => {
 	const zbc2 = new ZBClient('localtoast: 267890', {
 		eagerConnection: true,
 	}) // Broker doesn't exist!!!
@@ -40,7 +40,7 @@ test(`Sets connected:false if there is no broker and eagerConnection: true`, don
 	}, 5000)
 })
 
-test(`Does emit the connectionError event if there is no broker and eagerConnection: true`, done => {
+test('Does emit the connectionError event if there is no broker and eagerConnection: true', (done) => {
 	let called = 0
 	const zbc2 = new ZBClient('localtoast: 267890', {
 		eagerConnection: true,

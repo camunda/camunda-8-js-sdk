@@ -1,11 +1,13 @@
-import { TasklistApiClient } from '../index'
 import { join } from 'path'
+
 import { CreateProcessInstanceResponse, DeployProcessResponse, ZBClient } from '@jwulf/zeebe'
+
 import 'dotenv/config'
+import { TasklistApiClient } from '../index'
 
 jest.setTimeout(25000) // increase timeout to allow Tasklist application to create tasks
 
-let p: CreateProcessInstanceResponse
+let p: CreateProcessInstanceResponse | null
 let def: DeployProcessResponse
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(() => resolve(null), ms))
@@ -132,7 +134,7 @@ describe('TasklistApiClient', () => {
             const completeTask = await tasklist.completeTask(taskid, { outcome: 'approved', fruits: ['apple', 'orange'] })
             expect(completeTask.id).toBe(taskid)
             expect(completeTask.taskState).toEqual('COMPLETED')
-            p = null as any
+            p = null
         })
     })
 })

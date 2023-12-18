@@ -1,0 +1,30 @@
+{
+	"parser": "@typescript-eslint/parser",
+	"plugins": ["@typescript-eslint", "import", "prettier"],
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"prettier",
+		"plugin:prettier/recommended"
+	],
+	"rules": {
+		// Define your rules, for example:
+		"semi": "off",
+		"import/order": [
+			"error",
+			{
+				"groups": [
+					"builtin",
+					"external",
+					"internal",
+					"parent",
+					"sibling",
+					"index"
+				],
+				"newlines-between": "always"
+			}
+		],
+		"import/newline-after-import": "error",
+		"prettier/prettier": "error"
+	}
+}

@@ -57,9 +57,7 @@ test('parseVariables parses the payload key of a job object to JSON', () => {
 
 test('parseVariables correctly parses the payload string', () => {
 	const parsed = parseVariables(jobDictionary)
-	expect(parsed.variables.jobId).toEqual(
-		'7ead71d8-30c9-4eda-81e7-f2ada6d7d0da'
-	)
+	expect(parsed.variables.jobId).toEqual('7ead71d8-30c9-4eda-81e7-f2ada6d7d0da')
 	expect(parsed.variables.subtaskCount).toEqual(200)
 	expect(parsed.variables.tasksCompleted).toBeNull()
 	expect(Object.keys(parsed.variables).length).toBe(3)

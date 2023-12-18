@@ -1,31 +1,32 @@
-import { cancelProcesses } from '../../lib/cancelProcesses'
-import { ZBClient, BpmnParser } from '../../index'
 import fs from 'fs'
+
+import { BpmnParser, ZBClient } from '../../index'
+import { cancelProcesses } from '../../lib/cancelProcesses'
+
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(20000)
 
 const zbc = new ZBClient()
-const bpmnString = fs.readFileSync(`./src/__tests__/testdata/Client-DeployWorkflow.bpmn`, 'utf8')
+const bpmnString = fs.readFileSync(
+	'./src/__tests__/testdata/Client-DeployWorkflow.bpmn',
+	'utf8'
+)
 const expectedPid = BpmnParser.getProcessId(bpmnString)
 
-beforeAll(async () =>
-	await cancelProcesses(expectedPid)
-)
+beforeAll(async () => cancelProcesses(expectedPid))
 
-afterAll(async () =>
-	await zbc.close()
-)
+afterAll(async () => zbc.close())
 
 test('deploys a process', async () => {
 	const result = await zbc.deployResource({
 		process: Buffer.from(bpmnString),
-		name: `Client-DeployWorkflow.bpmn`,
+		name: 'Client-DeployWorkflow.bpmn',
 	})
 	expect(result.deployments[0].process.bpmnProcessId).toBe(expectedPid)
 })
 test('deploys a process from a file', async () => {
 	const result = await zbc.deployResource({
-		processFilename: `./src/__tests__/testdata/Client-DeployWorkflow.bpmn`,
+		processFilename: './src/__tests__/testdata/Client-DeployWorkflow.bpmn',
 	})
 	expect(result.deployments[0].process.version).toBeGreaterThanOrEqual(1)
 })
@@ -46,9 +47,7 @@ test('deploys a DMN table', async () => {
 	expect(result.deployments[0].decision.decisionKey).not.toBeNull()
 })
 test('deploys a Form', async () => {
-	const form = fs.readFileSync(
-		'./src/__tests__/testdata/form_1.form'
-	)
+	const form = fs.readFileSync('./src/__tests__/testdata/form_1.form')
 	const result = await zbc.deployResource({
 		form,
 		name: 'form_1.form',

@@ -3,7 +3,7 @@ export interface Token {
 	scope: string
 	expires_in: number
 	token_type: string
-	expiry: number,
+	expiry: number
 	audience: string
 }
 
@@ -14,23 +14,23 @@ export interface OAuthProviderConfig {
 	audience: string
 	clientId: string
 	clientSecret: string
-    userAgentString: string
+	userAgentString: string
 }
 
-export { OAuthProviderImpl } from "./lib/OAuthProviderImpl"
-export { OAuthProvider } from "./lib/OAuthProvider"
+export { OAuthProviderImpl } from './lib/OAuthProviderImpl'
+export { OAuthProvider } from './lib/OAuthProvider'
 
-export { getOperateToken } from "./lib/Operate"
-export { getOptimizeToken } from "./lib/Optimize"
-export { getTasklistToken } from "./lib/Tasklist"
-export { getZeebeToken } from "./lib/Zeebe"
-export { getConsoleToken } from "./lib/Console"
+export { getOperateToken } from './lib/Operate'
+export { getOptimizeToken } from './lib/Optimize'
+export { getTasklistToken } from './lib/Tasklist'
+export { getZeebeToken } from './lib/Zeebe'
+export { getConsoleToken } from './lib/Console'
 
-export { 
+export {
 	getCamundaCredentialsFromEnv,
 	getConsoleCredentials,
 	getOperateCredentials,
 	getOptimizeCredentials,
 	getTasklistCredentials,
-	getZeebeCredentials
-} from "./lib/creds/index"
+	getZeebeCredentials,
+} from './lib/creds/index'

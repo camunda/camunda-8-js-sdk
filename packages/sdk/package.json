@@ -5,10 +5,12 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "jest --detectOpenHandles",
-		"build": "npm run clean && npm run compile",
-		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-		"compile": "tsc",
-    "docs": "typedoc --options typedoc.json src/index.ts"
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+    "compile": "tsc",
+    "docs": "typedoc --options typedoc.json src/index.ts",
+    "prettify": "prettier --write 'src/**/*.ts'",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "repository": {
     "type": "git",
@@ -28,10 +30,7 @@
   },
   "homepage": "https://camunda-community-hub.github.io/camunda-8-sdk-node-js/",
   "devDependencies": {
-    "@types/jest": "^29.2.4",
-    "ts-jest": "^29.0.3",
-    "typedoc": "^0.23.24",
-    "typescript": "^4.9.4"
+    "typedoc": "^0.23.24"
   },
   "dependencies": {
     "@jwulf/console": "^8.3.0",

@@ -1,16 +1,16 @@
-import { OAuthProviderImpl } from "./OAuthProviderImpl";
-import { getCamundaCredentialsFromEnv } from "./creds"
+import { OAuthProviderImpl } from './OAuthProviderImpl'
+import { getCamundaCredentialsFromEnv } from './creds'
 
 export class OAuthProvider extends OAuthProviderImpl {
-    constructor(userAgentString: string) {
-        const creds = getCamundaCredentialsFromEnv()
-        const audience = creds.ZEEBE_TOKEN_AUDIENCE!
-        super({
-            audience,
-            clientId: creds.ZEEBE_CLIENT_ID,
-            clientSecret: creds.ZEEBE_CLIENT_SECRET,
-            authServerUrl: creds.ZEEBE_AUTHORIZATION_SERVER_URL,
-            userAgentString
-        })
-    }
+	constructor(userAgentString: string) {
+		const creds = getCamundaCredentialsFromEnv()
+		const audience = creds.ZEEBE_TOKEN_AUDIENCE!
+		super({
+			audience,
+			clientId: creds.ZEEBE_CLIENT_ID,
+			clientSecret: creds.ZEEBE_CLIENT_SECRET,
+			authServerUrl: creds.ZEEBE_AUTHORIZATION_SERVER_URL,
+			userAgentString,
+		})
+	}
 }

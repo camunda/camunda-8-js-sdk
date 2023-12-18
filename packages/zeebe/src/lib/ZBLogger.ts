@@ -2,18 +2,32 @@ import { Chalk } from 'chalk'
 import dayjs from 'dayjs'
 import * as stackTrace from 'stack-trace'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
+
 import { ConfigurationHydrator } from './ConfigurationHydrator'
 import { ZBLoggerConfig } from './interfaces-1.0'
-import { Loglevel } from './interfaces-published-contract'
+import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
+
+interface Msg {
+	timestamp: Date
+	context: string
+	id?: string
+	level: number
+	message: string
+	time: string
+	pollInterval?: MaybeTimeDuration
+	namespace?: string
+	taskType?: string
+	data?: unknown[]
+}
 
 export class ZBLogger {
 	// tslint:disable-next-line: variable-name
 	public _tag: 'ZBCLIENT' | 'ZBWORKER'
 	public loglevel: Loglevel
-	private colorFn: Chalk
+	private colorFn: Chalk | (<T extends string>(input: T) => string)
 	private taskType?: string
 	private id?: string
-	private stdout: any
+	private stdout: ZBCustomLogger
 	private colorise: boolean
 	private pollInterval?: MaybeTimeDuration
 	private namespace: string | undefined
@@ -30,7 +44,7 @@ export class ZBLogger {
 		_tag,
 	}: ZBLoggerConfig) {
 		this._tag = _tag
-		this.colorFn = color || ((m => m) as any)
+		this.colorFn = color || ((m) => m)
 		this.taskType = taskType
 		this.id = id
 		if (Array.isArray(namespace)) {
@@ -46,7 +60,7 @@ export class ZBLogger {
 			: pollInterval
 	}
 
-	public info(message: any, ...optionalParameters) {
+	public info(message: unknown, ...optionalParameters) {
 		if (this.loglevel === 'NONE' || this.loglevel === 'ERROR') {
 			return
 		}
@@ -58,7 +72,7 @@ export class ZBLogger {
 		this.stdout.info(msg)
 	}
 
-	public error(message, ...optionalParameters: any[]) {
+	public error(message, ...optionalParameters: unknown[]) {
 		if (this.loglevel === 'NONE') {
 			return
 		}
@@ -71,7 +85,7 @@ export class ZBLogger {
 		this.stdout.error(msg)
 	}
 
-	public debug(message: any, ...optionalParameters: any[]) {
+	public debug(message: string, ...optionalParameters: unknown[]) {
 		if (this.loglevel !== 'DEBUG') {
 			return
 		}
@@ -88,7 +102,7 @@ export class ZBLogger {
 		}
 	}
 
-	public log(message: any, ...optionalParameters: any[]) {
+	public log(message: string, ...optionalParameters: unknown[]) {
 		if (this.loglevel === 'NONE' || this.loglevel === 'ERROR') {
 			return
 		}
@@ -107,16 +121,17 @@ export class ZBLogger {
 		message,
 		...optionalParameters
 	) {
-		// tslint:disable: object-literal-sort-keys
-		const msg: any = {
+		const msg: Msg = {
 			timestamp: new Date(),
 			context: `${frame.getFileName()}:${frame.getLineNumber()}`,
-			id: this.id,
 			level,
 			message,
 			time: dayjs().format('YYYY MMM-DD HH:mm:ssA'),
 		}
 
+		if (this.id) {
+			msg.id = this.id
+		}
 		if (this.pollInterval) {
 			msg.pollInterval = this.pollInterval
 		}
@@ -127,7 +142,7 @@ export class ZBLogger {
 			msg.taskType = this.taskType
 		}
 		if (optionalParameters.length > 0) {
-			;(msg as any).data = optionalParameters
+			msg.data = optionalParameters
 		}
 		return JSON.stringify(msg)
 	}

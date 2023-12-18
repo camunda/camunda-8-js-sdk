@@ -6,10 +6,12 @@
   "scripts": {
     "test": "jest --detectOpenHandles --testPathIgnorePatterns integration",
     "test:integration": "jest --runInBand --detectOpenHandles --verbose true",
-		"build": "npm run clean && npm run compile",
-		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-		"compile": "tsc",
-    "docs": "typedoc src/index.ts"
+    "build": "npm run clean && npm run compile",
+    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+    "compile": "tsc",
+    "docs": "typedoc src/index.ts",
+    "prettify": "prettier --write 'src/**/*.ts'",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "repository": {
     "type": "git",
