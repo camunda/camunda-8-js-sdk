@@ -7,7 +7,9 @@
     "test": "jest",
     "build": "npm run clean && npm run compile",
     "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-    "compile": "tsc --build tsconfig.json"
+    "compile": "tsc --build tsconfig.json",
+    "prettify": "prettier --write 'src/**/*.ts'",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "repository": {
     "type": "git",

@@ -1,11 +1,10 @@
 import * as ZB from '../lib/interfaces-1.0'
-
 import { ZBWorkerBase, ZBWorkerConstructorConfig } from '../lib/ZBWorkerBase'
 
 export class ZBWorker<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 > extends ZBWorkerBase<
 	WorkerInputVariables,
 	CustomHeaderShape,
@@ -25,7 +24,7 @@ export class ZBWorker<
 		jobs: ZB.Job<WorkerInputVariables, CustomHeaderShape>[]
 	) {
 		// Call task handler for each new job
-		jobs.forEach(async job => this.handleJob(job))
+		jobs.forEach(async (job) => this.handleJob(job))
 	}
 
 	protected async handleJob(
@@ -41,11 +40,13 @@ export class ZBWorker<
 
 			const workerCallback = this.makeCompleteHandlers(job)
 
-			await (this.taskHandler as ZB.ZBWorkerTaskHandler<
-				WorkerInputVariables,
-				CustomHeaderShape,
-				WorkerOutputVariables
-			>)(
+			await (
+				this.taskHandler as ZB.ZBWorkerTaskHandler<
+					WorkerInputVariables,
+					CustomHeaderShape,
+					WorkerOutputVariables
+				>
+			)(
 				{
 					...job,
 					cancelWorkflow: workerCallback.cancelWorkflow,
@@ -56,21 +57,19 @@ export class ZBWorker<
 				},
 				this
 			)
-		} catch (e: any) {
+		} catch (e: unknown) {
 			this.logger.logError(
 				`Caught an unhandled exception in a task handler for process instance ${job.processInstanceKey}:`
 			)
 			this.logger.logDebug(job)
-			this.logger.logError(e.message)
+			this.logger.logError((e as Error).message)
 			if (this.cancelWorkflowOnException) {
 				const { processInstanceKey } = job
 				this.logger.logDebug(
 					`Cancelling process instance ${processInstanceKey}`
 				)
 				try {
-					await this.zbClient.cancelProcessInstance(
-						processInstanceKey
-					)
+					await this.zbClient.cancelProcessInstance(processInstanceKey)
 				} finally {
 					this.drainOne()
 				}
@@ -84,7 +83,7 @@ export class ZBWorker<
 						retries,
 						retryBackOff: 0,
 					})
-				} catch (e: any) {
+				} catch (e: unknown) {
 					this.logger.logDebug(e)
 				} finally {
 					this.drainOne()

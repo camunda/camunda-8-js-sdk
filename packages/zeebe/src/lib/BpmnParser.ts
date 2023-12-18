@@ -1,9 +1,10 @@
-import { XMLParser, XMLValidator as validator } from 'fast-xml-parser'
 import fs = require('fs')
 import * as path from 'path'
 
+import { XMLParser, XMLValidator as validator } from 'fast-xml-parser'
+
 // Converts, for example, task_type or task-type to TaskType
-const getSafeName = tasktype =>
+const getSafeName = (tasktype) =>
 	tasktype
 		.split('_')
 		.map(([f, ...r]) => [f.toUpperCase(), ...r].join(''))
@@ -12,15 +13,10 @@ const getSafeName = tasktype =>
 		.map(([f, ...r]) => [f.toUpperCase(), ...r].join(''))
 		.join('')
 
-const getConstantName = name =>
-	name
-		.split('-')
-		.join('_')
-		.split(' ')
-		.join('_')
-		.toUpperCase()
+const getConstantName = (name) =>
+	name.split('-').join('_').split(' ').join('_').toUpperCase()
 
-const toArray = stringOrArray =>
+const toArray = (stringOrArray) =>
 	Array.isArray(stringOrArray) ? stringOrArray : [stringOrArray]
 
 export class BpmnParser {
@@ -34,7 +30,7 @@ export class BpmnParser {
 		if (typeof filenames === 'string') {
 			filenames = [filenames]
 		}
-		return filenames.map(filename => {
+		return filenames.map((filename) => {
 			const xmlData = fs.readFileSync(filename).toString()
 			if (validator.validate(xmlData)) {
 				return BpmnParser.parser.parse(xmlData)
@@ -52,12 +48,12 @@ export class BpmnParser {
 
 	// Produce a starter worker file from a BPMN file
 	public static async scaffold(filename: string) {
-		const removeUndefined = t => !!t
+		const removeUndefined = (t) => !!t
 
 		const buildEnumDictionaryFromArray = (a: string[]) =>
 			a
 				.filter(removeUndefined)
-				.map(t => ({ [t]: getConstantName(t) }))
+				.map((t) => ({ [t]: getConstantName(t) }))
 				.reduce((prev, curr) => ({ ...prev, ...curr }), {})
 
 		const bpmnObject = BpmnParser.parseBpmn(filename)[0]
@@ -65,9 +61,7 @@ export class BpmnParser {
 		const taskTypes = await BpmnParser.getTaskTypes(bpmnObject)
 		const taskEnumDict = buildEnumDictionaryFromArray(taskTypes)
 
-		const interfaces = await BpmnParser.generateConstantsForBpmnFiles(
-			filename
-		)
+		const interfaces = await BpmnParser.generateConstantsForBpmnFiles(filename)
 
 		const headerInterfaces: { [key: string]: string[] } = {} // mutated in the recursive function
 
@@ -85,7 +79,7 @@ export interface WorkflowVariables {
 
 		const workers = taskTypes
 			.map(
-				t => `// Worker for tasks of type "${t}"
+				(t) => `// Worker for tasks of type "${t}"
 ${
 	headerInterfaces[t]
 		? headerInterfaces[t].join('|')
@@ -116,39 +110,33 @@ ${workers}`
 				return
 			}
 			for (const k in obj) {
-				if (obj.hasOwnProperty(k)) {
+				if (Object.prototype.hasOwnProperty.call(obj, k)) {
 					if (k === 'bpmn:serviceTask') {
 						const tasks = toArray(obj[k])
-						tasks.forEach(t => {
+						tasks.forEach((t) => {
 							const taskHeaders =
 								t['bpmn:extensionElements']['zeebe:taskHeaders']
 							const customHeaderNames = taskHeaders
-								? toArray(taskHeaders['zeebe:header']).map(
-										h => h['@_key']
-								  )
+								? toArray(taskHeaders['zeebe:header']).map((h) => h['@_key'])
 								: undefined
 
 							const tasktype =
-								t['bpmn:extensionElements'][
-									'zeebe:taskDefinition'
-								]['@_type']
+								t['bpmn:extensionElements']['zeebe:taskDefinition']['@_type']
 							const headerInterfaceName = getSafeName(tasktype)
 							if (customHeaderNames) {
 								const headerInterfaceDfnBody = customHeaderNames
 									.sort()
-									.map(h => '    ' + h + ': string')
+									.map((h) => '    ' + h + ': string')
 									.join('\n')
 								const headerInterfaceDfn = `interface ${headerInterfaceName}CustomHeaders {
 ${headerInterfaceDfnBody}
 }`
 								if (!headerInterfaces[tasktype]) {
-									headerInterfaces[tasktype] = [
-										headerInterfaceDfn,
-									]
+									headerInterfaces[tasktype] = [headerInterfaceDfn]
 								} else {
 									if (
 										headerInterfaces[tasktype].filter(
-											d => d === headerInterfaceDfn
+											(d) => d === headerInterfaceDfn
 										).length === 0
 									) {
 										headerInterfaces[tasktype].push(
@@ -176,12 +164,12 @@ ${headerInterfaceDfnBody}
 	public static async generateConstantsForBpmnFiles(
 		filenames: string | string[]
 	): Promise<string> {
-		const removeUndefined = t => !!t
+		const removeUndefined = (t) => !!t
 
-		const buildEnumListFromArray = a =>
+		const buildEnumListFromArray = (a) =>
 			a
 				.filter(removeUndefined)
-				.map(t => `    ${getConstantName(t)} = "${t}"`)
+				.map((t) => `    ${getConstantName(t)} = "${t}"`)
 				.join(',\n')
 
 		if (typeof filenames === 'string') {
@@ -191,7 +179,7 @@ ${headerInterfaceDfnBody}
 		const parsed = BpmnParser.parseBpmn(filenames)
 		const taskTypes = await BpmnParser.getTaskTypes(parsed)
 		const messageNames = await BpmnParser.getMessageNames(parsed)
-		const files = filenames.map(f => path.basename(f))
+		const files = filenames.map((f) => path.basename(f))
 		const taskEnumMembers = buildEnumListFromArray(taskTypes)
 		const messageEnumMembers = buildEnumListFromArray(messageNames)
 
@@ -218,9 +206,7 @@ ${messageEnumMembers}
 	): Promise<string[]> {
 		const processArray = toArray(processes)
 		return BpmnParser.mergeDedupeAndSort(
-			await Promise.all(
-				processArray.map(BpmnParser.scanBpmnObjectForTasks)
-			)
+			await Promise.all(processArray.map(BpmnParser.scanBpmnObjectForTasks))
 		)
 	}
 
@@ -234,9 +220,7 @@ ${messageEnumMembers}
 		const processArray = toArray(processes)
 
 		return BpmnParser.mergeDedupeAndSort(
-			await Promise.all(
-				processArray.map(BpmnParser.scanBpmnObjectForMessages)
-			)
+			await Promise.all(processArray.map(BpmnParser.scanBpmnObjectForMessages))
 		)
 	}
 
@@ -277,15 +261,13 @@ ${messageEnumMembers}
 				return // not an Object so obj[k] here is a value
 			}
 			for (const k in obj) {
-				if (obj.hasOwnProperty(k)) {
+				if (Object.prototype.hasOwnProperty.call(obj, k)) {
 					if (k === 'bpmn:serviceTask') {
 						const tasks = toArray(obj[k])
 						taskTypes = taskTypes.concat(
 							tasks.map(
-								t =>
-									t['bpmn:extensionElements'][
-										'zeebe:taskDefinition'
-									]['@_type']
+								(t) =>
+									t['bpmn:extensionElements']['zeebe:taskDefinition']['@_type']
 							)
 						)
 					} else {
@@ -311,13 +293,11 @@ ${messageEnumMembers}
 				return // not an Object so obj[k] here is a value
 			}
 			for (const k in obj) {
-				if (obj.hasOwnProperty(k)) {
+				if (Object.prototype.hasOwnProperty.call(obj, k)) {
 					if (k === 'bpmn:message') {
 						const messages = toArray(obj[k])
 
-						messageNames = messageNames.concat(
-							messages.map(m => m['@_name'])
-						)
+						messageNames = messageNames.concat(messages.map((m) => m['@_name']))
 					} else {
 						// recursive call to scan property
 						await scanRecursively(obj[k])

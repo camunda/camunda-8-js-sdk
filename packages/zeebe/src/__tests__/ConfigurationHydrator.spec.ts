@@ -1,6 +1,6 @@
 import { ConfigurationHydrator } from '../lib/ConfigurationHydrator'
 
-jest.mock('fs');
+jest.mock('fs')
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 // const gatewayAddress = process.env.ZEEBE_GATEWAY_ADDRESS || '0.0.0.0:26500'
@@ -20,18 +20,18 @@ const ENV_VARS_TO_STORE = [
 	'ZEEBE_CLIENT_SSL_ROOT_CERTS_PATH',
 	'ZEEBE_CLIENT_SSL_PRIVATE_KEY_PATH',
 	'ZEEBE_CLIENT_SSL_CERT_CHAIN_PATH',
-	'ZEEBE_TENANT_ID'
+	'ZEEBE_TENANT_ID',
 ]
 
 beforeAll(() => {
-	ENV_VARS_TO_STORE.forEach(e => {
+	ENV_VARS_TO_STORE.forEach((e) => {
 		STORED_ENV[e] = process.env[e]
 		delete process.env[e]
 	})
 })
 
 afterAll(() => {
-	ENV_VARS_TO_STORE.forEach(e => {
+	ENV_VARS_TO_STORE.forEach((e) => {
 		delete process.env[e]
 		if (STORED_ENV[e]) {
 			process.env[e] = STORED_ENV[e]
@@ -384,9 +384,7 @@ describe('Configures secure connection with custom root certs', () => {
 			},
 		})
 
-		expect(conf.oAuth!.url).toBe(
-			'https://login.cloud.camunda.io/oauth/token'
-		)
+		expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
 		expect(conf.oAuth!.customRootCert).toBe(rootCerts)
 	})
 
@@ -526,13 +524,17 @@ test('Tenant ID is picked up from environment', () => {
 })
 
 test('Tenant ID is picked up from constructor options', () => {
-	const conf = ConfigurationHydrator.configure(undefined, {tenantId: 'thisOne'})
+	const conf = ConfigurationHydrator.configure(undefined, {
+		tenantId: 'thisOne',
+	})
 	expect(conf.tenantId).toBe('thisOne')
 })
 
 test('Tenant ID from constructor overrides environment', () => {
 	process.env.ZEEBE_TENANT_ID = 'someId'
-	const conf = ConfigurationHydrator.configure(undefined, {tenantId: 'thisOne'})
+	const conf = ConfigurationHydrator.configure(undefined, {
+		tenantId: 'thisOne',
+	})
 	expect(conf.tenantId).toBe('thisOne')
 })
 

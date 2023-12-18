@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+
 import { Characteristics, State } from './ConnectionFactory'
 import { ZBLoggerConfig } from './interfaces-1.0'
 import { ZBLogger } from './ZBLogger'
@@ -26,18 +27,14 @@ export class StatefulLogInterceptor {
 			characteristics.startupTime > 0 && this.log.loglevel !== 'DEBUG'
 		if (this.blocking) {
 			this.logDirect(
-				chalk.yellowBright(
-					'Authenticating client with Camunda Cloud...'
-				)
+				chalk.yellowBright('Authenticating client with Camunda Cloud...')
 			)
 			this.blockingTimer = setTimeout(() => {
 				if (!this.blocking) {
 					return
 				}
 				this.blocking = false
-				return this.state === 'ERROR'
-					? this.emptyErrors()
-					: this.emptyLogs()
+				return this.state === 'ERROR' ? this.emptyErrors() : this.emptyLogs()
 			}, this.characteristics.startupTime)
 		}
 	}
@@ -48,10 +45,10 @@ export class StatefulLogInterceptor {
 		}
 	}
 
-	public logError = err => this.error(err)
-	public logInfo = msg => this.info(msg)
+	public logError = (err) => this.error(err)
+	public logInfo = (msg) => this.info(msg)
 	public logDebug = (msg, ...args) => this.log.debug(msg, ...args)
-	public logDirect = msg => this.log._tag === 'ZBCLIENT' && this.log.info(msg)
+	public logDirect = (msg) => this.log._tag === 'ZBCLIENT' && this.log.info(msg)
 	public connectionError = () => {
 		this.state = 'ERROR'
 	}
@@ -66,7 +63,7 @@ export class StatefulLogInterceptor {
 		if (this.errors.length === 0) {
 			return
 		}
-		this.errors.forEach(err => this.logError(err))
+		this.errors.forEach((err) => this.logError(err))
 		this.logDirect(chalk.redBright('Error connecting to Camunda Cloud.'))
 		this.errors = []
 	}
@@ -74,29 +71,28 @@ export class StatefulLogInterceptor {
 		if (!this.initialConnection) {
 			this.initialConnection = true
 			this.logDirect(
-				chalk.greenBright(
-					'Established encrypted connection to Camunda Cloud.'
-				)
+				chalk.greenBright('Established encrypted connection to Camunda Cloud.')
 			)
 		}
 		if (this.logs.length === 0) {
 			return
 		}
-		this.logs.forEach(msg => this.logInfo(msg))
+		this.logs.forEach((msg) => this.logInfo(msg))
 		this.logs = []
 	}
-	private wrap = (store: string[]) => (
-		logmethod: (msg: any, ...optionalParameters: any[]) => void
-	) => (msg: string) => {
-		if (this.blocking && this.state === 'ERROR') {
-			store.push(msg)
-			return
+	private wrap =
+		(store: string[]) =>
+		(logmethod: (msg: string, ...optionalParameters: unknown[]) => void) =>
+		(msg: string) => {
+			if (this.blocking && this.state === 'ERROR') {
+				store.push(msg)
+				return
+			}
+			logmethod(msg)
 		}
-		logmethod(msg)
-	}
 	// tslint:disable-next-line: member-ordering
-	private info = this.wrap(this.logs)(m => this.log.info(m))
+	private info = this.wrap(this.logs)((m) => this.log.info(m))
 
 	// tslint:disable-next-line: member-ordering
-	private error = this.wrap(this.errors)(e => this.log.error(e))
+	private error = this.wrap(this.errors)((e) => this.log.error(e))
 }

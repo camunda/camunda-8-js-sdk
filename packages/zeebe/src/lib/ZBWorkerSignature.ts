@@ -1,28 +1,24 @@
 import * as ZB from './interfaces-1.0'
 import { ZBClientOptions } from './interfaces-published-contract'
 
-function isConfig(
-	config: any
-): config is ZB.ZBBatchWorkerConfig<any, any, any> {
+function isConfig<T, V, P>(
+	config: unknown
+): config is ZB.ZBBatchWorkerConfig<T, V, P> {
 	return typeof config === 'object'
 }
 
-const cleanEmpty = obj =>
+const cleanEmpty = (obj) =>
 	Object.entries(obj)
 		.map(([k, v]) => [
 			k,
-			v && typeof v === 'object'
-				? !Array.isArray(v)
-					? cleanEmpty(v)
-					: v
-				: v,
+			v && typeof v === 'object' ? (!Array.isArray(v) ? cleanEmpty(v) : v) : v,
 		])
 		.reduce((a, [k, v]) => (v == null ? a : { ...a, [k]: v }), {})
 
 export function decodeCreateZBWorkerSig<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 >(config) {
 	const coerceConf = config.idOrTaskTypeOrConfig
 	const conf = isConfig(coerceConf) ? coerceConf : undefined
@@ -51,12 +47,12 @@ export function decodeCreateZBWorkerSig<
 				WorkerInputVariables,
 				CustomHeaderShape,
 				WorkerOutputVariables
-		  >)
+			>)
 		: (config.taskHandlerOrOptions as ZB.ZBWorkerTaskHandler<
 				WorkerInputVariables,
 				CustomHeaderShape,
 				WorkerOutputVariables
-		  >)
+			>)
 	const id: string | null = isShorthandSig
 		? (config.idOrTaskTypeOrConfig as string)
 		: null
@@ -70,8 +66,8 @@ export function decodeCreateZBWorkerSig<
 	const onConnectionError = isShorthandSig
 		? config.optionsOrOnConnectionError
 		: config.onConnectionError ||
-		  options.onConnectionError ||
-		  config.onConnectionError
+			options.onConnectionError ||
+			config.onConnectionError
 	const onReady = options.onReady
 	return cleanEmpty({
 		id,

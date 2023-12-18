@@ -1,6 +1,7 @@
 import { either as E, pipeable } from 'fp-ts'
 import * as A from 'fp-ts/lib/Array'
 import * as NEA from 'fp-ts/lib/NonEmptyArray'
+
 import * as ZB from '../interfaces-1.0'
 
 export const isBuffer = (

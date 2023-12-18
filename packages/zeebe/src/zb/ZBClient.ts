@@ -1,11 +1,15 @@
+import { readFileSync } from 'fs'
+import * as path from 'path'
+
 import chalk from 'chalk'
+import d from 'debug'
 import { either as E } from 'fp-ts'
 import * as NEA from 'fp-ts/lib/NonEmptyArray'
 import { pipe } from 'fp-ts/lib/pipeable'
-import * as path from 'path'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import { v4 as uuid } from 'uuid'
+
 import {
 	BpmnParser,
 	parseVariables,
@@ -14,29 +18,29 @@ import {
 } from '../lib'
 import { ConfigurationHydrator } from '../lib/ConfigurationHydrator'
 import { ConnectionFactory } from '../lib/ConnectionFactory'
+import { CustomSSL } from '../lib/GrpcClient'
+import { GrpcError } from '../lib/GrpcError'
+import { OAuthProvider, OAuthProviderConfig } from '../lib/OAuthProvider'
+import { ZBSimpleLogger } from '../lib/SimpleLogger'
+import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
+import { TypedEmitter } from '../lib/TypedEmitter'
+import { ZBJsonLogger } from '../lib/ZBJsonLogger'
+import { decodeCreateZBWorkerSig } from '../lib/ZBWorkerSignature'
 import { readDefinitionFromFile } from '../lib/deployWorkflow/impure'
 import { bufferOrFiles, mapThese } from '../lib/deployWorkflow/pure'
-import { CustomSSL } from '../lib/GrpcClient'
 import * as ZB from '../lib/interfaces-1.0'
-const debug = require('debug')('client')
-
 import * as Grpc from '../lib/interfaces-grpc-1.0'
 import {
 	Loglevel,
 	ZBClientOptions,
 	ZBCustomLogger,
 } from '../lib/interfaces-published-contract'
-import { OAuthProvider, OAuthProviderConfig } from '../lib/OAuthProvider'
-import { ZBSimpleLogger } from '../lib/SimpleLogger'
-import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
-import { TypedEmitter } from '../lib/TypedEmitter'
 import { Utils } from '../lib/utils'
-import { ZBJsonLogger } from '../lib/ZBJsonLogger'
-import { decodeCreateZBWorkerSig } from '../lib/ZBWorkerSignature'
+
 import { ZBBatchWorker } from './ZBBatchWorker'
 import { ZBWorker } from './ZBWorker'
-import { readFileSync } from 'fs'
-import { GrpcError } from '../lib/GrpcError'
+
+const debug = d('client')
 
 const idColors = [
 	chalk.yellow,
@@ -47,10 +51,10 @@ const idColors = [
 ]
 
 export const ConnectionStatusEvent = {
-	close: 'close' as 'close',
-	connectionError: 'connectionError' as 'connectionError',
-	ready: 'ready' as 'ready',
-	unknown: 'unknown' as 'unknown',
+	close: 'close' as const,
+	connectionError: 'connectionError' as const,
+	ready: 'ready' as const,
+	unknown: 'unknown' as const,
 }
 
 /**
@@ -64,15 +68,12 @@ export const ConnectionStatusEvent = {
  * ```
  */
 export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
-	public static readonly DEFAULT_CONNECTION_TOLERANCE = Duration.milliseconds.of(
-		3000
-	)
+	public static readonly DEFAULT_CONNECTION_TOLERANCE =
+		Duration.milliseconds.of(3000)
 	private static readonly DEFAULT_MAX_RETRIES = -1 // Infinite retry
 	private static readonly DEFAULT_MAX_RETRY_TIMEOUT = Duration.seconds.of(5)
 	private static readonly DEFAULT_LONGPOLL_PERIOD = Duration.seconds.of(30)
-	private static readonly DEFAULT_POLL_INTERVAL = Duration.milliseconds.of(
-		300
-	)
+	private static readonly DEFAULT_POLL_INTERVAL = Duration.milliseconds.of(300)
 	public connectionTolerance: MaybeTimeDuration = process.env
 		.ZEEBE_CONNECTION_TOLERANCE
 		? parseInt(process.env.ZEEBE_CONNECTION_TOLERANCE, 10)
@@ -84,15 +85,15 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	public onReady?: () => void
 	public onConnectionError?: (err: Error) => void
 	private logger: StatefulLogInterceptor
-	private closePromise?: Promise<any>
+	private closePromise?: Promise<null>
 	private closing = false
 	// A gRPC channel for the ZBClient to execute commands on
 	private grpc: ZB.ZBGrpc
 	private options: ZBClientOptions
 	private workerCount = 0
 	private workers: (
-		| ZBWorker<any, any, any>
-		| ZBBatchWorker<any, any, any>
+		| ZBWorker<any, any, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+		| ZBBatchWorker<any, any, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 	)[] = []
 	private retry: boolean
 	private maxRetries: number = process.env.ZEEBE_CLIENT_MAX_RETRIES
@@ -141,7 +142,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 			({
 				JSON: ZBJsonLogger,
 				SIMPLE: ZBSimpleLogger,
-			}[process.env.ZEEBE_NODE_LOG_TYPE ?? 'NONE'])
+			})[process.env.ZEEBE_NODE_LOG_TYPE ?? 'NONE']
 
 		constructorOptionsWithDefaults.stdout =
 			constructorOptionsWithDefaults.stdout ??
@@ -170,13 +171,14 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		this.onConnectionError = this.options.onConnectionError
 		this.onReady = this.options.onReady
 		this.oAuth = this.options.oAuth
-		? new OAuthProvider(this.options.oAuth as OAuthProviderConfig & {
-					customRootCert: Buffer
-					cacheDir: string
-					cacheOnDisk: boolean,
-				}
-		  )
-		: undefined
+			? new OAuthProvider(
+					this.options.oAuth as OAuthProviderConfig & {
+						customRootCert: Buffer
+						cacheDir: string
+						cacheOnDisk: boolean
+					}
+				)
+			: undefined
 
 		const { grpcClient, log } = this.constructGrpcClient({
 			grpcConfig: {
@@ -216,8 +218,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		this.logger = log
 
 		this.retry = this.options.retry!
-		this.maxRetries =
-			this.options.maxRetries || ZBClient.DEFAULT_MAX_RETRIES
+		this.maxRetries = this.options.maxRetries || ZBClient.DEFAULT_MAX_RETRIES
 
 		this.maxRetryTimeout =
 			this.options.maxRetryTimeout || ZBClient.DEFAULT_MAX_RETRY_TIMEOUT
@@ -227,13 +228,11 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		// display the connection status.
 		if (this.options.eagerConnection ?? false) {
 			this.topology()
-				.then(res => {
-					this.logger.logDirect(
-						chalk.blueBright('Zeebe cluster topology:')
-					)
+				.then((res) => {
+					this.logger.logDirect(chalk.blueBright('Zeebe cluster topology:'))
 					this.logger.logDirect(res.brokers)
 				})
-				.catch(e => {
+				.catch((e) => {
 					// Swallow exception to avoid throwing if retries are off
 					if (e.thisWillNeverHappenYo) {
 						this.emit(ConnectionStatusEvent.unknown)
@@ -266,22 +265,22 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 */
 	public activateJobs<
 		Variables = ZB.IInputVariables,
-		CustomHeaders = ZB.ICustomHeaders
-	>(request: Grpc.ActivateJobsRequest): Promise<ZB.Job[]> {
+		CustomHeaders = ZB.ICustomHeaders,
+	>(
+		request: Grpc.ActivateJobsRequest
+	): Promise<ZB.Job<Variables, CustomHeaders>[]> {
+		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			try {
 				const stream = await this.grpc.activateJobsStream(request)
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
-					const jobs = res.jobs.map(job =>
-						parseVariablesAndCustomHeadersToJSON<
-							Variables,
-							CustomHeaders
-						>(job)
+					const jobs = res.jobs.map((job) =>
+						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(job)
 					)
 
 					resolve(jobs)
 				})
-			} catch (e: any) {
+			} catch (e: unknown) {
 				reject(e)
 			}
 		})
@@ -299,12 +298,16 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 *   variables: { reasonCode: 3 }
 	 * })
 	 */
-	public async broadcastSignal(req: ZB.BroadcastSignalReq): Promise<ZB.BroadcastSignalRes> {
+	public async broadcastSignal(
+		req: ZB.BroadcastSignalReq
+	): Promise<ZB.BroadcastSignalRes> {
 		const request = {
 			signalName: req.signalName,
-			variables: JSON.stringify(req.variables ?? {})
+			variables: JSON.stringify(req.variables ?? {}),
 		}
-		return this.executeOperation('broadcastSignal', () => this.grpc.broadcastSignalSync(request))
+		return this.executeOperation('broadcastSignal', () =>
+			this.grpc.broadcastSignalSync(request)
+		)
 	}
 
 	/**
@@ -372,7 +375,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	public createBatchWorker<
 		WorkerInputVariables = ZB.IInputVariables,
 		CustomHeaderShape = ZB.ICustomHeaders,
-		WorkerOutputVariables = ZB.IOutputVariables
+		WorkerOutputVariables = ZB.IOutputVariables,
 	>(
 		conf: ZB.ZBBatchWorkerConfig<
 			WorkerInputVariables,
@@ -413,8 +416,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				id: config.id ?? uuid(),
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval:
-					options.longPoll || ZBClient.DEFAULT_LONGPOLL_PERIOD,
+				pollInterval: options.longPoll || ZBClient.DEFAULT_LONGPOLL_PERIOD,
 				stdout: options.stdout,
 				taskType: `${config.taskType} (batch)`,
 			},
@@ -489,18 +491,14 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	public createWorker<
 		WorkerInputVariables = ZB.IInputVariables,
 		CustomHeaderShape = ZB.ICustomHeaders,
-		WorkerOutputVariables = ZB.IOutputVariables
+		WorkerOutputVariables = ZB.IOutputVariables,
 	>(
 		config: ZB.ZBWorkerConfig<
 			WorkerInputVariables,
 			CustomHeaderShape,
 			WorkerOutputVariables
 		>
-	): ZBWorker<
-		WorkerInputVariables,
-		CustomHeaderShape,
-		WorkerOutputVariables
-	> {
+	): ZBWorker<WorkerInputVariables, CustomHeaderShape, WorkerOutputVariables> {
 		debug(`Creating worker for task type ${config.taskType}`)
 		if (this.closing) {
 			throw new Error('Client is closing. No worker creation allowed!')
@@ -528,8 +526,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				id: config.id!,
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval:
-					options.longPoll || ZBClient.DEFAULT_LONGPOLL_PERIOD,
+				pollInterval: options.longPoll || ZBClient.DEFAULT_LONGPOLL_PERIOD,
 				stdout: options.stdout,
 				taskType: config.taskType,
 			},
@@ -574,16 +571,18 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	public async close(timeout?: number): Promise<null> {
 		this.closePromise =
 			this.closePromise ||
-			new Promise(async resolve => {
+			new Promise((resolve) => {
 				// Prevent the creation of more workers
 				this.closing = true
-				await Promise.all(this.workers.map(w => w.close(timeout)))
-				this.oAuth?.stopExpiryTimer()
-				await this.grpc.close(timeout) // close the client GRPC channel
-				this.emit(ConnectionStatusEvent.close)
-				this.grpc.removeAllListeners()
-				this.removeAllListeners()
-				resolve(null)
+				Promise.all(this.workers.map((w) => w.close(timeout)))
+					.then(() => this.oAuth?.stopExpiryTimer())
+					.then(() => this.grpc.close(timeout))
+					.then(() => {
+						this.emit(ConnectionStatusEvent.close)
+						this.grpc.removeAllListeners()
+						this.removeAllListeners()
+						resolve(null)
+					})
 			})
 		return this.closePromise
 	}
@@ -617,7 +616,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		const withStringifiedVariables = stringifyVariables(completeJobRequest)
 		this.logger.logDebug(withStringifiedVariables)
 		return this.executeOperation('completeJob', () =>
-			this.grpc.completeJobSync(withStringifiedVariables).catch(e => {
+			this.grpc.completeJobSync(withStringifiedVariables).catch((e) => {
 				if (e.code === GrpcError.NOT_FOUND) {
 					e.details +=
 						'. The process may have been cancelled, the job cancelled by an interrupting event, or the job already completed.' +
@@ -644,14 +643,18 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 *   version: 5 // optional, will use latest by default
 	 * }).then(res => console.log(JSON.stringify(res, null, 2)))
 	 *
-	 * 	zbc.createProcessInstance({
-	 *		bpmnProcessId: 'SkipFirstTask',
-	 *		variables: { id: random },
-	 *		startInstructions: [{elementId: 'second_service_task'}]
-	 *	}).then(res => (id = res.processInstanceKey))
+	 * zbc.createProcessInstance({
+	 *   bpmnProcessId: 'SkipFirstTask',
+	 *   variables: { id: random },
+	 *   startInstructions: [{elementId: 'second_service_task'}]
+	 * }).then(res => (id = res.processInstanceKey))
 	 * ```
 	 */
-	public createProcessInstance<Variables extends ZB.JSONDoc = ZB.IProcessVariables>(config:ZB.CreateProcessInstanceReq<Variables>): Promise<Grpc.CreateProcessInstanceResponse> {
+	public createProcessInstance<
+		Variables extends ZB.JSONDoc = ZB.IProcessVariables,
+	>(
+		config: ZB.CreateProcessInstanceReq<Variables>
+	): Promise<Grpc.CreateProcessInstanceResponse> {
 		const request: ZB.CreateProcessInstanceReq<Variables> = {
 			bpmnProcessId: config.bpmnProcessId,
 			variables: config.variables,
@@ -659,12 +662,12 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 			startInstructions: config.startInstructions || [],
 		}
 
-
-		const createProcessInstanceRequest: Grpc.CreateProcessInstanceRequest = stringifyVariables({
-			...request,
-			startInstructions: request.startInstructions!,
-			tenantId: config.tenantId ?? this.tenantId
-		})
+		const createProcessInstanceRequest: Grpc.CreateProcessInstanceRequest =
+			stringifyVariables({
+				...request,
+				startInstructions: request.startInstructions!,
+				tenantId: config.tenantId ?? this.tenantId,
+			})
 
 		return this.executeOperation('createProcessInstance', () =>
 			this.grpc.createProcessInstanceSync(createProcessInstanceRequest)
@@ -690,35 +693,39 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 */
 	public createProcessInstanceWithResult<
 		Variables extends ZB.JSONDoc = ZB.IProcessVariables,
-		Result = ZB.IOutputVariables
+		Result = ZB.IOutputVariables,
 	>(
 		config: ZB.CreateProcessInstanceWithResultReq<Variables>
-	): Promise<Grpc.CreateProcessInstanceWithResultResponse<Result>>
-	{
+	): Promise<Grpc.CreateProcessInstanceWithResultResponse<Result>> {
 		const request = {
 			bpmnProcessId: config.bpmnProcessId,
 			fetchVariables: config.fetchVariables,
 			requestTimeout: config.requestTimeout || 0,
 			variables: config.variables,
 			version: config.version || -1,
-			tenantId: config.tenantId ?? this.tenantId
+			tenantId: config.tenantId ?? this.tenantId,
 		}
 
-		const createProcessInstanceRequest: Grpc.CreateProcessInstanceBaseRequest = stringifyVariables({
+		const createProcessInstanceRequest: Grpc.CreateProcessInstanceBaseRequest =
+			stringifyVariables({
 				bpmnProcessId: request.bpmnProcessId,
 				variables: request.variables,
 				version: request.version,
-				tenantId: request.tenantId ?? this.tenantId
-			}
-		)
+				tenantId: request.tenantId ?? this.tenantId,
+			})
 
 		return this.executeOperation('createProcessInstanceWithResult', () =>
-			this.grpc.createProcessInstanceWithResultSync<Result>({
+			this.grpc.createProcessInstanceWithResultSync({
 				fetchVariables: request.fetchVariables,
 				request: createProcessInstanceRequest,
 				requestTimeout: request.requestTimeout,
 			})
-		).then(res => parseVariables(res as any))
+		).then((res) =>
+			parseVariables<
+				Grpc.CreateProcessInstanceWithResultResponseOnWire,
+				Result
+			>(res)
+		)
 	}
 
 	/**
@@ -726,19 +733,18 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 * @description Deploys one or more resources (e.g. processes or decision models) to Zeebe.
 	 * Note that this is an atomic call, i.e. either all resources are deployed, or none of them are.
 	 *
-	 *  Errors:
-      PERMISSION_DENIED:
-        - if a deployment to an unauthorized tenant is performed
-      INVALID_ARGUMENT:
-        - no resources given.
-        - if at least one resource is invalid. A resource is considered invalid if:
-          - the content is not deserializable (e.g. detected as BPMN, but it's broken XML)
-          - the content is invalid (e.g. an event-based gateway has an outgoing sequence flow to a task)
-        - if multi-tenancy is enabled, and:
-          - a tenant id is not provided
-          - a tenant id with an invalid format is provided
-        - if multi-tenancy is disabled and a tenant id is provided
-
+	 * Errors:
+	 * PERMISSION_DENIED:
+	 *   - if a deployment to an unauthorized tenant is performed
+	 * INVALID_ARGUMENT:
+	 *   - no resources given.
+	 *   - if at least one resource is invalid. A resource is considered invalid if:
+	 *     - the content is not deserializable (e.g. detected as BPMN, but it's broken XML)
+	 *     - the content is invalid (e.g. an event-based gateway has an outgoing sequence flow to a task)
+	 *   - if multi-tenancy is enabled, and:
+	 *     - a tenant id is not provided
+	 *     - a tenant id with an invalid format is provided
+	 *   - if multi-tenancy is disabled and a tenant id is provided
 	 * @example
 	 * ```
 	 * import {join} from 'path'
@@ -750,27 +756,27 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 */
 	public async deployResource(
 		resource:
-			| { processFilename: string, tenantId?: string }
-			| { name: string; process: Buffer, tenantId?: string },
+			| { processFilename: string; tenantId?: string }
+			| { name: string; process: Buffer; tenantId?: string }
 	): Promise<Grpc.DeployResourceResponse<Grpc.ProcessDeployment>>
 	public async deployResource(
 		resource:
-			| { decisionFilename: string, tenantId?: string }
-			| { name: string; decision: Buffer, tenantId?: string },
+			| { decisionFilename: string; tenantId?: string }
+			| { name: string; decision: Buffer; tenantId?: string }
 	): Promise<Grpc.DeployResourceResponse<Grpc.DecisionDeployment>>
 	public async deployResource(
 		resource:
-		| { formFilename: string, tenantId?: string }
-		| { name: string; form: Buffer, tenantId?: string }
+			| { formFilename: string; tenantId?: string }
+			| { name: string; form: Buffer; tenantId?: string }
 	): Promise<Grpc.DeployResourceResponse<Grpc.FormDeployment>>
 	async deployResource(
 		resource:
-			| { name: string; process: Buffer, tenantId?: string }
-			| { processFilename: string, tenantId?: string }
-			| { name: string; decision: Buffer, tenantId?: string }
-			| { decisionFilename: string, tenantId?: string }
-			| { name: string; form: Buffer, tenantId?: string }
-			| { formFilename: string, tenantId?: string }
+			| { name: string; process: Buffer; tenantId?: string }
+			| { processFilename: string; tenantId?: string }
+			| { name: string; decision: Buffer; tenantId?: string }
+			| { decisionFilename: string; tenantId?: string }
+			| { name: string; form: Buffer; tenantId?: string }
+			| { formFilename: string; tenantId?: string }
 	): Promise<
 		Grpc.DeployResourceResponse<
 			| Grpc.ProcessDeployment
@@ -780,19 +786,19 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		>
 	> {
 		const isProcess = (
-			maybeProcess: any
+			maybeProcess: any // eslint-disable-line @typescript-eslint/no-explicit-any
 		): maybeProcess is { process: Buffer; name: string } =>
 			!!maybeProcess.process
 		const isProcessFilename = (
-			maybeProcessFilename: any
+			maybeProcessFilename: any // eslint-disable-line @typescript-eslint/no-explicit-any
 		): maybeProcessFilename is { processFilename: string } =>
 			!!maybeProcessFilename.processFilename
 		const isDecision = (
-			maybeDecision: any
+			maybeDecision: any // eslint-disable-line @typescript-eslint/no-explicit-any
 		): maybeDecision is { decision: Buffer; name: string } =>
 			!!maybeDecision.decision
 		const isDecisionFilename = (
-			maybeDecisionFilename: any
+			maybeDecisionFilename: any // eslint-disable-line @typescript-eslint/no-explicit-any
 		): maybeDecisionFilename is { decisionFilename: string } =>
 			!!maybeDecisionFilename.decisionFilename
 		// default fall-through
@@ -800,8 +806,8 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 			!!maybeForm.form
 			*/
 		const isFormFilename = (
-			maybeFormFilename: any
-		): maybeFormFilename is {formFilename: string} =>
+			maybeFormFilename: any // eslint-disable-line @typescript-eslint/no-explicit-any
+		): maybeFormFilename is { formFilename: string } =>
 			!!maybeFormFilename.formFilename
 
 		if (isProcessFilename(resource)) {
@@ -815,7 +821,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 							content: process,
 						},
 					],
-					tenantId: resource.tenantId ?? this.tenantId
+					tenantId: resource.tenantId ?? this.tenantId,
 				})
 			)
 		} else if (isProcess(resource)) {
@@ -827,7 +833,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 							content: resource.process,
 						},
 					],
-					tenantId: resource.tenantId ?? this.tenantId
+					tenantId: resource.tenantId ?? this.tenantId,
 				})
 			)
 		} else if (isDecisionFilename(resource)) {
@@ -841,7 +847,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 							content: decision,
 						},
 					],
-					tenantId: resource.tenantId ?? this.tenantId
+					tenantId: resource.tenantId ?? this.tenantId,
 				})
 			)
 		} else if (isDecision(resource)) {
@@ -853,7 +859,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 							content: resource.decision,
 						},
 					],
-					tenantId: resource.tenantId ?? this.tenantId
+					tenantId: resource.tenantId ?? this.tenantId,
 				})
 			)
 		} else if (isFormFilename(resource)) {
@@ -867,20 +873,20 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 							content: form,
 						},
 					],
-					tenantId: resource.tenantId ?? this.tenantId
+					tenantId: resource.tenantId ?? this.tenantId,
 				})
 			)
-		} else /* if (isForm(resource)) */ {
-		// default fall-through
+		} /* if (isForm(resource)) */ else {
+			// default fall-through
 			return this.executeOperation('deployResource', () =>
 				this.grpc.deployResourceSync({
 					resources: [
 						{
 							name: resource.name,
-							content: resource.form
-						}
+							content: resource.form,
+						},
 					],
-					tenantId: resource.tenantId ?? this.tenantId
+					tenantId: resource.tenantId ?? this.tenantId,
 				})
 			)
 		}
@@ -910,9 +916,8 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 * ```
 	 */
 	public async deployProcess(
-		process: (ZB.DeployProcessFiles | ZB.DeployProcessBuffer)
+		process: ZB.DeployProcessFiles | ZB.DeployProcessBuffer
 	): Promise<Grpc.DeployProcessResponse> {
-
 		const deploy = (processes: Grpc.ProcessRequestObject[]) =>
 			this.executeOperation('deployWorkflow', () =>
 				this.grpc.deployProcessSync({
@@ -929,11 +934,8 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 
 		return pipe(
 			bufferOrFiles(process),
-			E.fold(deploy, files =>
-				pipe(
-					mapThese(files, readDefinitionFromFile),
-					E.fold(error, deploy)
-				)
+			E.fold(deploy, (files) =>
+				pipe(mapThese(files, readDefinitionFromFile), E.fold(error, deploy))
 			)
 		)
 	}
@@ -949,14 +951,18 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 *   variables: { season: "Fall" }
 	 * }).then(res => console.log(JSON.stringify(res, null, 2)))
 	 */
-	public evaluateDecision(evaluateDecisionRequest: Grpc.EvaluateDecisionRequest): Promise<Grpc.EvaluateDecisionResponse> {
-	 // the gRPC API call needs a JSON string, but we accept a JSON object, so we transform it here
-		const variables = JSON.stringify(evaluateDecisionRequest.variables) as unknown as ZB.JSONDoc
+	public evaluateDecision(
+		evaluateDecisionRequest: Grpc.EvaluateDecisionRequest
+	): Promise<Grpc.EvaluateDecisionResponse> {
+		// the gRPC API call needs a JSON string, but we accept a JSON object, so we transform it here
+		const variables = JSON.stringify(
+			evaluateDecisionRequest.variables
+		) as unknown as ZB.JSONDoc
 		return this.executeOperation('evaluateDecision', () =>
 			this.grpc.evaluateDecisionSync({
 				...evaluateDecisionRequest,
 				variables,
-				tenantId: evaluateDecisionRequest.tenantId ?? this.tenantId
+				tenantId: evaluateDecisionRequest.tenantId ?? this.tenantId,
 			})
 		)
 	}
@@ -1005,7 +1011,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 * @example
 	 * ```
 	 * zbc.createProcessInstance('SkipFirstTask', {}).then(res =>
-	 *	 zbc.modifyProcessInstance({
+	 *   zbc.modifyProcessInstance({
 	 *     processInstanceKey: res.processInstanceKey,
 	 *     activateInstructions: [{
 	 *       elementId: 'second_service_task',
@@ -1015,18 +1021,25 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 *         variables: { second: 1}
 	 *       }]
 	 *     }]
-	 *	 })
+	 *   })
 	 * )
 	 * ```
 	 */
-	public modifyProcessInstance(modifyProcessInstanceRequest: Grpc.ModifyProcessInstanceRequest): Promise<Grpc.ModifyProcessInstanceResponse> {
+	public modifyProcessInstance(
+		modifyProcessInstanceRequest: Grpc.ModifyProcessInstanceRequest
+	): Promise<Grpc.ModifyProcessInstanceResponse> {
 		return this.executeOperation('modifyProcessInstance', () => {
 			// We accept JSONDoc for the variableInstructions, but the actual gRPC call needs stringified JSON, so transform it with a mutation
-			modifyProcessInstanceRequest?.activateInstructions?.forEach(
-				a => a.variableInstructions.forEach(
-					v => (v.variables = JSON.stringify(v.variables) as any)))
-			return this.grpc.modifyProcessInstanceSync({...modifyProcessInstanceRequest,})
-	})
+			const req = Utils.deepClone(modifyProcessInstanceRequest)
+			req?.activateInstructions?.forEach((a) =>
+				a.variableInstructions.forEach(
+					(v) => (v.variables = JSON.stringify(v.variables))
+				)
+			)
+			return this.grpc.modifyProcessInstanceSync({
+				...req,
+			})
+		})
 	}
 
 	/**
@@ -1046,7 +1059,9 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 * ```
 	 */
 	public publishMessage<
-		ProcessVariables extends { [key: string]: any } = ZB.IProcessVariables
+		ProcessVariables extends {
+			[key: string]: ZB.JSON
+		} = ZB.IProcessVariables,
 	>(
 		publishMessageRequest: Grpc.PublishMessageRequest<ProcessVariables>
 	): Promise<Grpc.PublishMessageResponse> {
@@ -1055,7 +1070,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				stringifyVariables({
 					...publishMessageRequest,
 					variables: publishMessageRequest.variables,
-					tenantId: publishMessageRequest.tenantId ?? this.tenantId
+					tenantId: publishMessageRequest.tenantId ?? this.tenantId,
 				})
 			)
 		)
@@ -1093,11 +1108,9 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 * ```
 	 */
 	public publishStartMessage<
-		ProcessVariables extends ZB.IInputVariables = ZB.IProcessVariables
+		ProcessVariables extends ZB.IInputVariables = ZB.IProcessVariables,
 	>(
-		publishStartMessageRequest: Grpc.PublishStartMessageRequest<
-			ProcessVariables
-		>
+		publishStartMessageRequest: Grpc.PublishStartMessageRequest<ProcessVariables>
 	): Promise<Grpc.PublishMessageResponse> {
 		/**
 		 * The hash of the correlationKey is used to determine the partition where this workflow will start.
@@ -1113,13 +1126,13 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		const publishMessageRequest: Grpc.PublishMessageRequest = {
 			correlationKey: uuid(),
 			...publishStartMessageRequest,
-			tenantId: publishStartMessageRequest.tenantId ?? this.tenantId
+			tenantId: publishStartMessageRequest.tenantId ?? this.tenantId,
 		}
 		return this.executeOperation('publishStartMessage', () =>
 			this.grpc.publishMessageSync(
 				stringifyVariables({
 					...publishMessageRequest,
-					variables: publishMessageRequest.variables || {}
+					variables: publishMessageRequest.variables || {},
 				})
 			)
 		)
@@ -1205,11 +1218,13 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		We allow developers to interact with variables as a native JS object, but the Zeebe server needs it as a JSON document
 		So we stringify it here.
 		*/
-		if (typeof request.variables === 'object') {
-			request.variables = JSON.stringify(request.variables) as any
-		}
+		const variables =
+			typeof request.variables === 'object'
+				? JSON.stringify(request.variables)
+				: request.variables
+
 		return this.executeOperation('setVariables', () =>
-			this.grpc.setVariablesSync(request)
+			this.grpc.setVariablesSync({ ...request, variables })
 		)
 	}
 
@@ -1258,7 +1273,10 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	 * ```
 	 */
 	public throwError(throwErrorRequest: Grpc.ThrowErrorRequest) {
-		const req = stringifyVariables({...throwErrorRequest, variables: throwErrorRequest.variables ?? {}})
+		const req = stringifyVariables({
+			...throwErrorRequest,
+			variables: throwErrorRequest.variables ?? {},
+		})
 		return this.executeOperation('throwError', () =>
 			this.grpc.throwErrorSync(req)
 		)
@@ -1416,14 +1434,18 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		return promiseRetry(
 			(retry, n) => {
 				if (this.closing || this.grpc.channelClosed) {
-					return Promise.resolve() as any
+					/**
+					 * Should we reject instead? The idea here is that calling ZBClient.close() will allow the application to cleanly shut down.
+					 * If we reject here, any pending calls will throw errors. This is probably not what the user is expecting to see.
+					 */
+					return Promise.resolve(null as unknown as T)
 				}
 				if (n > 1) {
 					this.logger.logError(
 						`[${operationName}]: Attempt ${n} (max: ${this.maxRetries}).`
 					)
 				}
-				return operation().catch(err => {
+				return operation().catch((err) => {
 					// This could be DNS resolution, or the gRPC gateway is not reachable yet, or Backpressure
 					const isNetworkError =
 						err.message.indexOf('14') === 0 ||
@@ -1437,14 +1459,12 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 						connectionErrorCount++
 					}
 					if (isNetworkError || isBackpressure) {
-						this.logger.logError(
-							`[${operationName}]: ${err.message}`
-						)
+						this.logger.logError(`[${operationName}]: ${err.message}`)
 						retry(err)
 					}
 					// The gRPC channel will be closed if close has been called
 					if (this.grpc.channelClosed) {
-						return Promise.resolve() as any
+						return Promise.resolve(null as unknown as T)
 					}
 					throw err
 				})

@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid'
+
 import { DeployProcessResponse, ZBClient } from '../..'
 import { cancelProcesses } from '../../lib/cancelProcesses'
 
@@ -8,7 +9,9 @@ const zbc = new ZBClient()
 let deploy: DeployProcessResponse
 
 beforeAll(async () => {
-	deploy = await zbc.deployProcess('./src/__tests__/testdata/Client-MessageStart.bpmn')
+	deploy = await zbc.deployProcess(
+		'./src/__tests__/testdata/Client-MessageStart.bpmn'
+	)
 })
 
 afterAll(async () => {
@@ -17,28 +20,28 @@ afterAll(async () => {
 })
 
 test('Can publish a message', () =>
-	new Promise(async done => {
+	new Promise((done) => {
 		const randomId = uuid()
 
 		// Wait 1 second to make sure the deployment is complete
-		await new Promise(res => setTimeout(() => res(null), 1000))
+		new Promise((res) => setTimeout(() => res(null), 1000)).then(() => {
+			zbc.publishMessage({
+				name: 'MSG-START_JOB',
+				variables: {
+					testKey: randomId,
+				},
+				correlationKey: 'something',
+			})
 
-		await zbc.publishMessage({
-			name: 'MSG-START_JOB',
-			variables: {
-				testKey: randomId,
-			},
-			correlationKey: 'something'
-		})
-
-		zbc.createWorker({
-			taskType: 'console-log-msg-start',
-			taskHandler: async job => {
-				const res = await job.complete()
-				expect(job.variables.testKey).toBe(randomId) // Makes sure the worker isn't responding to another message
-				done(null)
-				return res
-			},
-			loglevel: 'NONE',
+			zbc.createWorker({
+				taskType: 'console-log-msg-start',
+				taskHandler: async (job) => {
+					const res = await job.complete()
+					expect(job.variables.testKey).toBe(randomId) // Makes sure the worker isn't responding to another message
+					done(null)
+					return res
+				},
+				loglevel: 'NONE',
+			})
 		})
 	}))

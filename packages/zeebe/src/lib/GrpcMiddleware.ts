@@ -1,4 +1,5 @@
 import { ConnectionStatusEvent } from '../zb/ZBClient'
+
 import { Characteristics, State } from './ConnectionFactory'
 import { GrpcClient, GrpcClientCtor, MiddlewareSignals } from './GrpcClient'
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
@@ -29,7 +30,11 @@ export class GrpcMiddleware {
 				this.blocking = false
 				log.logDebug(`Grpc Middleware state: ${this.state}`)
 				if (this.state === 'ERROR') {
-					this.emitError(new Error(`Did not establish connection before deadline ${this.characteristics.startupTime}ms`))
+					this.emitError(
+						new Error(
+							`Did not establish connection before deadline ${this.characteristics.startupTime}ms`
+						)
+					)
 				} else if (this.state === 'CONNECTED') {
 					this.emitReady()
 				} else if (this.state === 'UNKNOWN') {
@@ -68,9 +73,9 @@ export class GrpcMiddleware {
 			logInterceptor.ready()
 			if (!this.blocking) {
 				this.emitReady()
-				logInterceptor.logDebug(`Middleware emits ready`)
+				logInterceptor.logDebug('Middleware emits ready')
 			} else {
-				logInterceptor.logDebug(`Blocked ready emit`)
+				logInterceptor.logDebug('Blocked ready emit')
 			}
 		})
 		grpcClient.on(

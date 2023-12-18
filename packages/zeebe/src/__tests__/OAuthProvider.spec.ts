@@ -1,20 +1,21 @@
 import fs from 'fs'
 import http from 'http'
 import path from 'path'
+
 import { OAuthProvider } from '../lib/OAuthProvider'
 
 const STORED_ENV = {}
 const ENV_VARS_TO_STORE = ['ZEEBE_TOKEN_CACHE_DIR']
 
 beforeAll(() => {
-	ENV_VARS_TO_STORE.forEach(e => {
+	ENV_VARS_TO_STORE.forEach((e) => {
 		STORED_ENV[e] = process.env[e]
 		delete process.env[e]
 	})
 })
 
 afterAll(() => {
-	ENV_VARS_TO_STORE.forEach(e => {
+	ENV_VARS_TO_STORE.forEach((e) => {
 		delete process.env[e]
 		if (STORED_ENV[e]) {
 			process.env[e] = STORED_ENV[e]
@@ -22,7 +23,7 @@ afterAll(() => {
 	})
 })
 
-test("Creates the token cache dir if it doesn't exist", () => {
+test('Creates the token cache dir if it does not exist', () => {
 	const tokenCache = path.join(__dirname, '.token-cache')
 	if (fs.existsSync(tokenCache)) {
 		fs.rmdirSync(tokenCache)
@@ -72,7 +73,7 @@ test('Gets the token cache dir from the environment', () => {
 test('Uses an explicit token cache over the environment', () => {
 	const tokenCache1 = path.join(__dirname, '.token-cache1')
 	const tokenCache2 = path.join(__dirname, '.token-cache2')
-	;[tokenCache1, tokenCache2].forEach(tokenCache => {
+	;[tokenCache1, tokenCache2].forEach((tokenCache) => {
 		if (fs.existsSync(tokenCache)) {
 			fs.rmdirSync(tokenCache)
 		}
@@ -90,7 +91,7 @@ test('Uses an explicit token cache over the environment', () => {
 	expect(o).toBeTruthy()
 	expect(fs.existsSync(tokenCache2)).toBe(true)
 	expect(fs.existsSync(tokenCache1)).toBe(false)
-	;[tokenCache1, tokenCache2].forEach(tokenCache => {
+	;[tokenCache1, tokenCache2].forEach((tokenCache) => {
 		if (fs.existsSync(tokenCache)) {
 			fs.rmdirSync(tokenCache)
 		}
@@ -143,7 +144,7 @@ test('Can set a custom user agent', () => {
 	o.stopExpiryTimer()
 })
 
-test('Uses form encoding for request', done => {
+test('Uses form encoding for request', (done) => {
 	const o = new OAuthProvider({
 		audience: 'token',
 		cacheOnDisk: false,
@@ -155,7 +156,7 @@ test('Uses form encoding for request', done => {
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
-				req.on('data', chunk => {
+				req.on('data', (chunk) => {
 					body += chunk
 				})
 
@@ -176,9 +177,9 @@ test('Uses form encoding for request', done => {
 	expect(o.userAgentString.includes(' modeler')).toBe(true)
 })
 
-test('In-memory cache is populated and evicted after timeout', done => {
-	const delay = timeout =>
-		new Promise(res => setTimeout(() => res(null), timeout))
+test('In-memory cache is populated and evicted after timeout', (done) => {
+	const delay = (timeout) =>
+		new Promise((res) => setTimeout(() => res(null), timeout))
 
 	const o = new OAuthProvider({
 		audience: 'token',
@@ -191,17 +192,15 @@ test('In-memory cache is populated and evicted after timeout', done => {
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
-				req.on('data', chunk => {
+				req.on('data', (chunk) => {
 					body += chunk
 				})
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					let expires_in = 2 // seconds
+					const expiresIn = 2 // seconds
 					res.end(
-						'{"access_token": "something", "expires_in": ' +
-							expires_in +
-							'}'
+						'{"access_token": "something", "expires_in": ' + expiresIn + '}'
 					)
 					server.close()
 					expect(body).toEqual(
@@ -212,12 +211,12 @@ test('In-memory cache is populated and evicted after timeout', done => {
 		})
 		.listen(3002)
 
-	o.getToken().then(async _ => {
-		expect(o.tokenCache['clientId']).toBeDefined()
+	o.getToken().then(async () => {
+		expect(o.tokenCache.clientId).toBeDefined()
 		await delay(500)
-		expect(o.tokenCache['clientId']).toBeDefined()
+		expect(o.tokenCache.clientId).toBeDefined()
 		await delay(1600)
-		expect(o.tokenCache['clientId']).not.toBeDefined()
+		expect(o.tokenCache.clientId).not.toBeDefined()
 		o.stopExpiryTimer()
 		done()
 	})

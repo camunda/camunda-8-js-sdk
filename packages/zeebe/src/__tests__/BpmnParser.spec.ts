@@ -13,9 +13,7 @@ test('parses a bpmn file to an Object', () => {
 })
 
 test('can parse a file with a message with no name', async () => {
-	const parsedv7 = await BpmnParser.generateConstantsForBpmnFiles(
-		modeller7File
-	)
+	const parsedv7 = await BpmnParser.generateConstantsForBpmnFiles(modeller7File)
 	// console.log(parsedv7)
 	expect(typeof parsedv7).toBe('string')
 })
@@ -36,17 +34,12 @@ test('gets a list of unique message names when passed an object', async () => {
 })
 
 test('gets a list of unique message names when passed an array', async () => {
-	const messageNames = await BpmnParser.getMessageNames([
-		parsed,
-		parsedSimple,
-	])
+	const messageNames = await BpmnParser.getMessageNames([parsed, parsedSimple])
 	expect(messageNames.length).toBe(3)
 })
 
 test('Returns a constants file for a single Bpmn file', async () => {
-	const constants = await BpmnParser.generateConstantsForBpmnFiles(
-		testBpmnFile
-	)
+	const constants = await BpmnParser.generateConstantsForBpmnFiles(testBpmnFile)
 	expect(constants.indexOf('console-log')).not.toBe(-1)
 })
 
@@ -62,7 +55,7 @@ test('Returns a constants file for an array of Bpmn files', async () => {
 			.split('\n')
 			.join('')
 			.indexOf(
-				`exportenumMessageName{MSG_EMIT_FRAME="MSG-EMIT_FRAME",MSG_EMIT_FRAME_1="MSG-EMIT_FRAME`
+				'exportenumMessageName{MSG_EMIT_FRAME="MSG-EMIT_FRAME",MSG_EMIT_FRAME_1="MSG-EMIT_FRAME'
 			)
 	).not.toBe(-1)
 })

@@ -1,4 +1,5 @@
 import { ZBCustomLogger } from './interfaces-published-contract'
+
 export class MockStdOut implements ZBCustomLogger {
 	public messages: string[] = []
 

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 
-type EventMap = Record<string, any>
+type EventMap = Record<string, unknown>
 
 type EventKey<T extends EventMap> = string & keyof T
 type EventReceiver = () => void

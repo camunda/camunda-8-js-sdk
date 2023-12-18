@@ -4,12 +4,12 @@ type EnvFunction = <T extends Readonly<K[]>, K extends string>(
 	[key1 in T[number]]: string
 }
 
-export const getEnv: EnvFunction = keys => {
+export const getEnv: EnvFunction = (keys) => {
 	return keys.reduce(
 		(prev, current) => ({
 			...prev,
 			[current]: process.env[current],
 		}),
-		{} as any
+		{} as { [key in (typeof keys)[number]]: string }
 	)
 }

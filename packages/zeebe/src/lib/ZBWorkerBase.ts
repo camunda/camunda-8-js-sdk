@@ -1,21 +1,29 @@
-import { ClientReadableStreamImpl } from '@grpc/grpc-js/build/src/call'
-import chalk, { Chalk } from 'chalk'
 import { EventEmitter } from 'events'
+
+import {
+	ClientReadableStream,
+	ClientReadableStreamImpl,
+} from '@grpc/grpc-js/build/src/call'
+import chalk, { Chalk } from 'chalk'
+import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import * as uuid from 'uuid'
-import { parseVariablesAndCustomHeadersToJSON } from '.'
-import * as ZB from './interfaces-1.0'
-import { StatefulLogInterceptor } from './StatefulLogInterceptor'
+
 import { ConnectionStatusEvent, ZBClient } from '../zb/ZBClient'
+
 import { GrpcError } from './GrpcError'
+import { StatefulLogInterceptor } from './StatefulLogInterceptor'
+import { TypedEmitter } from './TypedEmitter'
+import * as ZB from './interfaces-1.0'
 import {
 	ActivateJobsRequest,
 	ActivateJobsResponse,
 } from './interfaces-grpc-1.0'
 import { ZBClientOptions } from './interfaces-published-contract'
-import { TypedEmitter } from './TypedEmitter'
 
-const debug = require('debug')('worker')
+import { parseVariablesAndCustomHeadersToJSON } from '.'
+
+const debug = d('worker')
 debug('Loaded ZBWorkerBase')
 
 const MIN_ACTIVE_JOBS_RATIO_BEFORE_ACTIVATING_JOBS = 0.3
@@ -38,7 +46,7 @@ export interface ZBWorkerBaseConstructor<T> {
 export interface ZBBatchWorkerConstructorConfig<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 > extends ZBWorkerBaseConstructor<WorkerInputVariables> {
 	options: ZB.ZBWorkerOptions<WorkerInputVariables> &
 		ZBClientOptions & { jobBatchMaxTime: number }
@@ -52,7 +60,7 @@ export interface ZBBatchWorkerConstructorConfig<
 export interface ZBWorkerConstructorConfig<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 > extends ZBWorkerBaseConstructor<WorkerInputVariables> {
 	taskHandler: ZB.ZBWorkerTaskHandler<
 		WorkerInputVariables,
@@ -64,11 +72,10 @@ export interface ZBWorkerConstructorConfig<
 export class ZBWorkerBase<
 	WorkerInputVariables,
 	CustomHeaderShape,
-	WorkerOutputVariables
+	WorkerOutputVariables,
 > extends TypedEmitter<typeof ConnectionStatusEvent> {
-	private static readonly DEFAULT_JOB_ACTIVATION_TIMEOUT = Duration.seconds.of(
-		60
-	)
+	private static readonly DEFAULT_JOB_ACTIVATION_TIMEOUT =
+		Duration.seconds.of(60)
 	private static readonly DEFAULT_MAX_ACTIVE_JOBS = 32
 	public activeJobs = 0
 	public grpcClient: ZB.ZBGrpc
@@ -102,7 +109,7 @@ export class ZBWorkerBase<
 	private stalled = false
 	private connected = true
 	private readied = false
-	private jobStream?: ClientReadableStreamImpl<any>
+	private jobStream?: ClientReadableStreamImpl<unknown>
 	private activeJobsThresholdForReactivation: number
 	private pollInterval: MaybeTimeDuration
 	private pollLoop: NodeJS.Timeout
@@ -144,8 +151,7 @@ export class ZBWorkerBase<
 		this.maxJobsToActivate =
 			options.maxJobsToActivate || ZBWorkerBase.DEFAULT_MAX_ACTIVE_JOBS
 		this.activeJobsThresholdForReactivation =
-			this.maxJobsToActivate *
-			MIN_ACTIVE_JOBS_RATIO_BEFORE_ACTIVATING_JOBS
+			this.maxJobsToActivate * MIN_ACTIVE_JOBS_RATIO_BEFORE_ACTIVATING_JOBS
 		this.jobBatchMinSize = Math.min(
 			options.jobBatchMinSize ?? 0,
 			this.maxJobsToActivate
@@ -184,7 +190,7 @@ export class ZBWorkerBase<
 		this.grpcClient.on(ConnectionStatusEvent.ready, onReady)
 		this.cancelWorkflowOnException = options.failProcessOnException ?? false
 		this.zbClient = zbClient
-		this.grpcClient.topologySync().catch(e => {
+		this.grpcClient.topologySync().catch((e) => {
 			// Swallow exception to avoid throwing if retries are off
 			if (e.thisWillNeverHappenYo) {
 				this.emit(ConnectionStatusEvent.unknown)
@@ -211,7 +217,8 @@ export class ZBWorkerBase<
 		if (this.closePromise) {
 			return this.closePromise
 		}
-		this.closePromise = new Promise(async resolve => {
+		// eslint-disable-next-line no-async-promise-executor
+		this.closePromise = new Promise(async (resolve) => {
 			// this.closing prevents the worker from starting work on any new tasks
 			this.closing = true
 			clearInterval(this.pollLoop)
@@ -236,23 +243,21 @@ export class ZBWorkerBase<
 		return this.closePromise
 	}
 
-	public log(msg: any) {
+	public log(msg: ZB.JSON) {
 		this.logger.logInfo(msg)
 	}
 
-	public debug(msg: any) {
+	public debug(msg: ZB.JSON) {
 		this.logger.logDebug(msg)
 	}
 
-	public error(msg: any) {
+	public error(msg: ZB.JSON) {
 		this.logger.logError(msg)
 	}
 
 	protected drainOne() {
 		this.activeJobs--
-		this.logger.logDebug(
-			`Load: ${this.activeJobs}/${this.maxJobsToActivate}`
-		)
+		this.logger.logDebug(`Load: ${this.activeJobs}/${this.maxJobsToActivate}`)
 
 		const hasSufficientAvailableCapacityToRequestMoreJobs =
 			this.activeJobs <= this.activeJobsThresholdForReactivation
@@ -270,24 +275,27 @@ export class ZBWorkerBase<
 		}
 	}
 
-	protected handleJobs(_: ZB.Job[]) {
-		this.log(
-			`This method must be declared in a class that extends this base`
+	protected handleJobs(
+		jobs: ZB.Job<WorkerInputVariables, CustomHeaderShape>[]
+	) {
+		this.log(jobs.length)
+		throw new Error(
+			'This method must be declared in a class that extends this base'
 		)
 	}
 
 	protected makeCompleteHandlers<T>(
-		thisJob: ZB.Job
+		thisJob: ZB.Job<WorkerInputVariables, CustomHeaderShape>
 	): ZB.JobCompletionInterface<T> & ZB.JobCompletionInterface<T> {
 		let methodCalled: string | undefined
 
 		/**
 		 * This is a wrapper that allows us to throw an error if a job acknowledgement function is called more than once,
 		 * for these functions should be called once only (and only one should be called, but we don't handle that case).
-		 * */
-		const errorMsgOnPriorMessageCall = (
+		 */
+		const errorMsgOnPriorMessageCall = <T>(
 			thisMethod: string,
-			wrappedFunction: any
+			wrappedFunction: (...args) => T
 		) => {
 			return (...args) => {
 				if (methodCalled !== undefined) {
@@ -306,42 +314,53 @@ You should call only one job action method in the worker handler. This is a bug 
 			}
 		}
 
-		const cancelWorkflow = (job: ZB.Job) => () =>
-			this.zbClient
-				.cancelProcessInstance(job.processInstanceKey)
-				.then(() => ZB.JOB_ACTION_ACKNOWLEDGEMENT)
+		const cancelWorkflow =
+			(job: ZB.Job<WorkerInputVariables, CustomHeaderShape>) => () =>
+				this.zbClient
+					.cancelProcessInstance(job.processInstanceKey)
+					.then(() => ZB.JOB_ACTION_ACKNOWLEDGEMENT)
 
-		const failJob = (job: ZB.Job) => (
-			conf: string | ZB.JobFailureConfiguration,
-			retries?: number
-		) => {
-			const isFailureConfig = (_conf: string | ZB.JobFailureConfiguration): _conf is ZB.JobFailureConfiguration =>
-				typeof _conf === 'object'
-			const errorMessage = isFailureConfig(conf) ? conf.errorMessage : conf
-			const retryBackOff = isFailureConfig(conf) ? conf.retryBackOff ?? 0 : 0
-			const _retries = isFailureConfig(conf) ? conf.retries ?? 0 : retries
-			return this.failJob({ job, errorMessage, retries: _retries, retryBackOff })
-		}
+		const failJob =
+			(job: ZB.Job<WorkerInputVariables, CustomHeaderShape>) =>
+			(conf: string | ZB.JobFailureConfiguration, retries?: number) => {
+				const isFailureConfig = (
+					_conf: string | ZB.JobFailureConfiguration
+				): _conf is ZB.JobFailureConfiguration => typeof _conf === 'object'
+				const errorMessage = isFailureConfig(conf) ? conf.errorMessage : conf
+				const retryBackOff = isFailureConfig(conf) ? conf.retryBackOff ?? 0 : 0
+				const _retries = isFailureConfig(conf) ? conf.retries ?? 0 : retries
+				return this.failJob({
+					job,
+					errorMessage,
+					retries: _retries,
+					retryBackOff,
+				})
+			}
 
-		const succeedJob = (job: ZB.Job) => (completedVariables?: T) =>
-			this.completeJob(job.key, completedVariables ?? {})
+		const succeedJob =
+			(job: ZB.Job<WorkerInputVariables, CustomHeaderShape>) =>
+			(completedVariables?: T) =>
+				this.completeJob(job.key, completedVariables ?? {})
 
-		const errorJob = (job: ZB.Job) => (
-			e: string | ZB.ErrorJobWithVariables,
-			errorMessage: string = ''
-		) => {
-			const isErrorJobWithVariables = (s: string | ZB.ErrorJobWithVariables): s is ZB.ErrorJobWithVariables => typeof s === 'object'
-			const errorCode = isErrorJobWithVariables(e) ? e.errorCode : e
-			errorMessage = isErrorJobWithVariables(e) ? e.errorMessage ?? '' : errorMessage
-			const variables = isErrorJobWithVariables(e) ? e.variables : {}
+		const errorJob =
+			(job: ZB.Job<WorkerInputVariables, CustomHeaderShape>) =>
+			(e: string | ZB.ErrorJobWithVariables, errorMessage: string = '') => {
+				const isErrorJobWithVariables = (
+					s: string | ZB.ErrorJobWithVariables
+				): s is ZB.ErrorJobWithVariables => typeof s === 'object'
+				const errorCode = isErrorJobWithVariables(e) ? e.errorCode : e
+				errorMessage = isErrorJobWithVariables(e)
+					? e.errorMessage ?? ''
+					: errorMessage
+				const variables = isErrorJobWithVariables(e) ? e.variables : {}
 
-			return this.errorJob({
-				errorCode,
-				errorMessage,
-				job,
-				variables
-			})
-		}
+				return this.errorJob({
+					errorCode,
+					errorMessage,
+					job,
+					variables,
+				})
+			}
 
 		const fail = failJob(thisJob)
 		const succeed = succeedJob(thisJob)
@@ -363,7 +382,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		retries,
 		retryBackOff,
 	}: {
-		job: ZB.Job
+		job: ZB.Job<WorkerInputVariables, CustomHeaderShape>
 		errorMessage: string
 		retries?: number
 		retryBackOff?: number
@@ -388,13 +407,11 @@ You should call only one job action method in the worker handler. This is a bug 
 				jobKey,
 				variables: completedVariables,
 			})
-			.then(res => {
-				this.logger.logDebug(
-					`Completed job ${jobKey} for ${this.taskType}`
-				)
+			.then((res) => {
+				this.logger.logDebug(`Completed job ${jobKey} for ${this.taskType}`)
 				return res
 			})
-			.catch(e => {
+			.catch((e) => {
 				this.logger.logDebug(
 					`Completing job ${jobKey} for ${this.taskType} threw ${e.message}`
 				)
@@ -410,11 +427,11 @@ You should call only one job action method in the worker handler. This is a bug 
 		errorCode,
 		errorMessage,
 		job,
-		variables
+		variables,
 	}: {
-		job: ZB.Job
+		job: ZB.Job<WorkerInputVariables, CustomHeaderShape>
 		errorCode: string
-		errorMessage: string,
+		errorMessage: string
 		variables: ZB.JSONDoc
 	}) {
 		return this.zbClient
@@ -422,12 +439,12 @@ You should call only one job action method in the worker handler. This is a bug 
 				errorCode,
 				errorMessage,
 				jobKey: job.key,
-				variables
+				variables,
 			})
 			.then(() =>
 				this.logger.logDebug(`Errored job ${job.key} - ${errorMessage}`)
 			)
-			.catch(e => {
+			.catch((e) => {
 				this.logger.logError(
 					`Exception while attempting to raise BPMN Error for job ${job.key} - ${errorMessage}`
 				)
@@ -439,7 +456,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			})
 	}
 
-	private handleStreamEnd = id => {
+	private handleStreamEnd = (id) => {
 		this.jobStream = undefined
 		this.logger.logDebug(
 			`Deleted job stream [${id}] listeners and job stream reference`
@@ -447,8 +464,7 @@ You should call only one job action method in the worker handler. This is a bug 
 	}
 
 	private async poll() {
-		const pollAlreadyInProgress =
-			this.pollMutex || this.jobStream !== undefined
+		const pollAlreadyInProgress = this.pollMutex || this.jobStream !== undefined
 		const workerIsClosing = this.closePromise !== undefined || this.closing
 		const insufficientCapacityAvailable =
 			this.activeJobs > this.activeJobsThresholdForReactivation
@@ -461,7 +477,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			debug('Worker polling blocked', {
 				pollAlreadyInProgress,
 				workerIsClosing,
-				insufficientCapacityAvailable
+				insufficientCapacityAvailable,
 			})
 			return
 		}
@@ -473,9 +489,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		const jobStream = await this.activateJobs(id)
 		const start = Date.now()
 		this.logger.logDebug(
-			`Long poll loop. this.longPoll: ${Duration.value.of(
-				this.longPoll
-			)}`,
+			`Long poll loop. this.longPoll: ${Duration.value.of(this.longPoll)}`,
 			id,
 			start
 		)
@@ -487,21 +501,23 @@ You should call only one job action method in the worker handler. This is a bug 
 			// And when it has completed a response with work
 			jobStream.stream.on('end', () => {
 				this.logger.logDebug(
-					`Stream [${id}] ended after ${(Date.now() - start) /
-						1000} seconds`
+					`Stream [${id}] ended after ${(Date.now() - start) / 1000} seconds`
 				)
 				this.handleStreamEnd(id)
 				this.backPressureRetryCount = 0
 			})
 
-			jobStream.stream.on('error', error => {
+			jobStream.stream.on('error', (error) => {
 				this.logger.logDebug(
-					`Stream [${id}] error after ${(Date.now() - start) /
-						1000} seconds`,
+					`Stream [${id}] error after ${(Date.now() - start) / 1000} seconds`,
 					error
 				)
 				// Backoff on
-				if (error.code === GrpcError.RESOURCE_EXHAUSTED || error.code === GrpcError.INTERNAL) {
+				if (
+					(error as Error & { code: number }).code ===
+						GrpcError.RESOURCE_EXHAUSTED ||
+					(error as Error & { code: number }).code === GrpcError.INTERNAL
+				) {
 					setTimeout(
 						() => this.handleStreamEnd(id),
 						1000 * 2 ** this.backPressureRetryCount++
@@ -513,7 +529,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		}
 
 		if (jobStream.error) {
-			const error = (jobStream.error as any)?.message
+			const error = jobStream.error?.message
 			this.logger.logError({ id, error })
 		}
 		this.pollMutex = false
@@ -522,19 +538,19 @@ You should call only one job action method in the worker handler. This is a bug 
 	private async activateJobs(id: string) {
 		if (this.stalled) {
 			debug('Stalled')
-			return { stalled: true }
+			return { stalled: true as const }
 		}
 		if (this.closing) {
 			debug('Closing')
 			return {
-				closing: true,
+				closing: true as const,
 			}
 		}
 		if (this.debugMode) {
-			this.logger.logDebug(`Activating Jobs...`)
+			this.logger.logDebug('Activating Jobs...')
 		}
 		debug('Activating Jobs')
-		let stream: any
+		let stream: ClientReadableStream<unknown> & { error?: Error }
 
 		const amount = this.maxJobsToActivate - this.activeJobs
 
@@ -547,7 +563,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			type: this.taskType,
 			worker: this.id,
 			fetchVariable: this.fetchVariable as string[],
-			tenantIds: this.tenantId ? [this.tenantId] : undefined
+			tenantIds: this.tenantId ? [this.tenantId] : undefined,
 		}
 
 		this.logger.logDebug(
@@ -562,21 +578,19 @@ You should call only one job action method in the worker handler. This is a bug 
 		)
 
 		try {
-			stream = await this.grpcClient.activateJobsStream(
-				activateJobsRequest
-			)
+			stream = await this.grpcClient.activateJobsStream(activateJobsRequest)
 			if (this.debugMode) {
 				this.pollCount++
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			return {
-				error,
+				error: error as Error,
 			}
 		}
 
 		if (stream.error) {
-			debug(`Stream error`, stream.error)
-			return { error: stream.error }
+			debug('Stream error', stream.error)
+			return { error: stream.error as Error }
 		}
 
 		stream.on('data', this.handleJobResponse)
@@ -590,7 +604,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		}
 		this.activeJobs += res.jobs.length
 
-		const jobs = res.jobs.map(job =>
+		const jobs = res.jobs.map((job) =>
 			parseVariablesAndCustomHeadersToJSON<
 				WorkerInputVariables,
 				CustomHeaderShape

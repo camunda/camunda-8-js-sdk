@@ -8,17 +8,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensures commit history is fetched
+          fetch-depth: 0 # Ensures commit history is fetched
 
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Specify a Node.js version
+          node-version: "18" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
         env:
           GH_NPM_TOKEN: ${{ secrets.GH_NPM_TOKEN }}
 
-      - name: Lint last commit
+      - name: Lint last commit message
         run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Run Prettier
+        run: lerna run prettify
+
+      - name: Run ESLint
+        run: lerna run lint
+
+      - name: Commit and push if changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'josh.wulf@camunda.com'
+
+          # Check out the branch
+          git fetch
+          git checkout ${{ github.head_ref }}
+
+          # Add, commit, and push changes
+          git add -A
+          git diff --staged --quiet || git commit -m "Apply Prettier formatting"
+          git push origin ${{ github.head_ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

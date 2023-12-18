@@ -1,5 +1,6 @@
 // tslint:disable-next-line: no-implicit-dependencies
 import { GenericContainer, Wait } from '@sitapati/testcontainers'
+
 import { ZBClient } from '../..'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
@@ -22,11 +23,12 @@ function log(msg) {
 }
 
 test('reconnects after a pod reschedule', () =>
-	new Promise(async resolve => {
+	// eslint-disable-next-line no-async-promise-executor
+	new Promise(async (resolve) => {
 		let readyCount = 0
 		let errorCount = 0
-		const delay = timeout =>
-			new Promise(res => setTimeout(() => res(null), timeout))
+		const delay = (timeout) =>
+			new Promise((res) => setTimeout(() => res(null), timeout))
 
 		// tslint:disable-next-line: no-console
 		log('##### Starting container (reconnects after a pod reschedule)') // @DEBUG
@@ -43,7 +45,7 @@ test('reconnects after a pod reschedule', () =>
 
 		await delay(10000)
 
-		const zbc = new ZBClient(`localhost`)
+		const zbc = new ZBClient('localhost')
 		// tslint:disable-next-line: no-console
 		log('##### Deploying workflow') // @DEBUG
 
@@ -52,7 +54,7 @@ test('reconnects after a pod reschedule', () =>
 			.createWorker({
 				longPoll: 10000,
 				pollInterval: 300,
-				taskHandler: job => {
+				taskHandler: (job) => {
 					// tslint:disable-next-line: no-console
 					log('##### Executing task handler') // @DEBUG
 
@@ -119,10 +121,10 @@ test('reconnects after a pod reschedule', () =>
 		// tslint:disable-next-line: no-console
 		log('##### Starting workflow 2') // @DEBUG
 
-		const wf1 = await zbc.createProcessInstanceWithResult(
-			'disconnection',
-			{}
-		)
+		const wf1 = await zbc.createProcessInstanceWithResult({
+			bpmnProcessId: 'disconnection',
+			variables: {},
+		})
 		expect(wf1.bpmnProcessId).toBeTruthy()
 		await worker.close()
 		await container.stop()
@@ -134,17 +136,18 @@ test('reconnects after a pod reschedule', () =>
 	}))
 
 test('a worker that started first, connects to a broker that starts later', () =>
-	new Promise(async resolve => {
+	// eslint-disable-next-line no-async-promise-executor
+	new Promise(async (resolve) => {
 		let readyCount = 0
 		let errorCount = 0
 
-		const delay = timeout =>
-			new Promise(res => setTimeout(() => res(null), timeout))
+		const delay = (timeout) =>
+			new Promise((res) => setTimeout(() => res(null), timeout))
 
-		const zbc = new ZBClient(`localhost`)
+		const zbc = new ZBClient('localhost')
 		worker = zbc
 			.createWorker({
-				taskHandler: job => job.complete(),
+				taskHandler: (job) => job.complete(),
 				taskType: 'disconnection-task',
 			})
 			.on('connectionError', () => {
@@ -168,10 +171,10 @@ test('a worker that started first, connects to a broker that starts later', () =
 
 		await zbc.deployProcess('./src/__tests__/testdata/disconnection.bpmn')
 		await delay(1000) // Ensure deployment has happened
-		const wf = await zbc.createProcessInstanceWithResult(
-			'disconnection',
-			{}
-		)
+		const wf = await zbc.createProcessInstanceWithResult({
+			bpmnProcessId: 'disconnection',
+			variables: {},
+		})
 		expect(wf.bpmnProcessId).toBeTruthy()
 		await worker.close()
 		await container.stop()

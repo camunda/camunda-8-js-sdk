@@ -11,10 +11,8 @@ afterAll(async () => {
 test('does not retry the deployment of a broken BPMN file', async () => {
 	expect.assertions(1)
 	try {
-		await zbc.deployProcess(
-			'./src/__tests__/testdata/Client-BrokenBpmn.bpmn'
-		)
-	} catch (e: any) {
-		expect(e.message.indexOf('3 INVALID_ARGUMENT:')).toBe(0)
+		await zbc.deployProcess('./src/__tests__/testdata/Client-BrokenBpmn.bpmn')
+	} catch (e: unknown) {
+		expect((e as Error).message.indexOf('3 INVALID_ARGUMENT:')).toBe(0)
 	}
 })
