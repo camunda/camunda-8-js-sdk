@@ -1,4 +1,8 @@
-import { getOptimizeCredentials, getOptimizeToken } from '@jwulf/oauth'
+import {
+	OAuthProviderImpl,
+	getOptimizeCredentials,
+	getOptimizeToken,
+} from '@jwulf/oauth'
 import d from 'debug'
 import got from 'got'
 
@@ -41,6 +45,7 @@ export class OptimizeApiClient {
 		prefixUrl: string
 		hooks: { beforeRequest: ((o: unknown) => void)[] }
 	}
+	oauthProvider: OAuthProviderImpl | undefined
 
 	/**
 	 *
@@ -50,12 +55,18 @@ export class OptimizeApiClient {
 	 * const optimize = new OptimizeApiClient()
 	 * ```
 	 */
-	constructor(userAgent?: string) {
-		const customAgent = userAgent ? ` ${userAgent}` : ''
-		this.userAgentString = `optimize-client-nodejs/${pkg.version}${customAgent}`
-		const creds = getOptimizeCredentials()
+	constructor(
+		options: {
+			oauthProvider?: OAuthProviderImpl
+			baseUrl?: string
+		} = {}
+	) {
+		this.userAgentString = `optimize-client-nodejs/${pkg.version}`
+		const baseUrl =
+			options.baseUrl ?? getOptimizeCredentials().CAMUNDA_OPTIMIZE_BASE_URL
+		this.oauthProvider = options.oauthProvider
 		this.gotOptions = {
-			prefixUrl: `${creds.CAMUNDA_OPTIMIZE_BASE_URL}/api`,
+			prefixUrl: `${baseUrl}/api`,
 			hooks: {
 				beforeRequest: [
 					(options: unknown) => {
@@ -67,11 +78,13 @@ export class OptimizeApiClient {
 	}
 
 	private async getHeaders(auth = true) {
+		const token = this.oauthProvider
+			? await this.oauthProvider.getToken('OPERATE')
+			: await getOptimizeToken(this.userAgentString)
+
 		const authHeader: { authorization: string } | Record<string, never> = auth
 			? {
-					authorization: `Bearer ${await getOptimizeToken(
-						this.userAgentString
-					)}`,
+					authorization: `Bearer ${token}`,
 				}
 			: {}
 

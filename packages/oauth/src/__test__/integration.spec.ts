@@ -1,18 +1,13 @@
+import { getConsoleToken } from '../lib/Console'
 import { OAuthProvider } from '../lib/OAuthProvider'
 import { getOperateToken } from '../lib/Operate'
 import { getOptimizeToken } from '../lib/Optimize'
 import { getTasklistToken } from '../lib/Tasklist'
 import { getZeebeToken } from '../lib/Zeebe'
-import { getConsoleToken } from '../lib/Console'
-import { _close } from '../lib/Instances'
 
 let o: OAuthProvider
 
 beforeAll(() => (o = new OAuthProvider('client-nodejs testing')))
-afterAll(() => {
-	o.close()
-	_close()
-})
 
 test('Can get an Operate token from the environment vars', async () => {
 	const token = await o.getToken('OPERATE')
