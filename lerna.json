@@ -1,10 +1,12 @@
 {
 	"$schema": "node_modules/lerna/schemas/lerna-schema.json",
 	"version": "8.4.0",
-	"packages": ["packages/*"],
+	"packages": [
+		"packages/*"
+	],
 	"command": {
 		"publish": {
-			"registry": "https://npm.pkg.github.com",
+			"registry": "https://registry.npmjs.org",
 			"conventionalCommits": true
 		},
 		"version": {
