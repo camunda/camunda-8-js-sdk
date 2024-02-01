@@ -15,6 +15,7 @@
 		"type": "git",
 		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
 	},
+	"private": false,
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
