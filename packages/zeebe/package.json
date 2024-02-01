@@ -1,5 +1,5 @@
 {
-	"name": "@jwulf/zeebe",
+	"name": "@camunda8/zeebe",
 	"version": "8.3.0",
 	"description": "The Node.js client library for the Zeebe Workflow Automation Engine.",
 	"keywords": [
@@ -25,9 +25,6 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
-	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/@jwulf"
 	},
 	"main": "dist/index.js",
 	"bin": {
@@ -80,7 +77,7 @@
 		"uuid": "^7.0.3"
 	},
 	"devDependencies": {
-		"@jwulf/operate": "^8.3.0",
+		"@camunda8/operate": "^8.3.0",
 		"@sitapati/testcontainers": "^2.8.1",
 		"@types/debug": "0.0.31",
 		"@types/got": "^9.6.9",

@@ -1,4 +1,4 @@
-import { getConsoleCredentials, getConsoleToken } from '@jwulf/oauth'
+import { getConsoleCredentials, getConsoleToken } from '@camunda8/oauth'
 import d from 'debug'
 import got from 'got'
 

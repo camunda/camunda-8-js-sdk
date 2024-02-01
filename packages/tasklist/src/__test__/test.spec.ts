@@ -1,6 +1,6 @@
 import { join } from 'path'
 
-import { CreateProcessInstanceResponse, DeployProcessResponse, ZBClient } from '@jwulf/zeebe'
+import { CreateProcessInstanceResponse, DeployProcessResponse, ZBClient } from '@camunda8/zeebe'
 
 import 'dotenv/config'
 import { TasklistApiClient } from '../index'

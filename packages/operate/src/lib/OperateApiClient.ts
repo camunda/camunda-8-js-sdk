@@ -2,7 +2,7 @@ import {
 	OAuthProviderImpl,
 	getOperateCredentials,
 	getOperateToken,
-} from '@jwulf/oauth'
+} from '@camunda8/oauth'
 import got from 'got'
 
 import {

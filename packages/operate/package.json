@@ -1,38 +1,35 @@
 {
-  "name": "@jwulf/operate",
-  "version": "8.3.0",
-  "description": "A Node.js client for interacting with the Camunda 8 Operate API",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "jest --detectOpenHandles",
-    "build": "npm run clean && npm run compile",
-    "clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-    "compile": "tsc",
-    "docs": "typedoc src/index.ts",
-    "prettify": "prettier --write 'src/**/*.ts'",
-    "lint": "eslint . --ext .ts,.tsx --fix"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/@jwulf"
-  },
-  "keywords": [
-    "Camunda"
-  ],
-  "author": "josh.wulf@camunda.com",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
-  },
-  "homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
-  "dependencies": {
-    "@jwulf/oauth": "^8.3.0",
-    "got": "^11.8.5"
-  },
-  "devDependencies": {
-    "typedoc": "^0.23.21"
-  }
+	"name": "@camunda8/operate",
+	"version": "8.3.0",
+	"description": "A Node.js client for interacting with the Camunda 8 Operate API",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "jest --detectOpenHandles",
+		"build": "npm run clean && npm run compile",
+		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+		"compile": "tsc",
+		"docs": "typedoc src/index.ts",
+		"prettify": "prettier --write 'src/**/*.ts'",
+		"lint": "eslint . --ext .ts,.tsx --fix"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+	},
+	"keywords": [
+		"Camunda"
+	],
+	"author": "josh.wulf@camunda.com",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
+	},
+	"homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
+	"dependencies": {
+		"@camunda8/oauth": "^8.3.0",
+		"got": "^11.8.5"
+	},
+	"devDependencies": {
+		"typedoc": "^0.23.21"
+	}
 }
