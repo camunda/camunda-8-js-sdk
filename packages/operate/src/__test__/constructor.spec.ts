@@ -1,7 +1,7 @@
-import { OAuthProviderImpl } from '@jwulf/oauth'
+import { OAuthProviderImpl } from '@camunda8/oauth'
 
-import { ProcessDefinition, Query } from '../lib/APIObjects'
 import { OperateApiClient } from '../'
+import { ProcessDefinition, Query } from '../lib/APIObjects'
 
 /**
  * In order to test:

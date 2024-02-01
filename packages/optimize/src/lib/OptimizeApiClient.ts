@@ -2,7 +2,7 @@ import {
 	OAuthProviderImpl,
 	getOptimizeCredentials,
 	getOptimizeToken,
-} from '@jwulf/oauth'
+} from '@camunda8/oauth'
 import d from 'debug'
 import got from 'got'
 

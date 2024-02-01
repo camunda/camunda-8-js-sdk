@@ -1,11 +1,11 @@
-# Camunda 8 Web Modeler API Client 
+# Camunda 8 Web Modeler API Client
 
 This is a Node.js client for the Camunda 8 Web Modeler API v1.
 
-To install: 
+To install:
 
 ```bash
-npm i @jwulf/modeler --registry https://npm.pkg.github.com
+npm i @camunda8/modeler --registry https://npm.pkg.github.com
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm i @jwulf/modeler --registry https://npm.pkg.github.com
 Set the environment variables for a Console API client.
 
 ```typescript
-import { ModelerApiClient } from '@jwulf/modeler'
+import { ModelerApiClient } from '@camunda8/modeler'
 
 // Hydrate credentials from the environment using the dotenv package
 import 'dotenv/config'

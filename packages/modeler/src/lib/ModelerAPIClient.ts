@@ -1,4 +1,4 @@
-import { getConsoleToken } from '@jwulf/oauth'
+import { getConsoleToken } from '@camunda8/oauth'
 import d from 'debug'
 
 import 'isomorphic-fetch'

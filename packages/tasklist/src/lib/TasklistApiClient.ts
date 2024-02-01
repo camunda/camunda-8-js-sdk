@@ -1,4 +1,4 @@
-import { OAuthProviderImpl, getTasklistCredentials, getTasklistToken } from '@jwulf/oauth'
+import { OAuthProviderImpl, getTasklistCredentials, getTasklistToken } from '@camunda8/oauth'
 import { debug } from 'debug'
 import got from 'got'
 

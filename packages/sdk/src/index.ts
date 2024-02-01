@@ -1,9 +1,9 @@
-import * as Zeebe from '@jwulf/zeebe'
-import * as Optimize from '@jwulf/optimize'
-import * as Operate from '@jwulf/operate'
-import * as Tasklist from '@jwulf/tasklist'
-import * as Console from '@jwulf/console'
-import * as Modeler from '@jwulf/modeler'
+import * as Console from '@camunda8/console'
+import * as Modeler from '@camunda8/modeler'
+import * as Operate from '@camunda8/operate'
+import * as Optimize from '@camunda8/optimize'
+import * as Tasklist from '@camunda8/tasklist'
+import * as Zeebe from '@camunda8/zeebe'
 
 export const C8 = {
 	ZBClient: Zeebe.ZBClient,
@@ -14,4 +14,4 @@ export const C8 = {
 	ModelerApiClient: Modeler.ModelerApiClient,
 }
 
-export { Zeebe, Optimize, Operate, Tasklist, Console, Modeler }
+export { Console, Modeler, Operate, Optimize, Tasklist, Zeebe }

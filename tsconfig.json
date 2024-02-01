@@ -28,17 +28,14 @@
 		],
 		"baseUrl": "./packages",
 		"paths": {
-			"@jwulf/operate": ["operate"],
-			"@jwulf/oauth": ["oauth"],
-			"@jwulf/tasklist": ["tasklist"],
-			"@jwulf/zeebe": ["zeebe"],
-			"@jwulf/optimize": ["optimize"],
-			"@jwulf/console": ["console"],
-			"@jwulf/modeler": ["modeler"]
+			"@camunda8/operate": ["operate"],
+			"@camunda8/oauth": ["oauth"],
+			"@camunda8/tasklist": ["tasklist"],
+			"@camunda8/zeebe": ["zeebe"],
+			"@camunda8/optimize": ["optimize"],
+			"@camunda8/console": ["console"],
+			"@camunda8/modeler": ["modeler"]
 		}
 	},
-    "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
-    ]
+	"exclude": ["node_modules", "**/*.spec.ts"]
 }
