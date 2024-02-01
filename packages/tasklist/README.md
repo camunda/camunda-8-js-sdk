@@ -13,7 +13,7 @@ A Camunda 8 Tasklist API client for Node.js. Uses [camunda-saas-oauth-nodejs](ht
 ## Installation
 
 ```
-npm i camunda-tasklist-client
+npm i @camunda8/tasklist
 ```
 
 ## Usage
@@ -21,7 +21,7 @@ npm i camunda-tasklist-client
 Set the credential for Camunda SaaS in the environment, then:
 
 ```typescript
-import { TasklistApiClient } from 'camunda-tasklist-client'
+import { TasklistApiClient } from '@camunda8/tasklist'
 
 const tasklist = new TasklistApiClient()
 

@@ -1,11 +1,9 @@
 # Zeebe Node.js Client
 
-
 ![Compatible with: Camunda Platform 8](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%208-0072Ce)
 ![Community Extension](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)
 ![Lifecycle](https://img.shields.io/badge/Lifecycle-Stable-brightgreen)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
 
 This is a Node.js gRPC client for [Zeebe](https://zeebe.io), the workflow engine in [Camunda Platform 8](https://camunda.com/platform/). It is written in TypeScript and transpiled to JavaScript in the `dist` directory.
 
@@ -19,74 +17,74 @@ Get a hosted instance of Zeebe on [Camunda Cloud](https://camunda.io).
 
 **Quick Start**
 
--   [ Install ](#install)
--   [ Get Broker Topology ](#get-topology)
--   [ Deploy a process ](#deploy-process)
--   [ Start and service a process](#start-and-service-a-process)
+- [ Install ](#install)
+- [ Get Broker Topology ](#get-topology)
+- [ Deploy a process ](#deploy-process)
+- [ Start and service a process](#start-and-service-a-process)
 
--   [ Versioning ](#versioning)
--   [ Compatible Node Versions ](#node-versions)
--   [ Breaking changes in 8.1.0 ](#breaking-8.1.0)
--   [ Breaking changes in 1.0.0 ](#breaking-1.0.0)
--   [ gRPC Implementation ](#grpc-implementation)
--   [ Type difference from other Zeebe clients ](#type-difference)
--   [ A note on representing timeout durations ](#time-duration)
+- [ Versioning ](#versioning)
+- [ Compatible Node Versions ](#node-versions)
+- [ Breaking changes in 8.1.0 ](#breaking-8.1.0)
+- [ Breaking changes in 1.0.0 ](#breaking-1.0.0)
+- [ gRPC Implementation ](#grpc-implementation)
+- [ Type difference from other Zeebe clients ](#type-difference)
+- [ A note on representing timeout durations ](#time-duration)
 
 **Connection Behaviour**
 
--   [ Client-side gRPC retry in ZBClient ](#client-side-retry)
--   [ onReady(), onConnectionError(), and connected ](#on-ready)
--   [ Initial Connection Tolerance ](#initial-connection-tolerance)
+- [ Client-side gRPC retry in ZBClient ](#client-side-retry)
+- [ onReady(), onConnectionError(), and connected ](#on-ready)
+- [ Initial Connection Tolerance ](#initial-connection-tolerance)
 
 **Connecting to a Broker**
 
--   [ TLS ](#tls)
--   [ OAuth ](#oauth)
--   [ Basic Auth ](#basic-auth)
--   [ Camunda Cloud ](#camunda-cloud)
--   [ Zero-conf constructor ](#zero-conf)
+- [ TLS ](#tls)
+- [ OAuth ](#oauth)
+- [ Basic Auth ](#basic-auth)
+- [ Camunda Cloud ](#camunda-cloud)
+- [ Zero-conf constructor ](#zero-conf)
 
 **Job Workers**
 
--   [ Job Workers](#job-workers)
--   [ The `ZBWorker` Job Worker ](#create-zbworker)
--   [ Unhandled Exceptions in Task Handlers ](#unhandled-exceptions)
--   [ Completing tasks with success, failure, error, or forwarded ](#complete-tasks)
--   [ Working with Process Variables and Custom Headers ](#working-with-variables)
--   [ Constraining the Variables Fetched by the Worker ](#fetch-variable)
--   [ The "Decoupled Job Completion" pattern ](#decoupled-complete)
--   [ The `ZBBatchWorker` Job Worker ](#zbbatchworker)
--   [ Long polling ](#long-polling)
--   [ Poll Interval ](#poll-interval)
+- [ Job Workers](#job-workers)
+- [ The `ZBWorker` Job Worker ](#create-zbworker)
+- [ Unhandled Exceptions in Task Handlers ](#unhandled-exceptions)
+- [ Completing tasks with success, failure, error, or forwarded ](#complete-tasks)
+- [ Working with Process Variables and Custom Headers ](#working-with-variables)
+- [ Constraining the Variables Fetched by the Worker ](#fetch-variable)
+- [ The "Decoupled Job Completion" pattern ](#decoupled-complete)
+- [ The `ZBBatchWorker` Job Worker ](#zbbatchworker)
+- [ Long polling ](#long-polling)
+- [ Poll Interval ](#poll-interval)
 
 **Client Commands**
 
--   [ Deploy Process Models and DMN Tables ](#deploy-resource)
--   [ Start a Process Instance ](#start-process)
--   [ Start a Process Instance of a specific version of a Process definition ](#start-specific-version)
--   [ Start a process instance and await the process outcome ](#start-await)
--   [ Publish a Message ](#publish-message)
--   [ Publish a Start Message ](#publish-start-message)
--   [ Activate Jobs ](#activate-jobs)
+- [ Deploy Process Models and DMN Tables ](#deploy-resource)
+- [ Start a Process Instance ](#start-process)
+- [ Start a Process Instance of a specific version of a Process definition ](#start-specific-version)
+- [ Start a process instance and await the process outcome ](#start-await)
+- [ Publish a Message ](#publish-message)
+- [ Publish a Start Message ](#publish-start-message)
+- [ Activate Jobs ](#activate-jobs)
 
 **Other Concerns**
 
--   [ Graceful Shutdown ](#graceful-shutdown)
--   [ Logging ](#logging)
+- [ Graceful Shutdown ](#graceful-shutdown)
+- [ Logging ](#logging)
 
 **Programming with Safety**
 
--   [ Generating TypeScript constants for BPMN Models ](#generate-constants)
--   [ Generating code from a BPM Model file ](#generate-code)
--   [ Writing Strongly-typed Job Workers ](#strongly-typed)
--   [ Run-time Type Safety ](#run-time-safety)
+- [ Generating TypeScript constants for BPMN Models ](#generate-constants)
+- [ Generating code from a BPM Model file ](#generate-code)
+- [ Writing Strongly-typed Job Workers ](#strongly-typed)
+- [ Run-time Type Safety ](#run-time-safety)
 
 **Development of the Library itself**
 
--   [ Developing Zeebe Node ](#developing)
-    -   [ Tests ](#tests)
-    -   [ Writing Tests ](#writing-tests)
--   [ Contributors ](#contributors)
+- [ Developing Zeebe Node ](#developing)
+  - [ Tests ](#tests)
+  - [ Writing Tests ](#writing-tests)
+- [ Contributors ](#contributors)
 
 ## Quick Start
 
@@ -97,23 +95,15 @@ Get a hosted instance of Zeebe on [Camunda Cloud](https://camunda.io).
 ### Add the Library to your Project
 
 ```bash
-npm i zeebe-node
+npm i @camunda8/zeebe
 ```
-
-For Zeebe broker versions prior to 1.0.0:
-
-```bash
-npm i zeebe-node@0
-```
-
-Refer to [here](https://github.com/camunda-community-hub/zeebe-client-node-js/blob/v.0.25.0/README.md) for the documentation for the pre-1.0.0 version of the library.
 
 <a name = "get-topology"></a>
 
 ### Get Broker Topology
 
 ```javascript
-const ZB = require('zeebe-node')
+const ZB = require('@camunda8/zeebe')
 
 void (async () => {
 	const zbc = new ZB.ZBClient()
@@ -127,7 +117,7 @@ void (async () => {
 ### Deploy a process
 
 ```javascript
-const ZB = require('zeebe-node')
+const ZB = require('@camunda8/zeebe')
 const fs = require('fs')
 
 void (async () => {
@@ -154,55 +144,55 @@ This code demonstrates how to deploy a Zeebe process, create a process instance,
 
 ```javascript
 // Import the Zeebe Node.js client and the 'fs' module
-const ZB = require('zeebe-node');
-const fs = require('fs');
+const ZB = require('@camunda8/zeebe')
+const fs = require('fs')
 
 // Instantiate a Zeebe client with default localhost settings or environment variables
-const zbc = new ZB.ZBClient();
+const zbc = new ZB.ZBClient()
 
 // Create a Zeebe worker to handle the 'get-customer-record' service task
 const worker = zbc.createWorker({
-    // Define the task type that this worker will process
-    taskType: 'get-customer-record',
-    // Define the task handler to process incoming jobs
-    taskHandler: job => {
-        // Log the job variables for debugging purposes
-        console.log(job.variables);
+	// Define the task type that this worker will process
+	taskType: 'get-customer-record',
+	// Define the task handler to process incoming jobs
+	taskHandler: (job) => {
+		// Log the job variables for debugging purposes
+		console.log(job.variables)
 
-        // Check if the customerId variable is missing and return an error if so
-        if (!job.variables.customerId) {
-            return job.error('NO_CUSTID', 'Missing customerId in process variables');
-        }
+		// Check if the customerId variable is missing and return an error if so
+		if (!job.variables.customerId) {
+			return job.error('NO_CUSTID', 'Missing customerId in process variables')
+		}
 
-        // Add logic to retrieve the customer record from the database here
-        // ...
+		// Add logic to retrieve the customer record from the database here
+		// ...
 
-        // Complete the job with the 'customerRecordExists' variable set to true
-        return job.complete({
-            customerRecordExists: true
-        });
-    }
-});
+		// Complete the job with the 'customerRecordExists' variable set to true
+		return job.complete({
+			customerRecordExists: true,
+		})
+	},
+})
 
 // Define an async main function to deploy a process, create a process instance, and log the outcome
 async function main() {
-    // Deploy the 'new-customer.bpmn' process
-    const res = await zbc.deployProcess('./new-customer.bpmn');
-    // Log the deployment result
-    console.log('Deployed process:', JSON.stringify(res, null, 2));
+	// Deploy the 'new-customer.bpmn' process
+	const res = await zbc.deployProcess('./new-customer.bpmn')
+	// Log the deployment result
+	console.log('Deployed process:', JSON.stringify(res, null, 2))
 
-    // Create a process instance of the 'new-customer-process' process, with a customerId variable set
-    // 'createProcessInstanceWithResult' awaits the outcome
-    const outcome = await zbc.createProcessInstanceWithResult({
-        bpmnProcessId: 'new-customer-process',
-        variables: { customerId: 457 }
-    });
-    // Log the process outcome
-    console.log('Process outcome', JSON.stringify(outcome, null, 2));
+	// Create a process instance of the 'new-customer-process' process, with a customerId variable set
+	// 'createProcessInstanceWithResult' awaits the outcome
+	const outcome = await zbc.createProcessInstanceWithResult({
+		bpmnProcessId: 'new-customer-process',
+		variables: { customerId: 457 },
+	})
+	// Log the process outcome
+	console.log('Process outcome', JSON.stringify(outcome, null, 2))
 }
 
 // Call the main function to execute the script
-main();
+main()
 ```
 
 <a name = "versioning"></a>
@@ -235,11 +225,11 @@ All deprecated APIs are removed in the 8.1.0 package version. If your code relie
 
 ## Breaking changes in Zeebe 1.0.0
 
-For Zeebe brokers prior to 1.0.0, use the 0.26.z version of `zeebe-node`. This README documents the Zeebe 1.0.0 API. The previous API is documented [here](https://github.com/camunda-community-hub/zeebe-client-node-js/blob/v.0.25.0/README.md).
+For Zeebe brokers prior to 1.0.0, use the 0.26.z version of `@camunda8/zeebe`. This README documents the Zeebe 1.0.0 API. The previous API is documented [here](https://github.com/camunda-community-hub/zeebe-client-node-js/blob/v.0.25.0/README.md).
 
 Zeebe 1.0.0 contains a number of breaking changes, including the gRPC protocol and the API surface area. You must use a 1.x.y version of the client library with Zeebe 1.0.0 and later.
 
-The pre-1.0.0 API of the Node client has been deprecated, but not removed. This means that your pre-1.0.0 applications should still work, just by changing the version of `zeebe-node` in the `package.json`.
+The pre-1.0.0 API of the Node client has been deprecated, but not removed. This means that your pre-1.0.0 applications should still work, just by changing the version of `@camunda8/zeebe` in the `package.json`.
 
 <a name="grpc-implementation"></a>
 
@@ -264,7 +254,7 @@ All timeouts are ultimately communicated in _milliseconds_. They can be specifie
 All timeouts in the client library can _also_, optionally, be specified by a time value that encodes the units, using the [typed-durations](https://www.npmjs.com/package/typed-duration) package. You can specify durations for timeouts like this:
 
 ```
-const { Duration } = require('zeebe-node')
+const { Duration } = require('@camunda8/zeebe')
 
 const timeoutS = Duration.seconds.of(30) // 30s timeout
 const timeoutMs = Duration.milliseconds.of(30000) // 30s timeout in milliseconds
@@ -300,14 +290,14 @@ If no workers have been started, this can be fatal to the process if it is not h
 
 To mitigate against this, the Node client implements some client-side gRPC operation retry logic by default. This can be configured, including disabled, via configuration in the client constructor.
 
--   Operations retry, but only for [gRPC error codes 8 and 14](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md) - indicating resource exhaustion (8) or transient network failure (14). Resource exhaustion occurs when the broker starts backpressure due to latency because of load. Network failure can be caused by passing in an unresolvable gateway address (`14: DNS Resolution failed`), or by the gateway not being ready yet (`14: UNAVAILABLE: failed to connect to all addresses`).
--   Operations that fail for other reasons, such as deploying an invalid bpmn file or cancelling a process that does not exist, do not retry.
--   Retry is enabled by default, and can be disabled by passing { retry: false } to the client constructor.
--   Values for `retry`, `maxRetries` and `maxRetryTimeout` can be configured via the environment variables `ZEEBE_CLIENT_RETRY`, `ZEEBE_CLIENT_MAX_RETRIES` and `ZEEBE_CLIENT_MAX_RETRY_TIMEOUT` respectively.
--   `maxRetries` and `maxRetryTimeout` are also configurable through the constructor options, or through environment variables. By default, if not supplied, the values are:
+- Operations retry, but only for [gRPC error codes 8 and 14](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md) - indicating resource exhaustion (8) or transient network failure (14). Resource exhaustion occurs when the broker starts backpressure due to latency because of load. Network failure can be caused by passing in an unresolvable gateway address (`14: DNS Resolution failed`), or by the gateway not being ready yet (`14: UNAVAILABLE: failed to connect to all addresses`).
+- Operations that fail for other reasons, such as deploying an invalid bpmn file or cancelling a process that does not exist, do not retry.
+- Retry is enabled by default, and can be disabled by passing { retry: false } to the client constructor.
+- Values for `retry`, `maxRetries` and `maxRetryTimeout` can be configured via the environment variables `ZEEBE_CLIENT_RETRY`, `ZEEBE_CLIENT_MAX_RETRIES` and `ZEEBE_CLIENT_MAX_RETRY_TIMEOUT` respectively.
+- `maxRetries` and `maxRetryTimeout` are also configurable through the constructor options, or through environment variables. By default, if not supplied, the values are:
 
 ```TypeScript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient(gatewayAddress, {
     retry: true,
@@ -343,7 +333,7 @@ The client has a `connected` property that can be examined to determine if it ha
 The client and the worker can take an optional `onReady()` and `onConnectionError()` handler in their constructors, like this:
 
 ```TypeScript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient({
 	onReady: () => console.log(`Connected!`),
@@ -367,7 +357,7 @@ To specify it via an environment variable, set `ZEEBE_CONNECTION_TOLERANCE` to a
 To set it via the constructor, specify a value for `connectionTolerance` like this:
 
 ```TypeScript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient({
 	onReady: () => console.log(`Connected!`),
@@ -387,7 +377,7 @@ const zbWorker = zbc.createWorker({
 As well as the callback handlers, the client and workers extend the [`EventEmitter`](https://nodejs.org/api/events.html#events_class_eventemitter) class, and you can attach listeners to them for the 'ready' and 'connectionError' events:
 
 ```TypeScript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient()
 
@@ -426,7 +416,7 @@ The Node client does not use TLS by default.
 Enable a secure connection by setting `useTLS: true`:
 
 ```typescript
-const { ZBClient } = require('zeebe-node')
+const { ZBClient } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient(tlsSecuredGatewayAddress, {
 	useTLS: true,
@@ -479,7 +469,7 @@ In this case, they will be passed to the constructor automatically.
 In case you need to connect to a secured endpoint with OAuth, you can pass in OAuth credentials. This will enable TLS (unless you explicitly disable it with `useTLS: false`), and handle the OAuth flow to get / renew a JWT:
 
 ```typescript
-const { ZBClient } = require('zeebe-node')
+const { ZBClient } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient("my-secure-broker.io:443", {
 	oAuth: {
@@ -506,7 +496,7 @@ The `customRootCert` argument is optional. It can be used to provide a custom TL
 If you put a proxy in front of the broker with basic auth, you can pass in a username and password:
 
 ```typescript
-const { ZBClient } = require('zeebe-node')
+const { ZBClient } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient("my-broker-with-basic-auth.io:443", {
 	basicAuth: {
@@ -528,7 +518,7 @@ Basic Auth will also work without TLS.
 You can also connect to Camunda SaaS by using the `camundaCloud` configuration option, using the `clusterId`, `clientSecret`, and `clientId` from the Camunda SaaS Console, like this:
 
 ```typescript
-const { ZBClient } = require('zeebe-node')
+const { ZBClient } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient({
 	camundaCloud: {
@@ -553,7 +543,7 @@ The ZBClient has a 0-parameter constructor that takes the config from the enviro
 To use the zero-conf constructor, you create the client like this:
 
 ```typescript
-const { ZBClient } = require('zeebe-node')
+const { ZBClient } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient()
 ```
@@ -562,7 +552,7 @@ With no relevant environment variables set, it will default to localhost on the 
 
 The following environment variable configurations are possible with the Zero-conf constructor:
 
-From 8.3.0, multi-tenancy: 
+From 8.3.0, multi-tenancy:
 
 ```bash
 ZEEBE_TENANT_ID
@@ -632,8 +622,8 @@ ZEEBE_BASIC_AUTH_USERNAME
 
 There are two different types of job worker provided by the Zeebe Node client:
 
--   The `ZBWorker` - this worker operates on individual jobs.
--   The `ZBBatchWorker` - this worker batches jobs on the client, to allow you to batch operations that pool resources. (_This worker was introduced in 0.23.0 of the client_).
+- The `ZBWorker` - this worker operates on individual jobs.
+- The `ZBBatchWorker` - this worker batches jobs on the client, to allow you to batch operations that pool resources. (_This worker was introduced in 0.23.0 of the client_).
 
 Much of the information in the following [`ZBWorker` section](#create-zbworker) applies also to the `ZBBatchWorker`. The `ZBBatchWorker` section covers the features that differ from the `ZBWorker`.
 
@@ -650,7 +640,7 @@ The job handler receives the job object, which has methods that it can use to co
 Note: _The second argument is deprecated, and remains for backward-compatibility - it is a complete function. In the 1.0 version of the API, the complete function methods are available on the `job` object_.
 
 ```javascript
-const ZB = require('zeebe-node')
+const ZB = require('@camunda8/zeebe')
 
 const zbc = new ZB.ZBClient()
 
@@ -696,7 +686,7 @@ The worker can be configured with options. To do this, you should use the object
 Shown below are the defaults that apply if you don't supply them:
 
 ```javascript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient()
 
@@ -725,7 +715,7 @@ _Note: this behaviour is for the ZBWorker only. The ZBBatchWorker does not manag
 When a task handler throws an unhandled exception, the library will fail the job. Zeebe will then retry the job according to the retry settings of the task. Sometimes you want to halt the entire process so you can investigate. To have the library cancel the process on an unhandled exception, pass in `{failProcessOnException: true}` to the `createWorker` call:
 
 ```typescript
-import { ZBClient } from 'zeebe-node'
+import { ZBClient } from '@camunda8/zeebe'
 
 const zbc = new ZBClient()
 
@@ -770,11 +760,11 @@ From 8.2.5 of the client, you can update the variables in the workflow when you 
 
 ```javascript
 job.error({
-    errorCode: 'RECORD_NOT_FOUND',
-    errorMessage: 'Could not find the customer in the database',
-    variables: {
-        someVariable: 'someValue'
-    }
+	errorCode: 'RECORD_NOT_FOUND',
+	errorMessage: 'Could not find the customer in the database',
+	variables: {
+		someVariable: 'someValue',
+	},
 })
 ```
 
@@ -796,7 +786,7 @@ To update a key deep in the object structure of a process variable, you can use 
 
 ```TypeScript
 const merge = require('deepmerge')
-import { ZBClient } from 'zeebe-node'
+import { ZBClient } from '@camunda8/zeebe'
 
 const zbc = new ZBClient()
 
@@ -838,7 +828,7 @@ You can also use the `fetchVariable` parameter when creating a worker. Pass an a
 ```javascript
 zbc.createWorker({
 	taskType: 'process-favorite-albums',
-	taskHandler: job => {
+	taskHandler: (job) => {
 		const { name, albums } = job.variables
 		console.log(`${name} has the following albums: ${albums.join(', ')}`)
 		job.complete()
@@ -868,8 +858,8 @@ zbc.createWorker<Variables>({
 
 This parameterization does two things:
 
--   It informs the worker about the expected types of the variables. For example, if `albums` is a string, calling `join` on it will fail at runtime. Providing the type allows the compiler to reason about the valid methods that can be applied to the variables.
--   It allows the type-checker to pick up spelling errors in the strings in `fetchVariable`, by comparing them with the Variables typing.
+- It informs the worker about the expected types of the variables. For example, if `albums` is a string, calling `join` on it will fail at runtime. Providing the type allows the compiler to reason about the valid methods that can be applied to the variables.
+- It allows the type-checker to pick up spelling errors in the strings in `fetchVariable`, by comparing them with the Variables typing.
 
 Note, that this does not protect you against run-time exceptions where your typings are incorrect, or the payload simply does not match the definition that you provided.
 
@@ -908,11 +898,11 @@ You need at least the `job.key`, to be able to correlate the result back to Zeeb
 
 Here is an example:
 
--   You have a COBOL system that runs a database.
--   Somebody wrote an adapter for this COBOL database. In executes commands over SSH.
--   The adapter is accessible via a RabbitMQ "request" queue, which takes a command and a correlation id, so that its response can be correlated to this request.
--   The adapter sends back the COBOL database system response on a RabbitMQ "response" queue, with the correlation id.
--   It typically takes 15 seconds for the round-trip through RabbitMQ to the COBOL database and back.
+- You have a COBOL system that runs a database.
+- Somebody wrote an adapter for this COBOL database. In executes commands over SSH.
+- The adapter is accessible via a RabbitMQ "request" queue, which takes a command and a correlation id, so that its response can be correlated to this request.
+- The adapter sends back the COBOL database system response on a RabbitMQ "response" queue, with the correlation id.
+- It typically takes 15 seconds for the round-trip through RabbitMQ to the COBOL database and back.
 
 You want to put this system into a Zeebe-orchestrated BPMN model as a task.
 
@@ -920,15 +910,15 @@ Rather than injecting a RabbitMQ listener into the job handler, you can "_fire a
 
 Here is how you do it:
 
--   Your worker gets the job from Zeebe.
--   Your worker makes the command and sends it down the RabbitMQ "request" queue, with the `job.jobKey` as the correlation id.
--   Your worker calls `job.forward()`
+- Your worker gets the job from Zeebe.
+- Your worker makes the command and sends it down the RabbitMQ "request" queue, with the `job.jobKey` as the correlation id.
+- Your worker calls `job.forward()`
 
 Here is what that looks like in code:
 
 ```TypeScript
 import { RabbitMQSender } from './lib/my-awesome-rabbitmq-api'
-import { ZBClient, Duration } from 'zeebe-node'
+import { ZBClient, Duration } from '@camunda8/zeebe'
 
 const zbc = new ZBClient()
 
@@ -953,13 +943,13 @@ const cobolWorker = zbc.createWorker({
 
 Now for the response part:
 
--   Another part of your system listens to the RabbitMQ response queue.
--   It gets a response back from the COBOL adapter.
--   It examines the response, then sends the appropriate outcome to Zeebe, using the jobKey that has been attached as the correlationId
+- Another part of your system listens to the RabbitMQ response queue.
+- It gets a response back from the COBOL adapter.
+- It examines the response, then sends the appropriate outcome to Zeebe, using the jobKey that has been attached as the correlationId
 
 ```TypeScript
 import { RabbitMQListener } from './lib/my-awesome-rabbitmq-api'
-import { ZBClient } from 'zeebe-node'
+import { ZBClient } from '@camunda8/zeebe'
 
 const zbc = new ZBClient()
 
@@ -992,8 +982,8 @@ See also the section "[Publish a Message](#publish-message)", for a pattern that
 
 The `ZBBatchWorker` Job Worker batches jobs before calling the job handler. Its fundamental differences from the ZBWorker are:
 
--   Its job handler receives an _array_ of one or more jobs.
--   The handler is not invoked immediately, but rather when enough jobs are batched, or a job in the batch is at risk of being timed out by the Zeebe broker.
+- Its job handler receives an _array_ of one or more jobs.
+- The handler is not invoked immediately, but rather when enough jobs are batched, or a job in the batch is at risk of being timed out by the Zeebe broker.
 
 You can use the batch worker if you have tasks that _benefit from processing together_, but are _not related in the BPMN model_.
 
@@ -1003,8 +993,8 @@ The batch worker works on a _first-of_ batch size _or_ batch timeout basis.
 
 You must configure both `jobBatchMinSize` and `jobBatchMaxTime`. Whichever condition is met first will trigger the processing of the jobs:
 
--   Enough jobs are available to the worker to satisfy the minimum job batch size;
--   The batch has been building for the maximum amount of time - "_we're doing this now, before the earliest jobs in the batch time out on the broker_".
+- Enough jobs are available to the worker to satisfy the minimum job batch size;
+- The batch has been building for the maximum amount of time - "_we're doing this now, before the earliest jobs in the batch time out on the broker_".
 
 You should be sure to specify a `timeout` for your worker that is `jobBatchMaxTime` _plus_ the expected latency of the external call _plus_ your processing time and network latency, to avoid the broker timing your batch worker's lock and making the jobs available to another worker. That would defeat the whole purpose.
 
@@ -1012,7 +1002,7 @@ Here is an example of using the `ZBBatchWorker`:
 
 ```TypeScript
 import { API } from './lib/my-awesome-external-api'
-import { ZBClient, BatchedJob, Duration } from 'zeebe-node'
+import { ZBClient, BatchedJob, Duration } from '@camunda8/zeebe'
 
 const zbc = new ZBClient()
 
@@ -1065,7 +1055,7 @@ To use a different long polling duration, pass in a long poll timeout in millise
 Long polling for workers is configured in the ZBClient like this:
 
 ```typescript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient('serverAddress', {
 	longPoll: Duration.minutes.of(10), // Ten minutes - inherited by workers
@@ -1172,10 +1162,8 @@ From 8.3.1, you can deploy a form to the Zeebe broker:
 
 ```javascript
 async function deploy() {
-    const zbc = new ZBClient()
-    const form = fs.readFileSync(
-		'./src/__tests__/testdata/form_1.form'
-	)
+	const zbc = new ZBClient()
+	const form = fs.readFileSync('./src/__tests__/testdata/form_1.form')
 	const result = await zbc.deployResource({
 		form,
 		name: 'form_1.form',
@@ -1188,15 +1176,15 @@ async function deploy() {
 ### Start a Process Instance
 
 ```javascript
-const ZB = require('zeebe-node')
+const ZB = require('@camunda8/zeebe')
 
 ;(async () => {
 	const zbc = new ZB.ZBClient('localhost:26500')
 	const result = await zbc.createProcessInstance({
-        bpmnProcessId: 'test-process',
+		bpmnProcessId: 'test-process',
 		variables: {
-            testData: 'something'
-        }
+			testData: 'something',
+		},
 	})
 	console.log(result)
 })()
@@ -1220,7 +1208,7 @@ Example output:
 From version 0.22 of the client onward:
 
 ```javascript
-const ZB = require('zeebe-node')
+const ZB = require('@camunda8/zeebe')
 
 ;(async () => {
 	const zbc = new ZB.ZBClient('localhost:26500')
@@ -1244,10 +1232,10 @@ From version 0.22 of the broker and client, you can await the outcome of a proce
 ```typescript
 async function getOutcome() {
 	const result = await zbc.createProcessInstanceWithResult({
-        bpmnProcessId: processId,
-        variables: {
-		    sourceValue: 5
-        }
+		bpmnProcessId: processId,
+		variables: {
+			sourceValue: 5,
+		},
 	})
 	return result
 }
@@ -1258,7 +1246,7 @@ Be aware that by default, **this will throw an exception if the process takes lo
 To override the gateway's default timeout for a process that needs more time to complete:
 
 ```typescript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient()
 
@@ -1281,7 +1269,7 @@ const result = await zbc.createProcessInstanceWithResult({
 You can publish a message to the Zeebe broker that will be correlated with a running process instance:
 
 ```javascript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZBClient()
 
@@ -1304,9 +1292,9 @@ Another example: think of a system that emits events, and has no knowledge of a 
 
 In these two cases, I can publish a message to Zeebe, and let the broker figure out which processes are:
 
--   Sitting at an intermediate message catch event waiting for this message; or
--   In a sub-process that has a boundary event that will be triggered by this message; or
--   Would be started by a message start event, on receiving this message.
+- Sitting at an intermediate message catch event waiting for this message; or
+- In a sub-process that has a boundary event that will be triggered by this message; or
+- Would be started by a message start event, on receiving this message.
 
 The Zeebe broker correlates a message to a running process instance _not on the job key_ - but on _the value of one of the process variables_ (for intermediate message events) and _the message name_ (for all message events, including start messages).
 
@@ -1326,7 +1314,7 @@ In this case, the correlation key is optional, and all Message Start events that
 You can use the `publishStartMessage()` method to publish a message with no correlation key (it will be set to a random uuid in the background):
 
 ```javascript
-const { ZBClient, Duration } = require('zeebe-node')
+const { ZBClient, Duration } = require('@camunda8/zeebe')
 
 const zbc = new ZB.ZBClient('localhost:26500')
 zbc.publishStartMessage({
@@ -1390,7 +1378,7 @@ const zbc = new ZBClient({ stdout: logger })
 From version v0.23.0-alpha.1, the library logs human-readable logs by default, using the `ZBSimpleLogger`. If you want structured logs as stringified JSON, pass in `ZBJSONLogger` to the constructor `stdout` option, like this:
 
 ```typescript
-const { ZBJsonLogger, ZBClient } = require('zeebe-node')
+const { ZBJsonLogger, ZBClient } = require('@camunda8/zeebe')
 const zbc = new ZBClient({ stdout: ZBJsonLogger })
 ```
 
@@ -1412,10 +1400,10 @@ Message names and Task Types are untyped magic strings. You can generate type in
 Install the package globally:
 
 ```
-npm i -g zeebe-node
+npm i -g @camunda8/zeebe
 ```
 
-Now you have the command `zeebe-node <filename>` that parses a BPMN file and emits type definitions.
+Now you have the command `@camunda8/zeebe <filename>` that parses a BPMN file and emits type definitions.
 
 #### All versions
 
@@ -1423,7 +1411,7 @@ The `BpmnParser` class provides a static method `generateConstantsForBpmnFiles()
 This method takes a filepath and returns TypeScript definitions that you can use to avoid typos in your code, and to reason about the completeness of your task worker coverage.
 
 ```javascript
-const ZB = require('zeebe-node')
+const ZB = require('@camunda8/zeebe')
 ;(async () => {
 	console.log(await ZB.BpmnParser.generateConstantsForBpmnFiles(processFile))
 })()
@@ -1520,19 +1508,19 @@ Your type definition may be incorrect, or the variables or custom headers may si
 
 You should consider:
 
--   Writing interface definitions for your payloads to get design-time assist for protection against spelling errors as you demarshal and update variables.
--   Testing for the existence of variables and properties on payloads, and writing defensive pathways to deal with missing properties. If you mark _everything_ as optional in your interfaces, the type-checker will force you to write that code.
--   Surfacing code exceptions operationally to detect and diagnose mismatched expectations.
--   If you want to validate inputs and outputs to your system at runtime, you can use [io-ts](https://github.com/gcanti/io-ts). Once data goes into that, it either exits through an exception handler, or is guaranteed to have the shape of the defined codec at run-time.
+- Writing interface definitions for your payloads to get design-time assist for protection against spelling errors as you demarshal and update variables.
+- Testing for the existence of variables and properties on payloads, and writing defensive pathways to deal with missing properties. If you mark _everything_ as optional in your interfaces, the type-checker will force you to write that code.
+- Surfacing code exceptions operationally to detect and diagnose mismatched expectations.
+- If you want to validate inputs and outputs to your system at runtime, you can use [io-ts](https://github.com/gcanti/io-ts). Once data goes into that, it either exits through an exception handler, or is guaranteed to have the shape of the defined codec at run-time.
 
 As with everything, it is a balancing act / trade-off between correctness, safety, and speed. You do not want to lock everything down while you are still exploring.
 
 I recommend the following scale, to match the maturity of your system:
 
--   Start with `<any>` typing for the workers; then
--   Develop interfaces to describe the DTOs represented in your process variables;
--   Use optional types on those interfaces to check your defensive programming structures;
--   Lock down the run-time behaviour with io-ts as the boundary validator.
+- Start with `<any>` typing for the workers; then
+- Develop interfaces to describe the DTOs represented in your process variables;
+- Use optional types on those interfaces to check your defensive programming structures;
+- Lock down the run-time behaviour with io-ts as the boundary validator.
 
 You may choose to start with the DTOs. Anyway, there are options.
 

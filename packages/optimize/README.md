@@ -1,6 +1,6 @@
 # Optimize API Client for Node.js
 
-[![NPM](https://nodei.co/npm/optimize-api-client.png)](https://npmjs.org/package/optimize-api-client) 
+[![NPM](https://nodei.co/npm/optimize-api-client.png)](https://npmjs.org/package/optimize-api-client)
 
 ![Community Extension](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)
 
@@ -15,15 +15,15 @@ Uses [camunda-saas-oauth-nodejs](https://github.com/camunda-community-hub/camund
 ## Installation
 
 ```
-npm i optimize-api-client
+npm i @camunda8/optimize
 ```
 
 ## Usage
 
-Set the credential for Camunda SaaS in the environment, then: 
+Set the credential for Camunda SaaS in the environment, then:
 
 ```typescript
-import { OptimizeApiClient } from 'optimize-api-client`
+import { OptimizeApiClient } from '@camunda8/optimize`
 
 const optimize = new OperateApiClient()
 

@@ -1,6 +1,6 @@
 # Camunda SaaS OAuth for Node.js
 
- [![NPM](https://nodei.co/npm/camunda-saas-oauth.png)](https://npmjs.org/package/camunda-saas-oauth) 
+[![NPM](https://nodei.co/npm/camunda-saas-oauth.png)](https://npmjs.org/package/camunda-saas-oauth)
 
 ![Community Extension](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)
 
@@ -17,30 +17,30 @@ Caches the token to disk, and refreshes tokens before they expire.
 Install as a dependency:
 
 ```
-npm i camunda-saas-oauth
+npm i @camunda8/oauth
 ```
 
-## Usage 
+## Usage
 
 ```typescript
-import * as auth from "camunda-saas-oauth"
+import * as auth from '@camunda8/oauth'
 
-async function main () {
-    const useragent = 'myclient-nodejs/1.0.0'
-    const operateToken = await auth.getOperateToken(useragent)
-    const tasklistToken = await auth.getTasklistToken(useragent)
-    const optimizeToken = await auth.getOptimizeToken(useragent)
-    const zeebeToken = await auth.getZeebeToken(useragent)
-    return {
-        operateToken,
-        tasklistToken,
-        optimizeToken,
-        zeebeToken
-    }
-}   
+async function main() {
+	const useragent = 'myclient-nodejs/1.0.0'
+	const operateToken = await auth.getOperateToken(useragent)
+	const tasklistToken = await auth.getTasklistToken(useragent)
+	const optimizeToken = await auth.getOptimizeToken(useragent)
+	const zeebeToken = await auth.getZeebeToken(useragent)
+	return {
+		operateToken,
+		tasklistToken,
+		optimizeToken,
+		zeebeToken,
+	}
+}
 ```
 
-The call will throw if the client credentials are not found in the environment, or you request a token for a scope for which the credentials are not valid. 
+The call will throw if the client credentials are not found in the environment, or you request a token for a scope for which the credentials are not valid.
 
 ## Configuration
 
@@ -56,9 +56,9 @@ Example of a custom user agent string: `mycustom-client-nodejs/${pkg.version} ${
 
 ## Advanced Usage
 
-The methods that return tokens use an `OAuthProvider` to get the tokens. 
- 
-The `OAuthProvider` class is a wrapper that hydrates a `OAuthProviderImpl` with credentials from the environment. 
+The methods that return tokens use an `OAuthProvider` to get the tokens.
+
+The `OAuthProvider` class is a wrapper that hydrates a `OAuthProviderImpl` with credentials from the environment.
 
 If you want to manually set the credentials (for example, to address multiple clusters in a single application), you can do so by creating an `OAuthProviderImpl` directly, like so:
 
@@ -66,11 +66,13 @@ If you want to manually set the credentials (for example, to address multiple cl
 import { OAuthProviderImpl } from 'camunda-saas-oauth'
 
 const oauth = new OAuthProviderImpl({
-        /** OAuth Endpoint URL */
-        authServerUrl,
-        /** OAuth Audience */
-        audience, clientId, clientSecret,
-        userAgentString
+	/** OAuth Endpoint URL */
+	authServerUrl,
+	/** OAuth Audience */
+	audience,
+	clientId,
+	clientSecret,
+	userAgentString,
 })
 
 const operateToken = oauth.getToken('OPERATE')
@@ -78,5 +80,3 @@ const optimizeToken = oauth.getToken('OPTIMIZE')
 const tasklistToken = oauth.getToken('TASKLIST')
 const zeebeToken = oauth.getToken('ZEEBE')
 ```
-
-
