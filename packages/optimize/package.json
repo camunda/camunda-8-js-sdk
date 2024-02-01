@@ -36,5 +36,6 @@
 		"@camunda8/oauth": "^8.4.0",
 		"debug": "^4.3.4",
 		"got": "^11.8.5"
-	}
+	},
+	"gitHead": "45b1f93347bbe930d5782287d6821efec95e9a63"
 }

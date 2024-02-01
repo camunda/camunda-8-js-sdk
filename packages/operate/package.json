@@ -35,5 +35,6 @@
 	},
 	"devDependencies": {
 		"typedoc": "^0.23.21"
-	}
+	},
+	"gitHead": "45b1f93347bbe930d5782287d6821efec95e9a63"
 }

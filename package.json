@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"publish": "lerna run build && lerna publish",
+		"publish": "lerna run build && lerna run test && lerna publish",
 		"commit": "cz",
 		"publish:canary": "lerna run build && lerna run test && lerna publish --canary",
 		"prepare": "husky install",
@@ -13,6 +13,7 @@
 		"format": "lerna run prettify"
 	},
 	"keywords": [],
+	"private": true,
 	"author": "",
 	"license": "ISC",
 	"workspaces": [

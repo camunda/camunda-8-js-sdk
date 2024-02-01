@@ -40,5 +40,6 @@
 		"@camunda8/optimize": "^8.4.0",
 		"@camunda8/tasklist": "^8.4.0",
 		"@camunda8/zeebe": "^8.4.0"
-	}
+	},
+	"gitHead": "45b1f93347bbe930d5782287d6821efec95e9a63"
 }
