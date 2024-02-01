@@ -1,6 +1,6 @@
 {
 	"name": "@camunda8/zeebe",
-	"version": "8.3.0",
+	"version": "8.4.0",
 	"description": "The Node.js client library for the Zeebe Workflow Automation Engine.",
 	"keywords": [
 		"zeebe",
@@ -78,7 +78,7 @@
 		"uuid": "^7.0.3"
 	},
 	"devDependencies": {
-		"@camunda8/operate": "^8.3.0",
+		"@camunda8/operate": "^8.4.0",
 		"@sitapati/testcontainers": "^2.8.1",
 		"@types/debug": "0.0.31",
 		"@types/got": "^9.6.9",

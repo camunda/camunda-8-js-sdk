@@ -1,6 +1,6 @@
 {
     "name": "@camunda8/tasklist",
-    "version": "8.3.0",
+    "version": "8.4.0",
     "description": "A Camunda 8 Tasklist API client for Node.js",
     "main": "dist/index.js",
     "scripts": {
@@ -29,11 +29,11 @@
     },
     "homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
     "devDependencies": {
-        "@camunda8/zeebe": "^8.3.0",
+        "@camunda8/zeebe": "^8.4.0",
         "typedoc": "^0.23.25"
     },
     "dependencies": {
-        "@camunda8/oauth": "^8.3.0",
+        "@camunda8/oauth": "^8.4.0",
         "@types/debug": "^4.1.12",
         "debug": "^4.3.4",
         "dotenv": "^16.3.1",

@@ -1,6 +1,6 @@
 {
 	"name": "@camunda8/operate",
-	"version": "8.3.0",
+	"version": "8.4.0",
 	"description": "A Node.js client for interacting with the Camunda 8 Operate API",
 	"main": "dist/index.js",
 	"scripts": {
@@ -27,7 +27,7 @@
 	},
 	"homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
 	"dependencies": {
-		"@camunda8/oauth": "^8.3.0",
+		"@camunda8/oauth": "^8.4.0",
 		"got": "^11.8.5"
 	},
 	"devDependencies": {

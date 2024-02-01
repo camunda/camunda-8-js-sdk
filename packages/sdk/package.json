@@ -1,6 +1,6 @@
 {
 	"name": "@camunda8/sdk",
-	"version": "8.3.0",
+	"version": "8.4.0",
 	"description": "The Camunda Platform 8 SDK for Node.js",
 	"main": "dist/index.js",
 	"scripts": {
@@ -31,11 +31,11 @@
 		"typedoc": "^0.23.24"
 	},
 	"dependencies": {
-		"@camunda8/console": "^8.3.0",
-		"@camunda8/tasklist": "8.3.0",
-		"@camunda8/operate": "8.3.0",
-		"@camunda8/optimize": "8.3.0",
-		"@camunda8/zeebe": "^8.3.0",
-		"@camunda8/modeler": "^8.3.0"
+		"@camunda8/console": "^8.4.0",
+		"@camunda8/modeler": "^8.4.0",
+		"@camunda8/operate": "^8.4.0",
+		"@camunda8/optimize": "^8.4.0",
+		"@camunda8/tasklist": "^8.4.0",
+		"@camunda8/zeebe": "^8.4.0"
 	}
 }

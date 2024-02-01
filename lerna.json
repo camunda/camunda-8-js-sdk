@@ -1,17 +1,15 @@
 {
-  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-  "version": "8.3.0",
-  "packages": [
-    "packages/*"
-  ],
-  "command": {
-    "publish": {
-      "registry": "https://npm.pkg.github.com",
-      "conventionalCommits": true
-    },
-    "version": {
-      "conventionalCommits": true
-    }
-  },
-  "npmClient": "npm"
+	"$schema": "node_modules/lerna/schemas/lerna-schema.json",
+	"version": "8.4.0",
+	"packages": ["packages/*"],
+	"command": {
+		"publish": {
+			"registry": "https://npm.pkg.github.com",
+			"conventionalCommits": true
+		},
+		"version": {
+			"conventionalCommits": true
+		}
+	},
+	"npmClient": "npm"
 }

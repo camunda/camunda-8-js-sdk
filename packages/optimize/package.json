@@ -1,6 +1,6 @@
 {
 	"name": "@camunda8/optimize",
-	"version": "8.3.0",
+	"version": "8.4.0",
 	"description": "A Node.js client for interacting with the Camunda 8 Optimize API",
 	"main": "dist/index.js",
 	"scripts": {
@@ -30,7 +30,7 @@
 		"typedoc": "^0.23.21"
 	},
 	"dependencies": {
-		"@camunda8/oauth": "^8.3.0",
+		"@camunda8/oauth": "^8.4.0",
 		"debug": "^4.3.4",
 		"got": "^11.8.5"
 	}

@@ -1,3 +1,14 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+# 8.4.0 (2024-02-01)
+
+### Features
+
+- **tasklist:** enable multiple clusters via constructor options ([#16](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/16)) ([fb12e25](https://github.com/camunda-community-hub/camunda-8-js-sdk/commit/fb12e258321e6bba03d11d38119c740f0e242773))
+
 # CHANGELOG
 
 # 1.2.4
@@ -6,4 +17,4 @@
 
 _Things that were broken and are now fixed._
 
--   Cached tokens were not correctly expired, leading to a 401 Unauthorized response to API calls after some time. The tokens are now correctly evicted from the cache. Thanks to [@hanh-le-clv](https://github.com/hanh-le-clv) for reporting this. See [this issue](https://github.com/camunda-community-hub/camunda-8-sdk-node-js/issues/7) for more details.
+- Cached tokens were not correctly expired, leading to a 401 Unauthorized response to API calls after some time. The tokens are now correctly evicted from the cache. Thanks to [@hanh-le-clv](https://github.com/hanh-le-clv) for reporting this. See [this issue](https://github.com/camunda-community-hub/camunda-8-sdk-node-js/issues/7) for more details.

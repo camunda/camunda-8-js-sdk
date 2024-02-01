@@ -1,6 +1,6 @@
 {
 	"name": "@camunda8/modeler",
-	"version": "8.3.0",
+	"version": "8.4.0",
 	"description": "JavaScript client for Camunda 8 Web Modeler",
 	"main": "dist/index.js",
 	"scripts": {
@@ -24,7 +24,7 @@
 	},
 	"homepage": "https://github.com/camunda-community-hub/camunda-8-js-sdk#readme",
 	"dependencies": {
-		"@camunda8/oauth": "^8.3.0",
+		"@camunda8/oauth": "^8.4.0",
 		"debug": "^4.3.4",
 		"isomorphic-fetch": "^3.0.0"
 	},
