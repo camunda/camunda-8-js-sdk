@@ -4,11 +4,13 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"build": "lerna run build",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"publish": "lerna run build && lerna run test && lerna publish",
 		"commit": "cz",
 		"publish:canary": "lerna run build && lerna run test && lerna publish --canary",
 		"prepare": "husky install",
+		"prepublishOnly": "npm run build",
 		"lint": "eslint 'packages/**/*.{ts,tsx}'",
 		"format": "lerna run prettify"
 	},
