@@ -1,7 +1,7 @@
 on: [push, pull_request]
 
 jobs:
-  integration:
+  local-integration:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
