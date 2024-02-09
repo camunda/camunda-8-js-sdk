@@ -7,6 +7,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: disable and stop mono-xsp4.service
+        run: |
+          sudo systemctl stop mono-xsp4.service
+          sudo systemctl disable mono-xsp4.service
+
       - name: Set up Docker Compose
         run: |
           docker-compose -f docker/docker-compose.yml up -d
