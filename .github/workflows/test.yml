@@ -37,4 +37,4 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker-compose down
+        run: docker-compose -f docker/docker-compose.yml down
