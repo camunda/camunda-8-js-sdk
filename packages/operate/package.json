@@ -4,7 +4,9 @@
 	"description": "A Node.js client for interacting with the Camunda 8 Operate API",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "jest --detectOpenHandles",
+		"test": "jest --detectOpenHandles --verbose true",
+		"test:integration": "jest --detectOpenHandles --verbose true --testPathIgnorePatterns integration",
+		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose true",
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc",

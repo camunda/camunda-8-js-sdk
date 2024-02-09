@@ -4,8 +4,9 @@
 	"description": "A Node.js Camunda 8 Web Console API client",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration",
+		"test": "jest --detectOpenHandles  --verbose true --testPathIgnorePatterns integration",
 		"test:integration": "jest --runInBand --detectOpenHandles --verbose true",
+		"test:local-integration": "exit 0",
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc",

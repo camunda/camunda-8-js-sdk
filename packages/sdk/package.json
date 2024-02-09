@@ -4,7 +4,8 @@
 	"description": "The Camunda Platform 8 SDK for Node.js",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "jest --detectOpenHandles",
+		"test": "jest --detectOpenHandles --verbose",
+		"test:integration": "jest --detectOpenHandles --verbose --testPathIgnorePatterns integration",
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc",

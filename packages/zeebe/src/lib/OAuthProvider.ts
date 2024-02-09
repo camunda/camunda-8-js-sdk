@@ -173,18 +173,24 @@ export class OAuthProvider {
 				},
 			})
 			.then((res) => {
-				return this.safeJSONParse(res.body).then((token) => {
-					debug('Received token from token endpoint.')
+				return this.safeJSONParse(res.body)
+					.then((token) => {
+						debug('Received token from token endpoint.')
 
-					const d = new Date()
-					token.expiry = d.setSeconds(d.getSeconds()) + token.expires_in * 1000
-					if (this.useFileCache) {
-						this.toFileCache(token)
-					}
-					this.tokenCache[this.clientId] = token
-					this.startExpiryTimer(token)
-					return token.access_token
-				})
+						const d = new Date()
+						token.expiry =
+							d.setSeconds(d.getSeconds()) + token.expires_in * 1000
+						if (this.useFileCache) {
+							this.toFileCache(token)
+						}
+						this.tokenCache[this.clientId] = token
+						this.startExpiryTimer(token)
+						return token.access_token
+					})
+					.catch((e) => {
+						debug(res.body)
+						throw e
+					})
 			})
 	}
 
@@ -193,6 +199,7 @@ export class OAuthProvider {
 			try {
 				resolve(JSON.parse(thing))
 			} catch (e: unknown) {
+				debug('Failed to JSON.parse', thing)
 				reject(e)
 			}
 		})

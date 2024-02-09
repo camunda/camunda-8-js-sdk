@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { createEnv } from 'neon-env'
 
 import { _getConsoleEnv } from './console'

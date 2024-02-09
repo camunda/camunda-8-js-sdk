@@ -132,7 +132,13 @@ export class OAuthProviderImpl {
 					'user-agent': this.userAgentString,
 				},
 			})
-				.then((res) => res.json())
+				.then((res) =>
+					res.json().catch(() => {
+						throw new Error(
+							`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
+						)
+					})
+				)
 				// .then(res => this.safeJSONParse(res)
 				.then((t) => {
 					const token = { ...(t as Token), audience }

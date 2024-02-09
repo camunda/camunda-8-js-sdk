@@ -6,6 +6,7 @@
 	"scripts": {
 		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration",
 		"test:integration": "jest --runInBand --detectOpenHandles --verbose true",
+		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose true",
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc --project tsconfig.json",
@@ -29,6 +30,7 @@
 	"homepage": "https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs#readme",
 	"dependencies": {
 		"debug": "^4.3.4",
+		"dotenv": "^16.4.1",
 		"isomorphic-fetch": "^3.0.0",
 		"neon-env": "^0.1.1"
 	},
