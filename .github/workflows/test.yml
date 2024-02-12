@@ -10,6 +10,7 @@ jobs:
       # Workaround for https://github.com/actions/runner-images/issues/2821
       - name: disable and stop mono-xsp4.service
         run: |
+          sudo systemctl status mono-xsp4.service
           sudo systemctl stop mono-xsp4.service
           sudo systemctl disable mono-xsp4.service
 
