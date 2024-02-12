@@ -21,6 +21,8 @@ jobs:
           sudo systemctl status mono-xsp4.service
           sudo systemctl stop mono-xsp4.service
           sudo systemctl disable mono-xsp4.service
+          echo Post-stop status check:
+          sudo systemctl status mono-xsp4.service
 
       - name: Set up Docker Compose
         run: |
