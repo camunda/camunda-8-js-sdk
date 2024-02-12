@@ -16,12 +16,8 @@ jobs:
         run: npm install
 
       # Workaround for https://github.com/actions/runner-images/issues/2821
-      - name: disable and stop mono-xsp4.service
-        run: |
-          killall mono
-          ps aux | grep mono
-          kill -9 mono
-          ps aux | grep mono
+      - name: Remove mono blocking 8084 port
+        run: sudo kill -9 $(sudo lsof -t -i:8084)
 
       - name: Set up Docker Compose
         run: |
