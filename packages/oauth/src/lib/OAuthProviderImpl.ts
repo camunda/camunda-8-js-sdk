@@ -123,34 +123,35 @@ export class OAuthProviderImpl {
 		const body = `audience=${this.getAudience(audience)}&client_id=${
 			this.clientId
 		}&client_secret=${this.clientSecret}&grant_type=client_credentials`
-		return (
-			fetch(this.authServerUrl, {
-				method: 'POST',
-				body,
-				headers: {
-					'content-type': 'application/x-www-form-urlencoded',
-					'user-agent': this.userAgentString,
-				},
-			})
-				.then((res) =>
-					res.json().catch(() => {
-						throw new Error(
-							`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
-						)
-					})
-				)
-				// .then(res => this.safeJSONParse(res)
-				.then((t) => {
-					const token = { ...(t as Token), audience }
-					if (this.useFileCache) {
-						this.sendToFileCache({ audience, token })
-					}
-					this.sendToMemoryCache({ audience, token })
-					trace(`Got token from endpoint: \n${token.access_token}`)
-					trace(`Token expires in ${token.expires_in} seconds`)
-					return token.access_token
+		return fetch(this.authServerUrl, {
+			method: 'POST',
+			body,
+			headers: {
+				'content-type': 'application/x-www-form-urlencoded',
+				'user-agent': this.userAgentString,
+			},
+		})
+			.then((res) =>
+				res.json().catch(() => {
+					trace(
+						`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
+					)
+					throw new Error(
+						`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
+					)
 				})
-		)
+			)
+			.then((t) => {
+				trace(`Got token: ${t}`)
+				const token = { ...(t as Token), audience }
+				if (this.useFileCache) {
+					this.sendToFileCache({ audience, token })
+				}
+				this.sendToMemoryCache({ audience, token })
+				trace(`Got token from endpoint: \n${token.access_token}`)
+				trace(`Token expires in ${token.expires_in} seconds`)
+				return token.access_token
+			})
 	}
 
 	private sendToMemoryCache({
