@@ -4,7 +4,7 @@ import * as os from 'os'
 
 import { debug } from 'debug'
 
-import { OAuthProviderConfig, Token } from '../index'
+import { OAuthProviderConfig, Token, TokenError } from '../index'
 
 const trace = debug('camunda:token')
 
@@ -142,7 +142,20 @@ export class OAuthProviderImpl {
 				})
 			)
 			.then((t) => {
-				trace(`Got token: ${JSON.stringify(t, null, 2)}`)
+				trace(
+					`Got token for Client Id ${this.clientId}: ${JSON.stringify(
+						t,
+						null,
+						2
+					)}`
+				)
+				const isTokenError = (t: unknown): t is TokenError =>
+					!!(t as TokenError).error
+				if (isTokenError(t)) {
+					throw new Error(
+						`Failed to get token: ${t.error} - ${t.error_description}`
+					)
+				}
 				const token = { ...(t as Token), audience }
 				if (this.useFileCache) {
 					this.sendToFileCache({ audience, token })

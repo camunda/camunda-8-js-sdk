@@ -7,6 +7,11 @@ export interface Token {
 	audience: string
 }
 
+export interface TokenError {
+	error: string
+	error_description: string
+}
+
 export interface OAuthProviderConfig {
 	/** OAuth Endpoint URL */
 	authServerUrl: string
@@ -17,14 +22,14 @@ export interface OAuthProviderConfig {
 	userAgentString: string
 }
 
-export { OAuthProviderImpl } from './lib/OAuthProviderImpl'
 export { OAuthProvider } from './lib/OAuthProvider'
+export { OAuthProviderImpl } from './lib/OAuthProviderImpl'
 
+export { getConsoleToken } from './lib/Console'
 export { getOperateToken } from './lib/Operate'
 export { getOptimizeToken } from './lib/Optimize'
 export { getTasklistToken } from './lib/Tasklist'
 export { getZeebeToken } from './lib/Zeebe'
-export { getConsoleToken } from './lib/Console'
 
 export {
 	getCamundaCredentialsFromEnv,
