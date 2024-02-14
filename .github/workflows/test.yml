@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -44,6 +44,7 @@ jobs:
           CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
           CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8081
           CAMUNDA_TEST_TYPE: local
+          DEBUG: camunda:token
 
       - name: Cleanup
         if: always()
