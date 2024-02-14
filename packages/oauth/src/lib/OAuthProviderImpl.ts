@@ -142,7 +142,7 @@ export class OAuthProviderImpl {
 				})
 			)
 			.then((t) => {
-				trace(`Got token: ${t}`)
+				trace(`Got token: ${JSON.stringify(t, null, 2)}`)
 				const token = { ...(t as Token), audience }
 				if (this.useFileCache) {
 					this.sendToFileCache({ audience, token })

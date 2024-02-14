@@ -1,3 +1,5 @@
+name: Run Local Integration Tests
+
 on: [push, pull_request]
 
 jobs:
