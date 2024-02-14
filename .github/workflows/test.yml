@@ -43,8 +43,7 @@ jobs:
           CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
           CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
           CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8081
-          CAMUNDA_CLUSTER_ID: unused # This needs to be removed as a requirement
-          CAMUNDA_CLUSTER_REGION: unused # This needs to be removed as a requirement
+          CAMUNDA_TEST_TYPE: local
 
       - name: Cleanup
         if: always()

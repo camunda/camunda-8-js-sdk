@@ -103,11 +103,11 @@ function _getEnv() {
 		},
 		CAMUNDA_CLUSTER_ID: {
 			type: 'string',
-			optional: false,
+			optional: true,
 		},
 		CAMUNDA_CLUSTER_REGION: {
 			type: 'string',
-			optional: false,
+			optional: true,
 		},
 		CAMUNDA_CREDENTIALS_SCOPES: {
 			type: 'string',

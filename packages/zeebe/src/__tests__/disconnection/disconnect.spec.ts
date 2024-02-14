@@ -5,7 +5,7 @@ import { ZBClient } from '../..'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 
-const ZEEBE_DOCKER_TAG = '8.0.2'
+const ZEEBE_DOCKER_TAG = '8.4.0'
 
 jest.setTimeout(900000)
 

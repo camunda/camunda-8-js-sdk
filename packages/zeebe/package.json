@@ -46,7 +46,7 @@
 		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection",
 		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --detectOpenHandles --verbose true",
 		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration",
-		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose true",
+		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection",
 		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection local-integration --detectOpenHandles --verbose true",
 		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles disconnection",
 		"test&docs": "npm test && npm run docs",

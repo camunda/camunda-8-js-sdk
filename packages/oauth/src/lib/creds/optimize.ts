@@ -24,11 +24,11 @@ export function _getOptimizeEnv() {
 		},
 		CAMUNDA_CLUSTER_ID: {
 			type: 'string',
-			optional: false,
+			optional: true,
 		},
 		CAMUNDA_CLUSTER_REGION: {
 			type: 'string',
-			optional: false,
+			optional: true,
 		},
 		CAMUNDA_CREDENTIALS_SCOPES: {
 			type: 'string',
@@ -48,8 +48,8 @@ export function _getOptimizeEnv() {
 		ZEEBE_CLIENT_SECRET: string
 		ZEEBE_AUTHORIZATION_SERVER_URL: string
 		ZEEBE_TOKEN_AUDIENCE: string
-		CAMUNDA_CLUSTER_ID: string
-		CAMUNDA_CLUSTER_REGION: string
+		CAMUNDA_CLUSTER_ID?: string
+		CAMUNDA_CLUSTER_REGION?: string
 		CAMUNDA_CREDENTIALS_SCOPES: string
 		CAMUNDA_OPTIMIZE_BASE_URL: string
 		CAMUNDA_OAUTH_URL: string
