@@ -46,6 +46,8 @@ export CAMUNDA_OPTIMIZE_BASE_URL='http://localhost:8083'
 export CAMUNDA_TEST_TYPE='local'
 ```
 
+Now run the integration tests against Self-Managed with `lerna run test:local-integration`.
+
 ## Code Style
 
 We follow a specific code style in our project to maintain consistency. Please make sure to adhere to the following guidelines:
