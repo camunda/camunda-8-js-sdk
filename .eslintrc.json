@@ -7,6 +7,7 @@
 		"prettier",
 		"plugin:prettier/recommended"
 	],
+	"ignorePatterns": ["dist/"],
 	"rules": {
 		// Define your rules, for example:
 		"semi": "off",

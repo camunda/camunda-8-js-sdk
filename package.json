@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "lerna run build",
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "lerna run test",
 		"publish": "lerna run build && lerna run test && lerna publish",
 		"commit": "cz",
 		"publish:canary": "lerna run build && lerna run test && lerna publish --canary",

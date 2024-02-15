@@ -4,7 +4,8 @@
 	"description": "JavaScript client for Camunda 8 Web Modeler",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "jest",
+		"test": "exit 0",
+		"test:integration": "jest --runInBand --detectOpenHandles --verbose true",
 		"test:local-integration": "exit 0",
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
