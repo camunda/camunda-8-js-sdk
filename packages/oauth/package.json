@@ -37,6 +37,15 @@
 	"devDependencies": {
 		"@types/debug": "^4.1.12"
 	},
-	"jest": {},
+	"jest": {
+		"moduleNameMapper": {
+			"^@camunda8/oauth(.*)$": "<rootDir>/../oauth/src$1"
+		},
+		"transform": {
+			"^.+\\.(ts|tsx)$": "ts-jest"
+		},
+		"preset": "ts-jest",
+		"testEnvironment": "node"
+	},
 	"gitHead": "45b1f93347bbe930d5782287d6821efec95e9a63"
 }
