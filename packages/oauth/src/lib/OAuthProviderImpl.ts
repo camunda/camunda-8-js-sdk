@@ -72,6 +72,8 @@ export class OAuthProviderImpl {
 		const key = this.getCacheKey(audience)
 
 		if (this.tokenCache[key]) {
+			console.log('Memory cache hit', this.tokenCache[key])
+			console.log('isExpired', this.isExpired(this.tokenCache[key]))
 			const token = this.tokenCache[key]
 			// check expiry and evict in-memory and file cache if expired
 			if (this.isExpired(token)) {
@@ -249,6 +251,9 @@ export class OAuthProviderImpl {
 
 	private isExpired(token: Token) {
 		const d = new Date()
+		console.log('token.expiry', token.expiry)
+		console.log('d.setSeconds(d.getSeconds())', d.setSeconds(d.getSeconds()))
+		console.log(token.expiry - d.setSeconds(d.getSeconds()))
 		return token.expiry <= d.setSeconds(d.getSeconds())
 	}
 

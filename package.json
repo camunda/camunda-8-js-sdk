@@ -6,6 +6,7 @@
 	"scripts": {
 		"build": "lerna run build",
 		"test": "lerna run test",
+		"test:local-integration": "rm ~/.camunda/* && lerna run test:local-integration",
 		"publish": "lerna run build && lerna run test && lerna publish",
 		"commit": "cz",
 		"publish:canary": "lerna run build && lerna run test && lerna publish --canary",
@@ -55,6 +56,12 @@
 		"semantic-release-lerna": "^2.1.0",
 		"ts-jest": "^29.1.1",
 		"typescript": "^5.3.3"
+	},
+	"optionalDependencies": {
+		"@nx/nx-darwin-arm64": "16.10.0",
+		"@nx/nx-darwin-x64": "16.10.0",
+		"@nx/nx-linux-x64-gnu": "16.10.0",
+		"@nx/nx-win32-x64-msvc": "16.10.0"
 	},
 	"config": {
 		"commitizen": {

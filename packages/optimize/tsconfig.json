@@ -2,9 +2,13 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"outDir": "./dist",
-		"rootDir": "./src"
-	  },
-	"include": [
-		"src/**/*"
+		"rootDir": "./src",
+		"composite": true
+	},
+	"include": ["src/**/*"],
+	"references": [
+		{
+			"path": "../oauth"
+		}
 	]
 }

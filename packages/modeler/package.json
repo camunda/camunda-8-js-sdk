@@ -37,5 +37,15 @@
 		"@types/isomorphic-fetch": "^0.0.39",
 		"dotenv": "^16.3.1"
 	},
+	"jest": {
+		"moduleNameMapper": {
+			"^@camunda8/oauth(.*)$": "<rootDir>/../oauth/src$1"
+		},
+		"transform": {
+			"^.+\\.(ts|tsx)$": "ts-jest"
+		},
+		"preset": "ts-jest",
+		"testEnvironment": "node"
+	},
 	"gitHead": "45b1f93347bbe930d5782287d6821efec95e9a63"
 }

@@ -12,6 +12,8 @@ let def: DeployProcessResponse
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(() => resolve(null), ms))
 
+process.env.DEBUG = 'camunda:token' // @DEBUG
+
 describe('TasklistApiClient', () => {
     const zbc = new ZBClient({
         loglevel: 'NONE',
@@ -96,8 +98,13 @@ describe('TasklistApiClient', () => {
 
         it('will not allow a task to be claimed twice', async () => {
             const tasklist = new TasklistApiClient()
+            console.log('Zeebe Client ID', process.env.ZEEBE_CLIENT_ID)
+            console.log('Zeebe Client Secret', process.env.ZEEBE_CLIENT_SECRET)
+
             const tasks = await tasklist.getTasks({ state: 'CREATED' })
+            console.log('Tasks', JSON.stringify(tasks, null, 2))
             const task = await tasklist.assignTask({ taskId: tasks[0].id, assignee: 'jwulf' })
+            console.log('Task', JSON.stringify(task, null, 2))
             expect(task).toBeTruthy()
             let threw = false
             try {
@@ -109,10 +116,20 @@ describe('TasklistApiClient', () => {
         })
 
         it('can unclaim task', async () => {
-            const tasklist = new TasklistApiClient()
+            // const creds = {
+            //     authServerUrl: process.env.CAMUNDA_OAUTH_URL!,
+            //     clientId: process.env.ZEEBE_CLIENT_ID!,
+            //     clientSecret: process.env.ZEEBE_CLIENT_SECRET!,
+            //     audience: process.env.ZEEBE_TOKEN_AUDIENCE!,
+            //     scopes: process.env.CAMUNDA_CREDENTIALS_SCOPES!,
+            //     tokenUrl: process.env.CAMUNDA_OAUTH_TOKEN_URL!,
+            // }
+            // const oAuth = new OAuthProviderImpl({ ...creds, userAgentString: 'test' })
+            const tasklist = new TasklistApiClient(/*{ oauthProvider: oAuth }*/)
             const tasks = await tasklist.getTasks({ state: 'CREATED' })
             const taskId = tasks[0].id
             const task = await tasklist.assignTask({ taskId: taskId, assignee: 'jwulf', allowOverrideAssignment: false })
+
             expect(task).toBeTruthy()
             let threw = false
             try {
@@ -127,7 +144,18 @@ describe('TasklistApiClient', () => {
         })
 
         it('can complete a Task', async () => {
-            const tasklist = new TasklistApiClient()
+            // const creds = {
+            //     authServerUrl: process.env.CAMUNDA_OAUTH_URL!,
+            //     clientId: process.env.ZEEBE_CLIENT_ID!,
+            //     clientSecret: process.env.ZEEBE_CLIENT_SECRET!,
+            //     audience: process.env.ZEEBE_TOKEN_AUDIENCE!,
+            //     scopes: process.env.CAMUNDA_CREDENTIALS_SCOPES!,
+            //     tokenUrl: process.env.CAMUNDA_OAUTH_TOKEN_URL!,
+            // }
+            // const oAuth = new OAuthProviderImpl({ ...creds, userAgentString: 'test' })
+            const tasklist = new TasklistApiClient(/*{ oauthProvider: oAuth }*/)
+            console.log('Can complete a Task')
+            // console.log(creds)
             const tasks = await tasklist.getTasks({ state: 'CREATED' })
             const taskid = tasks[0].id
             expect(tasks.length).toBeGreaterThan(0)
