@@ -1,0 +1,1 @@
+export { packageVersion } from './GetPackageVersion'

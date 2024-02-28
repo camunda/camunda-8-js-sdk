@@ -8,8 +8,8 @@
 		"lib": ["es2018"],
 		"declaration": true /* Generates corresponding '.d.ts' file. */,
 		"sourceMap": true /* Generates corresponding '.map' file. */,
-		// "outDir": "dist" /* Redirect output structure to the directory. */,
-		// "rootDir": "src" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
+		"outDir": "./dist" /* Redirect output structure to the directory. */,
+		"rootDir": "./src" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
 		/* Strict Type-Checking Options */
 		"forceConsistentCasingInFileNames": true,
 		"strict": true /* Enable all strict type-checking options. */,
@@ -26,16 +26,12 @@
 				"name": "typescript-tslint-plugin"
 			}
 		],
-		"baseUrl": "./packages",
+		"baseUrl": ".",
 		"paths": {
-			"@camunda8/operate": ["operate"],
-			"@camunda8/oauth": ["oauth"],
-			"@camunda8/tasklist": ["tasklist"],
-			"@camunda8/zeebe": ["zeebe"],
-			"@camunda8/optimize": ["optimize"],
-			"@camunda8/console": ["console"],
-			"@camunda8/modeler": ["modeler"]
+			"utils": ["./src/utils"],
+			"oauth": ["./src/oauth"],
+			"operate": ["./src/operate"]
 		}
 	},
-	"exclude": ["node_modules", "**/*.spec.ts"]
+	"exclude": ["node_modules", "**/*.spec.ts", "src/zeebe/__mocks__/*"]
 }
