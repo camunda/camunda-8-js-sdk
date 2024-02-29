@@ -15,6 +15,9 @@ jobs:
         with:
           node-version: "18" # Specify a Node.js version
 
+      - name: Remove package-lock.json # This is to work around https://github.com/npm/cli/issues/4828
+        run: rm -f package-lock.json
+
       - name: Install dependencies
         run: npm install
         env:
@@ -38,8 +41,8 @@ jobs:
           git fetch
           git checkout ${{ github.head_ref }}
 
-          # Add, commit, and push changes
-          git add -A
+          # Add, commit, and push changes, ignoring package-lock.json
+          git diff --name-only | grep -v 'package-lock.json' | xargs git add
           git diff --staged --quiet || git commit -m "Apply Prettier formatting"
           git push origin ${{ github.head_ref }}
         env:
