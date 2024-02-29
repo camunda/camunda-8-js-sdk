@@ -1,5 +1,5 @@
-import { ModelerApiClient } from '../index'
 import 'dotenv/config'
+import { ModelerApiClient } from '../index'
 
 const modeler = new ModelerApiClient()
 
@@ -9,17 +9,11 @@ test('It can get info', async () => {
 })
 
 test('', async () => {
-	const res = await modeler.searchProjects({ filter: { name: '__test__' } })
+	let res
+	res = await modeler.searchProjects({ filter: { name: '__test__' } })
 	if (res.items.length === 0) {
 		console.log('Creating project')
-		await modeler.createProject('__test__')
-		console.log(
-			JSON.stringify(
-				await modeler.searchProjects({ filter: { name: '__test__' } }),
-				null,
-				2
-			)
-		)
+		res = await modeler.createProject('__test__')
 	}
 	expect(res).toBeTruthy()
 })

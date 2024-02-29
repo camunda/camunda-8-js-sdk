@@ -21,6 +21,7 @@ const ENV_VARS_TO_STORE = [
 	'ZEEBE_CLIENT_SSL_PRIVATE_KEY_PATH',
 	'ZEEBE_CLIENT_SSL_CERT_CHAIN_PATH',
 	'ZEEBE_TENANT_ID',
+	'ZEEBE_SECURE_CONNECTION',
 ]
 
 beforeAll(() => {
@@ -449,12 +450,12 @@ test('Is insecure by default', () => {
 	const conf = ConfigurationHydrator.configure('localhost:26600', {})
 	expect(conf.useTLS).toBeFalsy()
 })
-test('Can be secured via the environment', () => {
+test('Can be unsecured via the environment', () => {
 	process.env.ZEEBE_SECURE_CONNECTION = 'false'
 	const conf = ConfigurationHydrator.configure('localhost:26600', {})
 	expect(conf.useTLS).toBe(false)
 })
-test('Can be unsecured via the environment', () => {
+test('Can be secured via the environment', () => {
 	process.env.ZEEBE_SECURE_CONNECTION = 'true'
 	const conf = ConfigurationHydrator.configure('localhost:26600', {})
 	expect(conf.useTLS).toBe(true)
