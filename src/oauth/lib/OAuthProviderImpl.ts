@@ -20,7 +20,7 @@ type TokenGrantAudiences =
 
 export class OAuthProviderImpl {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
-	private static readonly getTokenCacheDirFromEnv = () =>
+	public static readonly getTokenCacheDirFromEnv = () =>
 		process.env.CAMUNDA_TOKEN_CACHE_DIR || OAuthProviderImpl.defaultTokenCache
 	private cacheDir: string
 	private zeebeAudience: string
@@ -33,12 +33,14 @@ export class OAuthProviderImpl {
 	private failureCount = 0
 	private userAgentString: string
 	private audience: string
+	private scope: string | undefined
 
 	constructor({
 		/** OAuth Endpoint URL */
 		authServerUrl,
 		/** OAuth Audience */
 		audience,
+		scope,
 		clientId,
 		clientSecret,
 		userAgentString,
@@ -48,6 +50,7 @@ export class OAuthProviderImpl {
 		this.audience = audience
 		this.clientId = clientId
 		this.clientSecret = clientSecret
+		this.scope = scope ?? process.env.CAMUNDA_TOKEN_SCOPE
 		this.useFileCache = process.env.CAMUNDA_TOKEN_CACHE !== 'memory-only'
 		this.cacheDir = OAuthProviderImpl.getTokenCacheDirFromEnv()
 
@@ -109,25 +112,33 @@ export class OAuthProviderImpl {
 							reject(e)
 						})
 				},
-				this.failed ? BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount : 1
+				this.failed ? BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount : 0
 			)
 		})
 	}
 
-	private makeDebouncedTokenRequest(audience: TokenGrantAudiences) {
-		// const form = {
-		//     audience: this.getAudience(audience),
-		//     client_id: this.clientId,
-		//     client_secret: this.clientSecret,
-		//     grant_type: 'client_credentials',
-		// };
+	public flushMemoryCache() {
+		this.tokenCache = {}
+	}
 
+	public flushFileCache() {
+		if (this.useFileCache) {
+			fs.readdirSync(this.cacheDir).forEach((file) => {
+				if (fs.existsSync(file)) {
+					fs.unlinkSync(file)
+				}
+			})
+		}
+	}
+
+	private makeDebouncedTokenRequest(audience: TokenGrantAudiences) {
 		const body = `audience=${this.getAudience(audience)}&client_id=${
 			this.clientId
 		}&client_secret=${this.clientSecret}&grant_type=client_credentials`
+		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
 		return fetch(this.authServerUrl, {
 			method: 'POST',
-			body,
+			body: bodyWithScope,
 			headers: {
 				'content-type': 'application/x-www-form-urlencoded',
 				'user-agent': this.userAgentString,
@@ -181,19 +192,6 @@ export class OAuthProviderImpl {
 		token.expiry = d.setSeconds(d.getSeconds()) + token.expires_in * 1000
 		this.tokenCache[key] = token
 	}
-
-	// private safeJSONParse(thing: any): Promise<Token> {
-	//     // tslint:disable-next-line: no-console
-	//     console.log(thing); // @DEBUG
-
-	//     return new Promise((resolve, reject) => {
-	//         try {
-	//             resolve(JSON.parse(thing));
-	//         } catch (e) {
-	//             reject(e);
-	//         }
-	//     });
-	// }
 
 	private retrieveFromFileCache(
 		clientId: string,
@@ -251,9 +249,6 @@ export class OAuthProviderImpl {
 
 	private isExpired(token: Token) {
 		const d = new Date()
-		// console.log('token.expiry', token.expiry)
-		// console.log('d.setSeconds(d.getSeconds())', d.setSeconds(d.getSeconds()))
-		// console.log(token.expiry - d.setSeconds(d.getSeconds()))
 		return token.expiry <= d.setSeconds(d.getSeconds())
 	}
 
