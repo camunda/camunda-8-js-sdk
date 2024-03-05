@@ -17,6 +17,7 @@ export interface OAuthProviderConfig {
 	authServerUrl: string
 	/** OAuth Audience */
 	audience: string
+	scope?: string
 	clientId: string
 	clientSecret: string
 	userAgentString: string

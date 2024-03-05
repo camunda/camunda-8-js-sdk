@@ -7,6 +7,7 @@
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc --project tsconfig.json",
+		"docs": "rm -rf ./docs && typedoc src/index.ts",
 		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection",
 		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --detectOpenHandles --verbose true",
 		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration",
@@ -14,9 +15,9 @@
 		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection local-integration --detectOpenHandles --verbose true",
 		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles disconnection",
 		"test&docs": "npm test && npm run docs",
-		"publish": "lerna run build && lerna run test && lerna publish",
+		"publish": "npm run build && npm run test && lerna publish",
 		"commit": "cz",
-		"publish:canary": "lerna run build && lerna run test && lerna publish --canary",
+		"publish:canary": "npm run build && npm run test && lerna publish --canary",
 		"prepare": "husky install",
 		"prepublishOnly": "npm run build",
 		"lint": "eslint 'src/**/*.{ts,tsx}'",
@@ -93,6 +94,7 @@
 		"semantic-release": "^22.0.12",
 		"semantic-release-lerna": "^2.1.0",
 		"ts-jest": "^29.1.1",
+		"typedoc": "^0.25.9",
 		"typescript": "^5.3.3"
 	},
 	"dependencies": {
