@@ -111,6 +111,7 @@
 		"isomorphic-fetch": "^3.0.0",
 		"long": "^4.0.0",
 		"neon-env": "^0.1.1",
+		"node-fetch": "^2.7.0",
 		"promise-retry": "^1.1.1",
 		"stack-trace": "0.0.10",
 		"typed-duration": "^1.0.12",

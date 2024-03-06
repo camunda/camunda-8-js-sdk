@@ -18,11 +18,16 @@ test('createClient', async () => {
 	const c = new ConsoleApiClient()
 	const clusters = await c.getClusters()
 	const clusterUuid = clusters[0].uuid
+	c.getClient(clusterUuid, 'testors')
+		.then((res) => c.deleteClient(clusterUuid, res.ZEEBE_CLIENT_ID))
+		.catch((e) => e)
+
 	const res = await c.createClient({
 		clusterUuid,
 		clientName: 'testors',
 		permissions: ['Zeebe'],
 	})
+	console.log(res.clientId)
 	const client = await c.getClient(clusterUuid, res.clientId)
 	expect(client.ZEEBE_ADDRESS).toBeTruthy()
 	await c.deleteClient(clusterUuid, res.clientId)

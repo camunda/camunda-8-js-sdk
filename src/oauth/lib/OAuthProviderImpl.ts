@@ -1,8 +1,10 @@
 import * as fs from 'fs'
-import 'isomorphic-fetch'
+import https from 'https'
 import * as os from 'os'
 
 import { debug } from 'debug'
+import fetch from 'node-fetch'
+import { packageVersion } from 'utils'
 
 import { OAuthProviderConfig, Token, TokenError } from '../index'
 
@@ -27,11 +29,13 @@ export class OAuthProviderImpl {
 	private authServerUrl: string
 	private clientId: string
 	private clientSecret: string
+	private customRootCert?: Buffer
 	private useFileCache: boolean
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
 	private failureCount = 0
-	private userAgentString: string
+	private inflightTokenRequest?: Promise<string>
+	public userAgentString: string
 	private audience: string
 	private scope: string | undefined
 
@@ -43,18 +47,25 @@ export class OAuthProviderImpl {
 		scope,
 		clientId,
 		clientSecret,
+		customRootCert,
 		userAgentString,
+		cacheDir,
+		cacheOnDisk,
 	}: OAuthProviderConfig) {
 		this.authServerUrl = authServerUrl
 		this.zeebeAudience = audience
 		this.audience = audience
 		this.clientId = clientId
 		this.clientSecret = clientSecret
+		this.customRootCert = customRootCert
 		this.scope = scope ?? process.env.CAMUNDA_TOKEN_SCOPE
-		this.useFileCache = process.env.CAMUNDA_TOKEN_CACHE !== 'memory-only'
-		this.cacheDir = OAuthProviderImpl.getTokenCacheDirFromEnv()
+		this.useFileCache =
+			cacheOnDisk ?? process.env.CAMUNDA_TOKEN_CACHE !== 'memory-only'
+		this.cacheDir = cacheDir ?? OAuthProviderImpl.getTokenCacheDirFromEnv()
 
-		this.userAgentString = userAgentString // e.g.: `zeebe-client-nodejs/${pkg.version} ${CUSTOM_AGENT_STRING}`
+		this.userAgentString = `camunda-8-sdk-nodejs/${packageVersion}${
+			userAgentString ? ' ' + userAgentString : ''
+		}` // e.g.: `zeebe-client-nodejs/${pkg.version} ${CUSTOM_AGENT_STRING}`
 
 		if (this.useFileCache) {
 			try {
@@ -75,8 +86,6 @@ export class OAuthProviderImpl {
 		const key = this.getCacheKey(audience)
 
 		if (this.tokenCache[key]) {
-			// console.log('Memory cache hit', this.tokenCache[key])
-			// console.log('isExpired', this.isExpired(this.tokenCache[key]))
 			const token = this.tokenCache[key]
 			// check expiry and evict in-memory and file cache if expired
 			if (this.isExpired(token)) {
@@ -97,24 +106,29 @@ export class OAuthProviderImpl {
 			}
 		}
 
-		return new Promise((resolve, reject) => {
-			setTimeout(
-				() => {
-					this.makeDebouncedTokenRequest(audience)
-						.then((res) => {
-							this.failed = false
-							this.failureCount = 0
-							resolve(res)
-						})
-						.catch((e) => {
-							this.failureCount++
-							this.failed = true
-							reject(e)
-						})
-				},
-				this.failed ? BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount : 0
-			)
-		})
+		if (!this.inflightTokenRequest) {
+			this.inflightTokenRequest = new Promise((resolve, reject) => {
+				setTimeout(
+					() => {
+						this.makeDebouncedTokenRequest(audience)
+							.then((res) => {
+								this.failed = false
+								this.failureCount = 0
+								this.inflightTokenRequest = undefined
+								resolve(res)
+							})
+							.catch((e) => {
+								this.failureCount++
+								this.failed = true
+								this.inflightTokenRequest = undefined
+								reject(e)
+							})
+					},
+					this.failed ? BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount : 0
+				)
+			})
+		}
+		return this.inflightTokenRequest
 	}
 
 	public flushMemoryCache() {
@@ -136,14 +150,25 @@ export class OAuthProviderImpl {
 			this.clientId
 		}&client_secret=${this.clientSecret}&grant_type=client_credentials`
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
-		return fetch(this.authServerUrl, {
+		if (this.customRootCert) {
+			trace('Using custom root certificate')
+		}
+		const customAgent = this.customRootCert
+			? new https.Agent({ ca: this.customRootCert })
+			: undefined
+		const options = {
+			agent: customAgent,
 			method: 'POST',
 			body: bodyWithScope,
 			headers: {
 				'content-type': 'application/x-www-form-urlencoded',
 				'user-agent': this.userAgentString,
 			},
-		})
+		}
+		const optionsWithAgent = this.customRootCert
+			? { ...options, agent: customAgent }
+			: options
+		return fetch(this.authServerUrl, optionsWithAgent)
 			.then((res) =>
 				res.json().catch(() => {
 					trace(

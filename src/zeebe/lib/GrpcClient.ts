@@ -12,11 +12,11 @@ import {
 import { VerifyOptions } from '@grpc/grpc-js/build/src/channel-credentials'
 import { Options, PackageDefinition, loadSync } from '@grpc/proto-loader'
 import d from 'debug'
+import { OAuthProviderImpl } from 'oauth'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { packageVersion } from './GetPackageVersion'
 import { GrpcError } from './GrpcError'
-import { OAuthProvider } from './OAuthProvider'
 import { BasicAuthConfig } from './interfaces-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
@@ -101,7 +101,7 @@ export interface GrpcClientCtor {
 	connectionTolerance: MaybeTimeDuration
 	host: string
 	loglevel: Loglevel
-	oAuth?: OAuthProvider
+	oAuth?: OAuthProviderImpl
 	options: Options & GrpcClientExtendedOptions
 	packageName: string
 	protoPath: string
@@ -138,7 +138,7 @@ export class GrpcClient extends EventEmitter {
 	private packageDefinition: PackageDefinition
 	private listNameMethods: string[]
 	private gRPCRetryCount = 0
-	private oAuth?: OAuthProvider
+	private oAuth?: OAuthProviderImpl
 	private readyTimer?: NodeJS.Timeout
 	private failTimer?: NodeJS.Timeout
 	private connectionTolerance: number
@@ -477,7 +477,7 @@ export class GrpcClient extends EventEmitter {
 		const metadata = new Metadata({ waitForReady: false })
 		metadata.add('user-agent', `zeebe-client-nodejs/${packageVersion}`)
 		if (this.oAuth) {
-			const token = await this.oAuth.getToken()
+			const token = await this.oAuth.getToken('ZEEBE')
 			metadata.add('Authorization', `Bearer ${token}`)
 		}
 		if (this.basicAuth) {

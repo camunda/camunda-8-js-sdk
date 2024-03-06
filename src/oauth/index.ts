@@ -20,7 +20,10 @@ export interface OAuthProviderConfig {
 	scope?: string
 	clientId: string
 	clientSecret: string
-	userAgentString: string
+	userAgentString?: string
+	customRootCert?: Buffer
+	cacheOnDisk?: boolean
+	cacheDir?: string
 }
 
 export { OAuthProvider } from './lib/OAuthProvider'
