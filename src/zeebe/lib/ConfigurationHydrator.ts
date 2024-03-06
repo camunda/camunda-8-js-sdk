@@ -6,8 +6,11 @@ import { Duration } from 'typed-duration'
 import { getEnv } from './EnvFunction'
 import { CustomSSL } from './GrpcClient'
 import * as ZB from './interfaces-1.0'
-import { Loglevel, ZBClientOptions } from './interfaces-published-contract'
-import { OAuthProviderConfig } from './OAuthProvider'
+import {
+	Loglevel,
+	OAuthProviderConfig,
+	ZBClientOptions,
+} from './interfaces-published-contract'
 
 const CamundaCloudDefaultRegion = 'bru-2'
 
@@ -137,7 +140,7 @@ export class ConfigurationHydrator {
 					cacheOnDisk: boolean
 					clientId: string
 					clientSecret: string
-					url: string
+					authServerUrl: string
 					customRootCert?: Buffer
 				}
 				port: string
@@ -163,7 +166,7 @@ export class ConfigurationHydrator {
 						cacheOnDisk: true,
 						clientId: clientId!,
 						clientSecret,
-						url: authServerUrl,
+						authServerUrl,
 					},
 					useTLS: true,
 				}
@@ -201,7 +204,7 @@ export class ConfigurationHydrator {
 		const clientId = ConfigurationHydrator.getClientIdFromEnv()
 		const clientSecret = ConfigurationHydrator.getClientSecretFromEnv()
 
-		const url =
+		const authServerUrl =
 			ConfigurationHydrator.ENV().ZEEBE_AUTHORIZATION_SERVER_URL ||
 			ConfigurationHydrator.CAMUNDA_CLOUD_AUTH_SERVER
 		return clientId
@@ -213,7 +216,7 @@ export class ConfigurationHydrator {
 						cacheOnDisk: true,
 						clientId,
 						clientSecret,
-						url,
+						authServerUrl,
 					},
 					port: '443',
 					useTLS: true,
@@ -268,7 +271,7 @@ export class ConfigurationHydrator {
 					cacheOnDisk: camundaCloud.cacheOnDisk !== false,
 					clientId: camundaCloud.clientId,
 					clientSecret: camundaCloud.clientSecret,
-					url: ConfigurationHydrator.CAMUNDA_CLOUD_AUTH_SERVER,
+					authServerUrl: ConfigurationHydrator.CAMUNDA_CLOUD_AUTH_SERVER,
 				},
 				port: '443',
 				useTLS: true,

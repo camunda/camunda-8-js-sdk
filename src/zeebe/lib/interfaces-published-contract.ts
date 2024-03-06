@@ -1,7 +1,21 @@
 import { MaybeTimeDuration } from 'typed-duration'
 
 import { CustomSSL } from './GrpcClient'
-import { OAuthProviderConfig } from './OAuthProvider'
+
+export interface OAuthProviderConfig {
+	/** OAuth Endpoint URL */
+	authServerUrl: string
+	/** OAuth Audience */
+	audience: string
+	clientId: string
+	clientSecret: string
+	/** Custom TLS certificate for OAuth */
+	customRootCert?: Buffer
+	/** Cache token in memory and on filesystem? */
+	cacheOnDisk?: boolean
+	/** Override default token cache directory */
+	cacheDir?: string
+}
 
 export interface CamundaCloudConfig {
 	clusterId: string

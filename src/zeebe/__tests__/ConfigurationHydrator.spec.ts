@@ -116,7 +116,9 @@ test('Constructs the Camunda Cloud connection from the environment with clusterI
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.bru-2.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -141,7 +143,9 @@ test('Constructs the Camunda Cloud connection from the environment with ZEEBE_AD
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -165,7 +169,9 @@ test('Constructs the Camunda Cloud connection from the environment with ZEEBE_AD
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.bru-2.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -194,7 +200,9 @@ test('Constructs the Camunda Cloud connection with default region from a Camunda
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.bru-2.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -255,7 +263,9 @@ test('Takes a CamundaCloudConfig over the environment', () => {
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.bru-2.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -298,7 +308,9 @@ test('Uses the Camunda Cloud connection from a CamundaCloudConfig, overriding th
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.bru-2.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -326,7 +338,9 @@ test('Defaults the region to bru-2 when passed a CamundaCloudConfig with no clus
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.bru-2.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -355,7 +369,9 @@ test('Uses the explicit region passed in a CamundaCloudConfig', () => {
 	expect(conf.oAuth!.audience).toBe(
 		'103ca930-6da6-4df7-aa97-941eb1f85040.us-1.zeebe.camunda.io'
 	)
-	expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+	expect(conf.oAuth!.authServerUrl).toBe(
+		'https://login.cloud.camunda.io/oauth/token'
+	)
 	expect(conf.oAuth!.clientId).toBe('yStuGvJ6a1RQhy8DQpeXJ80yEpar3pXh')
 	expect(conf.oAuth!.clientSecret).toBe(
 		'WZahIGHjyj0-oQ7DZ_aH2wwNuZt5O8Sq0ZJTz0OaxfO7D6jaDBZxM_Q-BHRsiGO_'
@@ -385,7 +401,9 @@ describe('Configures secure connection with custom root certs', () => {
 			},
 		})
 
-		expect(conf.oAuth!.url).toBe('https://login.cloud.camunda.io/oauth/token')
+		expect(conf.oAuth!.authServerUrl).toBe(
+			'https://login.cloud.camunda.io/oauth/token'
+		)
 		expect(conf.oAuth!.customRootCert).toBe(rootCerts)
 	})
 
@@ -404,7 +422,7 @@ describe('Configures secure connection with custom root certs', () => {
 				audience: 'OAUTH_AUDIENCE',
 				clientId: 'CLIENT_ID',
 				clientSecret: 'CLIENT_SECRET',
-				url: 'OAUTH_URL',
+				authServerUrl: 'OAUTH_URL',
 				customRootCert: oAuthRootCerts,
 			},
 			useTLS: true,
@@ -413,7 +431,7 @@ describe('Configures secure connection with custom root certs', () => {
 			},
 		})
 
-		expect(conf.oAuth!.url).toBe('OAUTH_URL')
+		expect(conf.oAuth!.authServerUrl).toBe('OAUTH_URL')
 		expect(conf.oAuth!.customRootCert).toBe(oAuthRootCerts)
 		expect(conf.customSSL?.rootCerts).toBe(rootCerts)
 	})
@@ -432,7 +450,7 @@ describe('Configures secure connection with custom root certs', () => {
 				audience: 'OAUTH_AUDIENCE',
 				clientId: 'CLIENT_ID',
 				clientSecret: 'CLIENT_SECRET',
-				url: 'OAUTH_URL',
+				authServerUrl: 'OAUTH_URL',
 			},
 			useTLS: true,
 			customSSL: {
@@ -440,7 +458,7 @@ describe('Configures secure connection with custom root certs', () => {
 			},
 		})
 
-		expect(conf.oAuth!.url).toBe('OAUTH_URL')
+		expect(conf.oAuth!.authServerUrl).toBe('OAUTH_URL')
 		expect(conf.oAuth!.customRootCert).toBe(rootCerts)
 	})
 })

@@ -1,5 +1,5 @@
 {
-	"conventionalCommits.scopes": ["repo", "oauth", "tasklist"],
+	"conventionalCommits.scopes": ["repo", "oauth", "tasklist", "zeebe"],
 	"editor.formatOnSave": true,
 
 	"editor.defaultFormatter": "esbenp.prettier-vscode",

@@ -6,8 +6,10 @@ import d from 'debug'
 import { either as E } from 'fp-ts'
 import * as NEA from 'fp-ts/lib/NonEmptyArray'
 import { pipe } from 'fp-ts/lib/pipeable'
+import { OAuthProviderImpl } from 'oauth'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
+import { packageVersion } from 'utils'
 import { v4 as uuid } from 'uuid'
 
 import {
@@ -20,7 +22,6 @@ import { ConfigurationHydrator } from '../lib/ConfigurationHydrator'
 import { ConnectionFactory } from '../lib/ConnectionFactory'
 import { CustomSSL } from '../lib/GrpcClient'
 import { GrpcError } from '../lib/GrpcError'
-import { OAuthProvider, OAuthProviderConfig } from '../lib/OAuthProvider'
 import { ZBSimpleLogger } from '../lib/SimpleLogger'
 import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
@@ -32,6 +33,7 @@ import * as ZB from '../lib/interfaces-1.0'
 import * as Grpc from '../lib/interfaces-grpc-1.0'
 import {
 	Loglevel,
+	OAuthProviderConfig,
 	ZBClientOptions,
 	ZBCustomLogger,
 } from '../lib/interfaces-published-contract'
@@ -57,6 +59,7 @@ export const ConnectionStatusEvent = {
 	unknown: 'unknown' as const,
 }
 
+const userAgentString = `zeebe-client-nodejs/${packageVersion}`
 /**
  * @description A client for interacting with a Zeebe broker. With the connection credentials set in the environment, you can use a "zero-conf" constructor with no arguments.
  * @example
@@ -103,7 +106,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		.ZEEBE_CLIENT_MAX_RETRY_TIMEOUT
 		? parseInt(process.env.ZEEBE_CLIENT_MAX_RETRY_TIMEOUT, 10)
 		: ZBClient.DEFAULT_MAX_RETRY_TIMEOUT
-	private oAuth?: OAuthProvider
+	private oAuth?: OAuthProviderImpl
 	private basicAuth?: ZB.BasicAuthConfig
 	private useTLS: boolean
 	private stdout: ZBCustomLogger
@@ -171,13 +174,13 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		this.onConnectionError = this.options.onConnectionError
 		this.onReady = this.options.onReady
 		this.oAuth = this.options.oAuth
-			? new OAuthProvider(
-					this.options.oAuth as OAuthProviderConfig & {
+			? new OAuthProviderImpl({
+					...(this.options.oAuth as OAuthProviderConfig & {
 						customRootCert: Buffer
-						cacheDir: string
 						cacheOnDisk: boolean
-					}
-				)
+					}),
+					userAgentString,
+				})
 			: undefined
 
 		const { grpcClient, log } = this.constructGrpcClient({
@@ -575,7 +578,6 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				// Prevent the creation of more workers
 				this.closing = true
 				Promise.all(this.workers.map((w) => w.close(timeout)))
-					.then(() => this.oAuth?.stopExpiryTimer())
 					.then(() => this.grpc.close(timeout))
 					.then(() => {
 						this.emit(ConnectionStatusEvent.close)
