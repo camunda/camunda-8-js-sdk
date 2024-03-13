@@ -1,5 +1,5 @@
 export * from './ClientConstructor'
-export * from './Configurator'
+export * from './Configuration'
 export * from './ConstructOAuthProvider'
 export * from './EnvironmentSetup'
 export { packageVersion } from './GetPackageVersion'

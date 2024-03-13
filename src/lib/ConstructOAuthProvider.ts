@@ -1,6 +1,6 @@
 import { NullAuthProvider, OAuthProvider } from 'oauth'
 
-import { CamundaPlatform8Configuration } from './Configurator'
+import { CamundaPlatform8Configuration } from './Configuration'
 
 export function constructOAuthProvider(config: CamundaPlatform8Configuration) {
 	if (config.CAMUNDA_OAUTH_DISABLED) {
