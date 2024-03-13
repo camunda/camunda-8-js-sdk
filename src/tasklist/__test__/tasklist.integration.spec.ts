@@ -1,6 +1,6 @@
 import { join } from 'path'
 
-import 'dotenv/config'
+// import 'dotenv/config'
 import {
 	CreateProcessInstanceResponse,
 	DeployProcessResponse,

@@ -1,35 +1,43 @@
+import fs from 'fs'
+
 import d from 'debug'
 import got from 'got'
-import { packageVersion } from 'utils'
-
-import { getConsoleCredentials, getConsoleToken } from '../../oauth'
-
 import {
-	Cluster,
-	ClusterClient,
-	ClusterClientConnectionDetails,
-	CreateClusterBody,
-	CreatedClusterClient,
-	Member,
-	OrganizationRole,
-	Parameters,
-} from './APIObjects'
+	CamundaEnvironmentConfigurator,
+	ClientConstructor,
+	constructOAuthProvider,
+	packageVersion,
+} from 'lib'
+
+import { IOAuthProvider } from '../../oauth'
+
+import * as Dto from './APIObjects'
 
 const debug = d('consoleapi')
 
 export class ConsoleApiClient {
 	private userAgentString: string
-	private gotOptions: {
-		prefixUrl: string
-		hooks: { beforeRequest: ((o: unknown) => void)[] }
-	}
+	private oAuthProvider: IOAuthProvider
+	private rest: typeof got
 
-	constructor(userAgent?: string) {
-		const customAgent = userAgent ? ` ${userAgent}` : ''
-		this.userAgentString = `console-client-nodejs/${packageVersion}${customAgent}`
-		const creds = getConsoleCredentials()
-		this.gotOptions = {
-			prefixUrl: `${creds.CAMUNDA_CONSOLE_BASE_URL}/clusters`,
+	constructor(options?: ClientConstructor) {
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
+			options?.config ?? {}
+		)
+		this.oAuthProvider =
+			options?.oAuthProvider ?? constructOAuthProvider(config)
+
+		const certificatePath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
+		const certificateAuthority = certificatePath
+			? fs.readFileSync(certificatePath, 'utf-8')
+			: undefined
+		this.userAgentString = `console-client-nodejs/${packageVersion}`
+		const baseUrl = config.CAMUNDA_CONSOLE_BASE_URL
+		this.rest = got.extend({
+			prefixUrl: `${baseUrl}/clusters`,
+			https: {
+				certificateAuthority,
+			},
 			hooks: {
 				beforeRequest: [
 					(options: unknown) => {
@@ -37,14 +45,15 @@ export class ConsoleApiClient {
 					},
 				],
 			},
-		}
-		debug('prefixUrl', `${creds.CAMUNDA_CONSOLE_BASE_URL}/clusters`)
+		})
+		debug('prefixUrl', `${baseUrl}/clusters`)
 	}
 
 	private async getHeaders() {
+		const token = await this.oAuthProvider.getToken('CONSOLE')
 		const headers = {
 			'content-type': 'application/json',
-			authorization: `Bearer ${await getConsoleToken(this.userAgentString)}`,
+			authorization: `Bearer ${token}`,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}
@@ -57,11 +66,10 @@ export class ConsoleApiClient {
 	 * @param clusterUuid - The cluster UUID
 	 *
 	 */
-	async getClients(clusterUuid: string): Promise<ClusterClient[]> {
+	async getClients(clusterUuid: string): Promise<Dto.ClusterClient[]> {
 		const headers = await this.getHeaders()
-		return got(`${clusterUuid}/clients`, {
+		return this.rest(`${clusterUuid}/clients`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -73,16 +81,15 @@ export class ConsoleApiClient {
 		clusterUuid: string
 		clientName: string
 		permissions: string[]
-	}): Promise<CreatedClusterClient> {
+	}): Promise<Dto.CreatedClusterClient> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post(`${req.clusterUuid}/clients`, {
 				body: JSON.stringify({
 					clientName: req.clientName,
 					permissions: req.permissions,
 				}),
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -96,11 +103,10 @@ export class ConsoleApiClient {
 	async getClient(
 		clusterUuid: string,
 		clientId: string
-	): Promise<ClusterClientConnectionDetails> {
+	): Promise<Dto.ClusterClientConnectionDetails> {
 		const headers = await this.getHeaders()
-		return got(`${clusterUuid}/clients/${clientId}`, {
+		return this.rest(`${clusterUuid}/clients/${clientId}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -111,10 +117,9 @@ export class ConsoleApiClient {
 	 */
 	async deleteClient(clusterUuid: string, clientId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`${clusterUuid}/clients/${clientId}`, {
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -123,11 +128,10 @@ export class ConsoleApiClient {
 	 *
 	 * @description Return an array of clusters. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClusters) for more details.
 	 */
-	async getClusters(): Promise<Cluster[]> {
+	async getClusters(): Promise<Dto.Cluster[]> {
 		const headers = await this.getHeaders()
-		return got('', {
+		return this.rest('', {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -136,16 +140,15 @@ export class ConsoleApiClient {
 	 * @description Create a new cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateCluster) for more details.
 	 */
 	async createCluster(
-		createClusterRequest: CreateClusterBody
+		createClusterRequest: Dto.CreateClusterBody
 	): Promise<{ clusterId: string }> {
 		const headers = await this.getHeaders()
 		const req = {
 			body: JSON.stringify(createClusterRequest),
 			headers,
-			...this.gotOptions,
 		}
 		debug(req)
-		return got.post('', req).json()
+		return this.rest.post('', req).json()
 	}
 
 	/**
@@ -153,11 +156,10 @@ export class ConsoleApiClient {
 	 * @description Retrieve the metadata for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetCluster) for more details.
 	 *
 	 */
-	async getCluster(clusterUuid: string): Promise<Cluster> {
+	async getCluster(clusterUuid: string): Promise<Dto.Cluster> {
 		const headers = await this.getHeaders()
-		return got(`${clusterUuid}`, {
+		return this.rest(`${clusterUuid}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -168,10 +170,9 @@ export class ConsoleApiClient {
 	 */
 	async deleteCluster(clusterUuid: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`${clusterUuid}`, {
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -180,11 +181,10 @@ export class ConsoleApiClient {
 	 *
 	 * @description Retrieve the available parameters for cluster creation. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetParameters) for more details.
 	 */
-	async getParameters(): Promise<Parameters> {
+	async getParameters(): Promise<Dto.Parameters> {
 		const headers = await this.getHeaders()
-		return got('parameters', {
+		return this.rest('parameters', {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -194,9 +194,8 @@ export class ConsoleApiClient {
 	 */
 	async getSecrets(clusterUuid: string): Promise<{ [key: string]: string }> {
 		const headers = await this.getHeaders()
-		return got(`${clusterUuid}/secrets`, {
+		return this.rest(`${clusterUuid}/secrets`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -217,9 +216,8 @@ export class ConsoleApiClient {
 		const req = {
 			body: JSON.stringify({ secretName, secretValue }),
 			headers,
-			...this.gotOptions,
 		}
-		return got.post(`${clusterUuid}/secrets`, req).json()
+		return this.rest.post(`${clusterUuid}/secrets`, req).json()
 	}
 
 	/**
@@ -228,10 +226,9 @@ export class ConsoleApiClient {
 	 */
 	async deleteSecret(clusterUuid: string, secretName: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`${clusterUuid}/secrets/${secretName}`, {
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -252,13 +249,12 @@ export class ConsoleApiClient {
 		]
 	) {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.put(`${clusterUuid}/ipwhitelist`, {
 				body: JSON.stringify({
 					ipwhitelist,
 				}),
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -267,12 +263,11 @@ export class ConsoleApiClient {
 	 *
 	 * @description Retrieve a list of members and pending invites for your organisation. See the [API Documentation]() for more details.
 	 */
-	async getUsers(): Promise<Member[]> {
+	async getUsers(): Promise<Dto.Member[]> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.get('members', {
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -284,14 +279,13 @@ export class ConsoleApiClient {
 	 */
 	async createMember(
 		email: string,
-		orgRoles: OrganizationRole[]
+		orgRoles: Dto.OrganizationRole[]
 	): Promise<null> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post(`members/${email}`, {
 				headers,
 				body: JSON.stringify({ orgRoles }),
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -303,10 +297,9 @@ export class ConsoleApiClient {
 	 */
 	async deleteMember(email: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`members/${email}`, {
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}

@@ -3,7 +3,6 @@ import dayjs from 'dayjs'
 import * as stackTrace from 'stack-trace'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 
-import { ConfigurationHydrator } from './ConfigurationHydrator'
 import { ZBLoggerConfig } from './interfaces-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
@@ -51,8 +50,7 @@ export class ZBLogger {
 			namespace = namespace.join(' ')
 		}
 		this.namespace = namespace
-		this.loglevel =
-			ConfigurationHydrator.getLogLevelFromEnv() || loglevel || 'INFO'
+		this.loglevel = loglevel || 'INFO'
 		this.stdout = stdout || console
 		this.colorise = colorise !== false
 		this.pollInterval = pollInterval

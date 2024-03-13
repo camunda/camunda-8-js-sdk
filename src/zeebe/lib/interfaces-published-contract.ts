@@ -64,8 +64,8 @@ export interface ZBClientOptions {
 	}
 	useTLS?: boolean
 	logNamespace?: string
-	longPoll?: MaybeTimeDuration
-	pollInterval?: MaybeTimeDuration
+	longPoll: MaybeTimeDuration
+	pollInterval: MaybeTimeDuration
 	camundaCloud?: CamundaCloudConfig
 	hostname?: string
 	port?: string

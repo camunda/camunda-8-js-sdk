@@ -12,7 +12,7 @@ import {
 import { VerifyOptions } from '@grpc/grpc-js/build/src/channel-credentials'
 import { Options, PackageDefinition, loadSync } from '@grpc/proto-loader'
 import d from 'debug'
-import { OAuthProviderImpl } from 'oauth'
+import { IOAuthProvider } from 'oauth'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { packageVersion } from './GetPackageVersion'
@@ -101,7 +101,7 @@ export interface GrpcClientCtor {
 	connectionTolerance: MaybeTimeDuration
 	host: string
 	loglevel: Loglevel
-	oAuth?: OAuthProviderImpl
+	oAuth?: IOAuthProvider
 	options: Options & GrpcClientExtendedOptions
 	packageName: string
 	protoPath: string
@@ -138,7 +138,7 @@ export class GrpcClient extends EventEmitter {
 	private packageDefinition: PackageDefinition
 	private listNameMethods: string[]
 	private gRPCRetryCount = 0
-	private oAuth?: OAuthProviderImpl
+	private oAuth?: IOAuthProvider
 	private readyTimer?: NodeJS.Timeout
 	private failTimer?: NodeJS.Timeout
 	private connectionTolerance: number

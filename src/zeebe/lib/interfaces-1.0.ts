@@ -432,6 +432,9 @@ export interface BroadcastSignalReq {
 	// the signal variables as a JSON document; to be valid, the root of the document must be an
 	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
 	variables?: JSONDoc
+
+	// Optional tenantId for a multi-tenant enabled cluster. This could also be supplied via environment variable.
+	tenantId?: string
 }
 
 export interface BroadcastSignalRes {

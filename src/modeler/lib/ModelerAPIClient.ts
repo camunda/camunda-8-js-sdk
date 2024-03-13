@@ -1,53 +1,53 @@
-import d from 'debug'
-import 'isomorphic-fetch'
-import { getConsoleToken } from 'oauth'
-import { packageVersion } from 'utils'
+import fs from 'fs'
 
+import d from 'debug'
+import got, { Response } from 'got'
 import {
-	CreateCollaboratorDto,
-	CreateFileDto,
-	CreateFolderDto,
-	CreateMilestoneDto,
-	FileDto,
-	FileMetadataDto,
-	FolderDto,
-	FolderMetadataDto,
-	InfoDto,
-	MilestoneDto,
-	MilestoneMetadataDto,
-	ProjectDto,
-	ProjectMetadataDto,
-	PubSearchDtoFileMetadataDto,
-	PubSearchDtoMilestoneMetadataDto,
-	PubSearchDtoProjectCollaboratorDto,
-	PubSearchDtoProjectMetadataDto,
-	PubSearchResultDtoFileMetadataDto,
-	PubSearchResultDtoMilestoneMetadataDto,
-	PubSearchResultDtoProjectCollaboratorDto,
-	PubSearchResultDtoProjectMetadataDto,
-	UpdateFileDto,
-	UpdateFolderDto,
-} from './DTO'
+	CamundaEnvironmentConfigurator,
+	ClientConstructor,
+	constructOAuthProvider,
+	packageVersion,
+} from 'lib'
+import { IOAuthProvider } from 'oauth'
+
+import * as Dto from './DTO'
 
 const debug = d('modelerapi')
 
 const API_VERSION = 'v1'
-const modelerApiUrl =
-	process.env.CAMUNDA_MODELER_BASE_URL ?? 'https://modeler.cloud.camunda.io/api'
 
 export class ModelerApiClient {
 	private userAgentString: string
-	private baseUrl: string
+	private oAuthProvider: IOAuthProvider
+	private rest: typeof got
 
-	constructor(userAgent?: string) {
-		const customAgent = userAgent ? ` ${userAgent}` : ''
-		this.userAgentString = `modeler-client-nodejs/${packageVersion}${customAgent}`
-		this.baseUrl = `${modelerApiUrl}/${API_VERSION}`
-		debug(`baseUrl: ${this.baseUrl}`)
+	constructor(options?: ClientConstructor) {
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
+			options?.config ?? {}
+		)
+		const modelerApiUrl =
+			config.CAMUNDA_MODELER_BASE_URL ?? 'https://modeler.cloud.camunda.io/api'
+		this.oAuthProvider =
+			options?.oAuthProvider ?? constructOAuthProvider(config)
+		this.userAgentString = `modeler-client-nodejs/${packageVersion}`
+		const prefixUrl = `${modelerApiUrl}/${API_VERSION}`
+		const certificatePath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
+		const certificateAuthority = certificatePath
+			? fs.readFileSync(certificatePath, 'utf-8')
+			: undefined
+		this.rest = got.extend({
+			prefixUrl,
+			https: {
+				certificateAuthority,
+			},
+			responseType: 'json',
+		})
+		debug(`baseUrl: ${prefixUrl}`)
 	}
 
 	private async getHeaders() {
-		const auth = `Bearer ${await getConsoleToken(this.userAgentString)}`
+		const token = await this.oAuthProvider.getToken('MODELER')
+		const auth = `Bearer ${token}`
 		const headers = {
 			'content-type': 'application/json',
 			authorization: auth,
@@ -58,16 +58,16 @@ export class ModelerApiClient {
 		return headers
 	}
 
-	private decodeResponseOrThrow(res) {
-		if (res.status === 200) {
-			return res.json()
+	private decodeResponseOrThrow(res: Response<string>) {
+		if (res.statusCode === 200) {
+			return res.body
 		}
 		// 204: No Content
-		if (res.status === 204) {
+		if (res.statusCode === 204) {
 			return null
 		}
-		const err = new Error(res.statusText) as unknown as { code: string }
-		err.code = res.status
+		const err = new Error(res.statusMessage) as unknown as { code: number }
+		err.code = res.statusCode
 		throw err
 	}
 
@@ -75,13 +75,14 @@ export class ModelerApiClient {
 	 * Adds a new collaborator to a project or modifies the permission level of an existing collaborator.
 	 * Note: Only users that are part of the authorized organization (see GET /api/v1/info) and logged in to Web Modeler at least once can be added to a project.
 	 */
-	async addCollaborator(req: CreateCollaboratorDto): Promise<null> {
+	async addCollaborator(req: Dto.CreateCollaboratorDto): Promise<null> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/collaborators`, {
-			headers,
-			method: 'PUT',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return got
+			.put(`/collaborators`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**
@@ -92,14 +93,17 @@ export class ModelerApiClient {
 	 * size specifies the number of items per page. The default value is 10.
 	 */
 	async searchCollaborators(
-		req: PubSearchDtoProjectCollaboratorDto
-	): Promise<PubSearchResultDtoProjectCollaboratorDto> {
+		req: Dto.PubSearchDtoProjectCollaboratorDto
+	): Promise<Dto.PubSearchResultDtoProjectCollaboratorDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/collaborators/search`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return got
+			.post(`/collaborators/search`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(
+				this.decodeResponseOrThrow
+			) as Promise<Dto.PubSearchResultDtoProjectCollaboratorDto>
 	}
 
 	async deleteCollaborator({
@@ -110,10 +114,11 @@ export class ModelerApiClient {
 		email: string
 	}): Promise<null> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/project/${projectId}collaborators/${email}`, {
-			headers,
-			method: 'DELETE',
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.delete(`/project/${projectId}collaborators/${email}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**
@@ -139,25 +144,30 @@ export class ModelerApiClient {
 	 *
 	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
 	 */
-	async createFile(req: CreateFileDto): Promise<FileMetadataDto> {
+	async createFile(req: Dto.CreateFileDto): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/files`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.post(`/files`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
 	 * Retrieves a file.
 	 *
-	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an
+	 * escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping
+	 * facilitates the processing of path-like structures within file and folder names.
+	 *
+	 * Does this throw if it is not found?
 	 */
-	async getFile(fileId: string): Promise<FileDto> {
+	async getFile(fileId: string): Promise<Dto.FileDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/files/${fileId}`, {
+		return this.rest(`/files/${fileId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<Dto.FileDto>
 	}
 
 	/**
@@ -166,9 +176,9 @@ export class ModelerApiClient {
 	 */
 	async deleteFile(fileId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/files/${fileId}`, {
+		return this.rest(`/files/${fileId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**
@@ -188,13 +198,13 @@ export class ModelerApiClient {
 	 */
 	async updateFile(
 		fileId: string,
-		update: UpdateFileDto
-	): Promise<FileMetadataDto> {
+		update: Dto.UpdateFileDto
+	): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/files/${fileId}`, {
+		return this.rest(`/files/${fileId}`, {
 			headers,
 			body: JSON.stringify(update),
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
@@ -222,13 +232,15 @@ export class ModelerApiClient {
 	 * Note: The simplePath transform any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
 	 */
 	async searchFiles(
-		req: PubSearchDtoFileMetadataDto
-	): Promise<PubSearchResultDtoFileMetadataDto> {
+		req: Dto.PubSearchDtoFileMetadataDto
+	): Promise<Dto.PubSearchResultDtoFileMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/files/search`, {
+		return this.rest(`/files/search`, {
 			headers,
 			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		}).then(
+			this.decodeResponseOrThrow
+		) as Promise<Dto.PubSearchResultDtoFileMetadataDto>
 	}
 
 	/**
@@ -241,20 +253,21 @@ export class ModelerApiClient {
 	 *
 	 * When projectId and parentId are both given, they must be consistent - i.e. the parent folder is in the project.
 	 */
-	async createFolder(req: CreateFolderDto): Promise<FolderMetadataDto> {
+	async createFolder(req: Dto.CreateFolderDto): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/folders`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.post(`/folders`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
 	}
 
-	async getFolder(folderId: string): Promise<FolderDto> {
+	async getFolder(folderId: string): Promise<Dto.FolderDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/folders/${folderId}`, {
+		return this.rest(`/folders/${folderId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<Dto.FolderDto>
 	}
 
 	/**
@@ -263,10 +276,11 @@ export class ModelerApiClient {
 	 */
 	async deleteFolder(folderId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/folders/${folderId}`, {
-			headers,
-			method: 'DELETE',
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.delete(`/folders/${folderId}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**
@@ -282,39 +296,41 @@ export class ModelerApiClient {
 	 */
 	async updateFolder(
 		folderId: string,
-		update: UpdateFolderDto
-	): Promise<FolderMetadataDto> {
+		update: Dto.UpdateFolderDto
+	): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/folders/${folderId}`, {
-			headers,
-			method: 'PATCH',
-			body: JSON.stringify(update),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.patch(`/folders/${folderId}`, {
+				headers,
+				body: JSON.stringify(update),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
 	}
 
-	async getInfo(): Promise<InfoDto> {
+	async getInfo(): Promise<Dto.InfoDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/info`, {
+		return this.rest(`/info`, {
 			headers,
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<Dto.InfoDto>
 	}
 
 	async createMilestone(
-		req: CreateMilestoneDto
-	): Promise<MilestoneMetadataDto> {
+		req: Dto.CreateMilestoneDto
+	): Promise<Dto.MilestoneMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/milestones`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.post(`/milestones`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneMetadataDto>
 	}
 
-	async getMilestone(milestoneId: string): Promise<MilestoneDto> {
+	async getMilestone(milestoneId: string): Promise<Dto.MilestoneDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/milestones/${milestoneId}`, {
+		return this.rest(`/milestones/${milestoneId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneDto>
 	}
 
 	/**
@@ -322,7 +338,7 @@ export class ModelerApiClient {
 	 */
 	async deleteMilestone(milestoneId: string) {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/milestones/${milestoneId}`, {
+		return this.rest(`/milestones/${milestoneId}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow)
 	}
@@ -335,12 +351,9 @@ export class ModelerApiClient {
 		milestone2Id: string
 	): Promise<string> {
 		const headers = await this.getHeaders()
-		return fetch(
-			`${this.baseUrl}/milestones/compare/${milestone1Id}...${milestone2Id}`,
-			{
-				headers,
-			}
-		).then((res) => res.text())
+		return this.rest(`/milestones/compare/${milestone1Id}...${milestone2Id}`, {
+			headers,
+		}).then(this.decodeResponseOrThrow) as Promise<string>
 	}
 
 	/**
@@ -367,33 +380,37 @@ export class ModelerApiClient {
 	 * size specifies the number of items per page. The default value is 10.
 	 */
 	async searchMilestones(
-		req: PubSearchDtoMilestoneMetadataDto
-	): Promise<PubSearchResultDtoMilestoneMetadataDto> {
+		req: Dto.PubSearchDtoMilestoneMetadataDto
+	): Promise<Dto.PubSearchResultDtoMilestoneMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/milestones/search`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.post(`/milestones/search`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(
+				this.decodeResponseOrThrow
+			) as Promise<Dto.PubSearchResultDtoMilestoneMetadataDto>
 	}
 
 	/**
 	 * Creates a new project. This project will be created without any collaborators, so it will not be visible in the UI by default. To assign collaborators, use `addCollaborator()`.
 	 */
-	async createProject(name: string): Promise<ProjectMetadataDto> {
+	async createProject(name: string): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/projects`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify({ name }),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.post(`/projects`, {
+				headers,
+				body: JSON.stringify({ name }),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
 	}
 
-	async getProject(projectId: string): Promise<ProjectDto> {
+	async getProject(projectId: string): Promise<Dto.ProjectDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/projects/${projectId}`, {
+		return this.rest(`/projects/${projectId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow)
+		}).then(this.decodeResponseOrThrow) as Promise<Dto.ProjectDto>
 	}
 
 	/**
@@ -401,22 +418,24 @@ export class ModelerApiClient {
 	 */
 	async deleteProject(projectId: string) {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/projects/${projectId}`, {
-			headers,
-			method: 'DELETE',
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.delete(`/projects/${projectId}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow)
 	}
 
 	async renameProject(
 		projectId: string,
 		name: string
-	): Promise<ProjectMetadataDto> {
+	): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/projects/${projectId}`, {
-			headers,
-			method: 'PATCH',
-			body: JSON.stringify({ name }),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.patch(`/projects/${projectId}`, {
+				headers,
+				body: JSON.stringify({ name }),
+			})
+			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
 	}
 
 	/**
@@ -444,13 +463,16 @@ export class ModelerApiClient {
 	 * size specifies the number of items per page. The default value is 10.
 	 */
 	async searchProjects(
-		req: PubSearchDtoProjectMetadataDto
-	): Promise<PubSearchResultDtoProjectMetadataDto> {
+		req: Dto.PubSearchDtoProjectMetadataDto
+	): Promise<Dto.PubSearchResultDtoProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return fetch(`${this.baseUrl}/projects/search`, {
-			headers,
-			method: 'POST',
-			body: JSON.stringify(req),
-		}).then(this.decodeResponseOrThrow)
+		return this.rest
+			.post(`/projects/search`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then(
+				this.decodeResponseOrThrow
+			) as Promise<Dto.PubSearchResultDtoProjectMetadataDto>
 	}
 }

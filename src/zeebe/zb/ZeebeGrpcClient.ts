@@ -6,20 +6,25 @@ import d from 'debug'
 import { either as E } from 'fp-ts'
 import * as NEA from 'fp-ts/lib/NonEmptyArray'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { OAuthProviderImpl } from 'oauth'
+import { IOAuthProvider } from 'oauth'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
-import { packageVersion } from 'utils'
 import { v4 as uuid } from 'uuid'
 
+import {
+	CamundaEnvironmentConfigurator,
+	ClientConstructor,
+	RequireConfiguration,
+	constructOAuthProvider,
+} from '../../lib'
 import {
 	BpmnParser,
 	parseVariables,
 	parseVariablesAndCustomHeadersToJSON,
 	stringifyVariables,
 } from '../lib'
-import { ConfigurationHydrator } from '../lib/ConfigurationHydrator'
 import { ConnectionFactory } from '../lib/ConnectionFactory'
+import { ConnectionStatusEvent } from '../lib/ConnectionStatusEvent'
 import { CustomSSL } from '../lib/GrpcClient'
 import { GrpcError } from '../lib/GrpcError'
 import { ZBSimpleLogger } from '../lib/SimpleLogger'
@@ -33,7 +38,6 @@ import * as ZB from '../lib/interfaces-1.0'
 import * as Grpc from '../lib/interfaces-grpc-1.0'
 import {
 	Loglevel,
-	OAuthProviderConfig,
 	ZBClientOptions,
 	ZBCustomLogger,
 } from '../lib/interfaces-published-contract'
@@ -52,25 +56,20 @@ const idColors = [
 	chalk.blue,
 ]
 
-export const ConnectionStatusEvent = {
-	close: 'close' as const,
-	connectionError: 'connectionError' as const,
-	ready: 'ready' as const,
-	unknown: 'unknown' as const,
-}
-
-const userAgentString = `zeebe-client-nodejs/${packageVersion}`
 /**
  * @description A client for interacting with a Zeebe broker. With the connection credentials set in the environment, you can use a "zero-conf" constructor with no arguments.
  * @example
  * ```
- * const zbc = new ZBClient()
+ * const oAuthProvider = new NullAuthProvider()
+ * const zbc = new ZeebeGrpcClient({ oAuthProvider: NullAuthProvider })
  * zbc.topology().then(info =>
  *     console.log(JSON.stringify(info, null, 2))
  * )
  * ```
  */
-export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
+export class ZeebeGrpcClient extends TypedEmitter<
+	typeof ConnectionStatusEvent
+> {
 	public static readonly DEFAULT_CONNECTION_TOLERANCE =
 		Duration.milliseconds.of(3000)
 	private static readonly DEFAULT_MAX_RETRIES = -1 // Infinite retry
@@ -80,7 +79,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	public connectionTolerance: MaybeTimeDuration = process.env
 		.ZEEBE_CONNECTION_TOLERANCE
 		? parseInt(process.env.ZEEBE_CONNECTION_TOLERANCE, 10)
-		: ZBClient.DEFAULT_CONNECTION_TOLERANCE
+		: ZeebeGrpcClient.DEFAULT_CONNECTION_TOLERANCE
 	public connected?: boolean = undefined
 	public readied = false
 	public gatewayAddress: string
@@ -99,89 +98,81 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		| ZBBatchWorker<any, any, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 	)[] = []
 	private retry: boolean
-	private maxRetries: number = process.env.ZEEBE_CLIENT_MAX_RETRIES
-		? parseInt(process.env.ZEEBE_CLIENT_MAX_RETRIES, 10)
-		: ZBClient.DEFAULT_MAX_RETRIES
-	private maxRetryTimeout: MaybeTimeDuration = process.env
-		.ZEEBE_CLIENT_MAX_RETRY_TIMEOUT
-		? parseInt(process.env.ZEEBE_CLIENT_MAX_RETRY_TIMEOUT, 10)
-		: ZBClient.DEFAULT_MAX_RETRY_TIMEOUT
-	private oAuth?: OAuthProviderImpl
+	private maxRetries: number
+	private maxRetryTimeout: MaybeTimeDuration
+	private oAuthProvider: IOAuthProvider
 	private basicAuth?: ZB.BasicAuthConfig
 	private useTLS: boolean
 	private stdout: ZBCustomLogger
 	private customSSL?: CustomSSL
 	private tenantId?: string
 
-	/**
-	 *
-	 * @param options Zero-conf constructor. The entire ZBClient connection config can be passed in via the environment.
-	 */
-	constructor(options?: ZBClientOptions)
-	constructor(gatewayAddress: string, options?: ZBClientOptions)
-	constructor(
-		gatewayAddress?: string | ZBClientOptions,
-		options?: ZBClientOptions
-	) {
+	constructor(options?: ClientConstructor) {
 		super()
-		if (typeof gatewayAddress === 'object') {
-			options = gatewayAddress
-			gatewayAddress = undefined
-		}
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
+			options?.config ?? {}
+		)
+		this.options = {} as ZBClientOptions
+		const longPoll = config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS
 
-		const constructorOptionsWithDefaults = {
-			longPoll: ZBClient.DEFAULT_LONGPOLL_PERIOD,
-			pollInterval: ZBClient.DEFAULT_POLL_INTERVAL,
-			...(options ? options : {}),
-			retry: options?.retry !== false,
-		}
-		constructorOptionsWithDefaults.loglevel =
-			(process.env.ZEEBE_NODE_LOG_LEVEL as Loglevel) ||
-			constructorOptionsWithDefaults.loglevel ||
-			'INFO'
-		this.loglevel = constructorOptionsWithDefaults.loglevel
+		this.options.longPoll = longPoll
+			? Duration.seconds.of(parseInt(longPoll, 10))
+			: undefined ?? ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD
+
+		const pollInterval =
+			config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_POLL_INTERVAL_MS
+
+		this.options.pollInterval = pollInterval
+			? Duration.milliseconds.of(parseInt(pollInterval, 10))
+			: undefined ?? ZeebeGrpcClient.DEFAULT_POLL_INTERVAL
+
+		this.retry = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_RETRY !== 'false'
+
+		this.options.retry = this.retry
+
+		this.loglevel =
+			(config.zeebeGrpcSettings.ZEEBE_CLIENT_LOG_LEVEL as Loglevel) ?? 'INFO'
 
 		const logTypeFromEnvironment = () =>
 			({
 				JSON: ZBJsonLogger,
 				SIMPLE: ZBSimpleLogger,
-			})[process.env.ZEEBE_NODE_LOG_TYPE ?? 'NONE']
+			})[config.zeebeGrpcSettings.ZEEBE_CLIENT_LOG_TYPE ?? 'NONE']
 
-		constructorOptionsWithDefaults.stdout =
-			constructorOptionsWithDefaults.stdout ??
-			logTypeFromEnvironment() ??
-			ZBSimpleLogger
+		this.stdout = logTypeFromEnvironment() ?? ZBSimpleLogger
 
-		this.stdout = constructorOptionsWithDefaults.stdout!
-
-		this.options = ConfigurationHydrator.configure(
-			gatewayAddress,
-			constructorOptionsWithDefaults
-		)
+		this.options.tenantId = config.CAMUNDA_TENANT_ID
 
 		this.tenantId = this.options.tenantId
 
-		this.gatewayAddress = `${this.options.hostname}:${this.options.port}`
-
-		this.useTLS =
-			this.options.useTLS === true ||
-			(!!this.options.oAuth && this.options.useTLS !== false)
-		this.customSSL = this.options.customSSL
-		this.basicAuth = this.options.basicAuth
-		this.connectionTolerance = Duration.milliseconds.from(
-			this.options.connectionTolerance || this.connectionTolerance
+		this.gatewayAddress = RequireConfiguration(
+			config.ZEEBE_ADDRESS,
+			'ZEEBE_ADDRESS'
 		)
+
+		this.useTLS = config.CAMUNDA_SECURE_CONNECTION !== 'false'
+		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
+		const rootCertsPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
+		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
+		const customSSL = {
+			certChain: certChainPath ? readFileSync(certChainPath) : undefined,
+			privateKey: privateKeyPath ? readFileSync(privateKeyPath) : undefined,
+			rootCerts: rootCertsPath ? readFileSync(rootCertsPath) : undefined,
+		}
+
+		this.customSSL = customSSL
+		this.options.customSSL = customSSL
+
+		const connectionTolerance =
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_CONNECTION_TOLERANCE_MS
+		this.connectionTolerance = connectionTolerance
+			? Duration.milliseconds.from(parseInt(connectionTolerance, 10))
+			: undefined ?? ZeebeGrpcClient.DEFAULT_CONNECTION_TOLERANCE
+
 		this.onConnectionError = this.options.onConnectionError
 		this.onReady = this.options.onReady
-		this.oAuth = this.options.oAuth
-			? new OAuthProviderImpl({
-					...(this.options.oAuth as OAuthProviderConfig & {
-						customRootCert: Buffer
-						cacheOnDisk: boolean
-					}),
-					userAgentString,
-				})
-			: undefined
+		this.oAuthProvider =
+			options?.oAuthProvider ?? constructOAuthProvider(config)
 
 		const { grpcClient, log } = this.constructGrpcClient({
 			grpcConfig: {
@@ -190,13 +181,9 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 			logConfig: {
 				_tag: 'ZBCLIENT',
 				loglevel: this.loglevel,
-				longPoll: this.options.longPoll
-					? Duration.milliseconds.from(this.options.longPoll)
-					: undefined,
+				longPoll: Duration.milliseconds.from(this.options.longPoll),
 				namespace: this.options.logNamespace || 'ZBClient',
-				pollInterval: this.options.pollInterval
-					? Duration.milliseconds.from(this.options.pollInterval)
-					: undefined,
+				pollInterval: Duration.milliseconds.from(this.options.pollInterval),
 				stdout: this.stdout,
 			},
 		})
@@ -220,16 +207,23 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		this.grpc = grpcClient
 		this.logger = log
 
-		this.retry = this.options.retry!
-		this.maxRetries = this.options.maxRetries || ZBClient.DEFAULT_MAX_RETRIES
+		const maxRetries = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES
+		this.maxRetries = maxRetries
+			? parseInt(maxRetries, 10)
+			: undefined ?? ZeebeGrpcClient.DEFAULT_MAX_RETRIES
 
-		this.maxRetryTimeout =
-			this.options.maxRetryTimeout || ZBClient.DEFAULT_MAX_RETRY_TIMEOUT
+		const maxRetryTimeout =
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT
+		this.maxRetryTimeout = maxRetryTimeout
+			? parseInt(maxRetryTimeout, 10)
+			: undefined ?? ZeebeGrpcClient.DEFAULT_MAX_RETRY_TIMEOUT
 
 		// Send command to broker to eagerly fail / prove connection.
 		// This is useful for, for example: the Node-Red client, which wants to
 		// display the connection status.
-		if (this.options.eagerConnection ?? false) {
+		const eagerConnection =
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_EAGER_CONNECT
+		if (eagerConnection ?? false) {
 			this.topology()
 				.then((res) => {
 					this.logger.logDirect(chalk.blueBright('Zeebe cluster topology:'))
@@ -307,6 +301,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 		const request = {
 			signalName: req.signalName,
 			variables: JSON.stringify(req.variables ?? {}),
+			tenantId: req.tenantId ?? this.tenantId,
 		}
 		return this.executeOperation('broadcastSignal', () =>
 			this.grpc.broadcastSignalSync(request)
@@ -419,7 +414,8 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				id: config.id ?? uuid(),
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval: options.longPoll || ZBClient.DEFAULT_LONGPOLL_PERIOD,
+				pollInterval:
+					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD,
 				stdout: options.stdout,
 				taskType: `${config.taskType} (batch)`,
 			},
@@ -529,7 +525,8 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				id: config.id!,
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval: options.longPoll || ZBClient.DEFAULT_LONGPOLL_PERIOD,
+				pollInterval:
+					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD,
 				stdout: options.stdout,
 				taskType: config.taskType,
 			},
@@ -920,12 +917,18 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 	public async deployProcess(
 		process: ZB.DeployProcessFiles | ZB.DeployProcessBuffer
 	): Promise<Grpc.DeployProcessResponse> {
-		const deploy = (processes: Grpc.ProcessRequestObject[]) =>
-			this.executeOperation('deployWorkflow', () =>
+		const deploy = (processes: Grpc.ProcessRequestObject[]) => {
+			const tenantAwareProcesses = processes.map((p) => ({
+				...p,
+				tenantId: this.tenantId,
+			}))
+			console.log('Deploying', tenantAwareProcesses)
+			return this.executeOperation('deployWorkflow', () =>
 				this.grpc.deployProcessSync({
-					processes,
+					processes: tenantAwareProcesses,
 				})
 			)
+		}
 
 		const error = (e: NEA.NonEmptyArray<string>) =>
 			Promise.reject(
@@ -1361,7 +1364,7 @@ export class ZBClient extends TypedEmitter<typeof ConnectionStatusEvent> {
 				host: this.gatewayAddress,
 				loglevel: this.loglevel,
 				namespace: grpcConfig.namespace,
-				oAuth: this.oAuth,
+				oAuth: this.oAuthProvider,
 				options: {
 					longPoll: this.options.longPoll
 						? Duration.milliseconds.from(this.options.longPoll)
