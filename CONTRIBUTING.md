@@ -26,7 +26,7 @@ To run integration tests against Camunda SaaS, but credentials for a Camunda Saa
 
 To run the integration tests against Self-Managed, you can use either your own Self-Managed instance, or start one locally using Docker.
 
-To start one locally, run `docker compose -f docker/docker-compose.yml up -d`.
+To start one locally, run `docker compose -f docker-compose-modeler.yaml -f docker-compose-multitenancy.yml up -d`.
 
 Put the following credentials in the environment:
 
@@ -43,7 +43,17 @@ export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/pr
 export CAMUNDA_TASKLIST_BASE_URL='http://localhost:8082'
 export CAMUNDA_OPERATE_BASE_URL='http://localhost:8081'
 export CAMUNDA_OPTIMIZE_BASE_URL='http://localhost:8083'
+export CAMUNDA_MODELER_BASE_URL='http://localhost:8086'
+export CAMUNDA_MODELER_OAUTH_AUDIENCE='_omit_'
+export CAMUNDA_TENANT_ID=''
+
 export CAMUNDA_TEST_TYPE='local'
+
+# Modeler API Client
+export CAMUNDA_CONSOLE_CLIENT_ID='zeebe'
+export CAMUNDA_CONSOLE_CLIENT_SECRET='zecret'
+# export CAMUNDA_CONSOLE_BASE_URL='https://api.cloud.camunda.io'
+# export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
 ```
 
 Now run the integration tests against Self-Managed with `npm run test:local-integration`.

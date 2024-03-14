@@ -14,6 +14,7 @@ import { v4 as uuid } from 'uuid'
 import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
+	ParseIntOrDefault,
 	RequireConfiguration,
 	constructOAuthProvider,
 } from '../../lib'
@@ -70,16 +71,12 @@ const idColors = [
 export class ZeebeGrpcClient extends TypedEmitter<
 	typeof ConnectionStatusEvent
 > {
-	public static readonly DEFAULT_CONNECTION_TOLERANCE =
-		Duration.milliseconds.of(3000)
+	public static readonly DEFAULT_CONNECTION_TOLERANCE_MS = 3000
 	private static readonly DEFAULT_MAX_RETRIES = -1 // Infinite retry
-	private static readonly DEFAULT_MAX_RETRY_TIMEOUT = Duration.seconds.of(5)
-	private static readonly DEFAULT_LONGPOLL_PERIOD = Duration.seconds.of(30)
-	private static readonly DEFAULT_POLL_INTERVAL = Duration.milliseconds.of(300)
-	public connectionTolerance: MaybeTimeDuration = process.env
-		.ZEEBE_CONNECTION_TOLERANCE
-		? parseInt(process.env.ZEEBE_CONNECTION_TOLERANCE, 10)
-		: ZeebeGrpcClient.DEFAULT_CONNECTION_TOLERANCE
+	private static readonly DEFAULT_MAX_RETRY_TIMEOUT_SECONDS = 5
+	private static readonly DEFAULT_LONGPOLL_PERIOD_SEC = 30
+	private static readonly DEFAULT_POLL_INTERVAL_MS = 300
+	public connectionTolerance: MaybeTimeDuration
 	public connected?: boolean = undefined
 	public readied = false
 	public gatewayAddress: string
@@ -113,18 +110,20 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			options?.config ?? {}
 		)
 		this.options = {} as ZBClientOptions
-		const longPoll = config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS
 
-		this.options.longPoll = longPoll
-			? Duration.seconds.of(parseInt(longPoll, 10))
-			: undefined ?? ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD
+		this.options.longPoll = Duration.seconds.of(
+			ParseIntOrDefault(
+				config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS,
+				ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD_SEC
+			)
+		)
 
-		const pollInterval =
-			config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_POLL_INTERVAL_MS
-
-		this.options.pollInterval = pollInterval
-			? Duration.milliseconds.of(parseInt(pollInterval, 10))
-			: undefined ?? ZeebeGrpcClient.DEFAULT_POLL_INTERVAL
+		this.options.pollInterval = Duration.milliseconds.of(
+			ParseIntOrDefault(
+				config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_POLL_INTERVAL_MS,
+				ZeebeGrpcClient.DEFAULT_POLL_INTERVAL_MS
+			)
+		)
 
 		this.retry = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_RETRY !== 'false'
 
@@ -163,11 +162,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.customSSL = customSSL
 		this.options.customSSL = customSSL
 
-		const connectionTolerance =
-			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_CONNECTION_TOLERANCE_MS
-		this.connectionTolerance = connectionTolerance
-			? Duration.milliseconds.from(parseInt(connectionTolerance, 10))
-			: undefined ?? ZeebeGrpcClient.DEFAULT_CONNECTION_TOLERANCE
+		this.connectionTolerance = Duration.milliseconds.of(
+			ParseIntOrDefault(
+				config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_CONNECTION_TOLERANCE_MS,
+				ZeebeGrpcClient.DEFAULT_CONNECTION_TOLERANCE_MS
+			)
+		)
 
 		this.onConnectionError = this.options.onConnectionError
 		this.onReady = this.options.onReady
@@ -207,16 +207,17 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.grpc = grpcClient
 		this.logger = log
 
-		const maxRetries = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES
-		this.maxRetries = maxRetries
-			? parseInt(maxRetries, 10)
-			: undefined ?? ZeebeGrpcClient.DEFAULT_MAX_RETRIES
+		this.maxRetries = ParseIntOrDefault(
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES,
+			ZeebeGrpcClient.DEFAULT_MAX_RETRIES
+		)
 
-		const maxRetryTimeout =
-			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT
-		this.maxRetryTimeout = maxRetryTimeout
-			? parseInt(maxRetryTimeout, 10)
-			: undefined ?? ZeebeGrpcClient.DEFAULT_MAX_RETRY_TIMEOUT
+		this.maxRetryTimeout = Duration.seconds.of(
+			ParseIntOrDefault(
+				config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT,
+				ZeebeGrpcClient.DEFAULT_MAX_RETRY_TIMEOUT_SECONDS
+			)
+		)
 
 		// Send command to broker to eagerly fail / prove connection.
 		// This is useful for, for example: the Node-Red client, which wants to
@@ -415,7 +416,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
 				pollInterval:
-					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD,
+					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD_SEC,
 				stdout: options.stdout,
 				taskType: `${config.taskType} (batch)`,
 			},
@@ -526,7 +527,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
 				pollInterval:
-					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD,
+					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD_SEC,
 				stdout: options.stdout,
 				taskType: config.taskType,
 			},
@@ -922,7 +923,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				...p,
 				tenantId: this.tenantId,
 			}))
-			console.log('Deploying', tenantAwareProcesses)
 			return this.executeOperation('deployWorkflow', () =>
 				this.grpc.deployProcessSync({
 					processes: tenantAwareProcesses,

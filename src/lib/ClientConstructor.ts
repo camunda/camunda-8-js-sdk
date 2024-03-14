@@ -1,8 +1,8 @@
 import { IOAuthProvider } from 'oauth'
 
-import { CamundaPlatform8Configuration } from './Configuration'
+import { CamundaPlatform8Configuration, DeepPartial } from './Configuration'
 
 export interface ClientConstructor {
-	config?: Partial<CamundaPlatform8Configuration>
+	config?: DeepPartial<CamundaPlatform8Configuration>
 	oAuthProvider?: IOAuthProvider
 }

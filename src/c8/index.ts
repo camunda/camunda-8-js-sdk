@@ -1,4 +1,4 @@
-import { ConsoleApiClient } from 'c8console'
+import { AdminApiClient } from 'admin'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -12,7 +12,7 @@ import { ZeebeGrpcClient } from 'zeebe'
 
 export class Camunda8 {
 	private operateApiClient?: OperateApiClient
-	private consoleApiClient?: ConsoleApiClient
+	private adminApiClient?: AdminApiClient
 	private modelerApiClient?: ModelerApiClient
 	private optimizeApiClient?: OptimizeApiClient
 	private tasklistApiClient?: TasklistApiClient
@@ -37,14 +37,14 @@ export class Camunda8 {
 		return this.operateApiClient
 	}
 
-	public _getConsoleApiClient(): ConsoleApiClient {
-		if (!this.consoleApiClient) {
-			this.consoleApiClient = new ConsoleApiClient({
+	public _getAdminApiClient(): AdminApiClient {
+		if (!this.adminApiClient) {
+			this.adminApiClient = new AdminApiClient({
 				config: this.configuration,
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
-		return this.consoleApiClient
+		return this.adminApiClient
 	}
 
 	public _getModelerApiClient(): ModelerApiClient {

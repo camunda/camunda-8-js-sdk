@@ -1,10 +1,9 @@
-import fs from 'fs'
-
 import { debug } from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
+	GetCertificateAuthority,
 	constructOAuthProvider,
 	packageVersion,
 } from 'lib'
@@ -47,10 +46,9 @@ export class TasklistApiClient {
 		this.userAgentString = `tasklist-rest-client-nodejs/${packageVersion}`
 		const baseUrl = config.CAMUNDA_TASKLIST_BASE_URL
 		const prefixUrl = `${baseUrl}/${TASKLIST_API_VERSION}`
-		const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
-		const certificateAuthority = customRootCertPath
-			? fs.readFileSync(customRootCertPath, 'utf-8')
-			: undefined
+
+		const certificateAuthority = GetCertificateAuthority(config)
+
 		this.rest = got.extend({
 			prefixUrl,
 			https: {

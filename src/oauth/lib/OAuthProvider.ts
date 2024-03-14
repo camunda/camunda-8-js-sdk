@@ -6,6 +6,8 @@ import { debug } from 'debug'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
+	DeepPartial,
+	GetCertificateAuthority,
 	RequireConfiguration,
 	packageVersion,
 } from 'lib'
@@ -22,10 +24,8 @@ const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
 
 export class OAuthProvider implements IOAuthProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
-	public static readonly getTokenCacheDirFromEnv = () =>
-		process.env.CAMUNDA_TOKEN_CACHE_DIR || OAuthProvider.defaultTokenCache
 	private cacheDir: string
-	private zeebeAudience: string
+	private zeebeAudience: string | undefined
 	private authServerUrl: string
 	private clientId: string
 	private clientSecret: string
@@ -40,9 +40,11 @@ export class OAuthProvider implements IOAuthProvider {
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
 	private consoleClientId: string | undefined
 	private consoleClientSecret: string | undefined
+	private isCamundaSaaS: boolean
+	private camundaModelerOAuthAudience: string | undefined
 
 	constructor(options?: {
-		config?: CamundaPlatform8Configuration
+		config?: DeepPartial<CamundaPlatform8Configuration>
 		userAgentString?: string
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
@@ -52,26 +54,28 @@ export class OAuthProvider implements IOAuthProvider {
 			config.CAMUNDA_OAUTH_URL,
 			'CAMUNDA_OAUTH_URL'
 		)
-		this.zeebeAudience = RequireConfiguration(
-			config.ZEEBE_TOKEN_AUDIENCE,
-			'ZEEBE_TOKEN_AUDIENCE'
-		)
+		this.zeebeAudience = config.ZEEBE_TOKEN_AUDIENCE
+
 		this.clientId = RequireConfiguration(
 			config.ZEEBE_CLIENT_ID,
 			'ZEEBE_CLIENT_ID'
 		)
+
 		this.clientSecret = RequireConfiguration(
 			config.ZEEBE_CLIENT_SECRET,
 			'ZEEBE_CLIENT_SECRET'
 		)
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
-		const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
-		this.customRootCert = customRootCertPath
-			? fs.readFileSync(customRootCertPath)
+		const customRootCert = GetCertificateAuthority(config)
+		this.customRootCert = customRootCert
+			? Buffer.from(customRootCert)
 			: undefined
+
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
-		this.useFileCache = config.CAMUNDA_TOKEN_CACHE !== 'memory-only'
+		this.useFileCache = ['true', 'TRUE'].includes(
+			config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE ?? 'false'
+		)
 		this.cacheDir =
 			config.CAMUNDA_TOKEN_CACHE_DIR ?? OAuthProvider.defaultTokenCache
 
@@ -81,17 +85,24 @@ export class OAuthProvider implements IOAuthProvider {
 
 		this.audienceMap = {
 			OPERATE: config.CAMUNDA_OPERATE_OAUTH_AUDIENCE || 'operate.camunda.io',
-			ZEEBE: config.CAMUNDA_ZEEBE_OAUTH_AUDIENCE || this.zeebeAudience,
+			ZEEBE:
+				config.CAMUNDA_ZEEBE_OAUTH_AUDIENCE ||
+				this.zeebeAudience ||
+				'zeebe.camunda.io',
 			OPTIMIZE: config.CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE || 'optimize.camunda.io',
 			TASKLIST: config.CAMUNDA_TASKLIST_OAUTH_AUDIENCE || 'tasklist.camunda.io',
 			CONSOLE: config.CAMUNDA_CONSOLE_OAUTH_AUDIENCE || 'api.cloud.camunda.io',
-			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE || 'modeler.camunda.io',
+			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE || 'api.cloud.camunda.io',
 		}
+
+		this.camundaModelerOAuthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE
 
 		if (this.useFileCache) {
 			try {
 				if (!fs.existsSync(this.cacheDir)) {
-					fs.mkdirSync(this.cacheDir)
+					fs.mkdirSync(this.cacheDir, {
+						recursive: true,
+					})
 				}
 				fs.accessSync(this.cacheDir, fs.constants.W_OK)
 			} catch (e) {
@@ -101,6 +112,10 @@ export class OAuthProvider implements IOAuthProvider {
 				)
 			}
 		}
+
+		this.isCamundaSaaS = this.authServerUrl.includes(
+			'https://login.cloud.camunda.io/oauth/token'
+		)
 	}
 
 	public async getToken(audience: TokenGrantAudienceType): Promise<string> {
@@ -166,32 +181,50 @@ export class OAuthProvider implements IOAuthProvider {
 		}
 	}
 
-	/** @TODO Validate that modeler also uses the Console Credentials in Self-Managed */
-	private makeDebouncedTokenRequest(audience: TokenGrantAudienceType) {
+	/** Camunda SaaS needs an audience for a Modeler token request, and Self-Managed does not. */
+	private addAudienceIfNeeded(audienceType: TokenGrantAudienceType) {
+		/** If we are running on Self-Managed (ie: not Camunda SaaS), and no explicit audience was set,
+		 * we should not include an audience in the token request.
+		 */
+		if (
+			audienceType === 'MODELER' &&
+			!this.isCamundaSaaS &&
+			!this.camundaModelerOAuthAudience
+		) {
+			return ''
+		}
+		return `audience=${this.getAudience(audienceType)}&`
+	}
+
+	private makeDebouncedTokenRequest(audienceType: TokenGrantAudienceType) {
 		const clientId =
-			audience === 'CONSOLE' || audience === 'MODELER'
+			audienceType === 'CONSOLE' || audienceType === 'MODELER'
 				? RequireConfiguration(
 						this.consoleClientId,
 						'CAMUNDA_CONSOLE_CLIENT_ID'
 					)
 				: this.clientId
 		const clientSecret =
-			audience === 'CONSOLE'
+			audienceType === 'CONSOLE' || audienceType === 'MODELER'
 				? RequireConfiguration(
 						this.consoleClientSecret,
 						'CAMUNDA_CONSOLE_CLIENT_SECRET'
 					)
 				: this.clientSecret
-		const body = `audience=${this.getAudience(
-			audience
-		)}&client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`
+
+		const body = `${this.addAudienceIfNeeded(
+			audienceType
+		)}client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`
+		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
 		if (this.customRootCert) {
 			trace('Using custom root certificate')
 		}
+
 		const customAgent = this.customRootCert
 			? new https.Agent({ ca: this.customRootCert })
 			: undefined
+
 		const options = {
 			agent: customAgent,
 			method: 'POST',
@@ -230,11 +263,11 @@ export class OAuthProvider implements IOAuthProvider {
 						`Failed to get token: ${t.error} - ${t.error_description}`
 					)
 				}
-				const token = { ...(t as Token), audience }
+				const token = { ...(t as Token), audience: audienceType }
 				if (this.useFileCache) {
-					this.sendToFileCache({ audience, token })
+					this.sendToFileCache({ audience: audienceType, token })
 				}
-				this.sendToMemoryCache({ audience, token })
+				this.sendToMemoryCache({ audience: audienceType, token })
 				trace(`Got token from endpoint: \n${token.access_token}`)
 				trace(`Token expires in ${token.expires_in} seconds`)
 				return token.access_token

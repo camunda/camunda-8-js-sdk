@@ -1,10 +1,9 @@
-import fs from 'fs'
-
 import d from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
+	GetCertificateAuthority,
 	constructOAuthProvider,
 	packageVersion,
 } from 'lib'
@@ -61,10 +60,9 @@ export class OptimizeApiClient {
 		const baseUrl = config.CAMUNDA_OPTIMIZE_BASE_URL
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
-		const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
-		const certificateAuthority = customRootCertPath
-			? fs.readFileSync(customRootCertPath, 'utf-8')
-			: undefined
+
+		const certificateAuthority = GetCertificateAuthority(config)
+
 		this.rest = got.extend({
 			prefixUrl: `${baseUrl}/api`,
 			https: {

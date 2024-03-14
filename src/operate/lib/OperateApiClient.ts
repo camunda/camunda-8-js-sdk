@@ -1,9 +1,8 @@
-import fs from 'fs'
-
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
+	GetCertificateAuthority,
 	constructOAuthProvider,
 	packageVersion,
 } from 'lib'
@@ -58,13 +57,13 @@ export class OperateApiClient {
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = `operate-client-nodejs/${packageVersion}`
 		const baseUrl = config.CAMUNDA_OPERATE_BASE_URL
-		const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
-		const certificateAuthority = customRootCertPath
-			? fs.readFileSync(customRootCertPath, 'utf-8')
-			: undefined
+
+		const certificateAuthority = GetCertificateAuthority(config)
+
+		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
 
 		this.rest = got.extend({
-			prefixUrl: `${baseUrl}/${OPERATE_API_VERSION}`,
+			prefixUrl,
 			https: {
 				certificateAuthority,
 			},
@@ -167,7 +166,7 @@ export class OperateApiClient {
 		query: Query<ProcessInstance> = {}
 	): Promise<SearchResults<ProcessInstance>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('process-instances/search', {
 				json: query,
 				headers,
@@ -188,7 +187,7 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ProcessInstance> {
 		const headers = await this.getHeaders()
-		return got(`process-instances/${processInstanceKey}`, {
+		return this.rest(`process-instances/${processInstanceKey}`, {
 			headers,
 		}).json()
 	}
@@ -205,7 +204,7 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ChangeStatus> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`process-instances/${processInstanceKey}`, {
 				headers,
 			})
@@ -397,7 +396,7 @@ export class OperateApiClient {
 	 */
 	public async getVariables(variableKey: number | string): Promise<Variable> {
 		const headers = await this.getHeaders()
-		return got(`variables/${variableKey}`, {
+		return this.rest(`variables/${variableKey}`, {
 			headers,
 		}).json()
 	}

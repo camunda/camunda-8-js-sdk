@@ -8,11 +8,11 @@
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc --project tsconfig.json",
 		"docs": "rm -rf ./docs && typedoc src/index.ts",
-		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection",
-		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true",
-		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns modeler --testPathIgnorePatterns disconnection --testPathIgnorePatterns console - --detectOpenHandles --verbose true",
-		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration",
-		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection --testPathIgnorePatterns console --testPathIgnorePatterns multitenancy",
+		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection multitenancy",
+		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true -u",
+		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns modeler --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin - --detectOpenHandles --verbose true -u",
+		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration -u",
+		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns multitenancy -u",
 		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection local-integration --detectOpenHandles --verbose true",
 		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles disconnection",
 		"test&docs": "npm test && npm run docs",
@@ -45,7 +45,7 @@
 			"^.+\\.(ts|tsx)$": [
 				"ts-jest",
 				{
-					"tsconfig": "tsconfig.json"
+					"tsconfig": "src/__tests__/tsconfig.json"
 				}
 			]
 		},
@@ -59,7 +59,8 @@
 			"^tasklist$": "<rootDir>/src/tasklist",
 			"^optimize$": "<rootDir>/src/optimize",
 			"^modeler$": "<rootDir>/src/modeler",
-			"^c8console$": "<rootDir>/src/c8console"
+			"^admin$": "<rootDir>/src/admin",
+			"^zeebe$": "<rootDir>/src/zeebe"
 		},
 		"preset": "ts-jest",
 		"testEnvironment": "node"

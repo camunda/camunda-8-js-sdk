@@ -14,14 +14,16 @@ const BaseCredentialEnvironmentVariables = [
 	'CAMUNDA_CLUSTER_REGION',
 	'CAMUNDA_CREDENTIALS_SCOPES',
 	'CAMUNDA_OAUTH_URL',
+	/** This is needed for MS Entra and other OIDC providers */
 	'CAMUNDA_TOKEN_SCOPE',
+	'CAMUNDA_CREDENTIALS_SCOPES',
 	'CAMUNDA_TENANT_ID',
 ] as const
 
 const OAuthConfigurationEnvironmentVariables = [
 	'CAMUNDA_TOKEN_CACHE_DIR',
-	/* Set to 'memory-only' to disable file cache */
-	'CAMUNDA_TOKEN_CACHE',
+	/* Set to 'true' to disable file cache */
+	'CAMUNDA_TOKEN_DISK_CACHE_DISABLE',
 	/** These only need to be set if they differ from the SaaS and standard Self-Managed settings */
 	'CAMUNDA_OPERATE_OAUTH_AUDIENCE',
 	'CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE',
@@ -67,16 +69,19 @@ const ConsoleCredentialsEnvironmentVariables = [
 ] as const
 
 const ZeebeGrpcSettingsEnvironmentVariables = [
+	/* 'DEBUG', 'INFO', 'NONE' */
 	'ZEEBE_CLIENT_LOG_LEVEL',
 	'ZEEBE_GRPC_CLIENT_EAGER_CONNECT',
-	/** Set to true to automate retries */
+	/** Set to 'true' to automate retries */
 	'ZEEBE_GRPC_CLIENT_RETRY',
+	/* Provide a number that represents the maximum number of retries */
 	'ZEEBE_GRPC_CLIENT_MAX_RETRIES',
+	/* Provide a number that represents the maximum time to wait between retries when backing off */
 	'ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT',
 	'ZEEBE_GRPC_CLIENT_INITIAL_CONNECTION_TOLERANCE ',
 	'GRPC_KEEPALIVE_TIME_MS',
 	'ZEEBE_GRPC_CLIENT_CONNECTION_TOLERANCE_MS',
-	/* JSON or SIMPLE */
+	/* 'JSON' or 'SIMPLE' */
 	'ZEEBE_CLIENT_LOG_TYPE',
 	/** How long the long poll is held open */
 	'ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS',
@@ -127,7 +132,7 @@ export class CamundaEnvironmentConfigurator {
 	})
 
 	public static mergeConfigWithEnvironment = (
-		config: Partial<CamundaPlatform8Configuration>
+		config: DeepPartial<CamundaPlatform8Configuration>
 	): CamundaPlatform8Configuration =>
 		mergeWith({}, CamundaEnvironmentConfigurator.ENV(), config)
 }
@@ -135,3 +140,7 @@ export class CamundaEnvironmentConfigurator {
 export type CamundaPlatform8Configuration = ReturnType<
 	typeof CamundaEnvironmentConfigurator.ENV
 >
+
+export type DeepPartial<T> = {
+	[K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
+}
