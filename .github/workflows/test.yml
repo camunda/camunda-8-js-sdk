@@ -34,7 +34,7 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker-compose -f docker/docker-compose.yml -f docker-compose-modeler.yaml up -d
+          docker-compose -f docker/docker-compose.yml -f docker/docker-compose-modeler.yaml up -d
 
       - name: Run Integration Tests
         run: |
