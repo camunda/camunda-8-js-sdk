@@ -473,7 +473,6 @@ export class GrpcClient extends EventEmitter {
 		metadata.add('user-agent', `zeebe-client-nodejs/${packageVersion}`)
 		if (this.oAuth) {
 			const token = await this.oAuth.getToken('ZEEBE')
-			console.log('token', token) // @DEBUG
 			metadata.add('Authorization', `Bearer ${token}`)
 		}
 		return metadata
