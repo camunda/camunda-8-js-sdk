@@ -27,7 +27,7 @@ test('Worker emits the ready event once if there is a broker', (done) => {
 
 test('Does set connected: true if there is a broker and eagerConnection: true', (done) => {
 	const zbc2 = new ZeebeGrpcClient({
-		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' } },
+		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true } },
 	})
 
 	setTimeout(async () => {

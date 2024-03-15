@@ -25,7 +25,6 @@ const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
 export class OAuthProvider implements IOAuthProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
 	private cacheDir: string
-	private zeebeAudience: string | undefined
 	private authServerUrl: string
 	private clientId: string
 	private clientSecret: string
@@ -54,7 +53,6 @@ export class OAuthProvider implements IOAuthProvider {
 			config.CAMUNDA_OAUTH_URL,
 			'CAMUNDA_OAUTH_URL'
 		)
-		this.zeebeAudience = config.ZEEBE_TOKEN_AUDIENCE
 
 		this.clientId = RequireConfiguration(
 			config.ZEEBE_CLIENT_ID,
@@ -73,9 +71,7 @@ export class OAuthProvider implements IOAuthProvider {
 			: undefined
 
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
-		this.useFileCache = ['true', 'TRUE'].includes(
-			config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE ?? 'false'
-		)
+		this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
 		this.cacheDir =
 			config.CAMUNDA_TOKEN_CACHE_DIR ?? OAuthProvider.defaultTokenCache
 
@@ -84,15 +80,12 @@ export class OAuthProvider implements IOAuthProvider {
 		}` // e.g.: `zeebe-client-nodejs/${pkg.version} ${CUSTOM_AGENT_STRING}`
 
 		this.audienceMap = {
-			OPERATE: config.CAMUNDA_OPERATE_OAUTH_AUDIENCE || 'operate.camunda.io',
-			ZEEBE:
-				config.CAMUNDA_ZEEBE_OAUTH_AUDIENCE ||
-				this.zeebeAudience ||
-				'zeebe.camunda.io',
-			OPTIMIZE: config.CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE || 'optimize.camunda.io',
-			TASKLIST: config.CAMUNDA_TASKLIST_OAUTH_AUDIENCE || 'tasklist.camunda.io',
-			CONSOLE: config.CAMUNDA_CONSOLE_OAUTH_AUDIENCE || 'api.cloud.camunda.io',
-			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE || 'api.cloud.camunda.io',
+			OPERATE: config.CAMUNDA_OPERATE_OAUTH_AUDIENCE,
+			ZEEBE: config.CAMUNDA_ZEEBE_OAUTH_AUDIENCE,
+			OPTIMIZE: config.CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE,
+			TASKLIST: config.CAMUNDA_TASKLIST_OAUTH_AUDIENCE,
+			CONSOLE: config.CAMUNDA_CONSOLE_OAUTH_AUDIENCE,
+			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE,
 		}
 
 		this.camundaModelerOAuthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE

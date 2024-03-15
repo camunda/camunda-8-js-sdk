@@ -24,7 +24,7 @@ test('Does not call the onReady handler if there is no broker', (done) => {
 test('Does call the onReady handler if there is a broker and eagerConnection is true', (done) => {
 	let called = 0
 	const zbc2 = new ZeebeGrpcClient({
-		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' } },
+		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true } },
 	}).on('ready', () => {
 		called++
 	})
@@ -38,7 +38,7 @@ test('Does call the onReady handler if there is a broker and eagerConnection is 
 
 test('Does set connected to true if there is a broker', (done) => {
 	const zbc2 = new ZeebeGrpcClient({
-		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' } },
+		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true } },
 	})
 
 	setTimeout(async () => {
@@ -51,7 +51,7 @@ test('Does set connected to true if there is a broker', (done) => {
 test('Does emit the ready event if there is a broker and eagerConnection: true', (done) => {
 	let called = 0
 	const zbc2 = new ZeebeGrpcClient({
-		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' } },
+		config: { zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true } },
 	}).on('ready', () => {
 		called++
 	})

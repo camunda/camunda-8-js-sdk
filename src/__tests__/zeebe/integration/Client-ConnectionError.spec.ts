@@ -13,7 +13,7 @@ test('Calls the onConnectionError handler if there is no broker and eagerConnect
 		const zbc2 = new ZeebeGrpcClient({
 			config: {
 				ZEEBE_ADDRESS: 'localtoast: 267890',
-				zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' },
+				zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true },
 			},
 		})
 		zbc2.on('connectionError', () => {
@@ -42,7 +42,7 @@ test('Sets connected:false if there is no broker and eagerConnection: true', (do
 	const zbc2 = new ZeebeGrpcClient({
 		config: {
 			ZEEBE_ADDRESS: 'localtoast: 267890',
-			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' },
+			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true },
 		},
 	}) // Broker doesn't exist!!!	{
 	setTimeout(async () => {
@@ -57,7 +57,7 @@ test('Does emit the connectionError event if there is no broker and eagerConnect
 	const zbc2 = new ZeebeGrpcClient({
 		config: {
 			ZEEBE_ADDRESS: 'localtoast: 267890',
-			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' },
+			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true },
 		},
 	})
 	zbc2.on('connectionError', () => {

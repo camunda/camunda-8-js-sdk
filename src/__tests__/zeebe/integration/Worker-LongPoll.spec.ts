@@ -13,7 +13,7 @@ let processId: string
 suppressZeebeLogging()
 
 const zbcLongPoll = new ZeebeGrpcClient({
-	config: { zeebeGrpcSettings: { ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS: '60' } },
+	config: { zeebeGrpcSettings: { ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS: 60 } },
 })
 
 afterAll(async () => {

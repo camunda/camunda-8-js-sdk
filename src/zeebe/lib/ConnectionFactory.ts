@@ -9,6 +9,9 @@ export interface Characteristics {
 	_tag: GrpcConnectionProfile
 }
 
+/**
+ * @TODO we need to override this via the constructor
+ */
 export const ConnectionCharacteristics: {
 	[key in GrpcConnectionProfile]: Characteristics
 } = {

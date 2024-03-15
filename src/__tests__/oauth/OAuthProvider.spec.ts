@@ -27,9 +27,10 @@ test('Gets the token cache dir from the environment', () => {
 	removeCacheDir(tokenCacheDir)
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
+
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
@@ -37,7 +38,8 @@ test('Gets the token cache dir from the environment', () => {
 		userAgentString: 'test',
 	})
 	expect(o).toBeTruthy()
-	expect(fs.existsSync(tokenCacheDir)).toBe(true)
+	const exists = fs.existsSync(tokenCacheDir)
+	expect(exists).toBe(true)
 	removeCacheDir(tokenCacheDir)
 
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
@@ -52,7 +54,7 @@ test('Creates the token cache dir if it does not exist', () => {
 
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
@@ -79,10 +81,10 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	try {
 		const o = new OAuthProvider({
 			config: {
-				ZEEBE_TOKEN_AUDIENCE: 'token',
+				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId',
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				ZEEBE_AUTHORIZATION_SERVER_URL: 'url',
+				CAMUNDA_OAUTH_URL: 'url',
 			},
 			userAgentString: 'test',
 		})
@@ -106,7 +108,7 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3002',
@@ -152,7 +154,7 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 test('Uses form encoding for request', (done) => {
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3001',
@@ -185,7 +187,7 @@ test('Uses form encoding for request', (done) => {
 test('Uses a custom audience for an Operate token, if one is configured', (done) => {
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3001',
@@ -219,7 +221,7 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 test('Passes scope, if provided', () => {
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			CAMUNDA_TOKEN_SCOPE: 'scope',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
@@ -256,7 +258,7 @@ test('Can get scope from environment', () => {
 	process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3003',
@@ -297,7 +299,7 @@ test('Creates the token cache dir if it does not exist', () => {
 
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			CAMUNDA_TOKEN_CACHE_DIR: tokenCache,
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
@@ -323,7 +325,7 @@ test('Gets the token cache dir from the environment', () => {
 	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
@@ -351,7 +353,7 @@ test('Uses an explicit token cache over the environment', () => {
 	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache1
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			CAMUNDA_TOKEN_CACHE_DIR: tokenCache2,
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
@@ -383,7 +385,7 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	try {
 		const o = new OAuthProvider({
 			config: {
-				ZEEBE_TOKEN_AUDIENCE: 'token',
+				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId',
 				CAMUNDA_TOKEN_CACHE_DIR: tokenCache,
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
@@ -405,7 +407,7 @@ test('Throws in the constructor if the token cache is not writable', () => {
 test('Can set a custom user agent', () => {
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3004',
@@ -420,9 +422,9 @@ test('Uses form encoding for request', (done) => {
 	process.env.DEBUG = 'camunda:token'
 	const o = new OAuthProvider({
 		config: {
-			ZEEBE_TOKEN_AUDIENCE: 'token',
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
-			CAMUNDA_TOKEN_CACHE: 'memory-only',
+			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3001',
 		},

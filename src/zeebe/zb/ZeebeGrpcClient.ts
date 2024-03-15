@@ -14,7 +14,6 @@ import { v4 as uuid } from 'uuid'
 import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
-	ParseIntOrDefault,
 	RequireConfiguration,
 	constructOAuthProvider,
 } from '../../lib'
@@ -71,11 +70,6 @@ const idColors = [
 export class ZeebeGrpcClient extends TypedEmitter<
 	typeof ConnectionStatusEvent
 > {
-	public static readonly DEFAULT_CONNECTION_TOLERANCE_MS = 3000
-	private static readonly DEFAULT_MAX_RETRIES = -1 // Infinite retry
-	private static readonly DEFAULT_MAX_RETRY_TIMEOUT_SECONDS = 5
-	private static readonly DEFAULT_LONGPOLL_PERIOD_SEC = 30
-	private static readonly DEFAULT_POLL_INTERVAL_MS = 300
 	public connectionTolerance: MaybeTimeDuration
 	public connected?: boolean = undefined
 	public readied = false
@@ -112,25 +106,19 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.options = {} as ZBClientOptions
 
 		this.options.longPoll = Duration.seconds.of(
-			ParseIntOrDefault(
-				config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS,
-				ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD_SEC
-			)
+			config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS
 		)
 
 		this.options.pollInterval = Duration.milliseconds.of(
-			ParseIntOrDefault(
-				config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_POLL_INTERVAL_MS,
-				ZeebeGrpcClient.DEFAULT_POLL_INTERVAL_MS
-			)
+			config.zeebeGrpcSettings.ZEEBE_GRPC_WORKER_POLL_INTERVAL_MS
 		)
 
-		this.retry = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_RETRY !== 'false'
+		this.retry = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_RETRY
 
 		this.options.retry = this.retry
 
-		this.loglevel =
-			(config.zeebeGrpcSettings.ZEEBE_CLIENT_LOG_LEVEL as Loglevel) ?? 'INFO'
+		this.loglevel = config.zeebeGrpcSettings.ZEEBE_CLIENT_LOG_LEVEL as Loglevel
+		this.options.loglevel = this.loglevel
 
 		const logTypeFromEnvironment = () =>
 			({
@@ -149,7 +137,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			'ZEEBE_ADDRESS'
 		)
 
-		this.useTLS = config.CAMUNDA_SECURE_CONNECTION !== 'false'
+		this.useTLS = config.CAMUNDA_SECURE_CONNECTION
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const rootCertsPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
@@ -163,10 +151,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.options.customSSL = customSSL
 
 		this.connectionTolerance = Duration.milliseconds.of(
-			ParseIntOrDefault(
-				config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_CONNECTION_TOLERANCE_MS,
-				ZeebeGrpcClient.DEFAULT_CONNECTION_TOLERANCE_MS
-			)
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_CONNECTION_TOLERANCE_MS
 		)
 
 		this.onConnectionError = this.options.onConnectionError
@@ -207,16 +192,10 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.grpc = grpcClient
 		this.logger = log
 
-		this.maxRetries = ParseIntOrDefault(
-			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES,
-			ZeebeGrpcClient.DEFAULT_MAX_RETRIES
-		)
+		this.maxRetries = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES
 
 		this.maxRetryTimeout = Duration.seconds.of(
-			ParseIntOrDefault(
-				config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT,
-				ZeebeGrpcClient.DEFAULT_MAX_RETRY_TIMEOUT_SECONDS
-			)
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT_SECONDS
 		)
 
 		// Send command to broker to eagerly fail / prove connection.
@@ -415,8 +394,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				id: config.id ?? uuid(),
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval:
-					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD_SEC,
+				pollInterval: options.longPoll,
 				stdout: options.stdout,
 				taskType: `${config.taskType} (batch)`,
 			},
@@ -508,7 +486,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		// Merge parent client options with worker override
 		const options = {
 			...this.options,
-			loglevel: this.loglevel,
 			onConnectionError: undefined, // Do not inherit client handler
 			onReady: undefined, // Do not inherit client handler
 			...config,
@@ -526,8 +503,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				id: config.id!,
 				loglevel: options.loglevel,
 				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval:
-					options.longPoll || ZeebeGrpcClient.DEFAULT_LONGPOLL_PERIOD_SEC,
+				pollInterval: options.longPoll,
 				stdout: options.stdout,
 				taskType: config.taskType,
 			},

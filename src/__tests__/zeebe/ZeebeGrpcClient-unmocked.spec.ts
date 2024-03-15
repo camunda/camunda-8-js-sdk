@@ -20,10 +20,10 @@ jest.setTimeout(13000)
 test('ZeebeGrpcClient constructor throws an exception when there is no broker and retry is false', async () => {
 	const zbc = new ZeebeGrpcClient({
 		config: {
-			CAMUNDA_OAUTH_DISABLED: 'true',
+			CAMUNDA_OAUTH_DISABLED: true,
 			ZEEBE_ADDRESS: 'localhoster',
 			zeebeGrpcSettings: {
-				ZEEBE_GRPC_CLIENT_RETRY: 'false',
+				ZEEBE_GRPC_CLIENT_RETRY: false,
 			},
 		},
 	})
@@ -39,9 +39,9 @@ test('ZeebeGrpcClient constructor throws an exception when there is no broker an
 test('cancelProcessInstance throws an exception when workflowInstanceKey is malformed', async () => {
 	const zbc = new ZeebeGrpcClient({
 		config: {
-			CAMUNDA_OAUTH_DISABLED: 'true',
+			CAMUNDA_OAUTH_DISABLED: true,
 			ZEEBE_ADDRESS: 'localhoster',
-			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_RETRY: 'false' },
+			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_RETRY: false },
 		},
 	})
 	expect.assertions(1)

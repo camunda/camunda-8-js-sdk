@@ -9,7 +9,7 @@ xtest('Calls the onConnectionError handler if there is no broker and eagerConnec
 		const zbc2 = new ZeebeGrpcClient({
 			config: {
 				ZEEBE_ADDRESS: 'localtoast: 267890',
-				zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' },
+				zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true },
 			},
 		})
 
@@ -45,7 +45,7 @@ xtest('Calls ZBClient onConnectionError once when there is no broker, eagerConne
 		const zbc2 = new ZeebeGrpcClient({
 			config: {
 				ZEEBE_ADDRESS: 'localtoast:234532534',
-				zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: 'true' },
+				zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: true },
 			},
 		})
 		zbc2.on('connectionError', () => {

@@ -13,7 +13,7 @@ test('ZeebeGrpcClient constructor creates a new ZeebeGrpcClient', async () => {
 	process.env.ZEEBE_ADDRESS = 'localhost:26500'
 	const zbc = new ZeebeGrpcClient({
 		config: {
-			CAMUNDA_OAUTH_DISABLED: 'true',
+			CAMUNDA_OAUTH_DISABLED: true,
 		},
 	})
 	expect(zbc instanceof ZeebeGrpcClient).toBe(true)

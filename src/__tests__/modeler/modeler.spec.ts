@@ -1,4 +1,3 @@
-// import 'dotenv/config'
 import { ModelerApiClient } from '../../modeler/index'
 
 process.env.DEBUG = 'camunda:token'
