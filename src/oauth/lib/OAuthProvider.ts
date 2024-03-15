@@ -41,6 +41,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private consoleClientSecret: string | undefined
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
+	private tokenRefreshThresholdMs: number
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -109,6 +110,9 @@ export class OAuthProvider implements IOAuthProvider {
 		}
 
 		this.camundaModelerOAuthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE
+
+		this.tokenRefreshThresholdMs =
+			config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
 
 		if (this.useFileCache) {
 			try {
@@ -383,7 +387,10 @@ export class OAuthProvider implements IOAuthProvider {
 
 	private isExpired(token: Token) {
 		const d = new Date()
-		return token.expiry <= d.setSeconds(d.getSeconds())
+		const currentTime = d.setSeconds(d.getSeconds())
+		const expiryHorizon = token.expiry - this.tokenRefreshThresholdMs
+		const tokenIsExpired = currentTime >= expiryHorizon
+		return tokenIsExpired
 	}
 
 	private evictFromMemoryCache(audience: TokenGrantAudienceType) {
