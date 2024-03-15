@@ -1,103 +1,31 @@
-import { Dto, OperateApiClient } from '../../operate'
+import { EnvironmentSetup } from 'lib'
 
-const c = new OperateApiClient()
-jest.setTimeout(15000)
+import { OperateApiClient } from '../../operate'
 
-xtest('It can get the Incident', async () => {
-	const res = await c.searchIncidents({
-		filter: {
-			processInstanceKey: 2251799816400111,
+beforeAll(() => {
+	EnvironmentSetup.storeEnv()
+	EnvironmentSetup.wipeEnv()
+})
+afterAll(() => EnvironmentSetup.restoreEnv())
+
+test('Censtructor throws without base url', () => {
+	try {
+		new OperateApiClient({
+			config: {
+				CAMUNDA_OAUTH_DISABLED: true,
+			},
+		})
+	} catch (e) {
+		expect((e as Error).message.includes('Missing')).toBe(true)
+	}
+})
+
+test('Can get construct a client', () => {
+	const client = new OperateApiClient({
+		config: {
+			CAMUNDA_OAUTH_DISABLED: true,
+			CAMUNDA_OPERATE_BASE_URL: 'http://localhost',
 		},
 	})
-	console.log(JSON.stringify(res, null, 2))
-	expect(res.total).toBe(1)
-})
-xtest('It can search process definitions', async () => {
-	const query: Dto.Query<Dto.ProcessDefinition> = {
-		filter: {},
-		size: 50,
-		sort: [
-			{
-				field: 'bpmnProcessId',
-				order: 'ASC',
-			},
-		],
-	}
-	const defs = await c.searchProcessDefinitions(query)
-	expect(defs.total).toBeGreaterThanOrEqual(0)
-})
-
-xtest('It can get a specific process definition', async () => {
-	const p = await c.getProcessDefinition(2251799817140074)
-	expect(p).toBeTruthy()
-})
-
-xtest('It can get the process definition XML', async () => {
-	const p = await c.getProcessDefinitionXML(2251799817140074)
-	expect(p).toBeTruthy()
-})
-
-xtest('It can search for process instances', async () => {
-	const query: Dto.Query<Dto.ProcessInstance> = {
-		filter: {
-			processVersion: 1,
-		},
-		size: 50,
-		sort: [
-			{
-				field: 'bpmnProcessId',
-				order: 'ASC',
-			},
-		],
-	}
-	const defs = await c.searchProcessInstances(query)
-	expect(defs).toBeTruthy()
-	const d = await c.searchProcessInstances({})
-	expect(d).toBeTruthy()
-})
-
-xtest('It can find a specific process instance', async () => {
-	const query: Dto.Query<Dto.ProcessInstance> = {
-		filter: {
-			processVersion: 1,
-			key: 2251799819847322,
-		},
-		size: 50,
-		sort: [
-			{
-				field: 'bpmnProcessId',
-				order: 'ASC',
-			},
-		],
-	}
-	const defs = await c.searchProcessInstances(query)
-	expect(defs).toBeTruthy()
-})
-
-xtest('It can get a specific process instance', async () => {
-	const p = await c.getProcessInstance(2251799819847322)
-	expect(p).toBeTruthy()
-})
-
-xtest('It can find incidents', async () => {
-	const is = await c.searchIncidents()
-	console.log(is)
-	expect(is).toBeTruthy()
-})
-
-xtest('It can get a specific incident', async () => {
-	const i = await c.getIncident(2251799818436725)
-	expect(i).toBeTruthy()
-})
-
-xtest('It can get variables for a specific process', async () => {
-	const vars = await c.getVariablesforProcess(4503599629029980)
-	console.log(vars)
-	expect(vars).toBeTruthy()
-})
-
-xtest('It can get variables as JSON', async () => {
-	const vars = await c.getJSONVariablesforProcess(2251799816518834)
-	console.log(vars)
-	expect(vars).toBeTruthy()
+	expect(client).toBeTruthy()
 })

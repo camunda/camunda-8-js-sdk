@@ -4,6 +4,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
 	GetCertificateAuthority,
+	RequireConfiguration,
 	constructOAuthProvider,
 	packageVersion,
 } from 'lib'
@@ -23,13 +24,17 @@ export class AdminApiClient {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+		const baseUrl = RequireConfiguration(
+			config.CAMUNDA_CONSOLE_BASE_URL,
+			'CAMUNDA_CONSOLE_BASE_URL'
+		)
+
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 
 		const certificateAuthority = GetCertificateAuthority(config)
 
 		this.userAgentString = `console-client-nodejs/${packageVersion}`
-		const baseUrl = config.CAMUNDA_CONSOLE_BASE_URL
 		this.rest = got.extend({
 			prefixUrl: `${baseUrl}/clusters`,
 			https: {

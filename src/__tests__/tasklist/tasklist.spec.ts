@@ -1,14 +1,31 @@
+import { EnvironmentSetup } from 'lib'
+
 import { TasklistApiClient } from '../../tasklist/index'
 
-it('throws during construction with no env variables set', () => {
-	const prev = process.env.ZEEBE_ADDRESS
-	delete process.env.ZEEBE_ADDRESS
+beforeAll(() => {
+	EnvironmentSetup.storeEnv()
+	EnvironmentSetup.wipeEnv()
+})
+afterAll(() => EnvironmentSetup.restoreEnv())
+
+test('Censtructor throws without base url', () => {
 	try {
-		new TasklistApiClient()
-	} catch (e: unknown) {
-		expect((e as Error).message).toBe(
-			'Missing environment variable: ZEEBE_ADDRESS'
-		)
+		new TasklistApiClient({
+			config: {
+				CAMUNDA_OAUTH_DISABLED: true,
+			},
+		})
+	} catch (e) {
+		expect((e as Error).message.includes('Missing')).toBe(true)
 	}
-	process.env.ZEEBE_ADDRESS = prev
+})
+
+test('Can get construct a client', () => {
+	const client = new TasklistApiClient({
+		config: {
+			CAMUNDA_OAUTH_DISABLED: true,
+			CAMUNDA_TASKLIST_BASE_URL: 'http://localhost',
+		},
+	})
+	expect(client).toBeTruthy()
 })

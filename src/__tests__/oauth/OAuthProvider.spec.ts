@@ -7,7 +7,10 @@ import { OAuthProvider } from '../../oauth'
 
 jest.setTimeout(10000)
 
-beforeAll(() => EnvironmentSetup.storeEnv())
+beforeAll(() => {
+	EnvironmentSetup.storeEnv()
+	EnvironmentSetup.wipeEnv()
+})
 
 beforeEach(() => EnvironmentSetup.wipeEnv())
 
@@ -21,6 +24,66 @@ function removeCacheDir(dirpath: string) {
 		})
 	}
 }
+
+test('Throws in the constructor if there in no clientId credentials', () => {
+	let thrown = false
+	let message = ''
+	try {
+		new OAuthProvider({
+			config: { CAMUNDA_OAUTH_URL: 'url' },
+		})
+	} catch (e) {
+		thrown = true
+		message = (e as Error).message
+	}
+	expect(thrown).toBe(true)
+	expect(
+		message.includes('ZEEBE_CLIENT_ID') &&
+			message.includes('CAMUNDA_CONSOLE_CLIENT_ID')
+	).toBe(true)
+})
+
+test('Throws in the constructor if there in no clientSecret credentials', () => {
+	let thrown = false
+	let message = ''
+	try {
+		new OAuthProvider({
+			config: {
+				CAMUNDA_CONSOLE_CLIENT_ID: 'clientId',
+				CAMUNDA_OAUTH_URL: 'url',
+			},
+		})
+	} catch (e) {
+		thrown = true
+		message = (e as Error).message
+	}
+	expect(thrown).toBe(true)
+	expect(
+		message.includes('ZEEBE_CLIENT_SECRET') &&
+			message.includes('CAMUNDA_CONSOLE_CLIENT_SECRET')
+	).toBe(true)
+})
+
+test('Throws in the constructor if there are insufficient credentials', () => {
+	let thrown = false
+	let message = ''
+	try {
+		new OAuthProvider({
+			config: {
+				CAMUNDA_CONSOLE_CLIENT_ID: 'clientId',
+				ZEEBE_CLIENT_SECRET: 'zeebe-secret',
+				CAMUNDA_OAUTH_URL: 'url',
+			},
+		})
+	} catch (e) {
+		thrown = true
+		message = (e as Error).message
+	}
+	expect(thrown).toBe(true)
+	expect(
+		message.includes('client ID') && message.includes('client secret')
+	).toBe(true)
+})
 
 test('Gets the token cache dir from the environment', () => {
 	const tokenCacheDir = path.join(__dirname, '.token-cache')
@@ -418,8 +481,8 @@ test('Can set a custom user agent', () => {
 	expect(o.userAgentString.includes(' modeler')).toBe(true)
 })
 
-test('Uses form encoding for request', (done) => {
-	process.env.DEBUG = 'camunda:token'
+// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+test('Passes no audience for Modeler API when self-hosted', (done) => {
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -443,12 +506,59 @@ test('Uses form encoding for request', (done) => {
 					res.end('{"token": "something"}')
 					server.close()
 					expect(body).toEqual(
-						'audience=token&client_id=clientId&client_secret=clientSecret&grant_type=client_credentials'
+						'client_id=clientId&client_secret=clientSecret&grant_type=client_credentials'
 					)
 					done()
 				})
 			}
 		})
 		.listen(3001)
-	o.getToken('ZEEBE')
+	o.getToken('MODELER')
+})
+
+// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+test('Throws if you try to get a Modeler token from SaaS without console creds', async () => {
+	let thrown = false
+	const o = new OAuthProvider({
+		config: {
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+			ZEEBE_CLIENT_ID: 'clientId',
+			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+			ZEEBE_CLIENT_SECRET: 'clientSecret',
+			CAMUNDA_OAUTH_URL: 'https://login.cloud.camunda.io/oauth/token',
+		},
+		userAgentString: 'modeler',
+	})
+
+	await o
+		.getToken('MODELER')
+		.catch(() => {
+			thrown = true
+		})
+		.then(() => {
+			expect(thrown).toBe(true)
+		})
+})
+
+// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+test('Throws if you try to get a Modeler token from Self-hosted without application creds', async () => {
+	let thrown = false
+	const o = new OAuthProvider({
+		config: {
+			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+			CAMUNDA_CONSOLE_CLIENT_ID: 'clientId',
+			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+			CAMUNDA_CONSOLE_CLIENT_SECRET: 'clientSecret',
+			CAMUNDA_OAUTH_URL: 'https://login.cloud.camunda.io/oauth/token',
+		},
+		userAgentString: 'modeler',
+	})
+	await o
+		.getToken('MODELER')
+		.catch(() => {
+			thrown = true
+		})
+		.then(() => {
+			expect(thrown).toBe(true)
+		})
 })

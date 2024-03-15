@@ -86,7 +86,6 @@ This is the complete environment configuration needed to run against the Dockeri
 export ZEEBE_ADDRESS='localhost:26500'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
-export ZEEBE_TOKEN_AUDIENCE='zeebe.camunda.io'
 export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
 export CAMUNDA_TASKLIST_BASE_URL='http://localhost:8082'
 export CAMUNDA_OPERATE_BASE_URL='http://localhost:8081'
@@ -99,10 +98,6 @@ export CAMUNDA_TENANT_ID=''
 
 # TLS for gRPC is on by default. If the Zeebe broker is not secured by TLS, turn it off
 export CAMUNDA_SECURE_CONNECTION=false
-
-# Modeler API Client credentials
-export CAMUNDA_CONSOLE_CLIENT_ID='zeebe'
-export CAMUNDA_CONSOLE_CLIENT_SECRET='zecret'
 ```
 
 If you are using an OIDC that requires a `scope` parameter to be passed with the token request, set the following variable:
@@ -121,16 +116,13 @@ const c8 = new Camunda8({
         ZEEBE_ADDRESS: 'localhost:26500'
         ZEEBE_CLIENT_ID: 'zeebe'
         ZEEBE_CLIENT_SECRET: 'zecret'
-        ZEEBE_TOKEN_AUDIENCE: 'zeebe.camunda.io'
         CAMUNDA_OAUTH_URL: 'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
         CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082'
         CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081'
         CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083'
         CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api'
         CAMUNDA_TENANT_ID: '' // We can override values in the env by passing an empty string value
-        CAMUNDA_SECURE_CONNECTION: 'false'
-        CAMUNDA_CONSOLE_CLIENT_ID: 'zeebe'
-        CAMUNDA_CONSOLE_CLIENT_SECRET: 'zecret'
+        CAMUNDA_SECURE_CONNECTION: false
     }
 })
 ```

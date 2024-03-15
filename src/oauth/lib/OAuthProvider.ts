@@ -26,8 +26,8 @@ export class OAuthProvider implements IOAuthProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
 	private cacheDir: string
 	private authServerUrl: string
-	private clientId: string
-	private clientSecret: string
+	private clientId: string | undefined
+	private clientSecret: string | undefined
 	private customRootCert?: Buffer
 	private useFileCache: boolean
 	public tokenCache: { [key: string]: Token } = {}
@@ -49,22 +49,38 @@ export class OAuthProvider implements IOAuthProvider {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+
 		this.authServerUrl = RequireConfiguration(
 			config.CAMUNDA_OAUTH_URL,
 			'CAMUNDA_OAUTH_URL'
 		)
 
-		this.clientId = RequireConfiguration(
-			config.ZEEBE_CLIENT_ID,
-			'ZEEBE_CLIENT_ID'
-		)
+		this.clientId = config.ZEEBE_CLIENT_ID
+		this.clientSecret = config.ZEEBE_CLIENT_SECRET
 
-		this.clientSecret = RequireConfiguration(
-			config.ZEEBE_CLIENT_SECRET,
-			'ZEEBE_CLIENT_SECRET'
-		)
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
+
+		if (!this.clientId && !this.consoleClientId) {
+			throw new Error(
+				`You need to supply a value for at at least one of ZEEBE_CLIENT_ID or CAMUNDA_CONSOLE_CLIENT_ID`
+			)
+		}
+		if (!this.clientSecret && !this.consoleClientSecret) {
+			throw new Error(
+				`You need to supply a value for at least one of ZEEBE_CLIENT_SECRET or CAMUNDA_CONSOLE_CLIENT_SECRET`
+			)
+		}
+
+		if (
+			!(
+				(!!this.clientId && !!this.clientSecret) ||
+				(!!this.consoleClientId && !!this.consoleClientSecret)
+			)
+		) {
+			throw new Error('You need to supply both a client ID and a client secret')
+		}
+
 		const customRootCert = GetCertificateAuthority(config)
 		this.customRootCert = customRootCert
 			? Buffer.from(customRootCert)
@@ -79,13 +95,17 @@ export class OAuthProvider implements IOAuthProvider {
 			options?.userAgentString ? ' ' + options?.userAgentString : ''
 		}` // e.g.: `zeebe-client-nodejs/${pkg.version} ${CUSTOM_AGENT_STRING}`
 
+		/**
+		 * CAMUNDA_MODELER_OAUTH_AUDIENCE is optional, and only needed if the Modeler is running on Self-Managed
+		 * and needs an audience. If it is not set, we will not include an audience in the token request.
+		 */
 		this.audienceMap = {
 			OPERATE: config.CAMUNDA_OPERATE_OAUTH_AUDIENCE,
 			ZEEBE: config.CAMUNDA_ZEEBE_OAUTH_AUDIENCE,
 			OPTIMIZE: config.CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE,
 			TASKLIST: config.CAMUNDA_TASKLIST_OAUTH_AUDIENCE,
 			CONSOLE: config.CAMUNDA_CONSOLE_OAUTH_AUDIENCE,
-			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE,
+			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE!,
 		}
 
 		this.camundaModelerOAuthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE
@@ -111,24 +131,46 @@ export class OAuthProvider implements IOAuthProvider {
 		)
 	}
 
-	public async getToken(audience: TokenGrantAudienceType): Promise<string> {
-		const key = this.getCacheKey(audience)
+	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
+		// We use the Console credential set if it we are requesting from
+		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
+		// Otherwise we use the application credential set, unless a Console credential set exists.
+		// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+		const requestingFromSaaSConsole =
+			this.isCamundaSaaS &&
+			(audienceType === 'CONSOLE' || audienceType === 'MODELER')
+
+		const clientIdToUse = requestingFromSaaSConsole
+			? RequireConfiguration(this.consoleClientId, 'CAMUNDA_CONSOLE_CLIENT_ID')
+			: RequireConfiguration(this.clientId, 'ZEEBE_CLIENT_ID')
+
+		const clientSecretToUse = requestingFromSaaSConsole
+			? RequireConfiguration(
+					this.consoleClientSecret,
+					'CAMUNDA_CONSOLE_CLIENT_SECRET'
+				)
+			: RequireConfiguration(this.clientSecret, 'ZEEBE_CLIENT_SECRET')
+
+		const key = this.getCacheKey(audienceType)
 
 		if (this.tokenCache[key]) {
 			const token = this.tokenCache[key]
 			// check expiry and evict in-memory and file cache if expired
 			if (this.isExpired(token)) {
-				this.evictFromMemoryCache(audience)
+				this.evictFromMemoryCache(audienceType)
 			} else {
 				return this.tokenCache[key].access_token
 			}
 		}
 		if (this.useFileCache) {
-			const cachedToken = this.retrieveFromFileCache(this.clientId, audience)
+			const cachedToken = this.retrieveFromFileCache(
+				clientIdToUse,
+				audienceType
+			)
 			if (cachedToken) {
 				// check expiry and evict in-memory and file cache if expired
 				if (this.isExpired(cachedToken)) {
-					this.evictFromFileCache(audience)
+					this.evictFromFileCache({ audienceType, clientId: clientIdToUse })
 				} else {
 					return cachedToken.access_token
 				}
@@ -139,7 +181,11 @@ export class OAuthProvider implements IOAuthProvider {
 			this.inflightTokenRequest = new Promise((resolve, reject) => {
 				setTimeout(
 					() => {
-						this.makeDebouncedTokenRequest(audience)
+						this.makeDebouncedTokenRequest({
+							audienceType,
+							clientIdToUse,
+							clientSecretToUse,
+						})
 							.then((res) => {
 								this.failed = false
 								this.failureCount = 0
@@ -178,38 +224,33 @@ export class OAuthProvider implements IOAuthProvider {
 	private addAudienceIfNeeded(audienceType: TokenGrantAudienceType) {
 		/** If we are running on Self-Managed (ie: not Camunda SaaS), and no explicit audience was set,
 		 * we should not include an audience in the token request.
+		 * See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
 		 */
 		if (
 			audienceType === 'MODELER' &&
-			!this.isCamundaSaaS &&
-			!this.camundaModelerOAuthAudience
+			!this.isCamundaSaaS && // Self-Managed
+			!this.camundaModelerOAuthAudience // User didn't set an audience
 		) {
-			return ''
+			return '' // No audience in token request
 		}
 		return `audience=${this.getAudience(audienceType)}&`
 	}
 
-	private makeDebouncedTokenRequest(audienceType: TokenGrantAudienceType) {
-		const clientId =
-			audienceType === 'CONSOLE' || audienceType === 'MODELER'
-				? RequireConfiguration(
-						this.consoleClientId,
-						'CAMUNDA_CONSOLE_CLIENT_ID'
-					)
-				: this.clientId
-		const clientSecret =
-			audienceType === 'CONSOLE' || audienceType === 'MODELER'
-				? RequireConfiguration(
-						this.consoleClientSecret,
-						'CAMUNDA_CONSOLE_CLIENT_SECRET'
-					)
-				: this.clientSecret
-
+	private makeDebouncedTokenRequest({
+		audienceType,
+		clientIdToUse,
+		clientSecretToUse,
+	}: {
+		audienceType: TokenGrantAudienceType
+		clientIdToUse: string
+		clientSecretToUse: string
+	}) {
 		const body = `${this.addAudienceIfNeeded(
 			audienceType
-		)}client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`
+		)}client_id=${clientIdToUse}&client_secret=${clientSecretToUse}&grant_type=client_credentials`
 		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
+
 		if (this.customRootCert) {
 			trace('Using custom root certificate')
 		}
@@ -243,7 +284,7 @@ export class OAuthProvider implements IOAuthProvider {
 			)
 			.then((t) => {
 				trace(
-					`Got token for Client Id ${this.clientId}: ${JSON.stringify(
+					`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
 						t,
 						null,
 						2
@@ -258,7 +299,11 @@ export class OAuthProvider implements IOAuthProvider {
 				}
 				const token = { ...(t as Token), audience: audienceType }
 				if (this.useFileCache) {
-					this.sendToFileCache({ audience: audienceType, token })
+					this.sendToFileCache({
+						audience: audienceType,
+						token,
+						clientId: clientIdToUse,
+					})
 				}
 				this.sendToMemoryCache({ audience: audienceType, token })
 				trace(`Got token from endpoint: \n${token.access_token}`)
@@ -309,12 +354,14 @@ export class OAuthProvider implements IOAuthProvider {
 	private sendToFileCache({
 		audience,
 		token,
+		clientId,
 	}: {
 		audience: TokenGrantAudienceType
 		token: Token
+		clientId: string
 	}) {
 		const d = new Date()
-		const file = this.getCachedTokenFileName(this.clientId, audience)
+		const file = this.getCachedTokenFileName(clientId, audience)
 
 		fs.writeFile(
 			file,
@@ -344,8 +391,14 @@ export class OAuthProvider implements IOAuthProvider {
 		delete this.tokenCache[key]
 	}
 
-	private evictFromFileCache(audience: TokenGrantAudienceType) {
-		const filename = this.getCachedTokenFileName(this.clientId, audience)
+	private evictFromFileCache({
+		audienceType,
+		clientId,
+	}: {
+		audienceType: TokenGrantAudienceType
+		clientId: string
+	}) {
+		const filename = this.getCachedTokenFileName(clientId, audienceType)
 		if (this.useFileCache && fs.existsSync(filename)) {
 			fs.unlinkSync(filename)
 		}

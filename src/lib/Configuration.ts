@@ -62,7 +62,9 @@ const getMainEnv = () =>
 		CAMUNDA_MODELER_OAUTH_AUDIENCE: {
 			type: 'string',
 			optional: true,
-			default: 'api.cloud.camunda.io',
+			// No default for this, because on Self-Managed it's not needed, and we omit it if the user doesn't set it.
+			// However, if someone sets up Self-Managed in a way that needs it, we let them set one.
+			// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
 		},
 		/** The audience parameter for an Optimize OAuth token request. Defaults to optimize.camunda.io */
 		CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE: {
@@ -249,6 +251,7 @@ export const CamundaEnvironmentVariableDictionary =
 		'CAMUNDA_OPTIMIZE_BASE_URL',
 		'CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE',
 		'CAMUNDA_OAUTH_DISABLED',
+		'CAMUNDA_OAUTH_URL',
 		'CAMUNDA_SECURE_CONNECTION',
 		'CAMUNDA_TASKLIST_BASE_URL',
 		'CAMUNDA_TASKLIST_OAUTH_AUDIENCE',
@@ -260,6 +263,7 @@ export const CamundaEnvironmentVariableDictionary =
 		'GRPC_KEEPALIVE_TIME_MS',
 		'ZEEBE_ADDRESS',
 		'ZEEBE_CLIENT_ID',
+		'ZEEBE_CLIENT_SECRET',
 		'ZEEBE_CLIENT_LOG_LEVEL',
 		'ZEEBE_CLIENT_LOG_TYPE',
 		'ZEEBE_GRPC_CLIENT_EAGER_CONNECT',

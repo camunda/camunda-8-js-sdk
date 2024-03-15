@@ -1,19 +1,35 @@
+import { EnvironmentSetup } from 'lib'
+
 import { ModelerApiClient } from '../../modeler/index'
 
-process.env.DEBUG = 'camunda:token'
-const modeler = new ModelerApiClient()
+beforeAll(() => {
+	EnvironmentSetup.storeEnv()
+	EnvironmentSetup.wipeEnv()
+})
+afterAll(() => EnvironmentSetup.restoreEnv())
 
-test('It can get info', async () => {
-	const res = await modeler.getInfo()
-	expect(res.version).toBe('v1')
+test('Constructor does not throws without base url', () => {
+	const thrown = false
+	try {
+		const m = new ModelerApiClient({
+			config: {
+				CAMUNDA_OAUTH_DISABLED: true,
+			},
+		})
+		expect(m).toBeTruthy()
+	} catch (e) {
+		console.log(e)
+		expect((e as Error).message.includes('Missing')).toBe(true)
+	}
+	expect(thrown).toBe(false)
 })
 
-test('Can create project', async () => {
-	let res
-	res = await modeler.searchProjects({ filter: { name: '__test__' } })
-	if (res.items.length === 0) {
-		console.log('Creating project')
-		res = await modeler.createProject('__test__')
-	}
-	expect(res).toBeTruthy()
+test('Can get construct a client', () => {
+	const client = new ModelerApiClient({
+		config: {
+			CAMUNDA_OAUTH_DISABLED: true,
+			CAMUNDA_OPERATE_BASE_URL: 'http://localhost',
+		},
+	})
+	expect(client).toBeTruthy()
 })

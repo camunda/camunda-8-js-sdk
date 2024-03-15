@@ -4,7 +4,8 @@
 		"oauth",
 		"tasklist",
 		"zeebe",
-		"github"
+		"github",
+		"modeler"
 	],
 	"editor.formatOnSave": true,
 

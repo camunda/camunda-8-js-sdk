@@ -4,6 +4,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	ClientConstructor,
 	GetCertificateAuthority,
+	RequireConfiguration,
 	constructOAuthProvider,
 	packageVersion,
 } from 'lib'
@@ -57,7 +58,10 @@ export class OptimizeApiClient {
 			options?.config ?? {}
 		)
 		this.userAgentString = `optimize-client-nodejs/${packageVersion}`
-		const baseUrl = config.CAMUNDA_OPTIMIZE_BASE_URL
+		const baseUrl = RequireConfiguration(
+			config.CAMUNDA_OPTIMIZE_BASE_URL,
+			'CAMUNDA_OPTIMIZE_BASE_URL'
+		)
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 
