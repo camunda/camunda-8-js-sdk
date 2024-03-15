@@ -54,4 +54,15 @@ describe('CamundaEnvironmentConfigurator', () => {
 		expect(config.CAMUNDA_TOKEN_CACHE_DIR).toBe('cacheDir')
 		expect(config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_RETRY).toBe(true)
 	})
+
+	test('It can override the environment with an empty string', () => {
+		expect(process.env.CAMUNDA_TOKEN_CACHE_DIR).toBe(undefined)
+
+		process.env.CAMUNDA_TOKEN_CACHE_DIR = 'someDirectory'
+
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
+			CAMUNDA_TOKEN_CACHE_DIR: '',
+		})
+		expect(config.CAMUNDA_TOKEN_CACHE_DIR).toBe('')
+	})
 })
