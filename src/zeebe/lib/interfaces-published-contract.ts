@@ -58,10 +58,6 @@ export interface ZBClientOptions {
 	maxRetries?: number
 	maxRetryTimeout?: MaybeTimeDuration
 	oAuth?: OAuthProviderConfig
-	basicAuth?: {
-		username: string
-		password: string
-	}
 	useTLS?: boolean
 	logNamespace?: string
 	longPoll: MaybeTimeDuration

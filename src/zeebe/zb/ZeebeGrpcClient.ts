@@ -92,7 +92,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private maxRetries: number
 	private maxRetryTimeout: MaybeTimeDuration
 	private oAuthProvider: IOAuthProvider
-	private basicAuth?: ZB.BasicAuthConfig
 	private useTLS: boolean
 	private stdout: ZBCustomLogger
 	private customSSL?: CustomSSL
@@ -1332,7 +1331,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}) {
 		const { grpcClient, log } = ConnectionFactory.getGrpcClient({
 			grpcConfig: {
-				basicAuth: this.basicAuth,
 				connectionTolerance: Duration.milliseconds.from(
 					this.connectionTolerance
 				),

@@ -35,10 +35,6 @@ import {
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
-export interface BasicAuthConfig {
-	password: string
-	username: string
-}
 // The JSON-stringified version of this is sent to the ZBCustomLogger
 export interface ZBLogMessage {
 	timestamp: Date

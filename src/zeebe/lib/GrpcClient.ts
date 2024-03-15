@@ -17,7 +17,6 @@ import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { packageVersion } from './GetPackageVersion'
 import { GrpcError } from './GrpcError'
-import { BasicAuthConfig } from './interfaces-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
 const debug = d('grpc')
@@ -97,7 +96,6 @@ const connectivityState = [
 ]
 
 export interface GrpcClientCtor {
-	basicAuth?: BasicAuthConfig
 	connectionTolerance: MaybeTimeDuration
 	host: string
 	loglevel: Loglevel
@@ -142,10 +140,8 @@ export class GrpcClient extends EventEmitter {
 	private readyTimer?: NodeJS.Timeout
 	private failTimer?: NodeJS.Timeout
 	private connectionTolerance: number
-	private basicAuth?: BasicAuthConfig
 
 	constructor({
-		basicAuth,
 		connectionTolerance,
 		host,
 		oAuth,
@@ -160,7 +156,6 @@ export class GrpcClient extends EventEmitter {
 		debug('Constructing gRPC client...')
 		this.host = host
 		this.oAuth = oAuth
-		this.basicAuth = basicAuth
 		this.longPoll = options.longPoll
 		this.connectionTolerance = Duration.milliseconds.from(connectionTolerance)
 		this.emit(
@@ -479,12 +474,6 @@ export class GrpcClient extends EventEmitter {
 		if (this.oAuth) {
 			const token = await this.oAuth.getToken('ZEEBE')
 			metadata.add('Authorization', `Bearer ${token}`)
-		}
-		if (this.basicAuth) {
-			const token = Buffer.from(
-				`${this.basicAuth.username}:${this.basicAuth.password}`
-			).toString('base64')
-			metadata.add('Authorization', `Basic ${token}`)
 		}
 		return metadata
 	}

@@ -489,26 +489,6 @@ If the cache directory is not writable, the ZBClient constructor will throw an e
 
 The `customRootCert` argument is optional. It can be used to provide a custom TLS certificate as a Buffer, which will be used while obtaining the OAuth token from the specified URL. If not provided, the CAs provided by [Mozilla](https://ccadb-public.secure.force.com/mozilla/IncludedCACertificateReport) will be used.
 
-<a name = "basic-auth"></a>
-
-## Basic Auth
-
-If you put a proxy in front of the broker with basic auth, you can pass in a username and password:
-
-```typescript
-const { ZBClient } = require('@camunda8/zeebe')
-
-const zbc = new ZBClient("my-broker-with-basic-auth.io:443", {
-	basicAuth: {
-		username: "user1",
-		password: "secret",
-	},
-	useTLS: true
-}
-```
-
-Basic Auth will also work without TLS.
-
 <a name = "camunda-cloud"></a>
 
 ### Camunda 8 SaaS
