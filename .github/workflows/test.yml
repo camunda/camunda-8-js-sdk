@@ -1,6 +1,6 @@
 name: Run Local Integration Tests
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   local_integration:
@@ -26,9 +26,13 @@ jobs:
       - name: Remove mono blocking 8084 port
         run: sudo kill -9 $(sudo lsof -t -i:8084)
 
+      - name: Set up Docker
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} registry.camunda.cloud
+
       - name: Set up Docker Compose
         run: |
-          docker-compose -f docker/docker-compose.yml up -d
+          docker-compose -f docker/docker-compose.yml -f docker-compose-modeler.yaml up -d
 
       - name: Run Integration Tests
         run: |
@@ -37,7 +41,6 @@ jobs:
           CAMUNDA_SECURE_CONNECTION: false
           ZEEBE_ADDRESS: localhost:26500
           ZEEBE_CLIENT_ID: zeebe
-          ZEEBE_AUTHORIZATION_SERVER_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
           ZEEBE_CLIENT_SECRET: zecret
           CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
           CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
