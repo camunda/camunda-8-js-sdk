@@ -5,6 +5,8 @@ on: [push]
 jobs:
   local_integration:
     runs-on: ubuntu-latest
+    environment:
+      name: selfhosted
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
