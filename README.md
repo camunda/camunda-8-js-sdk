@@ -38,19 +38,32 @@ The configuration object fields and the environment variables have exactly the s
 
 ## OAuth
 
+Calls to APIs are authorized using a token that is obtained via a client id/secret pair exchange and then passes as an authorisation header on API calls. The SDK handles this transparently for you.
+
+If your Camunda 8 Platform is secured using token exchange you will need to provide the client id and secret to the SDK.
+
 ### Disable OAuth
 
 To disable OAuth, set the environment variable `CAMUNDA_OAUTH_DISABLED`. You can use this when, for example, running against a minimal Zeebe broker in a development environment.
 
 With this environment variable set, the SDK will inject a `NullAuthProvider` that does nothing.
 
-Otherwise, you will need to provide the following configuration fields at a minimum, either via the `Camunda8` constructor or in environment variables:
+### Configuring OAuth
+
+To get a token for use with the application APIs you need to provide the following configuration fields at a minimum, either via the `Camunda8` constructor or in environment variables:
 
 ```bash
 ZEEBE_ADDRESS
 ZEEBE_CLIENT_ID
 ZEEBE_CLIENT_SECRET
 CAMUNDA_OAUTH_URL
+```
+
+To get a token for the Camunda SaaS Admin Console API or the Camunda SaaS Modeler API you need to set the following:
+
+```bash
+CAMUNDA_CONSOLE_CLIENT_ID
+CAMUNDA_CONSOLE_CLIENT_SECRET
 ```
 
 ### Token caching
@@ -114,18 +127,18 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-    config: {
-        ZEEBE_ADDRESS: 'localhost:26500'
-        ZEEBE_CLIENT_ID: 'zeebe'
-        ZEEBE_CLIENT_SECRET: 'zecret'
-        CAMUNDA_OAUTH_URL: 'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
-        CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082'
-        CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081'
-        CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083'
-        CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api'
-        CAMUNDA_TENANT_ID: '' // We can override values in the env by passing an empty string value
-        CAMUNDA_SECURE_CONNECTION: false
-    }
+  config: {
+    ZEEBE_ADDRESS: 'localhost:26500'
+    ZEEBE_CLIENT_ID: 'zeebe'
+    ZEEBE_CLIENT_SECRET: 'zecret'
+    CAMUNDA_OAUTH_URL: 'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
+    CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082'
+    CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081'
+    CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083'
+    CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api'
+    CAMUNDA_TENANT_ID: '' // We can override values in the env by passing an empty string value
+    CAMUNDA_SECURE_CONNECTION: false
+  }
 })
 ```
 
