@@ -9,8 +9,9 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import * as uuid from 'uuid'
 
-import { ConnectionStatusEvent, ZBClient } from '../zb/ZBClient'
+import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
+import { ConnectionStatusEvent } from './ConnectionStatusEvent'
 import { GrpcError } from './GrpcError'
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
 import { TypedEmitter } from './TypedEmitter'
@@ -39,7 +40,7 @@ export interface ZBWorkerBaseConstructor<T> {
 	taskType: string
 	options: ZB.ZBWorkerOptions<T> & ZBClientOptions
 	idColor: Chalk
-	zbClient: ZBClient
+	zbClient: ZeebeGrpcClient
 	log: StatefulLogInterceptor
 }
 
@@ -84,7 +85,7 @@ export class ZBWorkerBase<
 	public taskType: string
 	public timeout: MaybeTimeDuration
 	public pollCount = 0
-	protected zbClient: ZBClient
+	protected zbClient: ZeebeGrpcClient
 	protected logger: StatefulLogInterceptor
 	protected taskHandler:
 		| ZB.ZBBatchWorkerTaskHandler<

@@ -35,10 +35,6 @@ import {
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
-export interface BasicAuthConfig {
-	password: string
-	username: string
-}
 // The JSON-stringified version of this is sent to the ZBCustomLogger
 export interface ZBLogMessage {
 	timestamp: Date
@@ -432,6 +428,9 @@ export interface BroadcastSignalReq {
 	// the signal variables as a JSON document; to be valid, the root of the document must be an
 	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
 	variables?: JSONDoc
+
+	// Optional tenantId for a multi-tenant enabled cluster. This could also be supplied via environment variable.
+	tenantId?: string
 }
 
 export interface BroadcastSignalRes {

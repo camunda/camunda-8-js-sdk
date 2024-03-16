@@ -18,17 +18,12 @@ jobs:
         with:
           node-version: "18" # Specify a Node.js version
 
-      # This is to force nx arch-specific packages to correctly install
-      # This is to work around https://github.com/npm/cli/issues/4828
-      - name: Remove package-lock.json
-        run: rm -f package-lock.json
-
       - name: Install dependencies
         run: npm install
 
       - name: Run Integration Tests
         run: |
-          lerna run test:integration
+          npm run test:integration
         env:
           ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
           ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
@@ -40,3 +35,7 @@ jobs:
           CAMUNDA_TASKLIST_BASE_URL: ${{ secrets.CAMUNDA_TASKLIST_BASE_URL }}
           CAMUNDA_OPERATE_BASE_URL: ${{ secrets.CAMUNDA_OPERATE_BASE_URL }}
           CAMUNDA_OPTIMIZE_BASE_URL: ${{ secrets.CAMUNDA_OPTIMIZE_BASE_URL }}
+          CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
+          CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
+          CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
+          CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}

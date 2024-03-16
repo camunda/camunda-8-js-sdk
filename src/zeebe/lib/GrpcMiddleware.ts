@@ -1,6 +1,5 @@
-import { ConnectionStatusEvent } from '../zb/ZBClient'
-
 import { Characteristics, State } from './ConnectionFactory'
+import { ConnectionStatusEvent } from './ConnectionStatusEvent'
 import { GrpcClient, GrpcClientCtor, MiddlewareSignals } from './GrpcClient'
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
 

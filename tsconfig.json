@@ -26,12 +26,16 @@
 				"name": "typescript-tslint-plugin"
 			}
 		],
-		"baseUrl": ".",
+		"baseUrl": "./src",
 		"paths": {
-			"utils": ["./src/utils"],
-			"oauth": ["./src/oauth"],
-			"operate": ["./src/operate"]
+			"lib": ["./lib"],
+			"oauth": ["./oauth"],
+			"operate": ["./operate"],
+			"modeler": ["./modeler"],
+			"tasklist": ["./tasklist"],
+			"optimize": ["./optimize"],
+			"c8console": ["./c8console"]
 		}
 	},
-	"exclude": ["node_modules", "**/*.spec.ts", "src/zeebe/__mocks__/*"]
+	"exclude": ["node_modules", "src/__tests__/*"]
 }

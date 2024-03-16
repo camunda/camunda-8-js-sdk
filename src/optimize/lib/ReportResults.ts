@@ -10,22 +10,22 @@ export class ReportResults implements ReportDataExporter {
 	private reportId: string
 	private limit: number
 	private paginationTimeout: number
-	private gotOptions: { prefixUrl: string }
+	private rest: typeof got
 	constructor({
 		getHeaders,
-		gotOptions,
+		rest,
 		limit,
 		reportId,
 		paginationTimeout,
 	}: {
 		getHeaders: () => Promise<Headers>
-		gotOptions: { prefixUrl: string }
+		rest: typeof got
 		reportId: string
 		limit: number
 		paginationTimeout: number
 	}) {
 		this.getHeaders = getHeaders
-		this.gotOptions = gotOptions
+		this.rest = rest
 		this.reportId = reportId
 		this.limit = limit
 		this.paginationTimeout = paginationTimeout
@@ -40,11 +40,10 @@ export class ReportResults implements ReportDataExporter {
 		const sreqId = this.searchRequestId
 			? `&searchRequestId=${this.searchRequestId}`
 			: ''
-		const result = await got(
+		const result = await this.rest(
 			`export/report/${this.reportId}/result/json?paginationTimeout=${this.paginationTimeout}&limit=${this.limit}${sreqId}`,
 			{
 				headers,
-				...this.gotOptions,
 			}
 		).json()
 		this.searchRequestId = (

@@ -1,10 +1,13 @@
 import got from 'got'
 import {
-	OAuthProviderImpl,
-	getOperateCredentials,
-	getOperateToken,
-} from 'oauth'
-import { packageVersion } from 'utils'
+	CamundaEnvironmentConfigurator,
+	ClientConstructor,
+	GetCertificateAuthority,
+	RequireConfiguration,
+	constructOAuthProvider,
+	packageVersion,
+} from 'lib'
+import { IOAuthProvider } from 'oauth'
 
 import {
 	ChangeStatus,
@@ -38,8 +41,8 @@ type JSONDoc = { [key: string]: string | boolean | number | JSONDoc }
  */
 export class OperateApiClient {
 	private userAgentString: string
-	private gotOptions: { prefixUrl: string }
-	oauthProvider: OAuthProviderImpl | undefined
+	private oAuthProvider: IOAuthProvider
+	private rest: typeof got
 
 	/**
 	 * @example
@@ -47,25 +50,32 @@ export class OperateApiClient {
 	 * const operate = new OperateApiClient()
 	 * ```
 	 */
-	constructor(
-		options: {
-			oauthProvider?: OAuthProviderImpl
-			baseUrl?: string
-		} = {}
-	) {
-		this.oauthProvider = options.oauthProvider
+	constructor(options?: ClientConstructor) {
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
+			options?.config ?? {}
+		)
+		this.oAuthProvider =
+			options?.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = `operate-client-nodejs/${packageVersion}`
-		const baseUrl =
-			options.baseUrl ?? getOperateCredentials().CAMUNDA_OPERATE_BASE_URL
-		this.gotOptions = {
-			prefixUrl: `${baseUrl}/${OPERATE_API_VERSION}`,
-		}
+		const baseUrl = RequireConfiguration(
+			config.CAMUNDA_OPERATE_BASE_URL,
+			'CAMUNDA_OPERATE_BASE_URL'
+		)
+
+		const certificateAuthority = GetCertificateAuthority(config)
+
+		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
+
+		this.rest = got.extend({
+			prefixUrl,
+			https: {
+				certificateAuthority,
+			},
+		})
 	}
 
 	private async getHeaders() {
-		const token = this.oauthProvider
-			? await this.oauthProvider.getToken('OPERATE')
-			: await getOperateToken(this.userAgentString)
+		const token = await this.oAuthProvider.getToken('OPERATE')
 
 		return {
 			'content-type': 'application/json',
@@ -99,11 +109,10 @@ export class OperateApiClient {
 		query: Query<ProcessDefinition> = {}
 	): Promise<SearchResults<ProcessDefinition>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('process-definitions/search', {
 				json: query,
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -123,9 +132,8 @@ export class OperateApiClient {
 		processDefinitionKey: number | string
 	): Promise<ProcessDefinition> {
 		const headers = await this.getHeaders()
-		return got(`process-definitions/${processDefinitionKey}`, {
+		return this.rest(`process-definitions/${processDefinitionKey}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -133,9 +141,8 @@ export class OperateApiClient {
 		processDefinitionKey: number | string
 	): Promise<string> {
 		const headers = await this.getHeaders()
-		return got(`process-definitions/${processDefinitionKey}/xml`, {
+		return this.rest(`process-definitions/${processDefinitionKey}/xml`, {
 			headers,
-			...this.gotOptions,
 		}).text()
 	}
 
@@ -163,11 +170,10 @@ export class OperateApiClient {
 		query: Query<ProcessInstance> = {}
 	): Promise<SearchResults<ProcessInstance>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('process-instances/search', {
 				json: query,
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -185,9 +191,8 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ProcessInstance> {
 		const headers = await this.getHeaders()
-		return got(`process-instances/${processInstanceKey}`, {
+		return this.rest(`process-instances/${processInstanceKey}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -203,10 +208,9 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ChangeStatus> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`process-instances/${processInstanceKey}`, {
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -227,9 +231,8 @@ export class OperateApiClient {
 		}[]
 	> {
 		const headers = await this.getHeaders()
-		return got(`process-instances/${processInstanceKey}/statistics`, {
+		return this.rest(`process-instances/${processInstanceKey}/statistics`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -240,9 +243,8 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<string[]> {
 		const headers = await this.getHeaders()
-		return got(`process-instances/${processInstanceKey}/sequence-flows`, {
+		return this.rest(`process-instances/${processInstanceKey}/sequence-flows`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -271,11 +273,10 @@ export class OperateApiClient {
 		query: Query<Incident> = {}
 	): Promise<SearchResults<Incident>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('incidents/search', {
 				json: query,
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -292,9 +293,8 @@ export class OperateApiClient {
 	 */
 	public async getIncident(key: number | string): Promise<Incident> {
 		const headers = await this.getHeaders()
-		return got(`incidents/${key}`, {
+		return this.rest(`incidents/${key}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -302,10 +302,9 @@ export class OperateApiClient {
 		query: Query<FlownodeInstance>
 	): Promise<SearchResults<FlownodeInstance>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('flownodes/search', {
 				headers,
-				...this.gotOptions,
 				json: query,
 			})
 			.json()
@@ -315,9 +314,8 @@ export class OperateApiClient {
 		key: number | string
 	): Promise<FlownodeInstance> {
 		const headers = await this.getHeaders()
-		return got(`flownodes/${key}`, {
+		return this.rest(`flownodes/${key}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -325,11 +323,10 @@ export class OperateApiClient {
 		query: Query<Variable>
 	): Promise<SearchResults<Variable>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('variables/search', {
 				headers,
 				json: query,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -348,11 +345,10 @@ export class OperateApiClient {
 				processInstanceKey,
 			},
 		}
-		return got
+		return this.rest
 			.post('variables/search', {
 				headers,
 				body: JSON.stringify(body),
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -372,11 +368,10 @@ export class OperateApiClient {
 			},
 			size: 1000,
 		}
-		const vars: { items: Variable[] } = await got
+		const vars: { items: Variable[] } = await this.rest
 			.post('variables/search', {
 				headers,
 				body: JSON.stringify(body),
-				...this.gotOptions,
 			})
 			.json()
 		return vars.items.reduce(
@@ -405,9 +400,8 @@ export class OperateApiClient {
 	 */
 	public async getVariables(variableKey: number | string): Promise<Variable> {
 		const headers = await this.getHeaders()
-		return got(`variables/${variableKey}`, {
+		return this.rest(`variables/${variableKey}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 }

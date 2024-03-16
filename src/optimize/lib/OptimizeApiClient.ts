@@ -1,11 +1,14 @@
 import d from 'debug'
 import got from 'got'
 import {
-	OAuthProviderImpl,
-	getOptimizeCredentials,
-	getOptimizeToken,
-} from 'oauth'
-import { packageVersion } from 'utils'
+	CamundaEnvironmentConfigurator,
+	ClientConstructor,
+	GetCertificateAuthority,
+	RequireConfiguration,
+	constructOAuthProvider,
+	packageVersion,
+} from 'lib'
+import { IOAuthProvider } from 'oauth'
 
 import {
 	DashboardCollection,
@@ -39,11 +42,8 @@ const debug = d('optimizeapi')
  */
 export class OptimizeApiClient {
 	private userAgentString: string
-	private gotOptions: {
-		prefixUrl: string
-		hooks: { beforeRequest: ((o: unknown) => void)[] }
-	}
-	oauthProvider: OAuthProviderImpl | undefined
+	private rest: typeof got
+	private oAuthProvider: IOAuthProvider
 
 	/**
 	 *
@@ -53,18 +53,25 @@ export class OptimizeApiClient {
 	 * const optimize = new OptimizeApiClient()
 	 * ```
 	 */
-	constructor(
-		options: {
-			oauthProvider?: OAuthProviderImpl
-			baseUrl?: string
-		} = {}
-	) {
+	constructor(options?: ClientConstructor) {
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
+			options?.config ?? {}
+		)
 		this.userAgentString = `optimize-client-nodejs/${packageVersion}`
-		const baseUrl =
-			options.baseUrl ?? getOptimizeCredentials().CAMUNDA_OPTIMIZE_BASE_URL
-		this.oauthProvider = options.oauthProvider
-		this.gotOptions = {
+		const baseUrl = RequireConfiguration(
+			config.CAMUNDA_OPTIMIZE_BASE_URL,
+			'CAMUNDA_OPTIMIZE_BASE_URL'
+		)
+		this.oAuthProvider =
+			options?.oAuthProvider ?? constructOAuthProvider(config)
+
+		const certificateAuthority = GetCertificateAuthority(config)
+
+		this.rest = got.extend({
 			prefixUrl: `${baseUrl}/api`,
+			https: {
+				certificateAuthority,
+			},
 			hooks: {
 				beforeRequest: [
 					(options: unknown) => {
@@ -72,13 +79,11 @@ export class OptimizeApiClient {
 					},
 				],
 			},
-		}
+		})
 	}
 
 	private async getHeaders(auth = true) {
-		const token = this.oauthProvider
-			? await this.oauthProvider.getToken('OPERATE')
-			: await getOptimizeToken(this.userAgentString)
+		const token = await this.oAuthProvider.getToken('OPERATE')
 
 		const authHeader: { authorization: string } | Record<string, never> = auth
 			? {
@@ -110,10 +115,9 @@ export class OptimizeApiClient {
 	 */
 	async enableSharing() {
 		const headers = await this.getHeaders()
-		return got.post('public/share/enable', {
+		return this.rest.post('public/share/enable', {
 			body: '',
 			headers,
-			...this.gotOptions,
 		})
 	}
 
@@ -133,10 +137,9 @@ export class OptimizeApiClient {
 	 */
 	async disableSharing() {
 		const headers = await this.getHeaders()
-		return got.post('public/share/disable', {
+		return this.rest.post('public/share/disable', {
 			body: '',
 			headers,
-			...this.gotOptions,
 		})
 	}
 
@@ -157,16 +160,15 @@ export class OptimizeApiClient {
 	 */
 	async getDashboardIds(collectionId: number): Promise<DashboardCollection> {
 		const headers = await this.getHeaders()
-		return got(`public/dashboard?collectionId=${collectionId}`, {
+		return this.rest(`public/dashboard?collectionId=${collectionId}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
 	// Camunda 7-only
 	// async deleteDashboard(dashboardId: string) {
 	//     const headers = await this.getHeaders()
-	//     return got.delete(`dashboard/${dashboardId}`, {
+	//     return this.rest.delete(`dashboard/${dashboardId}`, {
 	//         headers,
 	//         ...this.gotOptions
 	//     })
@@ -192,11 +194,10 @@ export class OptimizeApiClient {
 		dashboardIds: string[]
 	): Promise<Array<DashboardDefinition | SingleProcessReport>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('public/export/dashboard/definition/json', {
 				body: JSON.stringify(dashboardIds),
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -215,9 +216,8 @@ export class OptimizeApiClient {
 	 */
 	async getReportIds(collectionId: number): Promise<ReportCollection> {
 		const headers = await this.getHeaders()
-		return got(`report?collectionId=${collectionId}`, {
+		return this.rest(`report?collectionId=${collectionId}`, {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -236,10 +236,9 @@ export class OptimizeApiClient {
 	 */
 	async deleteReport(reportId: string) {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.delete(`public/report/${reportId}`, {
 				headers,
-				...this.gotOptions,
 			})
 			.text()
 	}
@@ -262,11 +261,10 @@ export class OptimizeApiClient {
 		reportIds: string[]
 	): Promise<Array<SingleProcessReport>> {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('public/export/dashboard/definition/json', {
 				body: JSON.stringify(reportIds),
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -290,7 +288,7 @@ export class OptimizeApiClient {
 	): ReportDataExporter {
 		return new ReportResults({
 			getHeaders: () => this.getHeaders(),
-			gotOptions: this.gotOptions,
+			rest: this.rest,
 			limit,
 			paginationTimeout: paginationTimeoutSec,
 			reportId,
@@ -301,7 +299,7 @@ export class OptimizeApiClient {
 	// async ingestEventBatch(events: CloudEventV1<any>[]) {
 	//     const body = JSON.stringify(events)
 	//     const headers = await this.getHeaders()
-	//     return got.post(`ingestion/event/batch`, {
+	//     return this.rest.post(`ingestion/event/batch`, {
 	//         body,
 	//         headers,
 	//         ...this.gotOptions
@@ -339,11 +337,10 @@ export class OptimizeApiClient {
 	 */
 	async ingestExternalVariable(variables: Variable[]) {
 		const headers = await this.getHeaders()
-		return got
+		return this.rest
 			.post('ingestion/variable', {
 				body: JSON.stringify(variables),
 				headers,
-				...this.gotOptions,
 			})
 			.json()
 	}
@@ -366,9 +363,8 @@ export class OptimizeApiClient {
 	 */
 	async getReadiness() {
 		const headers = await this.getHeaders(false)
-		return got('readyz', {
+		return this.rest('readyz', {
 			headers,
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -412,10 +408,9 @@ export class OptimizeApiClient {
 		entities: unknown
 	): Promise<EntityImportResponse> {
 		const headers = await this.getHeaders()
-		return got(`public/import?collectionId=${collectionId}`, {
+		return this.rest(`public/import?collectionId=${collectionId}`, {
 			headers,
 			body: JSON.stringify(entities),
-			...this.gotOptions,
 		}).json()
 	}
 
@@ -452,10 +447,9 @@ export class OptimizeApiClient {
 	 */
 	async labelVariables(variableLabels: VariableLabels) {
 		const headers = await this.getHeaders()
-		return got('public/variables/labels', {
+		return this.rest('public/variables/labels', {
 			headers,
 			body: JSON.stringify(variableLabels),
-			...this.gotOptions,
 		}).json()
 	}
 }

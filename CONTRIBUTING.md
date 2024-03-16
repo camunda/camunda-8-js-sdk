@@ -26,7 +26,7 @@ To run integration tests against Camunda SaaS, but credentials for a Camunda Saa
 
 To run the integration tests against Self-Managed, you can use either your own Self-Managed instance, or start one locally using Docker.
 
-To start one locally, run `docker compose -f docker/docker-compose.yml up -d`.
+To start one locally, run `docker compose -f docker-compose-modeler.yaml -f docker-compose-multitenancy.yml up -d`.
 
 Put the following credentials in the environment:
 
@@ -43,17 +43,48 @@ export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/pr
 export CAMUNDA_TASKLIST_BASE_URL='http://localhost:8082'
 export CAMUNDA_OPERATE_BASE_URL='http://localhost:8081'
 export CAMUNDA_OPTIMIZE_BASE_URL='http://localhost:8083'
+export CAMUNDA_MODELER_BASE_URL='http://localhost:8086'
+export CAMUNDA_MODELER_OAUTH_AUDIENCE='_omit_'
+export CAMUNDA_TENANT_ID=''
+
 export CAMUNDA_TEST_TYPE='local'
+
+# Modeler API Client
+export CAMUNDA_CONSOLE_CLIENT_ID='zeebe'
+export CAMUNDA_CONSOLE_CLIENT_SECRET='zecret'
+# export CAMUNDA_CONSOLE_BASE_URL='https://api.cloud.camunda.io'
+# export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
 ```
 
-Now run the integration tests against Self-Managed with `lerna run test:local-integration`.
+Now run the integration tests against Self-Managed with `npm run test:local-integration`.
+
+### Multi-tenancy tests
+
+To run the multi-tenancy tests, use the following environment variables:
+
+```bash
+# Self-Managed
+export ZEEBE_SECURE_CONNECTION=false
+export ZEEBE_ADDRESS='localhost:26500'
+export ZEEBE_CLIENT_ID='zeebe'
+export ZEEBE_CLIENT_SECRET='zecret'
+export ZEEBE_AUTHORIZATION_SERVER_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
+export ZEEBE_TOKEN_AUDIENCE='zeebe.camunda.io'
+export CAMUNDA_CREDENTIALS_SCOPES='Zeebe,Tasklist,Operate,Optimize'
+export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
+export CAMUNDA_TASKLIST_BASE_URL='http://localhost:8082'
+export CAMUNDA_OPERATE_BASE_URL='http://localhost:8081'
+export CAMUNDA_OPTIMIZE_BASE_URL='http://localhost:8083'
+export CAMUNDA_TEST_TYPE='local'
+export CAMUNDA_TENANT_ID='<default>'
+```
 
 ## Code Style
 
 We follow a specific code style in our project to maintain consistency. Please make sure to adhere to the following guidelines:
 
-- Run `lerna run lint` to lint your code with ESLint.
-- Run `lerna run prettify` to format your code to the project standard.
+- Run `npm run lint` to lint your code with ESLint.
+- Run `npm run format` to format your code to the project standard.
 
 ## Issue Reporting
 

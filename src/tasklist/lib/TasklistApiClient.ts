@@ -1,12 +1,15 @@
 import { debug } from 'debug'
 import got from 'got'
-import { packageVersion } from 'utils'
-
 import {
-	OAuthProviderImpl,
-	getTasklistCredentials,
-	getTasklistToken,
-} from '../../oauth'
+	CamundaEnvironmentConfigurator,
+	ClientConstructor,
+	GetCertificateAuthority,
+	RequireConfiguration,
+	constructOAuthProvider,
+	packageVersion,
+} from 'lib'
+
+import { IOAuthProvider } from '../../oauth'
 
 import { Form, Task, TaskQuery, Variable } from './Types'
 import { JSONDoc, encodeTaskVariablesForAPIRequest } from './utils'
@@ -24,7 +27,7 @@ const TASKLIST_API_VERSION = 'v1'
  */
 export class TasklistApiClient {
 	private userAgentString: string
-	private oauthProvider: OAuthProviderImpl | undefined
+	private oAuthProvider: IOAuthProvider
 	private rest: typeof got
 
 	/**
@@ -35,28 +38,32 @@ export class TasklistApiClient {
 	 * @description
 	 *
 	 */
-	constructor(
-		options: {
-			oauthProvider?: OAuthProviderImpl
-			baseUrl?: string
-		} = {}
-	) {
-		this.oauthProvider = options.oauthProvider
+	constructor(options?: ClientConstructor) {
+		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
+			options?.config ?? {}
+		)
+		this.oAuthProvider =
+			options?.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = `tasklist-rest-client-nodejs/${packageVersion}`
-		const baseUrl =
-			options.baseUrl ?? getTasklistCredentials().CAMUNDA_TASKLIST_BASE_URL
+		const baseUrl = RequireConfiguration(
+			config.CAMUNDA_TASKLIST_BASE_URL,
+			'CAMUNDA_TASKLIST_BASE_URL'
+		)
 		const prefixUrl = `${baseUrl}/${TASKLIST_API_VERSION}`
+
+		const certificateAuthority = GetCertificateAuthority(config)
+
 		this.rest = got.extend({
 			prefixUrl,
+			https: {
+				certificateAuthority,
+			},
 		})
 		trace(`prefixUrl: ${prefixUrl}`)
 	}
 
 	private async getHeaders() {
-		const token = this.oauthProvider
-			? await this.oauthProvider.getToken('TASKLIST')
-			: await getTasklistToken(this.userAgentString)
-		trace(`Got a token: ${token}`)
+		const token = await this.oAuthProvider.getToken('TASKLIST')
 		return {
 			'content-type': 'application/json',
 			authorization: `Bearer ${token}`,
