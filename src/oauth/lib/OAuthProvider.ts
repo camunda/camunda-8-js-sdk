@@ -136,6 +136,7 @@ export class OAuthProvider implements IOAuthProvider {
 	}
 
 	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
+		// tslint:disable-next-line: no-console
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
 		// Otherwise we use the application credential set, unless a Console credential set exists.
@@ -237,6 +238,9 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			return '' // No audience in token request
 		}
+		if (audienceType === 'MODELER' && this.isCamundaSaaS) {
+			return 'audience=api.cloud.camunda.io&'
+		}
 		return `audience=${this.getAudience(audienceType)}&`
 	}
 
@@ -334,9 +338,8 @@ export class OAuthProvider implements IOAuthProvider {
 		audience: TokenGrantAudienceType
 	) {
 		let token: Token
-		const tokenCachedInFile = fs.existsSync(
-			this.getCachedTokenFileName(clientId, audience)
-		)
+		const tokenFileName = this.getCachedTokenFileName(clientId, audience)
+		const tokenCachedInFile = fs.existsSync(tokenFileName)
 		if (!tokenCachedInFile) {
 			return null
 		}
