@@ -11,7 +11,7 @@ jobs:
     environment: integration
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Use Node.js
         uses: actions/setup-node@v3
@@ -35,6 +35,7 @@ jobs:
           CAMUNDA_TASKLIST_BASE_URL: ${{ secrets.CAMUNDA_TASKLIST_BASE_URL }}
           CAMUNDA_OPERATE_BASE_URL: ${{ secrets.CAMUNDA_OPERATE_BASE_URL }}
           CAMUNDA_OPTIMIZE_BASE_URL: ${{ secrets.CAMUNDA_OPTIMIZE_BASE_URL }}
+          CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
           CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
           CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
           CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
