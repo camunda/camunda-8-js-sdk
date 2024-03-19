@@ -1,26 +1,30 @@
 import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
 import { v4 as uuid } from 'uuid'
 
-import { DeployProcessResponse, ZeebeGrpcClient } from '../../../zeebe'
+import {
+	DeployResourceResponse,
+	ProcessDeployment,
+	ZeebeGrpcClient,
+} from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(45000)
-let test1: DeployProcessResponse
+let test1: DeployResourceResponse<ProcessDeployment>
 suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 
 beforeAll(async () => {
-	test1 = await zbc.deployProcess(
-		'./src/__tests__/testdata/Client-MessageStart.bpmn'
-	)
-	await cancelProcesses(test1.processes[0].bpmnProcessId)
+	test1 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Client-MessageStart.bpmn',
+	})
+	await cancelProcesses(test1.deployments[0].process.bpmnProcessId)
 })
 
 afterAll(async () => {
 	await zbc.close()
 	restoreZeebeLogging()
-	await cancelProcesses(test1.processes[0].bpmnProcessId)
+	await cancelProcesses(test1.deployments[0].process.bpmnProcessId)
 })
 
 test('Can start a process with a message', (done) => {

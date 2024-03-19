@@ -15,8 +15,10 @@ beforeAll(async () => {
 	suppressZeebeLogging()
 	const zb = new ZeebeGrpcClient()
 	processId = (
-		await zb.deployProcess('./src/__tests__/testdata/Client-ThrowError.bpmn')
-	).processes[0].bpmnProcessId
+		await zb.deployResource({
+			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
+		})
+	).deployments[0].process.bpmnProcessId
 	cancelProcesses(processId)
 	await zb.close()
 })

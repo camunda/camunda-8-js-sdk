@@ -51,7 +51,9 @@ test('reconnects after a pod reschedule', () =>
 		// tslint:disable-next-line: no-console
 		log('##### Deploying workflow') // @DEBUG
 
-		await zbc.deployProcess('./src/__tests__/testdata/disconnection.bpmn')
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/disconnection.bpmn',
+		})
 		worker = zbc
 			.createWorker({
 				longPoll: 10000,
@@ -113,7 +115,9 @@ test('reconnects after a pod reschedule', () =>
 
 		// tslint:disable-next-line: no-console
 		log('##### Deploying workflow 2') // @DEBUG
-		await zbc.deployProcess('./src/__tests__/testdata/disconnection.bpmn')
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/disconnection.bpmn',
+		})
 
 		// tslint:disable-next-line: no-console
 		// console.log('Workflow 2 deployed', _) // @DEBUG
@@ -173,7 +177,9 @@ test('a worker that started first, connects to a broker that starts later', () =
 
 		await delay(10000)
 
-		await zbc.deployProcess('./src/__tests__/testdata/disconnection.bpmn')
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/disconnection.bpmn',
+		})
 		await delay(1000) // Ensure deployment has happened
 		const wf = await zbc.createProcessInstanceWithResult({
 			bpmnProcessId: 'disconnection',

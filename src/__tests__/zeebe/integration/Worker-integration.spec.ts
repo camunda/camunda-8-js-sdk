@@ -14,20 +14,20 @@ let processId2: string
 let processId3: string
 
 beforeAll(async () => {
-	const res1 = await zbc.deployProcess(
-		'./src/__tests__/testdata/hello-world.bpmn'
-	)
-	processId1 = res1.processes[0].bpmnProcessId
+	const res1 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/hello-world.bpmn',
+	})
+	processId1 = res1.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId1)
-	const res2 = await zbc.deployProcess(
-		'./src/__tests__/testdata/hello-world-complete.bpmn'
-	)
-	processId2 = res2.processes[0].bpmnProcessId
+	const res2 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/hello-world-complete.bpmn',
+	})
+	processId2 = res2.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId2)
-	const res3 = await zbc.deployProcess(
-		'./src/__tests__/testdata/conditional-pathway.bpmn'
-	)
-	processId3 = res3.processes[0].bpmnProcessId
+	const res3 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/conditional-pathway.bpmn',
+	})
+	processId3 = res3.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId3)
 })
 

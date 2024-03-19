@@ -16,15 +16,15 @@ let processId: string
 let processId2: string
 
 beforeAll(async () => {
-	const res = await zbc.deployProcess(
-		'./src/__tests__/testdata/hello-world.bpmn'
-	)
-	processId = res.processes[0].bpmnProcessId
+	const res = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/hello-world.bpmn',
+	})
+	processId = res.deployments[0].process.bpmnProcessId
 	processId2 = (
-		await zbc.deployProcess(
-			'./src/__tests__/testdata/Client-SkipFirstTask.bpmn'
-		)
-	).processes[0].bpmnProcessId
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
+		})
+	).deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId)
 	await cancelProcesses(processId2)
 	await zbc.close()

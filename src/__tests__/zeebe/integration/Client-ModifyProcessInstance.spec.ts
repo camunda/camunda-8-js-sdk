@@ -10,10 +10,10 @@ let pid: string
 let processModelId: string
 
 beforeAll(async () => {
-	const res = await zbc.deployProcess(
-		'./src/__tests__/testdata/Client-SkipFirstTask.bpmn'
-	)
-	processModelId = res.processes[0].bpmnProcessId
+	const res = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
+	})
+	processModelId = res.deployments[0].process.bpmnProcessId
 })
 afterAll(async () => {
 	zbc.cancelProcessInstance(pid).catch((_) => _)
@@ -23,7 +23,9 @@ afterAll(async () => {
 })
 
 test('Modify Process Instance', (done) => {
-	zbc.deployProcess('./src/__tests__/testdata/Client-SkipFirstTask.bpmn')
+	zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
+	})
 	zbc.createWorker({
 		taskType: 'second_service_task',
 		taskHandler: (job) => {

@@ -3,9 +3,6 @@ import * as path from 'path'
 
 import chalk from 'chalk'
 import d from 'debug'
-import { either as E } from 'fp-ts'
-import * as NEA from 'fp-ts/lib/NonEmptyArray'
-import { pipe } from 'fp-ts/lib/pipeable'
 import { IOAuthProvider } from 'oauth'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
@@ -32,8 +29,6 @@ import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
 import { ZBJsonLogger } from '../lib/ZBJsonLogger'
 import { decodeCreateZBWorkerSig } from '../lib/ZBWorkerSignature'
-import { readDefinitionFromFile } from '../lib/deployWorkflow/impure'
-import { bufferOrFiles, mapThese } from '../lib/deployWorkflow/pure'
 import * as ZB from '../lib/interfaces-1.0'
 import * as Grpc from '../lib/interfaces-grpc-1.0'
 import {
@@ -221,7 +216,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description activateJobs allows you to manually activate jobs, effectively building a worker; rather than using the ZBWorker class.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * zbc.activateJobs({
 	 *   maxJobsToActivate: 5,
 	 *   requestTimeout: 6000,
@@ -267,7 +262,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Broadcast a Signal
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.broadcastSignal({
 	 *   signalName: 'my-signal',
@@ -282,6 +277,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			variables: JSON.stringify(req.variables ?? {}),
 			tenantId: req.tenantId ?? this.tenantId,
 		}
+		// tslint:disable-next-line: no-console
+		console.log('signal', request) // @DEBUG
+
 		return this.executeOperation('broadcastSignal', () =>
 			this.grpc.broadcastSignalSync(request)
 		)
@@ -292,7 +290,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Cancel a process instance by process instance key.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.cancelProcessInstance(processInstanceId)
 	 * 	.catch(
@@ -316,7 +314,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Create a new Batch Worker. This is useful when you need to rate limit access to an external resource.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * // Helper function to find a job by its key
 	 * const findJobByKey = jobs => key => jobs.filter(job => job.jobKey === id)?.[0] ?? []
 	 *
@@ -425,7 +423,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Create a worker that polls the gateway for jobs and executes a job handler when units of work are available.
 	 * @example
 	 * ```
-	 * const zbc = new ZB.ZBClient()
+	 * const zbc = new ZB.ZeebeGrpcClient()
 	 *
 	 * const zbWorker = zbc.createWorker({
 	 *   taskType: 'demo-service',
@@ -530,7 +528,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 *
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.createWorker({
 	 *   taskType:
@@ -567,7 +565,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Explicitly complete a job. The method is useful for manually constructing a worker.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * zbc.activateJobs({
 	 *   maxJobsToActivate: 5,
 	 *   requestTimeout: 6000,
@@ -608,7 +606,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Create a new process instance. Asynchronously returns a process instance id.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.createProcessInstance({
 	 *   bpmnProcessId: 'onboarding-process',
@@ -654,7 +652,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Create a process instance, and return a Promise that returns the outcome of the process.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.createProcessInstanceWithResult({
 	 *   bpmnProcessId: 'order-process',
@@ -723,7 +721,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @example
 	 * ```
 	 * import {join} from 'path'
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.deployResource({ processFilename: join(process.cwd(), 'bpmn', 'onboarding.bpmn' })
 	 * zbc.deployResource({ decisionFilename: join(process.cwd(), 'dmn', 'approval.dmn')})
@@ -869,63 +867,10 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Deploy a process model.
-	 * @example
-	 * ```
-	 * import { readFileSync } from 'fs'
-	 * import { join } from 'path'
-	 *
-	 * const zbc = new ZBClient()
-	 * const bpmnFilePath = join(process.cwd(), 'bpmn', 'onboarding.bpmn')
-	 *
-	 * // Loading the process model allows you to perform modifications or analysis
-	 * const bpmn = readFileSync(bpmnFilePath, 'utf8')
-	 *
-	 * zbc.deployProcess({
-	 *    definition: bpmn,
-	 *    name: 'onboarding.bpmn'
-	 * })
-	 *
-	 * // If you don't need access to model contents, simply pass a file path
-	 * zbc.deployProcess(bpmnFilePath)
-	 * ```
-	 */
-	public async deployProcess(
-		process: ZB.DeployProcessFiles | ZB.DeployProcessBuffer
-	): Promise<Grpc.DeployProcessResponse> {
-		const deploy = (processes: Grpc.ProcessRequestObject[]) => {
-			const tenantAwareProcesses = processes.map((p) => ({
-				...p,
-				tenantId: this.tenantId,
-			}))
-			return this.executeOperation('deployWorkflow', () =>
-				this.grpc.deployProcessSync({
-					processes: tenantAwareProcesses,
-				})
-			)
-		}
-
-		const error = (e: NEA.NonEmptyArray<string>) =>
-			Promise.reject(
-				`Deployment failed. The following files were not found: ${e.join(
-					', '
-				)}.`
-			)
-
-		return pipe(
-			bufferOrFiles(process),
-			E.fold(deploy, (files) =>
-				pipe(mapThese(files, readDefinitionFromFile), E.fold(error, deploy))
-			)
-		)
-	}
-
-	/**
-	 *
 	 * @description Evaluates a decision. The decision to evaluate can be specified either by using its unique key (as returned by DeployResource), or using the decision ID. When using the decision ID, the latest deployed version of the decision is used.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * zbc.evaluateDecision({
 	 *   decisionId: 'my-decision',
 	 *   variables: { season: "Fall" }
@@ -954,7 +899,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 *
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * zbc.failJob( {
 	 *   jobKey: '345424343451',
 	 *   retries: 3,
@@ -973,7 +918,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Return an array of task types contained in a BPMN file or array of BPMN files. This can be useful, for example, to do
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * zbc.getServiceTypesFromBpmn(['bpmn/onboarding.bpmn', 'bpmn/process-sale.bpmn'])
 	 *   .then(tasktypes => console.log('The task types are:', tasktypes))
 	 *
@@ -1026,7 +971,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Publish a message to the broker for correlation with a workflow instance. See [this tutorial](https://docs.camunda.io/docs/guides/message-correlation/) for a detailed description of message correlation.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.publishMessage({
 	 *   // Should match the "Message Name" in a BPMN Message Catch
@@ -1069,7 +1014,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * See: https://github.com/zeebe-io/zeebe/issues/1012 and https://github.com/zeebe-io/zeebe/issues/1022
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 * zbc.publishStartMessage({
 	 *   name: 'Start_New_Onboarding_Flow',
 	 *   variables: {
@@ -1125,7 +1070,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 * type JSONObject = {[key: string]: string | number | boolean | JSONObject}
 	 *
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * async updateAndResolveIncident({
 	 *   processInstanceId,
@@ -1164,7 +1109,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 * type JSONObject = {[key: string]: string | number | boolean | JSONObject}
 	 *
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * async function updateAndResolveIncident({
 	 *   incidentKey,
@@ -1231,7 +1176,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 *
 	 * type Result = errorResult | successResult
 	 *
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 *
 	 * // This could be a listener on a return queue from an external system
@@ -1266,7 +1211,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @description Return the broker cluster topology.
 	 * @example
 	 * ```
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * zbc.topology().then(res => console.res(JSON.stringify(res, null, 2)))
 	 * ```
@@ -1282,7 +1227,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 * type JSONObject = {[key: string]: string | number | boolean | JSONObject}
 	 *
-	 * const zbc = new ZBClient()
+	 * const zbc = new ZeebeGrpcClient()
 	 *
 	 * async function updateAndResolveIncident({
 	 *   incidentKey,

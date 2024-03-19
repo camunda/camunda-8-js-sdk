@@ -3,14 +3,15 @@ import { join } from 'path'
 import { TasklistApiClient } from '../../tasklist/index'
 import {
 	CreateProcessInstanceResponse,
-	DeployProcessResponse,
+	DeployResourceResponse,
+	ProcessDeployment,
 	ZeebeGrpcClient,
 } from '../../zeebe'
 
 jest.setTimeout(25000) // increase timeout to allow Tasklist application to create tasks
 
 let p: CreateProcessInstanceResponse | null
-let def: DeployProcessResponse
+let def: DeployResourceResponse<ProcessDeployment>
 
 const delay = (ms: number) =>
 	new Promise((resolve) => setTimeout(() => resolve(null), ms))
@@ -28,7 +29,7 @@ describe('TasklistApiClient', () => {
 			'testdata',
 			'TasklistTestProcess.bpmn'
 		)
-		def = await zbc.deployProcess(bpmnFilePath)
+		def = await zbc.deployResource({ processFilename: bpmnFilePath })
 	})
 
 	beforeEach(async () => {
@@ -90,7 +91,7 @@ describe('TasklistApiClient', () => {
 			const tasklist = new TasklistApiClient()
 			const res = await tasklist.getForm(
 				'userTaskForm_3r97fja',
-				def.processes[0].processDefinitionKey
+				def.deployments[0].process.processDefinitionKey
 			)
 			expect(res.id).toBe('userTaskForm_3r97fja')
 		})

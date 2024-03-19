@@ -4,7 +4,8 @@ import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import {
 	CreateProcessInstanceResponse,
-	DeployProcessResponse,
+	DeployResourceResponse,
+	ProcessDeployment,
 } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 jest.setTimeout(60000)
@@ -14,20 +15,26 @@ suppressZeebeLogging()
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
 
-let wf1: DeployProcessResponse
-let wf2: DeployProcessResponse
-let wf3: DeployProcessResponse
+let wf1: DeployResourceResponse<ProcessDeployment>
+let wf2: DeployResourceResponse<ProcessDeployment>
+let wf3: DeployResourceResponse<ProcessDeployment>
 let bpmnProcessId1: string
 let bpmnProcessId2: string
 let bpmnProcessId3: string
 
 beforeAll(async () => {
-	wf1 = await zbc.deployProcess('./src/__tests__/testdata/Worker-Failure1.bpmn')
-	bpmnProcessId1 = wf1.processes[0].bpmnProcessId
-	wf2 = await zbc.deployProcess('./src/__tests__/testdata/Worker-Failure2.bpmn')
-	bpmnProcessId2 = wf2.processes[0].bpmnProcessId
-	wf3 = await zbc.deployProcess('./src/__tests__/testdata/Worker-Failure3.bpmn')
-	bpmnProcessId3 = wf3.processes[0].bpmnProcessId
+	wf1 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Worker-Failure1.bpmn',
+	})
+	bpmnProcessId1 = wf1.deployments[0].process.bpmnProcessId
+	wf2 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Worker-Failure2.bpmn',
+	})
+	bpmnProcessId2 = wf2.deployments[0].process.bpmnProcessId
+	wf3 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Worker-Failure3.bpmn',
+	})
+	bpmnProcessId3 = wf3.deployments[0].process.bpmnProcessId
 	await cancelProcesses(bpmnProcessId1)
 	await cancelProcesses(bpmnProcessId2)
 	await cancelProcesses(bpmnProcessId3)

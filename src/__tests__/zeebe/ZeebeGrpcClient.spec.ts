@@ -1,5 +1,5 @@
-import { ZeebeGrpcClient } from '..'
 import { EnvironmentSetup } from '../../lib'
+import { ZeebeGrpcClient } from '../../zeebe'
 
 beforeAll(() => EnvironmentSetup.storeEnv())
 beforeEach(() => EnvironmentSetup.wipeEnv())
