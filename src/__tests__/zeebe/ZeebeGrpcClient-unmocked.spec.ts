@@ -29,7 +29,9 @@ test('ZeebeGrpcClient constructor throws an exception when there is no broker an
 	})
 	expect.assertions(1)
 	try {
-		await zbc.deployProcess('./src/__tests__/testdata/hello-world.bpmn')
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/hello-world.bpmn',
+		})
 	} catch (e: unknown) {
 		expect((e as Error).message.indexOf('14 UNAVAILABLE:')).toEqual(0)
 	}

@@ -729,6 +729,8 @@ export interface BroadcastSignalRequest {
 	 * object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
 	 */
 	variables: string
+	/** the id of the tenant that owns the signal. */
+	tenantId?: string
 }
 
 export interface BroadcastSignalResponse {

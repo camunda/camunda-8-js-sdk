@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1h8javg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.21.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.4.0">
+  <bpmn:process id="red-tenant" name="red-tenant&#10;" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Red Tenant Start">
+      <bpmn:outgoing>Flow_0szb1jp</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_04ql45u" name="End">
+      <bpmn:incoming>Flow_04b8070</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0szb1jp" sourceRef="StartEvent_1" targetRef="Event_0mvf9yu" />
+    <bpmn:sequenceFlow id="Flow_04b8070" sourceRef="Event_0mvf9yu" targetRef="Event_04ql45u" />
+    <bpmn:intermediateCatchEvent id="Event_0mvf9yu" name="Red Tenant Signal">
+      <bpmn:incoming>Flow_0szb1jp</bpmn:incoming>
+      <bpmn:outgoing>Flow_04b8070</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_0821gif" signalRef="Signal_257epme" />
+    </bpmn:intermediateCatchEvent>
+  </bpmn:process>
+  <bpmn:signal id="Signal_257epme" name="red-tenant-signal" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="red-tenant">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="156" y="142" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_04ql45u_di" bpmnElement="Event_04ql45u">
+        <dc:Bounds x="582" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="590" y="142" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0332fng_di" bpmnElement="Event_0mvf9yu">
+        <dc:Bounds x="362" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="339" y="142" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0szb1jp_di" bpmnElement="Flow_0szb1jp">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="362" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04b8070_di" bpmnElement="Flow_04b8070">
+        <di:waypoint x="398" y="117" />
+        <di:waypoint x="582" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

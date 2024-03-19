@@ -6,6 +6,7 @@ import { EnvironmentSetup } from '../../lib'
 import { OAuthProvider } from '../../oauth'
 
 jest.setTimeout(10000)
+let server: http.Server
 
 beforeAll(() => {
 	EnvironmentSetup.storeEnv()
@@ -13,6 +14,8 @@ beforeAll(() => {
 })
 
 beforeEach(() => EnvironmentSetup.wipeEnv())
+
+afterEach(() => server && server.close())
 
 afterAll(() => EnvironmentSetup.restoreEnv())
 
@@ -168,20 +171,21 @@ test('Throws in the constructor if the token cache is not writable', () => {
 test('In-memory cache is populated and evicted after timeout', (done) => {
 	const delay = (timeout: number) =>
 		new Promise((res) => setTimeout(() => res(null), timeout))
+	const serverPort3002 = 3002
 
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3002',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
 			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
 		},
 		userAgentString: 'test',
 	})
 
 	let requestCount = 0
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -201,7 +205,7 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 				})
 			}
 		})
-		.listen(3002)
+		.listen(serverPort3002)
 
 	o.getToken('ZEEBE').then(async (token) => {
 		expect(token).toBe('0')
@@ -211,7 +215,7 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 		await delay(1600)
 		const token3 = await o.getToken('ZEEBE')
 		expect(token3).toBe('1')
-		server.close(() => done())
+		done()
 	})
 })
 
@@ -221,12 +225,13 @@ test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_RE
 	const delay = (timeout: number) =>
 		new Promise((res) => setTimeout(() => res(null), timeout))
 
+	const serverPort3009 = 3009
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3009',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3009}`,
 			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 2000,
 			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
 		},
@@ -234,7 +239,7 @@ test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_RE
 	})
 
 	let requestCount = 0
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -254,7 +259,7 @@ test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_RE
 				})
 			}
 		})
-		.listen(3009)
+		.listen(serverPort3009)
 
 	o.flushFileCache()
 	o.getToken('ZEEBE').then(async (token) => {
@@ -265,21 +270,22 @@ test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_RE
 		await delay(3600)
 		const token3 = await o.getToken('ZEEBE')
 		expect(token3).toBe('1')
-		server.close(() => done())
+		done()
 	})
 })
 
 test('Uses form encoding for request', (done) => {
+	const serverPort3001 = 3001
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3001',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3001}`,
 		},
 		userAgentString: 'test',
 	})
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -298,22 +304,23 @@ test('Uses form encoding for request', (done) => {
 				})
 			}
 		})
-		.listen(3001)
-	o.getToken('OPERATE').finally(() => server.close())
+		.listen(serverPort3001)
+	o.getToken('OPERATE')
 })
 
 test('Uses a custom audience for an Operate token, if one is configured', (done) => {
+	const serverPort3003 = 3003
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3001',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3003}`,
 			CAMUNDA_OPERATE_OAUTH_AUDIENCE: 'custom.operate.audience',
 		},
 		userAgentString: 'test',
 	})
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -332,22 +339,23 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 				})
 			}
 		})
-		.listen(3001)
-	o.getToken('OPERATE').finally(() => server.close())
+		.listen(serverPort3003)
+	o.getToken('OPERATE')
 })
 
 test('Passes scope, if provided', () => {
+	const serverPort3004 = 3004
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			CAMUNDA_TOKEN_SCOPE: 'scope',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3003',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3004}`,
 		},
 		userAgentString: 'test',
 	})
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -365,25 +373,24 @@ test('Passes scope, if provided', () => {
 				})
 			}
 		})
-		.listen(3003)
+		.listen(serverPort3004)
 
-	return o.getToken('ZEEBE').finally(() => {
-		return server.close()
-	})
+	return o.getToken('ZEEBE')
 })
 
 test('Can get scope from environment', () => {
+	const serverPort3005 = 3005
 	process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3004',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3005}`,
 		},
 		userAgentString: 'test',
 	})
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -401,11 +408,9 @@ test('Can get scope from environment', () => {
 				})
 			}
 		})
-		.listen(3004)
+		.listen(serverPort3005)
 
-	return o.getToken('ZEEBE').finally(() => {
-		return server.close()
-	})
+	return o.getToken('ZEEBE')
 })
 
 test('Creates the token cache dir if it does not exist', () => {
@@ -538,17 +543,18 @@ test('Can set a custom user agent', () => {
 
 // See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
 test('Passes no audience for Modeler API when self-hosted', (done) => {
+	const serverPort3006 = 3006
 	const o = new OAuthProvider({
 		config: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 			ZEEBE_CLIENT_ID: 'clientId',
 			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3005',
+			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3006}`,
 		},
 		userAgentString: 'modeler',
 	})
-	const server = http
+	server = http
 		.createServer((req, res) => {
 			if (req.method === 'POST') {
 				let body = ''
@@ -559,7 +565,6 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
 					res.end('{"token": "something"}')
-					server.close()
 					expect(body).toEqual(
 						'client_id=clientId&client_secret=clientSecret&grant_type=client_credentials'
 					)
@@ -567,7 +572,7 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 				})
 			}
 		})
-		.listen(3005)
+		.listen(serverPort3006)
 	o.getToken('MODELER')
 })
 

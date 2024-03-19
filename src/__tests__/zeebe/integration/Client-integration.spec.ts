@@ -12,10 +12,10 @@ let processId: string
 beforeAll(async () => {
 	suppressZeebeLogging()
 	const client = new ZeebeGrpcClient()
-	const res = await client.deployProcess(
-		'./src/__tests__/testdata/hello-world.bpmn'
-	)
-	processId = res.processes[0].bpmnProcessId
+	const res = await client.deployResource({
+		processFilename: './src/__tests__/testdata/hello-world.bpmn',
+	})
+	processId = res.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId)
 	await client.close()
 })

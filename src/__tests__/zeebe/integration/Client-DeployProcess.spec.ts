@@ -10,9 +10,9 @@ afterAll(() => restoreZeebeLogging())
 
 test('deploys a process', async () => {
 	const zbc = new ZeebeGrpcClient()
-	const result = await zbc.deployProcess(
-		'./src/__tests__/testdata/Client-DeployWorkflow.bpmn'
-	)
+	const result = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Client-DeployWorkflow.bpmn',
+	})
 	await zbc.close()
-	expect(result.processes[0].bpmnProcessId).toBeTruthy()
+	expect(result.deployments[0].process.bpmnProcessId).toBeTruthy()
 })

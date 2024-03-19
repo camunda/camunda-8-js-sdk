@@ -13,10 +13,10 @@ let wf: CreateProcessInstanceResponse | undefined
 let processId: string
 
 beforeAll(async () => {
-	const res = await zbc.deployProcess(
-		'./src/__tests__/testdata/hello-world.bpmn'
-	)
-	processId = res.processes[0].bpmnProcessId
+	const res = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/hello-world.bpmn',
+	})
+	processId = res.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId)
 })
 

@@ -23,10 +23,10 @@ afterAll(async () => {
 })
 
 beforeAll(async () => {
-	const res = await zbcLongPoll.deployProcess(
-		'./src/__tests__/testdata/Worker-LongPoll.bpmn'
-	)
-	processId = res.processes[0].bpmnProcessId
+	const res = await zbcLongPoll.deployResource({
+		processFilename: './src/__tests__/testdata/Worker-LongPoll.bpmn',
+	})
+	processId = res.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId)
 })
 

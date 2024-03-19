@@ -4,7 +4,8 @@ import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import {
 	CreateProcessInstanceResponse,
-	DeployProcessResponse,
+	DeployResourceResponse,
+	ProcessDeployment,
 } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 jest.setTimeout(30000)
@@ -19,14 +20,14 @@ suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse
-let deploy: DeployProcessResponse
+let deploy: DeployResourceResponse<ProcessDeployment>
 let processId: string
 
 beforeAll(async () => {
-	deploy = await zbc.deployProcess(
-		'./src/__tests__/testdata/conditional-pathway.bpmn'
-	)
-	processId = deploy.processes[0].bpmnProcessId
+	deploy = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/conditional-pathway.bpmn',
+	})
+	processId = deploy.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processId)
 })
 
