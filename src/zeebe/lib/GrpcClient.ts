@@ -365,6 +365,8 @@ export class GrpcClient extends EventEmitter {
 					return new Promise(async (resolve, reject) => {
 						try {
 							const metadata = (await this.getAuthToken()) || {}
+							debug(methodName, 'timeNormalisedRequest', timeNormalisedRequest)
+
 							client[methodName](
 								timeNormalisedRequest,
 								metadata,
@@ -372,7 +374,10 @@ export class GrpcClient extends EventEmitter {
 									// This will error on network or business errors
 									if (err) {
 										debug(`${methodName}Sync error: ${err.code}`)
-										const isNetworkError = err.code === GrpcError.UNAVAILABLE
+										debug(err.message)
+										const isNetworkError =
+											err.code === GrpcError.UNAVAILABLE &&
+											!err.message.includes('partition')
 										if (isNetworkError) {
 											this.setNotReady()
 										} else {

@@ -15,7 +15,7 @@ import {
 	CreateProcessInstanceResponse,
 	CreateProcessInstanceWithResultRequest,
 	CreateProcessInstanceWithResultResponseOnWire,
-	DeployProcessResponse,
+	DeleteResourceRequest,
 	DeployResourceRequest,
 	DeployResourceResponse,
 	EvaluateDecisionRequest,
@@ -24,7 +24,6 @@ import {
 	ModifyProcessInstanceRequest,
 	ModifyProcessInstanceResponse,
 	ProcessInstanceCreationStartInstruction,
-	ProcessRequestObject,
 	PublishMessageRequest,
 	PublishMessageResponse,
 	ResolveIncidentRequest,
@@ -43,13 +42,6 @@ export interface ZBLogMessage {
 	level: Loglevel
 	message: string
 	time: string
-}
-
-export type DeployProcessFiles = string | string[]
-
-export interface DeployProcessBuffer {
-	definition: Buffer
-	name: string
 }
 
 export interface CreateProcessBaseRequest<V extends JSONDoc> {
@@ -451,9 +443,9 @@ export interface ZBGrpc extends GrpcClient {
 	updateJobRetriesSync(
 		updateJobRetriesRequest: UpdateJobRetriesRequest
 	): Promise<void>
-	deployProcessSync(processes: {
-		processes: ProcessRequestObject[]
-	}): Promise<DeployProcessResponse>
+	deleteResourceSync: (
+		deleteResourceRequest: DeleteResourceRequest
+	) => Promise<Record<string, never>>
 	deployResourceSync<T>(
 		resource: DeployResourceRequest
 	): Promise<DeployResourceResponse<T>>

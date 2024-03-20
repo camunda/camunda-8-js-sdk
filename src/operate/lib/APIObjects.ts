@@ -10,12 +10,15 @@ export interface ProcessInstance {
 	processVersion: number
 	bpmnProcessId: string
 	parentKey?: number
+	parentFlowNodeInstanceKey: number
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	startDate: string
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	endDate: string
 	state: 'ACTIVE' | 'COMPLETED' | 'CANCELED'
 	processDefinitionKey: number
+	tenantId: string | undefined
+	parentProcessInstanceKey: number
 }
 
 export interface Incident {

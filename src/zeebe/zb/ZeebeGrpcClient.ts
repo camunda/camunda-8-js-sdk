@@ -55,8 +55,7 @@ const idColors = [
  * @description A client for interacting with a Zeebe broker. With the connection credentials set in the environment, you can use a "zero-conf" constructor with no arguments.
  * @example
  * ```
- * const oAuthProvider = new NullAuthProvider()
- * const zbc = new ZeebeGrpcClient({ oAuthProvider: NullAuthProvider })
+ * const zbc = new ZeebeGrpcClient()
  * zbc.topology().then(info =>
  *     console.log(JSON.stringify(info, null, 2))
  * )
@@ -277,9 +276,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			variables: JSON.stringify(req.variables ?? {}),
 			tenantId: req.tenantId ?? this.tenantId,
 		}
-		// tslint:disable-next-line: no-console
-		console.log('signal', request) // @DEBUG
-
 		return this.executeOperation('broadcastSignal', () =>
 			this.grpc.broadcastSignalSync(request)
 		)
@@ -698,6 +694,22 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				Grpc.CreateProcessInstanceWithResultResponseOnWire,
 				Result
 			>(res)
+		)
+	}
+
+	/**
+	 * Delete a resource.
+	 * @param resourceId - The key of the resource that should be deleted. This can either be the key of a process definition, the key of a decision requirements definition or the key of a form.
+	 * @returns
+	 */
+	deleteResource({
+		resourceKey,
+	}: {
+		resourceKey: string
+	}): Promise<Record<string, never>> {
+		console.log('resourceKey', resourceKey)
+		return this.executeOperation('deleteResourceSync', () =>
+			this.grpc.deleteResourceSync({ resourceKey })
 		)
 	}
 
@@ -1372,8 +1384,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				return operation().catch((err) => {
 					// This could be DNS resolution, or the gRPC gateway is not reachable yet, or Backpressure
 					const isNetworkError =
-						err.message.indexOf('14') === 0 ||
-						err.message.indexOf('Stream removed') !== -1
+						(err.message.indexOf('14') === 0 ||
+							err.message.indexOf('Stream removed') !== -1) &&
+						!err.message.includes('partition') // Error 14 can be host unavailable (network) or partition unavailable (not network)
 					const isBackpressure =
 						err.message.indexOf('8') === 0 || err.code === 8
 					if (isNetworkError) {
