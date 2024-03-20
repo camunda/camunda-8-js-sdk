@@ -158,7 +158,7 @@ export interface ProcessInstanceCreationStartInstruction {
 export interface CreateProcessInstanceResponse {
 	/**
 	 * The unique key identifying the process definition (e.g. returned from a process
-	 * in the DeployProcessResponse message)
+	 * in the DeployResourceResponse message)
 	 */
 	readonly processDefinitionKey: string
 	/**
@@ -417,18 +417,6 @@ export interface Resource {
 	name: string
 	/** the file content as a UTF8-encoded string */
 	content: Buffer
-}
-
-/**
- * @deprecated since 8, replaced by DeployResourceResponse
- */
-export interface DeployProcessResponse {
-	readonly key: string
-	readonly processes: ProcessMetadata[]
-}
-
-export interface DeployProcessRequest {
-	readonly processes: ProcessRequestObject[]
 }
 
 export interface ListProcessResponse {
@@ -718,6 +706,14 @@ export interface MatchedDecisionRule {
 	ruleIndex: number
 	/** the evaluated decision outputs */
 	evaluatedOutputs: EvaluatedDecisionOutput[]
+}
+
+export interface DeleteResourceRequest {
+	/**
+	 * The key of the resource that should be deleted. This can either be the key
+	 * of a process definition, the key of a decision requirements definition or the key of a form.
+	 */
+	resourceKey: string
 }
 
 export interface BroadcastSignalRequest {

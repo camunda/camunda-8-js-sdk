@@ -43,6 +43,7 @@ export class OperateApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
 	private rest: typeof got
+	private tenantId: string | undefined
 
 	/**
 	 * @example
@@ -72,6 +73,7 @@ export class OperateApiClient {
 				certificateAuthority,
 			},
 		})
+		this.tenantId = config.CAMUNDA_TENANT_ID
 	}
 
 	private async getHeaders() {
@@ -170,9 +172,15 @@ export class OperateApiClient {
 		query: Query<ProcessInstance> = {}
 	): Promise<SearchResults<ProcessInstance>> {
 		const headers = await this.getHeaders()
+		const json = this.tenantId
+			? {
+					...query,
+					tenantId: this.tenantId,
+				}
+			: query
 		return this.rest
 			.post('process-instances/search', {
-				json: query,
+				json,
 				headers,
 			})
 			.json()
