@@ -14,7 +14,7 @@ beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Signal.bpmn',
 	})
-	pid = res.deployments[0].process.bpmnProcessId
+	pid = res.deployments[0].process.processDefinitionKey
 	await cancelProcesses(pid)
 })
 

@@ -7,7 +7,8 @@ process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(30000)
 
 let zbc: ZeebeGrpcClient
-let processId: string
+let processDefinitionKey: string
+let bpmnProcessId: string
 
 beforeAll(async () => {
 	suppressZeebeLogging()
@@ -15,8 +16,8 @@ beforeAll(async () => {
 	const res = await client.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
-	processId = res.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId)
+	;({ bpmnProcessId, processDefinitionKey } = res.deployments[0].process)
+	await cancelProcesses(processDefinitionKey)
 	await client.close()
 })
 
@@ -26,12 +27,12 @@ beforeEach(() => {
 
 afterEach(async () => {
 	await zbc.close()
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 afterAll(async () => {
 	restoreZeebeLogging()
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 test('Can get the broker topology', async () => {
@@ -52,7 +53,7 @@ test('Can create a worker', async () => {
 test('Can cancel a process', async () => {
 	const client = new ZeebeGrpcClient()
 	const process = await client.createProcessInstance({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		variables: {},
 	})
 	const key = process.processInstanceKey

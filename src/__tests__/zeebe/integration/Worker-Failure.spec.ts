@@ -18,6 +18,9 @@ let wf: CreateProcessInstanceResponse | undefined
 let wf1: DeployResourceResponse<ProcessDeployment>
 let wf2: DeployResourceResponse<ProcessDeployment>
 let wf3: DeployResourceResponse<ProcessDeployment>
+let processDefinitionKey1: string
+let processDefinitionKey2: string
+let processDefinitionKey3: string
 let bpmnProcessId1: string
 let bpmnProcessId2: string
 let bpmnProcessId3: string
@@ -26,18 +29,28 @@ beforeAll(async () => {
 	wf1 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure1.bpmn',
 	})
+	;({
+		processDefinitionKey: processDefinitionKey1,
+		bpmnProcessId: bpmnProcessId1,
+	} = wf1.deployments[0].process)
 	bpmnProcessId1 = wf1.deployments[0].process.bpmnProcessId
 	wf2 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure2.bpmn',
 	})
-	bpmnProcessId2 = wf2.deployments[0].process.bpmnProcessId
+	;({
+		processDefinitionKey: processDefinitionKey2,
+		bpmnProcessId: bpmnProcessId2,
+	} = wf2.deployments[0].process)
 	wf3 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure3.bpmn',
 	})
-	bpmnProcessId3 = wf3.deployments[0].process.bpmnProcessId
-	await cancelProcesses(bpmnProcessId1)
-	await cancelProcesses(bpmnProcessId2)
-	await cancelProcesses(bpmnProcessId3)
+	;({
+		processDefinitionKey: processDefinitionKey3,
+		bpmnProcessId: bpmnProcessId3,
+	} = wf3.deployments[0].process)
+	await cancelProcesses(processDefinitionKey1)
+	await cancelProcesses(processDefinitionKey2)
+	await cancelProcesses(processDefinitionKey3)
 })
 
 afterEach(async () => {
@@ -53,9 +66,9 @@ afterEach(async () => {
 afterAll(async () => {
 	await zbc.close()
 	restoreZeebeLogging()
-	await cancelProcesses(bpmnProcessId1)
-	await cancelProcesses(bpmnProcessId2)
-	await cancelProcesses(bpmnProcessId3)
+	await cancelProcesses(processDefinitionKey1)
+	await cancelProcesses(processDefinitionKey2)
+	await cancelProcesses(processDefinitionKey3)
 })
 
 test('Causes a retry with complete.failure()', async () => {
@@ -92,7 +105,6 @@ test('Causes a retry with complete.failure()', async () => {
 				}
 				return job.fail('Triggering a retry')
 			},
-			loglevel: 'NONE',
 		})
 	)
 })
@@ -120,8 +132,6 @@ test('Does not fail a process when the handler throws, by default', async () => 
 					'Unhandled exception in task handler for testing purposes'
 				) // Will be caught in the library
 			},
-
-			loglevel: 'NONE',
 			pollInterval: 10000,
 		})
 	})
@@ -149,7 +159,6 @@ test('Fails a process when the handler throws and options.failProcessOnException
 				throw new Error('Unhandled exception in task handler for test purposes') // Will be caught in the library
 			},
 			failProcessOnException: true,
-			loglevel: 'NONE',
 		})
 
 		function testProcessInstanceExists() {

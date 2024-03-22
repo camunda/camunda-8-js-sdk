@@ -1,4 +1,4 @@
-name: Run Local Integration Tests Multitenant
+name: Multitenant Integration Tests
 
 on: [push]
 

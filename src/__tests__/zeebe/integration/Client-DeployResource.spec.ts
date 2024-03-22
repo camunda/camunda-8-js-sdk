@@ -3,7 +3,6 @@ import fs from 'fs'
 import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
 
 import { BpmnParser, ZeebeGrpcClient } from '../../../zeebe/index'
-import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(20000)
@@ -18,7 +17,7 @@ const bpmnString = fs.readFileSync(
 const expectedPid = BpmnParser.getProcessId(bpmnString)
 
 beforeAll(async () => {
-	cancelProcesses(expectedPid)
+	// cancelProcesses(expectedPid)
 })
 
 afterAll(async () => {

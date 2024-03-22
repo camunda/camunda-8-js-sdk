@@ -12,21 +12,24 @@ suppressZeebeLogging()
 let zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse
 let id: string | null
-let processId: string
-let processId2: string
+let bpmnProcessId: string
+let bpmnProcessId2: string
+let processKey: string
+let processKey2: string
 
 beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
-	processId = res.deployments[0].process.bpmnProcessId
-	processId2 = (
-		await zbc.deployResource({
-			processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
-		})
-	).deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId)
-	await cancelProcesses(processId2)
+	processKey = res.deployments[0].process.processDefinitionKey
+	bpmnProcessId = res.deployments[0].process.bpmnProcessId
+	const res2 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
+	})
+	processKey2 = res2.deployments[0].process.processDefinitionKey
+	bpmnProcessId2 = res2.deployments[0].process.bpmnProcessId
+	await cancelProcesses(processKey)
+	await cancelProcesses(processKey2)
 	await zbc.close()
 })
 
@@ -49,17 +52,17 @@ afterAll(async () => {
 	}
 	await zbc.close() // Makes sure we don't forget to close connection
 	restoreZeebeLogging()
-	await cancelProcesses(processId)
-	await cancelProcesses(processId)
+	await cancelProcesses(processKey)
+	await cancelProcesses(processKey2)
 })
 
 test('Can start a process', async () => {
 	wf = await zbc.createProcessInstance({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		variables: {},
 	})
 	await zbc.cancelProcessInstance(wf.processInstanceKey)
-	expect(wf.bpmnProcessId).toBe(processId)
+	expect(wf.bpmnProcessId).toBe(bpmnProcessId)
 	expect(wf.processInstanceKey).toBeTruthy()
 })
 
@@ -75,7 +78,7 @@ test('Can start a process at an arbitrary point', (done) => {
 	const finish = () => worker.close().then(() => done())
 	zbc
 		.createProcessInstance({
-			bpmnProcessId: 'SkipFirstTask',
+			bpmnProcessId: bpmnProcessId2,
 			variables: { id: random },
 			startInstructions: [{ elementId: 'second_service_task' }],
 		})

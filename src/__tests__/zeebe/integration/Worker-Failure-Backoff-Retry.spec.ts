@@ -11,14 +11,16 @@ suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
+let processDefinitionKey: string
 let processId: string
 
 beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure1.bpmn',
 	})
+	processDefinitionKey = res.deployments[0].process.processDefinitionKey
 	processId = res.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 afterEach(async () => {
@@ -30,7 +32,7 @@ afterEach(async () => {
 afterAll(async () => {
 	await zbc.close()
 	restoreZeebeLogging()
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 test('Can specify a retryBackoff with complete.failure()', async () => {

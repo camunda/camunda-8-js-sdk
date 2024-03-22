@@ -1,5 +1,7 @@
+import { LosslessNumber } from 'lossless-json'
+
 import { OperateApiClient } from '../../operate'
-import { ProcessDefinition, Query } from '../../operate/lib/APIObjects'
+import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
 
 jest.setTimeout(15000)
 describe('Operate Integration', () => {
@@ -8,7 +10,7 @@ describe('Operate Integration', () => {
 
 		const res = await c.searchIncidents({
 			filter: {
-				processInstanceKey: 2251799816400111,
+				processInstanceKey: new LosslessNumber('2251799816400111'),
 			},
 		})
 		console.log(JSON.stringify(res, null, 2))
@@ -19,7 +21,7 @@ describe('Operate Integration', () => {
 
 		const query: Query<ProcessDefinition> = {
 			filter: {},
-			size: 50,
+			size: 5,
 			sort: [
 				{
 					field: 'bpmnProcessId',
