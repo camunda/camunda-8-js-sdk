@@ -10,14 +10,15 @@ suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
-let processId: string
+let processDefinitionKey: string
+let bpmnProcessId: string
 
 beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
-	processId = res.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId)
+	;({ processDefinitionKey, bpmnProcessId } = res.deployments[0].process)
+	await cancelProcesses(processDefinitionKey)
 })
 
 afterEach(async () => {
@@ -27,7 +28,7 @@ afterEach(async () => {
 })
 
 afterAll(async () => {
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 	await zbc.close()
 	restoreZeebeLogging()
 })
@@ -35,7 +36,7 @@ afterAll(async () => {
 test('Can retrieve only specified variables using fetchVariable', (done) => {
 	zbc
 		.createProcessInstance({
-			bpmnProcessId: processId,
+			bpmnProcessId,
 			variables: {
 				var1: 'foo',
 				var2: 'bar',

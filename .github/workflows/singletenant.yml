@@ -1,4 +1,4 @@
-name: Run Local Integration Tests
+name: Single Tenant Integration Tests
 
 on: [push]
 

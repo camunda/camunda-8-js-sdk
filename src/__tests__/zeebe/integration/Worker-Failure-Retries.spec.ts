@@ -33,7 +33,7 @@ test('Decrements the retries count by default', async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
 	})
-	await cancelProcesses(res.deployments[0].process.bpmnProcessId)
+	await cancelProcesses(res.deployments[0].process.processDefinitionKey)
 	wf = await zbc.createProcessInstance({
 		bpmnProcessId: 'worker-failure-retries',
 		variables: {
@@ -66,7 +66,7 @@ test('Set the retries to a specific number when provided with one via simple sig
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
 	})
-	cancelProcesses(res.deployments[0].process.bpmnProcessId)
+	cancelProcesses(res.deployments[0].process.processDefinitionKey)
 	wf = await zbc.createProcessInstance({
 		bpmnProcessId: 'worker-failure-retries',
 		variables: {
@@ -99,7 +99,7 @@ test('Set the retries to a specific number when provided with one via object sig
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
 	})
-	await cancelProcesses(res.deployments[0].process.bpmnProcessId)
+	await cancelProcesses(res.deployments[0].process.processDefinitionKey)
 	wf = await zbc.createProcessInstance({
 		bpmnProcessId: 'worker-failure-retries',
 		variables: {

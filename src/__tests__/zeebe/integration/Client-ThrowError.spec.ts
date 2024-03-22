@@ -7,19 +7,20 @@ import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(25000)
 
-let processId: string
+let bpmnProcessId: string
+let processDefinitionKey: string
 
 let zbc: ZeebeGrpcClient
 
 beforeAll(async () => {
 	suppressZeebeLogging()
 	const zb = new ZeebeGrpcClient()
-	processId = (
+	;({ bpmnProcessId, processDefinitionKey } = (
 		await zb.deployResource({
 			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
 		})
-	).deployments[0].process.bpmnProcessId
-	cancelProcesses(processId)
+	).deployments[0].process)
+	cancelProcesses(processDefinitionKey)
 	await zb.close()
 })
 
@@ -33,7 +34,7 @@ afterEach(async () => {
 
 afterAll(async () => {
 	restoreZeebeLogging()
-	cancelProcesses(processId)
+	cancelProcesses(processDefinitionKey)
 })
 
 test('Throws a business error that is caught in the process', async () => {
@@ -51,7 +52,7 @@ test('Throws a business error that is caught in the process', async () => {
 			}),
 	})
 	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		requestTimeout: 20000,
 		variables: {},
 	})
@@ -77,7 +78,7 @@ test('Can set variables when throwing a BPMN Error', async () => {
 			}),
 	})
 	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		requestTimeout: 20000,
 		variables: {},
 	})

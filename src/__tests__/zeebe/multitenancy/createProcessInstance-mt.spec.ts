@@ -7,7 +7,7 @@ import {
 
 suppressZeebeLogging()
 let res: DeployResourceResponse<ProcessDeployment>
-
+let bpmnProcessId: string
 beforeAll(async () => {
 	const client = new ZeebeGrpcClient({
 		config: {
@@ -17,6 +17,7 @@ beforeAll(async () => {
 	res = await client.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
+	bpmnProcessId = res.deployments[0].process.bpmnProcessId
 })
 
 afterAll(() => restoreZeebeLogging())
@@ -32,8 +33,7 @@ test('Will not throw an error if tenantId is provided when starting a process in
 
 	try {
 		const p = await client.createProcessInstance({
-			bpmnProcessId: res.deployments[0].process.bpmnProcessId,
-			version: res.deployments[0].process.version,
+			bpmnProcessId,
 			variables: {},
 		})
 		expect(p).toBeTruthy()
@@ -56,8 +56,7 @@ test('Will throw an error if no tenantId is provided when starting a process ins
 	})
 	try {
 		const p = await client.createProcessInstance({
-			bpmnProcessId: res.deployments[0].process.bpmnProcessId,
-			version: res.deployments[0].process.version,
+			bpmnProcessId,
 			variables: {},
 		})
 		client.cancelProcessInstance(p.bpmnProcessId)

@@ -707,7 +707,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}: {
 		resourceKey: string
 	}): Promise<Record<string, never>> {
-		console.log('resourceKey', resourceKey)
 		return this.executeOperation('deleteResourceSync', () =>
 			this.grpc.deleteResourceSync({ resourceKey })
 		)

@@ -4,8 +4,6 @@ import * as uuid from 'uuid'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
-process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
-
 jest.setTimeout(40000)
 
 let processId: string
@@ -26,7 +24,7 @@ beforeAll(async () => {
 	const res = await zbcLongPoll.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-LongPoll.bpmn',
 	})
-	processId = res.deployments[0].process.bpmnProcessId
+	processId = res.deployments[0].process.processDefinitionKey
 	await cancelProcesses(processId)
 })
 

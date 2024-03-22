@@ -26,23 +26,23 @@ beforeAll(async () => {
 	test3 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/await-outcome.bpmn',
 	})
-	await cancelProcesses(test1.deployments[0].process.bpmnProcessId)
-	await cancelProcesses(test2.deployments[0].process.bpmnProcessId)
-	await cancelProcesses(test3.deployments[0].process.bpmnProcessId)
+	await cancelProcesses(test1.deployments[0].process.processDefinitionKey)
+	await cancelProcesses(test2.deployments[0].process.processDefinitionKey)
+	await cancelProcesses(test3.deployments[0].process.processDefinitionKey)
 })
 
 afterAll(async () => {
 	await zbc.close() // Makes sure we don't forget to close connection
 	restoreZeebeLogging()
-	await cancelProcesses(test1.deployments[0].process.bpmnProcessId)
-	await cancelProcesses(test2.deployments[0].process.bpmnProcessId)
-	await cancelProcesses(test3.deployments[0].process.bpmnProcessId)
+	await cancelProcesses(test1.deployments[0].process.processDefinitionKey)
+	await cancelProcesses(test2.deployments[0].process.processDefinitionKey)
+	await cancelProcesses(test3.deployments[0].process.processDefinitionKey)
 })
 
 test('Awaits a process outcome', async () => {
-	const processId = test1.deployments[0].process.bpmnProcessId
+	const bpmnProcessId = test1.deployments[0].process.bpmnProcessId
 	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		variables: {
 			sourceValue: 5,
 		},
@@ -51,9 +51,9 @@ test('Awaits a process outcome', async () => {
 })
 
 test('can override the gateway timeout', async () => {
-	const processId = test2.deployments[0].process.bpmnProcessId
+	const bpmnProcessId = test2.deployments[0].process.bpmnProcessId
 	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		requestTimeout: 25000,
 		variables: {
 			otherValue: 'rome',
@@ -64,9 +64,9 @@ test('can override the gateway timeout', async () => {
 })
 
 test('fetches a subset of variables', async () => {
-	const processId = test3.deployments[0].process.bpmnProcessId
+	const bpmnProcessId = test3.deployments[0].process.bpmnProcessId
 	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId: processId,
+		bpmnProcessId,
 		fetchVariables: ['otherValue'],
 		variables: {
 			otherValue: 'rome',

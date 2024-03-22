@@ -2,7 +2,7 @@
 
 [![NPM](https://nodei.co/npm/@camunda8/sdk.png)](https://www.npmjs.com/package/@camunda8/sdk)
 
-This is the official Camunda 8 JavaScript SDK.
+This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on NodeJS ([why not in a web browser?](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/79)).
 
 ## Using the SDK in your project
 
@@ -11,6 +11,10 @@ Install the SDK as a dependency:
 ```bash
 npm i @camunda8/sdk
 ```
+
+## A note on entity key types in the JavaScript SDK
+
+Entity keys in Camunda 8 are stored and represented as int64 numbers. The range of int64 extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, int64 keys are serialised by the SDK as the JavaScript `string` type. See [this issue](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/78) for more details.
 
 ## Usage
 

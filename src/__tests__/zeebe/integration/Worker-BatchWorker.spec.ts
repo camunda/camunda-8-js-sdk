@@ -7,26 +7,27 @@ jest.setTimeout(30000)
 suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
-let processId: string
+let processDefinitionKey: string
+let bpmnProcessId: string
 
 beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
-	processId = res.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId)
+	;({ bpmnProcessId, processDefinitionKey } = res.deployments[0].process)
+	await cancelProcesses(processDefinitionKey)
 })
 
 afterAll(async () => {
 	await zbc.close() // Makes sure we don't forget to close connection
 	restoreZeebeLogging()
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 test('BatchWorker gets ten jobs', async () => {
 	for (let i = 0; i < 10; i++) {
 		await zbc.createProcessInstance({
-			bpmnProcessId: processId,
+			bpmnProcessId,
 			variables: {},
 		})
 	}

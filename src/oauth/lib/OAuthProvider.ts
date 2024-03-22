@@ -17,7 +17,7 @@ import { IOAuthProvider, Token, TokenError } from '../index'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'
 
-const trace = debug('camunda:token')
+const trace = debug('camunda:oauth')
 
 const homedir = os.homedir()
 const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
@@ -163,7 +163,9 @@ export class OAuthProvider implements IOAuthProvider {
 			// check expiry and evict in-memory and file cache if expired
 			if (this.isExpired(token)) {
 				this.evictFromMemoryCache(audienceType)
+				trace(`In-memory token ${token.token_type} is expired`)
 			} else {
+				trace(`Using in-memory cached token ${token.token_type}`)
 				return this.tokenCache[key].access_token
 			}
 		}
@@ -176,7 +178,9 @@ export class OAuthProvider implements IOAuthProvider {
 				// check expiry and evict in-memory and file cache if expired
 				if (this.isExpired(cachedToken)) {
 					this.evictFromFileCache({ audienceType, clientId: clientIdToUse })
+					trace(`File cached token ${cachedToken.token_type} is expired`)
 				} else {
+					trace(`Using file cached token ${cachedToken.token_type}`)
 					return cachedToken.access_token
 				}
 			}
@@ -279,7 +283,15 @@ export class OAuthProvider implements IOAuthProvider {
 		const optionsWithAgent = this.customRootCert
 			? { ...options, agent: customAgent }
 			: options
+		trace(`Making token request to the token endpoint: `)
+		trace(`  ${this.authServerUrl}`)
+		trace(optionsWithAgent)
 		return fetch(this.authServerUrl, optionsWithAgent)
+			.catch((e) => {
+				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
+				console.log(e)
+				throw e
+			})
 			.then((res) =>
 				res.json().catch(() => {
 					trace(
@@ -314,8 +326,6 @@ export class OAuthProvider implements IOAuthProvider {
 					})
 				}
 				this.sendToMemoryCache({ audience: audienceType, token })
-				trace(`Got token from endpoint: \n${token.access_token}`)
-				trace(`Token expires in ${token.expires_in} seconds`)
 				return token.access_token
 			})
 	}
@@ -378,6 +388,7 @@ export class OAuthProvider implements IOAuthProvider {
 			}),
 			(e) => {
 				if (!e) {
+					trace(`Wrote OAuth token to file ${file}`)
 					return
 				}
 				// tslint:disable-next-line

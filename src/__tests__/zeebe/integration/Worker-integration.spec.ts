@@ -9,26 +9,38 @@ suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
-let processId1: string
-let processId2: string
-let processId3: string
+let processDefinitionKey1: string
+let processDefinitionKey2: string
+let processDefinitionKey3: string
+let bpmnProcessId1: string
+let bpmnProcessId2: string
+let bpmnProcessId3: string
 
 beforeAll(async () => {
 	const res1 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
-	processId1 = res1.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId1)
+	;({
+		processDefinitionKey: processDefinitionKey1,
+		bpmnProcessId: bpmnProcessId1,
+	} = res1.deployments[0].process)
+	await cancelProcesses(processDefinitionKey1)
 	const res2 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world-complete.bpmn',
 	})
-	processId2 = res2.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId2)
+	;({
+		processDefinitionKey: processDefinitionKey2,
+		bpmnProcessId: bpmnProcessId2,
+	} = res2.deployments[0].process)
+	await cancelProcesses(processDefinitionKey2)
 	const res3 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/conditional-pathway.bpmn',
 	})
-	processId3 = res3.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId3)
+	;({
+		processDefinitionKey: processDefinitionKey3,
+		bpmnProcessId: bpmnProcessId3,
+	} = res3.deployments[0].process)
+	await cancelProcesses(processDefinitionKey3)
 })
 
 afterEach(async () => {
@@ -39,16 +51,16 @@ afterEach(async () => {
 
 afterAll(async () => {
 	await zbc.close()
-	await cancelProcesses(processId1)
-	await cancelProcesses(processId2)
-	await cancelProcesses(processId3)
+	await cancelProcesses(processDefinitionKey1)
+	await cancelProcesses(processDefinitionKey2)
+	await cancelProcesses(processDefinitionKey3)
 	restoreZeebeLogging()
 })
 
 test('Can service a task', (done) => {
 	zbc
 		.createProcessInstance({
-			bpmnProcessId: processId1,
+			bpmnProcessId: bpmnProcessId1,
 			variables: {},
 		})
 		.then((res) => {
@@ -69,7 +81,7 @@ test('Can service a task', (done) => {
 test('Can service a task with complete.success', (done) => {
 	zbc
 		.createProcessInstance({
-			bpmnProcessId: processId2,
+			bpmnProcessId: bpmnProcessId2,
 			variables: {},
 		})
 		.then((res) => {
@@ -89,7 +101,7 @@ test('Can service a task with complete.success', (done) => {
 
 test('Can update process variables with complete.success()', async () => {
 	wf = await zbc.createProcessInstance({
-		bpmnProcessId: processId3,
+		bpmnProcessId: bpmnProcessId3,
 		variables: {
 			conditionVariable: true,
 		},

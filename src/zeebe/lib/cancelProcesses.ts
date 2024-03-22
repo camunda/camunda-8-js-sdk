@@ -8,13 +8,16 @@ export async function cancelProcesses(processDefinitionKey: string) {
 	}
 	const processes = await operate.searchProcessInstances({
 		filter: {
-			processDefinitionKey: +processDefinitionKey,
+			processDefinitionKey,
 		},
 	})
 	await Promise.all(
-		processes.items.map((item) =>
-			operate.deleteProcessInstance(+item.bpmnProcessId)
-		)
+		processes.items.map((item) => {
+			return operate.deleteProcessInstance(item.key).catch((e) => {
+				console.log(`Failed to delete process ${item.key}`)
+				console.log(e)
+			})
+		})
 	)
 }
 

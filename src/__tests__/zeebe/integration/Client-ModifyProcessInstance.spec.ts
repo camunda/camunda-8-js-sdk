@@ -13,7 +13,7 @@ beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
 	})
-	processModelId = res.deployments[0].process.bpmnProcessId
+	processModelId = res.deployments[0].process.processDefinitionKey
 })
 afterAll(async () => {
 	zbc.cancelProcessInstance(pid).catch((_) => _)

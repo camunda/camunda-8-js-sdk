@@ -21,14 +21,16 @@ suppressZeebeLogging()
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse
 let deploy: DeployResourceResponse<ProcessDeployment>
-let processId: string
+let bpmnProcessId: string
+let processDefinitionKey: string
 
 beforeAll(async () => {
 	deploy = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/conditional-pathway.bpmn',
 	})
-	processId = deploy.deployments[0].process.bpmnProcessId
-	await cancelProcesses(processId)
+	bpmnProcessId = deploy.deployments[0].process.bpmnProcessId
+	processDefinitionKey = deploy.deployments[0].process.processDefinitionKey
+	await cancelProcesses(processDefinitionKey)
 })
 
 afterAll(async () => {
@@ -37,7 +39,7 @@ afterAll(async () => {
 	}
 	await zbc.close() // Make sure to close the connection
 	restoreZeebeLogging()
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 test('Can update process variables with setVariables', async () => {
@@ -45,7 +47,7 @@ test('Can update process variables with setVariables', async () => {
 
 	wf = await zbc
 		.createProcessInstance({
-			bpmnProcessId: processId,
+			bpmnProcessId,
 			variables: {
 				conditionVariable: true,
 			},

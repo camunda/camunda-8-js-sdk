@@ -5,7 +5,8 @@
 		"tasklist",
 		"zeebe",
 		"github",
-		"modeler"
+		"modeler",
+		"operate"
 	],
 	"editor.formatOnSave": true,
 

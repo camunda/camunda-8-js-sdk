@@ -18,13 +18,13 @@ beforeAll(async () => {
 	test1 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Client-MessageStart.bpmn',
 	})
-	await cancelProcesses(test1.deployments[0].process.bpmnProcessId)
+	await cancelProcesses(test1.deployments[0].process.processDefinitionKey)
 })
 
 afterAll(async () => {
 	await zbc.close()
 	restoreZeebeLogging()
-	await cancelProcesses(test1.deployments[0].process.bpmnProcessId)
+	await cancelProcesses(test1.deployments[0].process.processDefinitionKey)
 })
 
 test('Can start a process with a message', (done) => {
