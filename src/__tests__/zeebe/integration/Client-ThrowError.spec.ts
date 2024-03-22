@@ -20,7 +20,7 @@ beforeAll(async () => {
 			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
 		})
 	).deployments[0].process)
-	cancelProcesses(processDefinitionKey)
+	await cancelProcesses(processDefinitionKey)
 	await zb.close()
 })
 
@@ -34,7 +34,7 @@ afterEach(async () => {
 
 afterAll(async () => {
 	restoreZeebeLogging()
-	cancelProcesses(processDefinitionKey)
+	await cancelProcesses(processDefinitionKey)
 })
 
 test('Throws a business error that is caught in the process', async () => {

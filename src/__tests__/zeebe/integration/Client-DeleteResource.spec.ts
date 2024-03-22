@@ -36,4 +36,5 @@ test('can delete a resource', async () => {
 		thrown = true
 	}
 	expect(thrown).toBe(true)
+	await zbc.close()
 })

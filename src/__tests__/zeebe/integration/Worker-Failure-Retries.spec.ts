@@ -63,12 +63,16 @@ test('Decrements the retries count by default', async () => {
 })
 
 test('Set the retries to a specific number when provided with one via simple signature', async () => {
-	const res = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
-	})
-	cancelProcesses(res.deployments[0].process.processDefinitionKey)
+	const { processDefinitionKey, bpmnProcessId } = (
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
+		})
+	).deployments[0].process
+
+	await cancelProcesses(processDefinitionKey)
+
 	wf = await zbc.createProcessInstance({
-		bpmnProcessId: 'worker-failure-retries',
+		bpmnProcessId,
 		variables: {
 			conditionVariable: true,
 		},
