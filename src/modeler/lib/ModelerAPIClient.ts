@@ -2,14 +2,15 @@ import d from 'debug'
 import got, { Response } from 'got'
 import {
 	CamundaEnvironmentConfigurator,
-	ClientConstructor,
+	CamundaPlatform8Configuration,
+	DeepPartial,
 	GetCertificateAuthority,
 	constructOAuthProvider,
 	packageVersion,
 } from 'lib'
 import { IOAuthProvider } from 'oauth'
 
-import * as Dto from './DTO'
+import * as Dto from './ModelerDto'
 
 const debug = d('modelerapi')
 
@@ -20,7 +21,10 @@ export class ModelerApiClient {
 	private oAuthProvider: IOAuthProvider
 	private rest: typeof got
 
-	constructor(options?: ClientConstructor) {
+	constructor(options?: {
+		config?: DeepPartial<CamundaPlatform8Configuration>
+		oAuthProvider?: IOAuthProvider
+	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)

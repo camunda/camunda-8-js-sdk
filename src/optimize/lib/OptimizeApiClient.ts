@@ -2,7 +2,8 @@ import d from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
-	ClientConstructor,
+	CamundaPlatform8Configuration,
+	DeepPartial,
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -47,13 +48,15 @@ export class OptimizeApiClient {
 
 	/**
 	 *
-	 * @param userAgent An optional custom string to add to the user-agent for API calls
 	 * @example
 	 * ```
 	 * const optimize = new OptimizeApiClient()
 	 * ```
 	 */
-	constructor(options?: ClientConstructor) {
+	constructor(options?: {
+		config?: DeepPartial<CamundaPlatform8Configuration>
+		oAuthProvider?: IOAuthProvider
+	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)

@@ -1,10 +1,7 @@
 import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
+import { DeployResourceResponse, ProcessDeployment } from 'zeebe/types'
 
-import {
-	DeployResourceResponse,
-	ProcessDeployment,
-	ZeebeGrpcClient,
-} from '../../../zeebe'
+import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(25000)

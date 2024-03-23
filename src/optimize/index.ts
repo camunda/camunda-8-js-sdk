@@ -1,3 +1,3 @@
 export { OptimizeApiClient } from './lib/OptimizeApiClient'
 
-export * as Dto from './lib/APIObjects'
+export * as OptimizeDto from './lib/APIObjects'

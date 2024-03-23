@@ -8,7 +8,7 @@ beforeAll(() => {
 })
 afterAll(() => EnvironmentSetup.restoreEnv())
 
-test('Censtructor throws without base url', () => {
+test('Constructor throws without base url', () => {
 	try {
 		new TasklistApiClient({
 			config: {

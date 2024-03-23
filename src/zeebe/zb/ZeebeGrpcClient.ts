@@ -10,7 +10,8 @@ import { v4 as uuid } from 'uuid'
 
 import {
 	CamundaEnvironmentConfigurator,
-	ClientConstructor,
+	CamundaPlatform8Configuration,
+	DeepPartial,
 	RequireConfiguration,
 	constructOAuthProvider,
 } from '../../lib'
@@ -91,7 +92,10 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private customSSL?: CustomSSL
 	private tenantId?: string
 
-	constructor(options?: ClientConstructor) {
+	constructor(options?: {
+		config?: DeepPartial<CamundaPlatform8Configuration>
+		oAuthProvider?: IOAuthProvider
+	}) {
 		super()
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}

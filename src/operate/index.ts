@@ -1,3 +1,3 @@
 export { OperateApiClient } from './lib/OperateApiClient'
 
-export * as Dto from './lib/OperateDto'
+export * as OperateDto from './lib/OperateDto'

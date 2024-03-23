@@ -29,7 +29,7 @@ const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
 const modeler = c8.getModelerApiClient()
-const console = c8.getConsoleApiClient()
+const admin = c8.getAdminApiClient()
 ```
 
 ## Configuration

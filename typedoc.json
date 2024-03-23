@@ -1,0 +1,10 @@
+{
+	"$schema": "https://typedoc.org/schema.json",
+	"entryPoints": ["./src/index.ts", "./src/zeebe/types.ts"],
+	"plugin": [
+		"typedoc-plugin-missing-exports",
+		"typedoc-plugin-include-example"
+	],
+	"excludeExternals": true,
+	"out": "docs"
+}
