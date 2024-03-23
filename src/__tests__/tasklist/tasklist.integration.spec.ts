@@ -56,13 +56,13 @@ describe('TasklistApiClient', () => {
 	describe('Read operations', () => {
 		it('can request all tasks', async () => {
 			const tasklist = new TasklistApiClient()
-			const tasks = await tasklist.getAllTasks()
+			const tasks = await tasklist.searchTasks({})
 			expect(tasks.length).toBeGreaterThan(0)
 		})
 
 		it('can request a task with parameters', async () => {
 			const tasklist = new TasklistApiClient()
-			const tasks = await tasklist.getTasks({
+			const tasks = await tasklist.searchTasks({
 				state: 'CREATED',
 			})
 			expect(tasks.length).toBeGreaterThan(0)
@@ -70,7 +70,7 @@ describe('TasklistApiClient', () => {
 
 		it('gets all fields for a task', async () => {
 			const tasklist = new TasklistApiClient()
-			const tasks = await tasklist.getTasks({
+			const tasks = await tasklist.searchTasks({
 				state: 'CREATED',
 			})
 			expect(tasks.length).toBeGreaterThan(0)
@@ -80,7 +80,7 @@ describe('TasklistApiClient', () => {
 
 		it('can request a specific task', async () => {
 			const tasklist = new TasklistApiClient()
-			const tasks = await tasklist.getTasks({
+			const tasks = await tasklist.searchTasks({
 				state: 'CREATED',
 			})
 			const id = tasks[0].id
@@ -101,7 +101,7 @@ describe('TasklistApiClient', () => {
 	describe('Write operations', () => {
 		it('can claim a task', async () => {
 			const tasklist = new TasklistApiClient()
-			const tasks = await tasklist.getTasks({ state: 'CREATED' })
+			const tasks = await tasklist.searchTasks({ state: 'CREATED' })
 			const taskid = tasks[0].id
 			expect(tasks.length).toBeGreaterThan(0)
 			const claimTask = await tasklist.assignTask({
@@ -114,7 +114,7 @@ describe('TasklistApiClient', () => {
 		it('will not allow a task to be claimed twice', async () => {
 			const tasklist = new TasklistApiClient()
 
-			const tasks = await tasklist.getTasks({ state: 'CREATED' })
+			const tasks = await tasklist.searchTasks({ state: 'CREATED' })
 			const task = await tasklist.assignTask({
 				taskId: tasks[0].id,
 				assignee: 'jwulf',
@@ -135,7 +135,7 @@ describe('TasklistApiClient', () => {
 
 		it('can unclaim task', async () => {
 			const tasklist = new TasklistApiClient(/*{ oauthProvider: oAuth }*/)
-			const tasks = await tasklist.getTasks({ state: 'CREATED' })
+			const tasks = await tasklist.searchTasks({ state: 'CREATED' })
 			const taskId = tasks[0].id
 			const task = await tasklist.assignTask({
 				taskId: taskId,
@@ -166,7 +166,7 @@ describe('TasklistApiClient', () => {
 
 		it('can complete a Task', async () => {
 			const tasklist = new TasklistApiClient(/*{ oauthProvider: oAuth }*/)
-			const tasks = await tasklist.getTasks({ state: 'CREATED' })
+			const tasks = await tasklist.searchTasks({ state: 'CREATED' })
 			const taskid = tasks[0].id
 			expect(tasks.length).toBeGreaterThan(0)
 			const completeTask = await tasklist.completeTask(taskid, {

@@ -1,3 +1,3 @@
 export { TasklistApiClient } from './lib/TasklistApiClient'
 
-export * as TasklistDto from './lib/Types'
+export * as TasklistDto from './lib/TasklistDto'

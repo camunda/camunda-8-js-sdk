@@ -9,7 +9,12 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LosslessNumber, parse, stringify } from 'lossless-json'
+import {
+	LosslessNumber,
+	isLosslessNumber,
+	parse,
+	stringify,
+} from 'lossless-json'
 import 'reflect-metadata'
 
 // Custom Decorators
@@ -64,9 +69,15 @@ export function parseWithAnnotations<T>(
 		} else {
 			// Existing logic for int32 and int64...
 			if (Reflect.hasMetadata('type:int32', dto.prototype, key)) {
-				instance[key] = (value as LosslessNumber).valueOf() // Assuming value is already the correct type
+				instance[key] =
+					value && isLosslessNumber(value)
+						? (value as LosslessNumber).valueOf()
+						: value // Assuming value is already the correct type
 			} else if (Reflect.hasMetadata('type:int64', dto.prototype, key)) {
-				instance[key] = (value as LosslessNumber).toString() // Assuming value is string
+				instance[key] =
+					value && isLosslessNumber(value)
+						? (value as LosslessNumber).toString()
+						: value // Assuming value is string
 			} else {
 				instance[key] = value // Assign directly for other types
 			}
