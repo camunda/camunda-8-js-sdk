@@ -12,7 +12,6 @@ import {
 	parseWithAnnotations,
 } from 'lib'
 
-import { Task } from '../../../dist/tasklist/lib/Types'
 import { IOAuthProvider } from '../../oauth'
 
 import {
@@ -158,7 +157,7 @@ export class TasklistApiClient {
 	 * @throws Will throw if no task of the given taskId exists
 	 * @returns
 	 */
-	public async getTask(taskId: string): Promise<Task> {
+	public async getTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.get(`tasks/${taskId}`, {
