@@ -79,18 +79,27 @@ test('Set the retries to a specific number when provided with one via simple sig
 	})
 	let called = false
 
+	// tslint:disable-next-line: no-console
+	console.log('wf', wf) // @DEBUG
+
 	await new Promise((resolve) => {
 		const worker = zbc.createWorker({
 			taskType: 'service-task-worker-failure-retries',
 			taskHandler: (job) => {
+				// tslint:disable-next-line: no-console
+				console.log('Worker handler called') // @DEBUG
+				console.log('called', called) // @DEBUG
+				console.log(JSON.stringify(job, null, 2))
+
 				if (!called) {
 					expect(job.retries).toBe(100)
 					called = true
 					return job.fail('Some reason', 101)
 				}
 				expect(job.retries).toBe(101)
-				resolve(null)
+
 				return job.complete().then(async (res) => {
+					resolve(null)
 					await worker.close()
 					return res
 				})
@@ -100,12 +109,14 @@ test('Set the retries to a specific number when provided with one via simple sig
 })
 
 test('Set the retries to a specific number when provided with one via object signature', async () => {
-	const res = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
-	})
-	await cancelProcesses(res.deployments[0].process.processDefinitionKey)
+	const { processDefinitionKey, bpmnProcessId } = (
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/Worker-Failure-Retries.bpmn',
+		})
+	).deployments[0].process
+	await cancelProcesses(processDefinitionKey)
 	wf = await zbc.createProcessInstance({
-		bpmnProcessId: 'worker-failure-retries',
+		bpmnProcessId,
 		variables: {
 			conditionVariable: true,
 		},
@@ -125,9 +136,10 @@ test('Set the retries to a specific number when provided with one via object sig
 					})
 				}
 				expect(job.retries).toBe(101)
-				resolve(null)
+
 				return job.complete().then(async (res) => {
 					await worker.close()
+					resolve(null)
 					return res
 				})
 			},
