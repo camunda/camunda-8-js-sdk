@@ -8,11 +8,25 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	packageVersion,
+	parseArrayWithAnnotations,
+	parseWithAnnotations,
 } from 'lib'
 
 import { IOAuthProvider } from '../../oauth'
 
-import { Form, Task, TaskQuery, Variable } from './Types'
+import {
+	DateFilter,
+	Form,
+	TaskResponse,
+	TaskSearchAfterOrEqualRequest,
+	TaskSearchAfterRequest,
+	TaskSearchBeforeOrEqualRequest,
+	TaskSearchBeforeRequest,
+	TaskSearchRequestBase,
+	TaskSearchResponse,
+	Variable,
+	VariableSearchResponse,
+} from './TasklistDto'
 import { JSONDoc, encodeTaskVariablesForAPIRequest } from './utils'
 
 const trace = debug('tasklist:rest')
@@ -76,14 +90,38 @@ export class TasklistApiClient {
 			accept: '*/*',
 		}
 	}
+
+	private replaceDatesWithString<
+		T extends { followUpDate?: DateFilter; dueDate?: DateFilter },
+	>(query: T) {
+		if (query.followUpDate) {
+			if (typeof query.followUpDate.from === 'object') {
+				query.followUpDate.from = query.followUpDate.from.toISOString()
+			}
+			if (typeof query.followUpDate.to === 'object') {
+				query.followUpDate.to = query.followUpDate.to.toISOString()
+			}
+		}
+		if (query.dueDate) {
+			if (typeof query.dueDate.from === 'object') {
+				query.dueDate.from = query.dueDate.from.toISOString()
+			}
+			if (typeof query.dueDate.to === 'object') {
+				query.dueDate.to = query.dueDate.to.toISOString()
+			}
+		}
+		return query
+	}
+
 	/**
 	 * @description Query Tasklist for a list of tasks. See the [API documentation](https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/tasks/).
+	 * @throws Status 400 - An error is returned when more than one search parameters among [`searchAfter`, `searchAfterOrEqual`, `searchBefore`, `searchBeforeOrEqual`] are present in request
 	 * @example
 	 * ```
 	 * const tasklist = new TasklistApiClient()
 	 *
 	 * async function getTasks() {
-	 *   const res = await tasklist.getTasks({
+	 *   const res = await tasklist.searchTasks({
 	 *     state: TaskState.CREATED
 	 *   })
 	 *   console.log(res ? 'Nothing' : JSON.stringify(res, null, 2))
@@ -92,20 +130,26 @@ export class TasklistApiClient {
 	 * ```
 	 * @param query
 	 */
-	public async getTasks(query: Partial<TaskQuery>): Promise<Task[]> {
+	public async searchTasks(
+		query:
+			| TaskSearchAfterRequest
+			| TaskSearchAfterOrEqualRequest
+			| TaskSearchBeforeRequest
+			| TaskSearchBeforeOrEqualRequest
+			| Partial<TaskSearchRequestBase>
+	): Promise<TaskSearchResponse[]> {
 		const headers = await this.getHeaders()
 		const url = 'tasks/search'
+
 		trace(`Requesting ${url}`)
 		return this.rest
 			.post(url, {
-				json: query,
+				json: this.replaceDatesWithString(query),
 				headers,
+				parseJson: (text) =>
+					parseArrayWithAnnotations(text, TaskSearchResponse),
 			})
 			.json()
-	}
-
-	public async getAllTasks(): Promise<Task[]> {
-		return this.getTasks({})
 	}
 
 	/**
@@ -113,7 +157,7 @@ export class TasklistApiClient {
 	 * @throws Will throw if no task of the given taskId exists
 	 * @returns
 	 */
-	public async getTask(taskId: string): Promise<Task> {
+	public async getTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.get(`tasks/${taskId}`, {
@@ -127,33 +171,42 @@ export class TasklistApiClient {
 	 */
 	public async getForm(
 		formId: string,
-		processDefinitionKey: string
+		processDefinitionKey: string,
+		version?: string | number
 	): Promise<Form> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.get(`forms/${formId}`, {
 				searchParams: {
 					processDefinitionKey,
+					version,
 				},
+				parseJson: (text) => parseWithAnnotations(text, Form),
 				headers,
 			})
 			.json()
 	}
 
 	/**
-	 * @description Returns a list of variables
-	 * @param taskId
-	 * @param variableNames
-	 * @throws Throws 404 if no task of taskId is found
+	 * @description This method returns a list of task variables for the specified taskId and variableNames. If the variableNames parameter is empty, all variables associated with the task will be returned.
+	 * @throws Status 404 - An error is returned when the task with the taskId is not found.
 	 */
-	public async getVariables(
-		taskId: string,
+	public async getVariables({
+		taskId,
+		variableNames,
+		includeVariables,
+	}: {
+		taskId: string
 		variableNames?: string[]
-	): Promise<Variable[]> {
+		includeVariables?: { name: string; alwaysReturnFullValue: boolean }[]
+	}): Promise<VariableSearchResponse[]> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.post(`tasks/${taskId}/variables/search`, {
-				body: JSON.stringify(variableNames || []),
+				body: JSON.stringify({
+					variableNames: variableNames || [],
+					includeVariables: includeVariables || {},
+				}),
 				headers,
 			})
 			.json()
@@ -174,7 +227,10 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Assign a task with taskId to assignee or the active user.
-	 * @throws 400 - task not active, or already assigned. 403 - no permission to reassign task. 404 - no task for taskId.
+	 * @throws Status 400 - An error is returned when the task is not active (not in the CREATED state).
+	 * @throws Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
+	 * @throws Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
+	 * @throws Status 404 - An error is returned when the task with the taskId is not found.
 	 */
 	public async assignTask({
 		taskId,
@@ -184,7 +240,7 @@ export class TasklistApiClient {
 		taskId: string
 		assignee?: string
 		allowOverrideAssignment?: boolean
-	}): Promise<Task> {
+	}): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.patch(`tasks/${taskId}/assign`, {
@@ -193,19 +249,23 @@ export class TasklistApiClient {
 					allowOverrideAssignment,
 				}),
 				headers,
+				parseJson: (text) => parseWithAnnotations(text, TaskResponse),
 			})
 			.json()
 	}
 
 	/**
 	 * @description Complete a task with taskId and optional variables
-	 * @param taskId
-	 * @param variables
+	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
+	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
+	 * @throws Status 400 An error is returned if the task is not assigned to the current user.
+	 * @throws Status 403 User has no permission to access the task (Self-managed only).
+	 * @throws Status 404 An error is returned when the task with the taskId is not found.
 	 */
 	public async completeTask(
 		taskId: string,
 		variables?: JSONDoc
-	): Promise<Task> {
+	): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.patch(`tasks/${taskId}/complete`, {
@@ -213,16 +273,24 @@ export class TasklistApiClient {
 				body: JSON.stringify({
 					variables: encodeTaskVariablesForAPIRequest(variables || {}),
 				}),
+				parseJson: (text) => parseWithAnnotations(text, TaskResponse),
 			})
 			.json()
 	}
 
 	/**
-	 * @description Unassign a task with taskI
-	 * @param taskId
+	 * @description Unassign a task with taskId
+	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
+	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
+	 * @throws Status 404 An error is returned when the task with the taskId is not found.
 	 */
-	public async unassignTask(taskId: string): Promise<Task> {
+	public async unassignTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest.patch(`tasks/${taskId}/unassign`, { headers }).json()
+		return this.rest
+			.patch(`tasks/${taskId}/unassign`, {
+				headers,
+				parseJson: (text) => parseWithAnnotations(text, TaskResponse),
+			})
+			.json()
 	}
 }
