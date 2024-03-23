@@ -2,7 +2,8 @@ import { debug } from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
-	ClientConstructor,
+	CamundaPlatform8Configuration,
+	DeepPartial,
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -33,12 +34,16 @@ export class TasklistApiClient {
 	/**
 	 * @example
 	 * ```
-	 *
+	 * const tasklist = new TasklistApiClient()
+	 * const tasks = await tasklist.getTasks({ state: TaskState.CREATED })
 	 * ```
 	 * @description
 	 *
 	 */
-	constructor(options?: ClientConstructor) {
+	constructor(options?: {
+		config?: DeepPartial<CamundaPlatform8Configuration>
+		oAuthProvider?: IOAuthProvider
+	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
@@ -105,8 +110,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Return a task by id, or throw if not found.
-	 * @throws Will throw if no task of the given id exists
-	 * @param id
+	 * @throws Will throw if no task of the given taskId exists
 	 * @returns
 	 */
 	public async getTask(taskId: string): Promise<Task> {
@@ -120,8 +124,6 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Get the form details by form id and processDefinitionKey.
-	 * @param formId
-	 * @param processDefinitionKey
 	 */
 	public async getForm(
 		formId: string,
@@ -159,7 +161,6 @@ export class TasklistApiClient {
 
 	/**
 	 * @description https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/variable/
-	 * @param id
 	 * @throws Throws 404 if no variable of the id is found
 	 */
 	public async getVariable(variableId: string): Promise<Variable> {
@@ -173,9 +174,6 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Assign a task with taskId to assignee or the active user.
-	 * @param taskId
-	 * @param assignee if not provided, assigns to the user whose JWT is used
-	 * @param allowOverrideAssignment
 	 * @throws 400 - task not active, or already assigned. 403 - no permission to reassign task. 404 - no task for taskId.
 	 */
 	public async assignTask({

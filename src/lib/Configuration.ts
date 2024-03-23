@@ -224,7 +224,7 @@ const getZeebeEnv = () =>
 
 const getEnv = () => ({
 	...getMainEnv(),
-	zeebeGrpcSettings: getZeebeEnv(),
+	zeebeGrpcSettings: { ...getZeebeEnv() },
 })
 
 // Helper type for enforcing array contents to match an object's keys

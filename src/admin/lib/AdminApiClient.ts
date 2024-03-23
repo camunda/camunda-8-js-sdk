@@ -2,7 +2,8 @@ import d from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
-	ClientConstructor,
+	CamundaPlatform8Configuration,
+	DeepPartial,
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -11,7 +12,7 @@ import {
 
 import { IOAuthProvider } from '../../oauth'
 
-import * as Dto from './APIObjects'
+import * as Dto from './AdminDto'
 
 const debug = d('consoleapi')
 
@@ -20,7 +21,10 @@ export class AdminApiClient {
 	private oAuthProvider: IOAuthProvider
 	private rest: typeof got
 
-	constructor(options?: ClientConstructor) {
+	constructor(options?: {
+		config?: DeepPartial<CamundaPlatform8Configuration>
+		oAuthProvider?: IOAuthProvider
+	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)

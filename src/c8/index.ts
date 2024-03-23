@@ -2,6 +2,7 @@ import { AdminApiClient } from 'admin'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
+	DeepPartial,
 } from 'lib'
 import { ModelerApiClient } from 'modeler'
 import { OAuthProvider } from 'oauth'
@@ -10,6 +11,24 @@ import { OptimizeApiClient } from 'optimize'
 import { TasklistApiClient } from 'tasklist'
 import { ZeebeGrpcClient } from 'zeebe'
 
+/**
+ * A single point of configuration for all Camunda Platform 8 clients.
+ *
+ * This class is a facade for all the clients in the Camunda Platform 8 SDK.
+ *
+ * @example
+ * ```typescript
+ * import { Camunda8 } from '@camunda8/sdk'
+ *
+ * const c8 = new Camunda8()
+ * const zeebe = c8.getZeebeGrpcClient()
+ * const operate = c8.getOperateApiClient()
+ * const optimize = c8.getOptimizeApiClient()
+ * const tasklist = c8.getTasklistApiClient()
+ * const modeler = c8.getModelerApiClient()
+ * const admin = c8.getAdminApiClient()
+ * ```
+ */
 export class Camunda8 {
 	private operateApiClient?: OperateApiClient
 	private adminApiClient?: AdminApiClient
@@ -20,14 +39,14 @@ export class Camunda8 {
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: OAuthProvider
 
-	constructor(config: Partial<CamundaPlatform8Configuration> = {}) {
+	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
 
 		this.oAuthProvider = new OAuthProvider({ config: this.configuration })
 	}
 
-	public _getOperateApiClient(): OperateApiClient {
+	public getOperateApiClient(): OperateApiClient {
 		if (!this.operateApiClient) {
 			this.operateApiClient = new OperateApiClient({
 				config: this.configuration,
@@ -37,7 +56,7 @@ export class Camunda8 {
 		return this.operateApiClient
 	}
 
-	public _getAdminApiClient(): AdminApiClient {
+	public getAdminApiClient(): AdminApiClient {
 		if (!this.adminApiClient) {
 			this.adminApiClient = new AdminApiClient({
 				config: this.configuration,
@@ -47,7 +66,7 @@ export class Camunda8 {
 		return this.adminApiClient
 	}
 
-	public _getModelerApiClient(): ModelerApiClient {
+	public getModelerApiClient(): ModelerApiClient {
 		if (!this.modelerApiClient) {
 			this.modelerApiClient = new ModelerApiClient({
 				config: this.configuration,
@@ -57,7 +76,7 @@ export class Camunda8 {
 		return this.modelerApiClient
 	}
 
-	public _getOptimizeApiClient(): OptimizeApiClient {
+	public getOptimizeApiClient(): OptimizeApiClient {
 		if (!this.optimizeApiClient) {
 			this.optimizeApiClient = new OptimizeApiClient({
 				config: this.configuration,
@@ -67,7 +86,7 @@ export class Camunda8 {
 		return this.optimizeApiClient
 	}
 
-	public _getTasklistApiClient(): TasklistApiClient {
+	public getTasklistApiClient(): TasklistApiClient {
 		if (!this.tasklistApiClient) {
 			this.tasklistApiClient = new TasklistApiClient({
 				config: this.configuration,
@@ -77,7 +96,7 @@ export class Camunda8 {
 		return this.tasklistApiClient
 	}
 
-	public _getZeebeApiClient(): ZeebeGrpcClient {
+	public getZeebeApiClient(): ZeebeGrpcClient {
 		if (!this.zeebeGrpcClient) {
 			this.zeebeGrpcClient = new ZeebeGrpcClient({
 				config: this.configuration,

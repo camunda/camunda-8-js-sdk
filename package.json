@@ -7,7 +7,7 @@
 		"build": "npm run clean && npm run compile",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc --project tsconfig.json",
-		"docs": "rm -rf ./docs && typedoc src/index.ts",
+		"docs": "rm -rf ./docs && typedoc",
 		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection multitenancy",
 		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true -u",
 		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin - --detectOpenHandles --verbose true -u",
@@ -103,6 +103,8 @@
 		"semantic-release": "^22.0.12",
 		"ts-jest": "^29.1.1",
 		"typedoc": "^0.25.9",
+		"typedoc-plugin-include-example": "^1.2.0",
+		"typedoc-plugin-missing-exports": "^2.2.0",
 		"typescript": "^5.3.3"
 	},
 	"dependencies": {

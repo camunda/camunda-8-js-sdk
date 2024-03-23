@@ -1,7 +1,8 @@
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
-	ClientConstructor,
+	CamundaPlatform8Configuration,
+	DeepPartial,
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -66,7 +67,10 @@ export class OperateApiClient {
 	 * const operate = new OperateApiClient()
 	 * ```
 	 */
-	constructor(options?: ClientConstructor) {
+	constructor(options?: {
+		config?: DeepPartial<CamundaPlatform8Configuration>
+		oAuthProvider?: IOAuthProvider
+	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)

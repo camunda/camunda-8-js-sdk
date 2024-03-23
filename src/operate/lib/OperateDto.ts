@@ -16,13 +16,13 @@ export class DecisionDefinition extends LosslessDto {
 	tenantId: string | undefined
 }
 
-class DecisionInstanceInput extends LosslessDto {
+export class DecisionInstanceInput extends LosslessDto {
 	id!: string
 	name!: string
 	value!: string
 }
 
-class DecisionInstanceOutput extends LosslessDto {
+export class DecisionInstanceOutput extends LosslessDto {
 	id!: string
 	name!: string
 	value!: string
