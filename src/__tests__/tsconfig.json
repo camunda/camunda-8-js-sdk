@@ -4,5 +4,17 @@
 		".", // Includes all files in the current directory
 		"../**/*" // Includes all files in the src directory
 	],
+	"compilerOptions": {
+		"baseUrl": "../",
+		"paths": {
+			"lib": ["./lib"],
+			"oauth": ["./oauth"],
+			"operate": ["./operate"],
+			"modeler": ["./modeler"],
+			"tasklist": ["./tasklist"],
+			"optimize": ["./optimize"],
+			"c8console": ["./c8console"]
+		}
+	},
 	"exclude": ["node_modules"]
 }

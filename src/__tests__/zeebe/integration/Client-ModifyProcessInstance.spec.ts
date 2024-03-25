@@ -7,19 +7,19 @@ suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let pid: string
-let processModelId: string
+let processDefinitionKey: string
 
 beforeAll(async () => {
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Client-SkipFirstTask.bpmn',
 	})
-	processModelId = res.deployments[0].process.processDefinitionKey
+	processDefinitionKey = res.deployments[0].process.processDefinitionKey
 })
 afterAll(async () => {
 	zbc.cancelProcessInstance(pid).catch((_) => _)
 	await zbc.close()
 	restoreZeebeLogging()
-	await cancelProcesses(processModelId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 test('Modify Process Instance', (done) => {

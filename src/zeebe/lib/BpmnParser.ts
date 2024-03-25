@@ -31,9 +31,11 @@ export class BpmnParser {
 			filenames = [filenames]
 		}
 		return filenames.map((filename) => {
-			const xmlData = fs.readFileSync(filename).toString()
-			if (validator.validate(xmlData)) {
-				return BpmnParser.parser.parse(xmlData)
+			if (filename) {
+				const xmlData = fs.readFileSync(filename, 'utf8')
+				if (xmlData && validator.validate(xmlData)) {
+					return BpmnParser.parser.parse(xmlData)
+				}
 			}
 			return {}
 		})

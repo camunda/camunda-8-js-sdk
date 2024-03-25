@@ -79,18 +79,10 @@ test('Set the retries to a specific number when provided with one via simple sig
 	})
 	let called = false
 
-	// tslint:disable-next-line: no-console
-	console.log('wf', wf) // @DEBUG
-
 	await new Promise((resolve) => {
 		const worker = zbc.createWorker({
 			taskType: 'service-task-worker-failure-retries',
 			taskHandler: (job) => {
-				// tslint:disable-next-line: no-console
-				console.log('Worker handler called') // @DEBUG
-				console.log('called', called) // @DEBUG
-				console.log(JSON.stringify(job, null, 2))
-
 				if (!called) {
 					expect(job.retries).toBe(100)
 					called = true
