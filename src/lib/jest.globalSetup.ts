@@ -1,0 +1,47 @@
+import fs from 'fs'
+import path from 'path'
+
+// See: https://stackoverflow.com/a/74206721/1758461
+// Without this, the paths in tsconfig.json are not resolved correctly
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('tsconfig-paths').register()
+
+import { OperateApiClient } from 'operate'
+import { BpmnParser, ZeebeGrpcClient } from 'zeebe'
+
+export default async () => {
+	console.log('_dirname', __dirname)
+	console.log(process.cwd())
+	// Your cleanup process here.
+	console.log(
+		'Running global setup: cleanup test process instances before all tests...'
+	)
+	const filePath = path.join(__dirname, '..', '__tests__', 'testdata')
+	const files = fs
+		.readdirSync(filePath)
+		.map((file) => path.join(filePath, file))
+	const bpmn = BpmnParser.parseBpmn(files)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const processIds = (bpmn as any[]).map(
+		(b) => b['bpmn:definitions']?.['bpmn:process']?.['@_id']
+	)
+	const operate = new OperateApiClient()
+	const zeebe = new ZeebeGrpcClient()
+	for (const id of processIds) {
+		if (id) {
+			const res = await operate.searchProcessInstances({
+				filter: { bpmnProcessId: id, state: 'ACTIVE' },
+			})
+			const instancesKeys = res.items.map((instance) => instance.key)
+			console.log(`Canceling ${instancesKeys.length} instances for ${id}`)
+			for (const key of instancesKeys) {
+				try {
+					await zeebe.cancelProcessInstance(key)
+				} catch (e) {
+					console.log('Error canceling process instance', key)
+					console.log(e)
+				}
+			}
+		}
+	}
+}
