@@ -80,11 +80,11 @@ export class OptimizeApiClient {
 					(error) => {
 						const { request } = error
 						if (request) {
-							console.error(`Error in request to ${request.options.url.href}`)
+							debug(`Error in request to ${request.options.url.href}`)
 							debug(
 								`Request headers: ${JSON.stringify(request.options.headers)}`
 							)
-							console.error(`Error: ${error.code} - ${error.message}`)
+							debug(`Error: ${error.code} - ${error.message}`)
 
 							// Attach more contextual information to the error object
 							error.message += ` (request to ${request.options.url.href})`
