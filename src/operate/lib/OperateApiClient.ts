@@ -1,3 +1,4 @@
+import { debug as d } from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
@@ -29,6 +30,8 @@ import {
 import { parseSearchResults } from './parseSearchResults'
 
 const OPERATE_API_VERSION = 'v1'
+
+const debug = d('camunda:operate')
 
 type JSONDoc = { [key: string]: string | boolean | number | JSONDoc }
 type EnhanceWithTenantIdIfMissing<T> = T extends {
@@ -90,6 +93,24 @@ export class OperateApiClient {
 			prefixUrl,
 			https: {
 				certificateAuthority,
+			},
+			hooks: {
+				beforeError: [
+					(error) => {
+						const { request } = error
+						if (request) {
+							debug(`Error in request to ${request.options.url.href}`)
+							debug(
+								`Request headers: ${JSON.stringify(request.options.headers)}`
+							)
+							debug(`Error: ${error.code} - ${error.message}`)
+
+							// Attach more contextual information to the error object
+							error.message += ` (request to ${request.options.url.href})`
+						}
+						return error
+					},
+				],
 			},
 		})
 		this.tenantId = config.CAMUNDA_TENANT_ID

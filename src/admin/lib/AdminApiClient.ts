@@ -14,7 +14,7 @@ import { IOAuthProvider } from '../../oauth'
 
 import * as Dto from './AdminDto'
 
-const debug = d('consoleapi')
+const debug = d('camunda:adminconsole')
 
 export class AdminApiClient {
 	private userAgentString: string
@@ -45,9 +45,20 @@ export class AdminApiClient {
 				certificateAuthority,
 			},
 			hooks: {
-				beforeRequest: [
-					(options: unknown) => {
-						debug('beforeRequest', options)
+				beforeError: [
+					(error) => {
+						const { request } = error
+						if (request) {
+							console.error(`Error in request to ${request.options.url.href}`)
+							console.error(
+								`Request headers: ${JSON.stringify(request.options.headers)}`
+							)
+							console.error(`Error: ${error.code} - ${error.message}`)
+
+							// Attach more contextual information to the error object
+							error.message += ` (request to ${request.options.url.href})`
+						}
+						return error
 					},
 				],
 			},

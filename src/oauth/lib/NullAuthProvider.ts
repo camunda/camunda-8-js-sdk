@@ -3,7 +3,7 @@ import { IOAuthProvider } from 'oauth'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'
 
-const d = debug('oauth')
+const d = debug('camunda:oauth')
 
 export class NullAuthProvider implements IOAuthProvider {
 	public async getToken(audience: TokenGrantAudienceType): Promise<string> {

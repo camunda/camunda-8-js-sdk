@@ -24,7 +24,7 @@ import { ZBClientOptions } from './interfaces-published-contract'
 
 import { parseVariablesAndCustomHeadersToJSON } from '.'
 
-const debug = d('worker')
+const debug = d('camunda:worker')
 debug('Loaded ZBWorkerBase')
 
 const MIN_ACTIVE_JOBS_RATIO_BEFORE_ACTIVATING_JOBS = 0.3

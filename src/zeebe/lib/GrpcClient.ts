@@ -19,7 +19,7 @@ import { packageVersion } from './GetPackageVersion'
 import { GrpcError } from './GrpcError'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
-const debug = d('grpc')
+const debug = d('camunda:grpc')
 
 export interface GrpcClientExtendedOptions {
 	longPoll?: MaybeTimeDuration

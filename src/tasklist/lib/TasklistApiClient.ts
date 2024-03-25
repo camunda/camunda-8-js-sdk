@@ -29,7 +29,7 @@ import {
 } from './TasklistDto'
 import { JSONDoc, encodeTaskVariablesForAPIRequest } from './utils'
 
-const trace = debug('tasklist:rest')
+const trace = debug('camunda:tasklist')
 
 const TASKLIST_API_VERSION = 'v1'
 
@@ -76,6 +76,24 @@ export class TasklistApiClient {
 			prefixUrl,
 			https: {
 				certificateAuthority,
+			},
+			hooks: {
+				beforeError: [
+					(error) => {
+						const { request } = error
+						if (request) {
+							console.error(`Error in request to ${request.options.url.href}`)
+							console.error(
+								`Request headers: ${JSON.stringify(request.options.headers)}`
+							)
+							console.error(`Error: ${error.code} - ${error.message}`)
+
+							// Attach more contextual information to the error object
+							error.message += ` (request to ${request.options.url.href})`
+						}
+						return error
+					},
+				],
 			},
 		})
 		trace(`prefixUrl: ${prefixUrl}`)
