@@ -43,7 +43,7 @@ describe('TasklistApiClient', () => {
 				interests: ['golf', 'frisbee'],
 			},
 		})
-		await delay(10000) // we wait here to allow Tasklist to do its thing
+		await delay(13000) // we wait here to allow Tasklist to do its thing
 	})
 
 	afterEach(async () => {

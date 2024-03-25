@@ -52,9 +52,9 @@ test('Decrements the retries count by default', async () => {
 					return job.fail('Some reason')
 				}
 				expect(job.retries).toBe(99)
-				resolve(null)
 				return job.complete().then(async (res) => {
 					await worker.close()
+					resolve(null)
 					return res
 				})
 			},
