@@ -1,5 +1,6 @@
 import { join } from 'path'
 
+import { OperateApiClient } from 'operate'
 import {
 	CreateProcessInstanceResponse,
 	DeployResourceResponse,
@@ -101,6 +102,14 @@ describe('TasklistApiClient', () => {
 	describe('Write operations', () => {
 		it('can claim a task', async () => {
 			const tasklist = new TasklistApiClient()
+			expect(p).toBeTruthy()
+			const operate = new OperateApiClient()
+			const res = await operate
+				.getProcessInstance(p!.processInstanceKey)
+				.catch((e) => {
+					console.log('Error getting process instance', e)
+				})
+			expect(res).toBeTruthy()
 			const tasks = await tasklist.searchTasks({ state: 'CREATED' })
 			const taskid = tasks[0].id
 			expect(tasks.length).toBeGreaterThan(0)

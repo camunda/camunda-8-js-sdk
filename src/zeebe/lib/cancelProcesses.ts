@@ -1,7 +1,6 @@
 import { OperateApiClient } from 'operate'
 
 const operate = createClient()
-console.log(`Created Operate client for cancelProcesses`)
 
 export async function cancelProcesses(processDefinitionKey: string) {
 	if (!operate) {
