@@ -9,14 +9,14 @@ require('tsconfig-paths').register()
 import { OperateApiClient } from 'operate'
 import { BpmnParser, ZeebeGrpcClient } from 'zeebe'
 
-export default async () => {
+export const cleanUp = async () => {
 	console.log('_dirname', __dirname)
 	console.log(process.cwd())
 	// Your cleanup process here.
 	console.log(
 		'Running global setup: cleanup test process instances before all tests...'
 	)
-	const filePath = path.join(__dirname, '..', '__tests__', 'testdata')
+	const filePath = path.join(__dirname, '..', 'testdata')
 	const files = fs
 		.readdirSync(filePath)
 		.map((file) => path.join(filePath, file))

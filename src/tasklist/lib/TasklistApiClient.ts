@@ -246,9 +246,9 @@ export class TasklistApiClient {
 	/**
 	 * @description Assign a task with taskId to assignee or the active user.
 	 * @throws Status 400 - An error is returned when the task is not active (not in the CREATED state).
-	 * @throws Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
-	 * @throws Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
-	 * @throws Status 404 - An error is returned when the task with the taskId is not found.
+	 * Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
+	 * Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
+	 * Status 404 - An error is returned when the task with the taskId is not found.
 	 */
 	public async assignTask({
 		taskId,
