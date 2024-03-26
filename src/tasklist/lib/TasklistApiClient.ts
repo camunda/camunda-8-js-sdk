@@ -29,7 +29,7 @@ import {
 } from './TasklistDto'
 import { JSONDoc, encodeTaskVariablesForAPIRequest } from './utils'
 
-const trace = debug('tasklist:rest')
+const trace = debug('camunda:tasklist')
 
 const TASKLIST_API_VERSION = 'v1'
 
@@ -76,6 +76,24 @@ export class TasklistApiClient {
 			prefixUrl,
 			https: {
 				certificateAuthority,
+			},
+			hooks: {
+				beforeError: [
+					(error) => {
+						const { request } = error
+						if (request) {
+							debug(`Error in request to ${request.options.url.href}`)
+							debug(
+								`Request headers: ${JSON.stringify(request.options.headers)}`
+							)
+							debug(`Error: ${error.code} - ${error.message}`)
+
+							// Attach more contextual information to the error object
+							error.message += ` (request to ${request.options.url.href})`
+						}
+						return error
+					},
+				],
 			},
 		})
 		trace(`prefixUrl: ${prefixUrl}`)
@@ -228,9 +246,9 @@ export class TasklistApiClient {
 	/**
 	 * @description Assign a task with taskId to assignee or the active user.
 	 * @throws Status 400 - An error is returned when the task is not active (not in the CREATED state).
-	 * @throws Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
-	 * @throws Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
-	 * @throws Status 404 - An error is returned when the task with the taskId is not found.
+	 * Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
+	 * Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
+	 * Status 404 - An error is returned when the task with the taskId is not found.
 	 */
 	public async assignTask({
 		taskId,

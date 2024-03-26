@@ -9,12 +9,12 @@
 		"compile": "tsc --project tsconfig.json",
 		"docs": "rm -rf ./docs && typedoc",
 		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection multitenancy",
-		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true -u",
-		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin - --detectOpenHandles --verbose true -u",
+		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns __tests__/config --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true -u",
+		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns __tests__/config - --detectOpenHandles --verbose true -u",
 		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration -u",
-		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns multitenancy -u",
-		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection local-integration --detectOpenHandles --verbose true",
-		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles disconnection",
+		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns multitenancy --testPathIgnorePatterns __tests__/config -u",
+		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns __tests__/config local-integration --detectOpenHandles --verbose true",
+		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles --testPathIgnorePatterns __tests__/config disconnection",
 		"test&docs": "npm test && npm run docs",
 		"publish": "npm run build && npm run test && lerna publish",
 		"commit": "cz",
@@ -72,7 +72,12 @@
 		},
 		"preset": "ts-jest",
 		"testEnvironment": "node",
-		"globalSetup": "<rootDir>/src/lib/jest.globalSetup.ts"
+		"testPathIgnorePatterns": [
+			"/node_modules/",
+			"__tests__/config/*.ts"
+		],
+		"globalSetup": "<rootDir>/src/__tests__/config/jest.globalSetup.ts",
+		"globalTeardown": "<rootDir>/src/__tests__/config/jest.globalTeardown.ts"
 	},
 	"config": {
 		"commitizen": {

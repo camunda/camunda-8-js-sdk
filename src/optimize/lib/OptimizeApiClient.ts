@@ -1,4 +1,4 @@
-import d from 'debug'
+import { debug as d } from 'debug'
 import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
@@ -23,7 +23,7 @@ import {
 } from './APIObjects'
 import { ReportResults } from './ReportResults'
 
-const debug = d('optimizeapi')
+const debug = d('camunda:optimize')
 
 /**
  * @description The high-level API client for Optimize.
@@ -76,9 +76,20 @@ export class OptimizeApiClient {
 				certificateAuthority,
 			},
 			hooks: {
-				beforeRequest: [
-					(options: unknown) => {
-						debug('beforeRequest', options)
+				beforeError: [
+					(error) => {
+						const { request } = error
+						if (request) {
+							debug(`Error in request to ${request.options.url.href}`)
+							debug(
+								`Request headers: ${JSON.stringify(request.options.headers)}`
+							)
+							debug(`Error: ${error.code} - ${error.message}`)
+
+							// Attach more contextual information to the error object
+							error.message += ` (request to ${request.options.url.href})`
+						}
+						return error
 					},
 				],
 			},

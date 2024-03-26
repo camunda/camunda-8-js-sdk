@@ -42,7 +42,7 @@ import { Utils } from '../lib/utils'
 import { ZBBatchWorker } from './ZBBatchWorker'
 import { ZBWorker } from './ZBWorker'
 
-const debug = d('client')
+const debug = d('camunda:zeebeclient')
 
 const idColors = [
 	chalk.yellow,

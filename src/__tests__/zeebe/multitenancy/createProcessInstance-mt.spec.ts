@@ -56,7 +56,7 @@ test('Will throw an error if no tenantId is provided when starting a process ins
 			bpmnProcessId,
 			variables: {},
 		})
-		client.cancelProcessInstance(p.bpmnProcessId)
+		client.cancelProcessInstance(p.processInstanceKey)
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		expect((e as any).code).toBe(3)

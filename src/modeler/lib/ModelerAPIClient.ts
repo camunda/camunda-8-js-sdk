@@ -12,7 +12,7 @@ import { IOAuthProvider } from 'oauth'
 
 import * as Dto from './ModelerDto'
 
-const debug = d('modelerapi')
+const debug = d('camunda:modeler')
 
 const API_VERSION = 'v1'
 
@@ -43,6 +43,23 @@ export class ModelerApiClient {
 				certificateAuthority,
 			},
 			responseType: 'json',
+			hooks: {
+				beforeError: [
+					(error) => {
+						const { request } = error
+						if (request) {
+							debug(`Error in request to ${request.options.url.href}`)
+							debug(
+								`Request headers: ${JSON.stringify(request.options.headers)}`
+							)
+							debug(`Error: ${error.code} - ${error.message}`)
+							// Attach more contextual information to the error object
+							error.message += ` (request to ${request.options.url.href})`
+						}
+						return error
+					},
+				],
+			},
 		})
 		debug(`baseUrl: ${prefixUrl}`)
 	}

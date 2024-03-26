@@ -127,7 +127,7 @@ CAMUNDA_TOKEN_SCOPE
 
 Here is an example of doing this via the constructor, rather than via the environment:
 
-````typescript
+```typescript
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
@@ -168,4 +168,20 @@ export CAMUNDA_CONSOLE_CLIENT_ID='e-JdgKfJy9hHSXzi'
 export CAMUNDA_CONSOLE_CLIENT_SECRET='DT8Pe-ANC6e3Je_ptLyzZvBNS0aFwaIV'
 export CAMUNDA_CONSOLE_BASE_URL='https://api.cloud.camunda.io'
 export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
-````
+```
+
+## Debugging
+
+The SDK uses the [`debug`](https://github.com/debug-js/debug) library. To enable debugging output, set a value for the `DEBUG` environment variable. The value is a comma-separated list of debugging namespaces. The SDK has the following namespaces:
+
+| Value                  | Component            |
+| ---------------------- | -------------------- |
+| `camunda:adminconsole` | Admin Console API    |
+| `camunda:modeler`      | Modeler API          |
+| `camunda:operate`      | Operate API          |
+| `camunda:optimize`     | Optimize API         |
+| `camunda:tasklist`     | Tasklist API         |
+| `camunda:oauth`        | OAuth Token Exchange |
+| `camunda:grpc`         | Zeebe gRPC channel   |
+| `camunda:worker`       | Zeebe Worker         |
+| `camunda:zeebeclient`  | Zeebe Client         |
