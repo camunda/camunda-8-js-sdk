@@ -6,7 +6,7 @@ import {
 	DeepPartial,
 	GetCertificateAuthority,
 	constructOAuthProvider,
-	packageVersion,
+	createUserAgentString,
 } from 'lib'
 import { IOAuthProvider } from 'oauth'
 
@@ -32,7 +32,7 @@ export class ModelerApiClient {
 			config.CAMUNDA_MODELER_BASE_URL ?? 'https://modeler.cloud.camunda.io/api'
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
-		this.userAgentString = `modeler-client-nodejs/${packageVersion}`
+		this.userAgentString = createUserAgentString(config)
 		const prefixUrl = `${modelerApiUrl}/${API_VERSION}`
 
 		const certificateAuthority = GetCertificateAuthority(config)

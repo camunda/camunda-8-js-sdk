@@ -7,7 +7,7 @@ import {
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
-	packageVersion,
+	createUserAgentString,
 	parseArrayWithAnnotations,
 	parseWithAnnotations,
 } from 'lib'
@@ -63,7 +63,7 @@ export class TasklistApiClient {
 		)
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
-		this.userAgentString = `tasklist-rest-client-nodejs/${packageVersion}`
+		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_TASKLIST_BASE_URL,
 			'CAMUNDA_TASKLIST_BASE_URL'

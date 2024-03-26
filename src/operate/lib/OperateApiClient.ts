@@ -7,7 +7,7 @@ import {
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
-	packageVersion,
+	createUserAgentString,
 	parseArrayWithAnnotations,
 	parseWithAnnotations,
 } from 'lib'
@@ -79,7 +79,7 @@ export class OperateApiClient {
 		)
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
-		this.userAgentString = `operate-client-nodejs/${packageVersion}`
+		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_OPERATE_BASE_URL,
 			'CAMUNDA_OPERATE_BASE_URL'

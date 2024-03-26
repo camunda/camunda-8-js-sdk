@@ -12,10 +12,10 @@ import {
 import { VerifyOptions } from '@grpc/grpc-js/build/src/channel-credentials'
 import { Options, PackageDefinition, loadSync } from '@grpc/proto-loader'
 import d from 'debug'
+import { CamundaPlatform8Configuration, createUserAgentString } from 'lib'
 import { IOAuthProvider } from 'oauth'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
-import { packageVersion } from './GetPackageVersion'
 import { GrpcError } from './GrpcError'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
@@ -96,6 +96,7 @@ const connectivityState = [
 ]
 
 export interface GrpcClientCtor {
+	config: CamundaPlatform8Configuration
 	connectionTolerance: MaybeTimeDuration
 	host: string
 	loglevel: Loglevel
@@ -140,8 +141,11 @@ export class GrpcClient extends EventEmitter {
 	private readyTimer?: NodeJS.Timeout
 	private failTimer?: NodeJS.Timeout
 	private connectionTolerance: number
+	private userAgentString: string
+	private config: CamundaPlatform8Configuration
 
 	constructor({
+		config,
 		connectionTolerance,
 		host,
 		oAuth,
@@ -154,6 +158,8 @@ export class GrpcClient extends EventEmitter {
 	}: GrpcClientCtor) {
 		super()
 		debug('Constructing gRPC client...')
+		this.config = config
+		this.userAgentString = createUserAgentString(config)
 		this.host = host
 		this.oAuth = oAuth
 		this.longPoll = options.longPoll
@@ -201,12 +207,14 @@ export class GrpcClient extends EventEmitter {
 			 * The time between the first and second connection attempts,
 			 * in ms
 			 */
-			'grpc.initial_reconnect_backoff_ms': 1000,
+			'grpc.initial_reconnect_backoff_ms':
+				this.config.zeebeGrpcSettings.GRPC_INITIAL_RECONNECT_BACKOFF_MS,
 			/**
 			 * The maximum time between subsequent connection attempts,
 			 * in ms
 			 */
-			'grpc.max_reconnect_backoff_ms': 10000,
+			'grpc.max_reconnect_backoff_ms':
+				this.config.zeebeGrpcSettings.GRPC_MAX_RECONNECT_BACKOFF_MS,
 			/**
 			 * The minimum time between subsequent connection attempts,
 			 * in ms. Default is 1000ms, but this can cause an SSL Handshake failure.
@@ -215,33 +223,41 @@ export class GrpcClient extends EventEmitter {
 			 * Raised to 5000ms.
 			 * See: https://github.com/grpc/grpc/issues/8382#issuecomment-259482949
 			 */
-			'grpc.min_reconnect_backoff_ms': 5000,
+			'grpc.min_reconnect_backoff_ms':
+				this.config.zeebeGrpcSettings.GRPC_INITIAL_RECONNECT_BACKOFF_MS,
 			/**
 			 * After a duration of this time the client/server
 			 * pings its peer to see if the transport is still alive.
 			 * Int valued, milliseconds.
 			 */
-			'grpc.keepalive_time_ms': process.env.GRPC_KEEPALIVE_TIME_MS ?? 360000,
+			'grpc.keepalive_time_ms':
+				this.config.zeebeGrpcSettings.GRPC_KEEPALIVE_TIME_MS,
 			/**
 			 * After waiting for a duration of this time,
 			 * if the keepalive ping sender does
 			 * not receive the ping ack, it will close the
 			 * transport. Int valued, milliseconds.
 			 */
-			'grpc.keepalive_timeout_ms': 120000,
-			'grpc.http2.min_time_between_pings_ms': 90000,
+			'grpc.keepalive_timeout_ms':
+				this.config.zeebeGrpcSettings.GRPC_KEEPALIVE_TIMEOUT_MS,
+			'grpc.http2.min_time_between_pings_ms':
+				this.config.zeebeGrpcSettings.GRPC_HTTP2_MIN_TIME_BETWEEN_PINGS_MS,
 			/**
 			 * Minimum allowed time between a server receiving
 			 * successive ping frames without sending any data
-			 * frame. Int valued, milliseconds
+			 * frame. Int valued, milliseconds. Default: 90000
 			 */
-			'grpc.http2.min_ping_interval_without_data_ms': 90000,
+			'grpc.http2.min_ping_interval_without_data_ms':
+				this.config.zeebeGrpcSettings
+					.GRPC_HTTP2_MIN_PING_INTERVAL_WITHOUT_DATA_MS,
 			/**
 			 * This channel argument if set to 1
 			 * (0 : false; 1 : true), allows keepalive pings
 			 * to be sent even if there are no calls in flight.
+			 * Default is 1.
 			 */
-			'grpc.keepalive_permit_without_calls': 1,
+			'grpc.keepalive_permit_without_calls':
+				this.config.zeebeGrpcSettings.GRPC_KEEPALIVE_PERMIT_WITHOUT_CALLS,
 			/**
 			 * This channel argument controls the maximum number
 			 * of pings that can be sent when there is no other
@@ -250,7 +266,8 @@ export class GrpcClient extends EventEmitter {
 			 * run over the limit. Setting it to 0 allows sending
 			 * pings without sending data.
 			 */
-			'grpc.http2.max_pings_without_data': 0,
+			'grpc.http2.max_pings_without_data':
+				this.config.zeebeGrpcSettings.GRPC_HTTP2_MAX_PINGS_WITHOUT_DATA,
 			interceptors: [this.interceptor],
 		})
 		this.listNameMethods = []
@@ -475,7 +492,7 @@ export class GrpcClient extends EventEmitter {
 
 	private async getAuthToken() {
 		const metadata = new Metadata({ waitForReady: false })
-		metadata.add('user-agent', `zeebe-client-nodejs/${packageVersion}`)
+		metadata.add('user-agent', this.userAgentString)
 		if (this.oAuth) {
 			const token = await this.oAuth.getToken('ZEEBE')
 			metadata.add('Authorization', `Bearer ${token}`)

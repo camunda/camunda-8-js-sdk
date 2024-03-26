@@ -3,6 +3,11 @@ import { createEnv } from 'neon-env'
 
 const getMainEnv = () =>
 	createEnv({
+		/** Custom user agent  */
+		CAMUNDA_CUSTOM_USER_AGENT_STRING: {
+			type: 'string',
+			optional: true,
+		},
 		/** Set to true to disable OAuth completely */
 		CAMUNDA_OAUTH_DISABLED: {
 			type: 'boolean',
@@ -198,9 +203,96 @@ const getZeebeEnv = () =>
 			optional: true,
 			default: 3000,
 		},
+		/**
+		 * After a duration of this time the client/server pings its peer to see if the transport is still alive.
+		 * Int valued, milliseconds. Defaults to 360000.
+		 */
 		GRPC_KEEPALIVE_TIME_MS: {
 			type: 'number',
 			optional: true,
+			default: 360000,
+		},
+		/**
+		 * After waiting for a duration of this time, if the keepalive ping sender does not receive the ping ack, it will close the
+		 * transport. Int valued, milliseconds. Defaults to 120000.
+		 */
+		GRPC_KEEPALIVE_TIMEOUT_MS: {
+			type: 'number',
+			optional: true,
+			default: 120000,
+		},
+		/**
+		 * The time between the first and second connection attempts,
+		 * in ms. Defaults to 1000.
+		 */
+		GRPC_INITIAL_RECONNECT_BACKOFF_MS: {
+			type: 'string',
+			optional: true,
+			default: 1000,
+		},
+		/**
+		 * The maximum time between subsequent connection attempts,
+		 * in ms. Defaults to 10000.
+		 */
+		GRPC_MAX_RECONNECT_BACKOFF_MS: {
+			type: 'string',
+			optional: true,
+			default: 10000,
+		},
+		/**
+		 * The minimum time between subsequent connection attempts,
+		 * in ms. Default is 1000ms, but this can cause an SSL Handshake failure.
+		 * This causes an intermittent failure in the Worker-LongPoll test when run
+		 * against Camunda Cloud.
+		 * Raised to 5000ms.
+		 * See: https://github.com/grpc/grpc/issues/8382#issuecomment-259482949
+		 */
+		GRPC_MIN_RECONNECT_BACKOFF_MS: {
+			type: 'string',
+			optional: true,
+			default: 5000,
+		},
+		/**
+		 * Defaults to 90000.
+		 */
+		GRPC_HTTP2_MIN_TIME_BETWEEN_PINGS_MS: {
+			type: 'number',
+			optional: true,
+			default: 90000,
+		},
+		/**
+		 * Minimum allowed time between a server receiving
+		 * successive ping frames without sending any data
+		 * frame. Int valued, milliseconds. Default: 90000
+		 */
+		GRPC_HTTP2_MIN_PING_INTERVAL_WITHOUT_DATA_MS: {
+			type: 'number',
+			optional: true,
+			default: 90000,
+		},
+		/**
+		 * This channel argument if set to 1
+		 * (0 : false; 1 : true), allows keepalive pings
+		 * to be sent even if there are no calls in flight.
+		 * Defaults to 1.
+		 */
+		GRPC_KEEPALIVE_PERMIT_WITHOUT_CALLS: {
+			type: 'number',
+			optional: true,
+			default: 1,
+		},
+		/**
+		 * This channel argument controls the maximum number
+		 * of pings that can be sent when there is no other
+		 * data (data frame or header frame) to be sent.
+		 * GRPC Core will not continue sending pings if we
+		 * run over the limit. Setting it to 0 allows sending
+		 * pings without sending data.
+		 */
+		GRPC_HTTP2_MAX_PINGS_WITHOUT_DATA: {
+			type: 'number',
+			optional: true,
+			default: 0,
 		},
 		/** Zeebe client log output can be human-readable 'SIMPLE' or structured 'JSON'. Defaults to 'SIMPLE' */
 		ZEEBE_CLIENT_LOG_TYPE: {
