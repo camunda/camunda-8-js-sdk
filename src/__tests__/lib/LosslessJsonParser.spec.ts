@@ -3,6 +3,7 @@ import {
 	Int32,
 	Int64,
 	LosslessDto,
+	parseAndThrowForUnsafeNumbers,
 	parseArrayWithAnnotations,
 	parseWithAnnotations,
 } from 'lib'
@@ -69,5 +70,17 @@ describe('LosslessJSONParser methods', () => {
 		expect(parsedDto[0].smallNumber).toBe(100)
 		expect(parsedDto[1].activityId).toBe('activityId2')
 		expect(parsedDto[1].active).toBe('11')
+	})
+
+	test('It will throw when passed an unsafe int64 number', () => {
+		let threw = false
+		const text = '{"normal":2.3,"long":123456789012345678901,"big":2.3e+500}'
+		try {
+			parseAndThrowForUnsafeNumbers(text)
+		} catch (e) {
+			threw = true
+			expect((e as Error).message.includes('Unsafe number detected'))
+		}
+		expect(threw).toBe(true)
 	})
 })

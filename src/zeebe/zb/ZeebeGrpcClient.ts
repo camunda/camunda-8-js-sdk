@@ -29,7 +29,6 @@ import { ZBSimpleLogger } from '../lib/SimpleLogger'
 import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
 import { ZBJsonLogger } from '../lib/ZBJsonLogger'
-import { decodeCreateZBWorkerSig } from '../lib/ZBWorkerSignature'
 import * as ZB from '../lib/interfaces-1.0'
 import * as Grpc from '../lib/interfaces-grpc-1.0'
 import {
@@ -39,7 +38,6 @@ import {
 } from '../lib/interfaces-published-contract'
 import { Utils } from '../lib/utils'
 
-import { ZBBatchWorker } from './ZBBatchWorker'
 import { ZBWorker } from './ZBWorker'
 
 const debug = d('camunda:zeebeclient')
@@ -79,10 +77,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private grpc: ZB.ZBGrpc
 	private options: ZBClientOptions
 	private workerCount = 0
-	private workers: (
-		| ZBWorker<any, any, any> // eslint-disable-line @typescript-eslint/no-explicit-any
-		| ZBBatchWorker<any, any, any> // eslint-disable-line @typescript-eslint/no-explicit-any
-	)[] = []
+	private workers: ZBWorker<any, any, any>[] = // eslint-disable-line @typescript-eslint/no-explicit-any
+		[]
 	private retry: boolean
 	private maxRetries: number
 	private maxRetryTimeout: MaybeTimeDuration
@@ -307,115 +303,6 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				processInstanceKey,
 			})
 		)
-	}
-
-	/**
-	 *
-	 * @description Create a new Batch Worker. This is useful when you need to rate limit access to an external resource.
-	 * @example
-	 * ```
-	 * const zbc = new ZeebeGrpcClient()
-	 * // Helper function to find a job by its key
-	 * const findJobByKey = jobs => key => jobs.filter(job => job.jobKey === id)?.[0] ?? []
-	 *
-	 * const handler = async (jobs: BatchedJob[]) => {
-	 *   console.log("Let's do this!")
-	 *   const {jobKey, variables} = job
-	 *   // Construct some hypothetical payload with correlation ids and requests
-	 *   const req = jobs.map(job => ({id: jobKey, data: variables.request}))
-	 *   // An uncaught exception will not be managed by the library
-	 * 	 try {
-	 *     // Our API wrapper turns that into a request, and returns
-	 *     // an array of results with ids
-	 *     const outcomes = await API.post(req)
-	 *     // Construct a find function for these jobs
-	 *     const getJob = findJobByKey(jobs)
-	 *     // Iterate over the results and call the succeed method on the corresponding job,
-	 *     // passing in the correlated outcome of the API call
-	 *     outcomes.forEach(res => getJob(res.id)?.complete(res.data))
-	 *   } catch (e) {
-	 *     jobs.forEach(job => job.fail(e.message))
-	 *   }
-	 * }
-	 *
-	 * const batchWorker = zbc.createBatchWorker({
-	 *   taskType: 'get-data-from-external-api',
-	 *   taskHandler: handler,
-	 *   jobBatchMinSize: 10, // at least 10 at a time
-	 *   jobBatchMaxTime: 60, // or every 60 seconds, whichever comes first
-	 *   timeout: Duration.seconds.of(80) // 80 second timeout means we have 20 seconds to process at least
-	 * })
-	 * ```
-	 */
-	public createBatchWorker<
-		WorkerInputVariables = ZB.IInputVariables,
-		CustomHeaderShape = ZB.ICustomHeaders,
-		WorkerOutputVariables = ZB.IOutputVariables,
-	>(
-		conf: ZB.ZBBatchWorkerConfig<
-			WorkerInputVariables,
-			CustomHeaderShape,
-			WorkerOutputVariables
-		>
-	): ZBBatchWorker<
-		WorkerInputVariables,
-		CustomHeaderShape,
-		WorkerOutputVariables
-	> {
-		if (this.closing) {
-			throw new Error('Client is closing. No worker creation allowed!')
-		}
-		const config = decodeCreateZBWorkerSig({
-			idOrTaskTypeOrConfig: conf,
-		})
-		// Merge parent client options with worker override
-		const options = {
-			...this.options,
-			loglevel: this.loglevel,
-			onConnectionError: undefined, // Do not inherit client handler
-			onReady: undefined, // Do not inherit client handler
-			...config.options,
-		}
-
-		const idColor = idColors[this.workerCount++ % idColors.length]
-
-		// Give worker its own gRPC connection
-		const { grpcClient: workerGRPCClient, log } = this.constructGrpcClient({
-			grpcConfig: {
-				namespace: 'ZBWorker',
-				tasktype: config.taskType,
-			},
-			logConfig: {
-				_tag: 'ZBWORKER',
-				colorise: true,
-				id: config.id ?? uuid(),
-				loglevel: options.loglevel,
-				namespace: ['ZBWorker', options.logNamespace].join(' ').trim(),
-				pollInterval: options.longPoll,
-				stdout: options.stdout,
-				taskType: `${config.taskType} (batch)`,
-			},
-		})
-		const worker = new ZBBatchWorker<
-			WorkerInputVariables,
-			CustomHeaderShape,
-			WorkerOutputVariables
-		>({
-			grpcClient: workerGRPCClient,
-			id: config.id || null,
-			idColor,
-			log,
-			options: { ...this.options, ...options },
-			taskHandler: config.taskHandler as ZB.ZBBatchWorkerTaskHandler<
-				WorkerInputVariables,
-				CustomHeaderShape,
-				WorkerOutputVariables
-			>,
-			taskType: config.taskType,
-			zbClient: this,
-		})
-		this.workers.push(worker)
-		return worker
 	}
 
 	/**

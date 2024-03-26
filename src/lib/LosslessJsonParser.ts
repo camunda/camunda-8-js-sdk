@@ -97,3 +97,20 @@ export function parseArrayWithAnnotations<T>(
 		parseWithAnnotations(stringify(item) as string, dto)
 	)
 }
+
+export function parseAndThrowForUnsafeNumbers(json: string): any {
+	const obj = parse(json) as any
+
+	try {
+		Object.keys(obj).forEach((key) => {
+			if (isLosslessNumber(obj[key])) {
+				obj[key] = obj[key].valueOf()
+			}
+		})
+	} catch (e) {
+		throw new Error(
+			'Unsafe number detected - an int64 JSON serialised value was received that cannot be represented as a JS number type without loss of precision.'
+		)
+	}
+	return obj
+}
