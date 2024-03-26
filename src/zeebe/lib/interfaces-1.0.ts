@@ -2,7 +2,6 @@ import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
 import { MaybeTimeDuration } from 'typed-duration'
 
-import { ZBBatchWorker } from '../zb/ZBBatchWorker'
 import { ZBWorker } from '../zb/ZBWorker'
 
 import { GrpcClient } from './GrpcClient'
@@ -318,38 +317,6 @@ export type MustReturnJobActionAcknowledgement =
 	| JOB_ACTION_ACKNOWLEDGEMENT
 	| Promise<JOB_ACTION_ACKNOWLEDGEMENT>
 
-export type ZBBatchWorkerTaskHandler<V, H, O> = (
-	jobs: BatchedJob<V, H, O>[],
-	worker: ZBBatchWorker<V, H, O>
-) =>
-	| MustReturnJobActionAcknowledgement[]
-	| Promise<MustReturnJobActionAcknowledgement[]>
-	| Promise<MustReturnJobActionAcknowledgement>[]
-
-export interface ZBBatchWorkerConfig<
-	WorkerInputVariables,
-	CustomHeaderShape,
-	WorkerOutputVariables,
-> extends ZBWorkerBaseConfig<WorkerInputVariables> {
-	/**
-	 * A job handler - this must return an array of job actions (eg: job.complete(..), job.error(..)) in all code paths.
-	 */
-	taskHandler: ZBBatchWorkerTaskHandler<
-		WorkerInputVariables,
-		CustomHeaderShape,
-		WorkerOutputVariables
-	>
-	/**
-	 * The minimum amount of jobs to batch before calling the job handler.
-	 */
-	jobBatchMinSize: number
-	/**
-	 * The max timeout in seconds to wait for a batch to populate. If there are less than `minJobBatchSize` jobs
-	 * available when this timeout is reached, all currently batched jobs will be processed, regardless.
-	 * You should set this higher than the worker timeout, to avoid batched jobs timing out before they are executed.
-	 */
-	jobBatchMaxTime: number
-}
 export interface ZBWorkerBaseConfig<T> extends ZBWorkerOptions<T> {
 	/**
 	 * A custom id for the worker. If none is supplied, a UUID will be generated.

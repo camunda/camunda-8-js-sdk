@@ -1,3 +1,6 @@
+import { parseAndThrowForUnsafeNumbers } from 'lib'
+import { stringify } from 'lossless-json'
+
 import { Job } from './interfaces-1.0'
 import { ActivatedJob } from './interfaces-grpc-1.0'
 
@@ -5,7 +8,7 @@ export function parseVariables<T extends { variables: string }, V = JSONDoc>(
 	input: T
 ): Omit<T, 'variables'> & { variables: V } {
 	return Object.assign({}, input, {
-		variables: JSON.parse(input.variables || '{}') as V,
+		variables: parseAndThrowForUnsafeNumbers(input.variables || '{}') as V,
 	})
 }
 
@@ -13,8 +16,10 @@ export function parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
 	response: ActivatedJob
 ): Job<Variables, CustomHeaders> {
 	return Object.assign({}, response, {
-		customHeaders: JSON.parse(response.customHeaders),
-		variables: JSON.parse(response.variables),
+		customHeaders: parseAndThrowForUnsafeNumbers(
+			response.customHeaders
+		) as CustomHeaders,
+		variables: parseAndThrowForUnsafeNumbers(response.variables) as Variables,
 	}) as Job<Variables, CustomHeaders>
 }
 
@@ -24,7 +29,7 @@ export function stringifyVariables<
 	V extends T & { variables: string },
 >(request: T): V {
 	const variables = request.variables || {}
-	const variablesString = JSON.stringify(variables)
+	const variablesString = stringify(variables)
 	return Object.assign({}, request, { variables: variablesString }) as V
 }
 

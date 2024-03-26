@@ -44,20 +44,6 @@ export interface ZBWorkerBaseConstructor<T> {
 	log: StatefulLogInterceptor
 }
 
-export interface ZBBatchWorkerConstructorConfig<
-	WorkerInputVariables,
-	CustomHeaderShape,
-	WorkerOutputVariables,
-> extends ZBWorkerBaseConstructor<WorkerInputVariables> {
-	options: ZB.ZBWorkerOptions<WorkerInputVariables> &
-		ZBClientOptions & { jobBatchMaxTime: number }
-	taskHandler: ZB.ZBBatchWorkerTaskHandler<
-		WorkerInputVariables,
-		CustomHeaderShape,
-		WorkerOutputVariables
-	>
-}
-
 export interface ZBWorkerConstructorConfig<
 	WorkerInputVariables,
 	CustomHeaderShape,
@@ -87,17 +73,11 @@ export class ZBWorkerBase<
 	public pollCount = 0
 	protected zbClient: ZeebeGrpcClient
 	protected logger: StatefulLogInterceptor
-	protected taskHandler:
-		| ZB.ZBBatchWorkerTaskHandler<
-				WorkerInputVariables,
-				CustomHeaderShape,
-				WorkerOutputVariables
-		  >
-		| ZB.ZBWorkerTaskHandler<
-				WorkerInputVariables,
-				CustomHeaderShape,
-				WorkerOutputVariables
-		  >
+	protected taskHandler: ZB.ZBWorkerTaskHandler<
+		WorkerInputVariables,
+		CustomHeaderShape,
+		WorkerOutputVariables
+	>
 	protected cancelWorkflowOnException = false
 	private closeCallback?: () => void
 	private closePromise?: Promise<null>
@@ -127,17 +107,11 @@ export class ZBWorkerBase<
 		taskHandler,
 		taskType,
 		zbClient,
-	}:
-		| ZBBatchWorkerConstructorConfig<
-				WorkerInputVariables,
-				CustomHeaderShape,
-				WorkerOutputVariables
-		  >
-		| ZBWorkerConstructorConfig<
-				WorkerInputVariables,
-				CustomHeaderShape,
-				WorkerOutputVariables
-		  >) {
+	}: ZBWorkerConstructorConfig<
+		WorkerInputVariables,
+		CustomHeaderShape,
+		WorkerOutputVariables
+	>) {
 		super()
 		options = options || {}
 		if (!taskType) {
