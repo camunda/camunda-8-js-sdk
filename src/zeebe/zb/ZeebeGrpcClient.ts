@@ -87,6 +87,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private stdout: ZBCustomLogger
 	private customSSL?: CustomSSL
 	private tenantId?: string
+	private config: CamundaPlatform8Configuration
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -96,6 +97,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+		this.config = config
 		this.options = {} as ZBClientOptions
 
 		this.options.longPoll = Duration.seconds.of(
@@ -1178,6 +1180,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}) {
 		const { grpcClient, log } = ConnectionFactory.getGrpcClient({
 			grpcConfig: {
+				config: this.config,
 				connectionTolerance: Duration.milliseconds.from(
 					this.connectionTolerance
 				),

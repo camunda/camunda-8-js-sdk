@@ -9,7 +9,7 @@ import {
 	DeepPartial,
 	GetCertificateAuthority,
 	RequireConfiguration,
-	packageVersion,
+	createUserAgentString,
 } from 'lib'
 import fetch from 'node-fetch'
 
@@ -45,7 +45,6 @@ export class OAuthProvider implements IOAuthProvider {
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		userAgentString?: string
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -92,9 +91,7 @@ export class OAuthProvider implements IOAuthProvider {
 		this.cacheDir =
 			config.CAMUNDA_TOKEN_CACHE_DIR ?? OAuthProvider.defaultTokenCache
 
-		this.userAgentString = `camunda-8-sdk-nodejs/${packageVersion}${
-			options?.userAgentString ? ' ' + options?.userAgentString : ''
-		}` // e.g.: `zeebe-client-nodejs/${pkg.version} ${CUSTOM_AGENT_STRING}`
+		this.userAgentString = createUserAgentString(config)
 
 		/**
 		 * CAMUNDA_MODELER_OAUTH_AUDIENCE is optional, and only needed if the Modeler is running on Self-Managed

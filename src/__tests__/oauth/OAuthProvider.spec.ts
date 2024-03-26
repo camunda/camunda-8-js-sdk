@@ -101,7 +101,6 @@ test('Gets the token cache dir from the environment', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
 		},
-		userAgentString: 'test',
 	})
 	expect(o).toBeTruthy()
 	const exists = fs.existsSync(tokenCacheDir)
@@ -125,7 +124,6 @@ test('Creates the token cache dir if it does not exist', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
 		},
-		userAgentString: 'test',
 	})
 
 	expect(o).toBeTruthy()
@@ -152,7 +150,6 @@ test('Throws in the constructor if the token cache is not writable', () => {
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
 				CAMUNDA_OAUTH_URL: 'url',
 			},
-			userAgentString: 'test',
 		})
 		expect(o).toBeTruthy()
 	} catch {
@@ -181,7 +178,6 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
 			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
 		},
-		userAgentString: 'test',
 	})
 
 	let requestCount = 0
@@ -235,7 +231,6 @@ test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_RE
 			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 2000,
 			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
 		},
-		userAgentString: 'test',
 	})
 
 	let requestCount = 0
@@ -283,7 +278,6 @@ test('Uses form encoding for request', (done) => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3001}`,
 		},
-		userAgentString: 'test',
 	})
 	server = http
 		.createServer((req, res) => {
@@ -318,7 +312,6 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3003}`,
 			CAMUNDA_OPERATE_OAUTH_AUDIENCE: 'custom.operate.audience',
 		},
-		userAgentString: 'test',
 	})
 	server = http
 		.createServer((req, res) => {
@@ -353,7 +346,6 @@ test('Passes scope, if provided', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3004}`,
 		},
-		userAgentString: 'test',
 	})
 	server = http
 		.createServer((req, res) => {
@@ -388,7 +380,6 @@ test('Can get scope from environment', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3005}`,
 		},
-		userAgentString: 'test',
 	})
 	server = http
 		.createServer((req, res) => {
@@ -428,7 +419,6 @@ test('Creates the token cache dir if it does not exist', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
 		},
-		userAgentString: 'test',
 	})
 
 	expect(o).toBeTruthy()
@@ -453,7 +443,6 @@ test('Gets the token cache dir from the environment', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
 		},
-		userAgentString: 'test',
 	})
 
 	expect(o).toBeTruthy()
@@ -482,7 +471,6 @@ test('Uses an explicit token cache over the environment', () => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'url',
 		},
-		userAgentString: 'test',
 	})
 
 	expect(o).toBeTruthy()
@@ -514,7 +502,6 @@ test('Throws in the constructor if the token cache is not writable', () => {
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
 				CAMUNDA_OAUTH_URL: 'url',
 			},
-			userAgentString: 'test',
 		})
 		expect(o).toBeTruthy()
 	} catch {
@@ -534,8 +521,8 @@ test('Can set a custom user agent', () => {
 			ZEEBE_CLIENT_ID: 'clientId',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'http://127.0.0.1:3005',
+			CAMUNDA_CUSTOM_USER_AGENT_STRING: 'modeler',
 		},
-		userAgentString: 'modeler',
 	})
 
 	expect(o.userAgentString.includes(' modeler')).toBe(true)
@@ -552,7 +539,6 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3006}`,
 		},
-		userAgentString: 'modeler',
 	})
 	server = http
 		.createServer((req, res) => {
@@ -587,7 +573,6 @@ test('Throws if you try to get a Modeler token from SaaS without console creds',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'https://login.cloud.camunda.io/oauth/token',
 		},
-		userAgentString: 'modeler',
 	})
 
 	await o
@@ -611,7 +596,6 @@ test('Throws if you try to get a Modeler token from Self-hosted without applicat
 			CAMUNDA_CONSOLE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: 'https://localhost',
 		},
-		userAgentString: 'modeler',
 	})
 	await o
 		.getToken('MODELER')

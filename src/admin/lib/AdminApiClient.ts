@@ -7,7 +7,7 @@ import {
 	GetCertificateAuthority,
 	RequireConfiguration,
 	constructOAuthProvider,
-	packageVersion,
+	createUserAgentString,
 } from 'lib'
 
 import { IOAuthProvider } from '../../oauth'
@@ -38,7 +38,7 @@ export class AdminApiClient {
 
 		const certificateAuthority = GetCertificateAuthority(config)
 
-		this.userAgentString = `console-client-nodejs/${packageVersion}`
+		this.userAgentString = createUserAgentString(config)
 		this.rest = got.extend({
 			prefixUrl: `${baseUrl}/clusters`,
 			https: {
