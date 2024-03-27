@@ -1,4 +1,4 @@
-import { ChildDto, Int32, Int64String, LosslessDto } from 'lib'
+import { ChildDto, Int64String, LosslessDto } from 'lib'
 import { LosslessNumber } from 'lossless-json'
 
 export class DecisionDefinition extends LosslessDto {
@@ -27,7 +27,6 @@ export class DecisionInstanceOutput extends LosslessDto {
 	name!: string
 	value!: string
 	ruleId!: string
-	@Int32
 	ruleIndex!: number
 }
 
@@ -43,7 +42,6 @@ export class DecisionInstance extends LosslessDto {
 	decisionId!: string
 	decisionDefinitionId!: string
 	decisionName!: string
-	@Int32
 	decisionVersion!: number
 	decisionType!:
 		| 'DECISION_TABLE'
@@ -63,7 +61,6 @@ export class DecisionRequirements extends LosslessDto {
 	key!: string
 	decisionRequirementsId!: string
 	name!: string
-	@Int32
 	version!: number
 	resourceName!: string
 	tenantId: string | undefined
@@ -74,7 +71,6 @@ export class ProcessDefinition extends LosslessDto {
 	@Int64String
 	key!: string
 	name!: string
-	@Int32
 	version!: number
 	bpmnProcessId!: string
 }
@@ -82,7 +78,6 @@ export class ProcessDefinition extends LosslessDto {
 export class ProcessInstance extends LosslessDto {
 	@Int64String
 	key!: string
-	@Int32
 	processVersion!: number
 	bpmnProcessId!: string
 	@Int64String

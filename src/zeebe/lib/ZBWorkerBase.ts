@@ -6,7 +6,7 @@ import {
 } from '@grpc/grpc-js/build/src/call'
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
-import { SafeLosslessDto } from 'lib'
+import { LosslessDto } from 'lib'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import * as uuid from 'uuid'
 
@@ -136,13 +136,13 @@ export class ZBWorkerBase<
 		}
 		this.inputVariableDto =
 			inputVariableDto ??
-			(SafeLosslessDto as {
+			(LosslessDto as {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				new (obj: any): WorkerInputVariables
 			})
 		this.customHeadersDto =
 			customHeadersDto ??
-			(SafeLosslessDto as {
+			(LosslessDto as {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				new (obj: any): CustomHeaderShape
 			})

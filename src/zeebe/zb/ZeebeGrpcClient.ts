@@ -7,8 +7,8 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
+	LosslessDto,
 	RequireConfiguration,
-	SafeLosslessDto,
 	constructOAuthProvider,
 } from 'lib'
 import { IOAuthProvider } from 'oauth'
@@ -252,13 +252,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const { inputVariableDto, customHeadersDto, ...req } = request
 		const inputVariableDtoToUse =
 			inputVariableDto ??
-			(SafeLosslessDto as {
+			(LosslessDto as {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				new (obj: any): Variables
 			})
 		const customHeadersDtoToUse =
 			customHeadersDto ??
-			(SafeLosslessDto as {
+			(LosslessDto as {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				new (obj: any): CustomHeaders
 			})
