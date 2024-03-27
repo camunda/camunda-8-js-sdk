@@ -1,11 +1,12 @@
 import {
+	BigIntValue,
 	ChildDto,
+	DtoBehaviour,
 	Int32,
-	Int64,
+	Int64String,
 	LosslessDto,
-	parseAndThrowForUnsafeNumbers,
-	parseArrayWithAnnotations,
-	parseWithAnnotations,
+	SafeLosslessDto,
+	losslessParse,
 } from 'lib'
 import { ProcessInstanceStatistics } from 'operate/lib/OperateDto'
 
@@ -20,7 +21,7 @@ describe('LosslessJSONParser methods', () => {
 			@ChildDto(DecisionInstanceOutput)
 			public decisionsOutputs!: DecisionInstanceOutput[]
 
-			@Int64
+			@Int64String
 			public total!: string // Example of another field
 		}
 
@@ -33,7 +34,7 @@ describe('LosslessJSONParser methods', () => {
 			]
 		}`
 
-		const parsedDto = parseWithAnnotations(json, ProcessDefinitionDto)
+		const parsedDto = losslessParse(json, ProcessDefinitionDto)
 		expect(parsedDto.decisionsOutputs[0].someInt32Field).toBe(123) // 123 (number)
 		expect(parsedDto.total).toBe('3') // 3 (string)
 	})
@@ -60,10 +61,7 @@ describe('LosslessJSONParser methods', () => {
 				"completed": 14
 			}
 		]`
-		const parsedDto = parseArrayWithAnnotations(
-			json,
-			ProcessInstanceStatisticsWithInt32
-		)
+		const parsedDto = losslessParse(json, ProcessInstanceStatisticsWithInt32)
 		expect(Array.isArray(parsedDto)).toBe(true)
 		expect(parsedDto[0].activityId).toBe('activityId')
 		expect(parsedDto[0].active).toBe('1')
@@ -76,11 +74,64 @@ describe('LosslessJSONParser methods', () => {
 		let threw = false
 		const text = '{"normal":2.3,"long":123456789012345678901,"big":2.3e+500}'
 		try {
-			parseAndThrowForUnsafeNumbers(text)
+			losslessParse(text)
 		} catch (e) {
 			threw = true
 			expect((e as Error).message.includes('Unsafe number detected'))
 		}
 		expect(threw).toBe(true)
+	})
+
+	test('It will throw when passed an unsafe int64 number and a SafeLosslessDto', () => {
+		let threw = false
+		const text = '{"normal":2.3,"long":123456789012345678901,"big":2.3e+500}'
+		try {
+			losslessParse(text, SafeLosslessDto)
+		} catch (e) {
+			threw = true
+			expect((e as Error).message.includes('Unsafe number detected'))
+		}
+		expect(threw).toBe(true)
+	})
+
+	test('It will parse a BigInt when passed an int64 number and a mapped LosslessDto', () => {
+		const text = '{"normal":2.3,"long":123456789012345678901,"big":2.3e+500}'
+
+		@DtoBehaviour('mapped')
+		class BigIntDto extends LosslessDto {
+			@BigIntValue
+			long!: bigint
+			@Int32
+			normal!: number
+			@Int64String
+			big!: string
+		}
+
+		const v = losslessParse(text, BigIntDto)
+		expect(v.long).toBe(123456789012345678901n)
+		expect(v.normal).toBe(2.3)
+	})
+
+	test('With a SafeLosslessDto and safe numbers, it works like JSON.parse', () => {
+		const json = `[
+			{
+				"activityId": "activityId",
+				"active": 1,
+				"canceled": 2,
+				"incidents": 3,
+				"completed": 4,
+				"smallNumber": 100
+			},
+			{
+				"activityId": "activityId2",
+				"active": 11,
+				"canceled": 12,
+				"incidents": 13,
+				"completed": 14
+			}
+		]`
+		const p = losslessParse(json, SafeLosslessDto)
+		expect(p[0].active).toBe(1)
+		expect(p[1].incidents).toBe(13)
 	})
 })

@@ -273,12 +273,6 @@ export interface ZBWorkerOptions<InputVars = IInputVariables> {
 	 */
 	maxJobsToActivate?: number
 	/**
-	 * The minimum amount of jobs to fetch. The worker will request more jobs only
-	 * when it has capacity for this many jobs. Defaults to 0, meaning the worker will
-	 * fetch more jobs as soon as it as any capacity.
-	 */
-	jobBatchMinSize?: number
-	/**
 	 * Max seconds to allow before time out of a job given to this worker. Default: 30s.
 	 * The broker checks deadline timeouts every 30 seconds, so an
 	 */
@@ -305,19 +299,17 @@ export interface ZBWorkerOptions<InputVars = IInputVariables> {
 	debug?: boolean
 }
 
-export type BatchedJob<
-	Variables = IInputVariables,
-	Headers = ICustomHeaders,
-	Output = IOutputVariables,
-> = Job<Variables, Headers> & JobCompletionInterface<Output>
-
 export const JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT' as const
 export type JOB_ACTION_ACKNOWLEDGEMENT = typeof JOB_ACTION_ACKNOWLEDGEMENT
 export type MustReturnJobActionAcknowledgement =
 	| JOB_ACTION_ACKNOWLEDGEMENT
 	| Promise<JOB_ACTION_ACKNOWLEDGEMENT>
 
-export interface ZBWorkerBaseConfig<T> extends ZBWorkerOptions<T> {
+export interface ZBWorkerConfig<
+	WorkerInputVariables,
+	CustomHeaderShape,
+	WorkerOutputVariables,
+> extends ZBWorkerOptions<WorkerInputVariables> {
 	/**
 	 * A custom id for the worker. If none is supplied, a UUID will be generated.
 	 */
@@ -350,21 +342,6 @@ export interface ZBWorkerBaseConfig<T> extends ZBWorkerOptions<T> {
 	 */
 	taskType: string
 	/**
-	 * This handler is called when the worker (re)establishes its connection to the broker
-	 */
-	onReady?: () => void
-	/**
-	 * This handler is called when the worker cannot connect to the broker, or loses its connection.
-	 */
-	onConnectionError?: () => void
-}
-
-export interface ZBWorkerConfig<
-	WorkerInputVariables,
-	CustomHeaderShape,
-	WorkerOutputVariables,
-> extends ZBWorkerBaseConfig<WorkerInputVariables> {
-	/**
 	 * A job handler - this must return a job action - e.g.: job.complete(), job.error() - in all code paths.
 	 */
 	taskHandler: ZBWorkerTaskHandler<
@@ -373,11 +350,25 @@ export interface ZBWorkerConfig<
 		WorkerOutputVariables
 	>
 	/**
-	 * The minimum amount of jobs to fetch. The worker will request more jobs only
-	 * when it has capacity for this many jobs. Defaults to 0, meaning the worker will
-	 * fetch more jobs as soon as it as _any_ capacity.
+	 * This handler is called when the worker (re)establishes its connection to the broker
 	 */
-	jobBatchMinSize?: number
+	onReady?: () => void
+	/**
+	 * This handler is called when the worker cannot connect to the broker, or loses its connection.
+	 */
+	onConnectionError?: () => void
+	/**
+	 * Provide an annotated Dto class to control the serialisation of JSON numbers. This allows you to serialise
+	 * numbers as strings or BigInts to avoid precision loss. This also gives you design-time type safety.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	inputVariableDto?: { new (...args: any[]): Readonly<WorkerInputVariables> }
+	/**
+	 * Provide an annotated Dto class to control the serialisation of JSON numbers. This allows you to serialise
+	 * numbers as strings or BigInts to avoid precision loss. This also gives you design-time type safety.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
 }
 
 export interface BroadcastSignalReq {

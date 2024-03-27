@@ -3,18 +3,19 @@ import * as path from 'path'
 
 import chalk from 'chalk'
 import d from 'debug'
-import { IOAuthProvider } from 'oauth'
-import promiseRetry from 'promise-retry'
-import { Duration, MaybeTimeDuration } from 'typed-duration'
-import { v4 as uuid } from 'uuid'
-
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	RequireConfiguration,
+	SafeLosslessDto,
 	constructOAuthProvider,
-} from '../../lib'
+} from 'lib'
+import { IOAuthProvider } from 'oauth'
+import promiseRetry from 'promise-retry'
+import { Duration, MaybeTimeDuration } from 'typed-duration'
+import { v4 as uuid } from 'uuid'
+
 import {
 	BpmnParser,
 	parseVariables,
@@ -239,15 +240,39 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		Variables = ZB.IInputVariables,
 		CustomHeaders = ZB.ICustomHeaders,
 	>(
-		request: Grpc.ActivateJobsRequest
+		request: Grpc.ActivateJobsRequest & {
+			inputVariableDto?: {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (...args: any[]): Readonly<Variables>
+			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaders> }
+		}
 	): Promise<ZB.Job<Variables, CustomHeaders>[]> {
+		const { inputVariableDto, customHeadersDto, ...req } = request
+		const inputVariableDtoToUse =
+			inputVariableDto ??
+			(SafeLosslessDto as {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (obj: any): Variables
+			})
+		const customHeadersDtoToUse =
+			customHeadersDto ??
+			(SafeLosslessDto as {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (obj: any): CustomHeaders
+			})
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			try {
-				const stream = await this.grpc.activateJobsStream(request)
+				const stream = await this.grpc.activateJobsStream(req)
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
 					const jobs = res.jobs.map((job) =>
-						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(job)
+						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
+							job,
+							inputVariableDtoToUse,
+							customHeadersDtoToUse
+						)
 					)
 
 					resolve(jobs)

@@ -1,15 +1,15 @@
-import { ChildDto, Int32, Int64, LosslessDto } from 'lib'
+import { ChildDto, Int32, Int64String, LosslessDto } from 'lib'
 import { LosslessNumber } from 'lossless-json'
 
 export class DecisionDefinition extends LosslessDto {
 	id!: string
-	@Int64
+	@Int64String
 	key!: string
 	decisionId!: string
 	name!: string
 	version!: number
 	decisionRequirementsId!: string
-	@Int64
+	@Int64String
 	decisionRequirementsKey!: string
 	decisionRequirementsName!: string
 	decisionRequirementsVersion!: number
@@ -33,12 +33,12 @@ export class DecisionInstanceOutput extends LosslessDto {
 
 export class DecisionInstance extends LosslessDto {
 	id!: string
-	@Int64
+	@Int64String
 	key!: string
 	state!: 'FAILED' | 'EVALUATED' | 'UNKNOWN' | 'UNSPECIFIED'
 	evaluationDate!: string
 	evaluationFailure!: string
-	@Int64
+	@Int64String
 	processDefinitionKey!: string
 	decisionId!: string
 	decisionDefinitionId!: string
@@ -59,7 +59,7 @@ export class DecisionInstance extends LosslessDto {
 
 export class DecisionRequirements extends LosslessDto {
 	id!: string
-	@Int64
+	@Int64String
 	key!: string
 	decisionRequirementsId!: string
 	name!: string
@@ -71,7 +71,7 @@ export class DecisionRequirements extends LosslessDto {
 
 export class ProcessDefinition extends LosslessDto {
 	/** ProcessDefinition key is a string in the SDK, but it's an int64 number in the database */
-	@Int64
+	@Int64String
 	key!: string
 	name!: string
 	@Int32
@@ -80,31 +80,31 @@ export class ProcessDefinition extends LosslessDto {
 }
 
 export class ProcessInstance extends LosslessDto {
-	@Int64
+	@Int64String
 	key!: string
 	@Int32
 	processVersion!: number
 	bpmnProcessId!: string
-	@Int64
+	@Int64String
 	parentKey?: string
-	@Int64
+	@Int64String
 	parentFlowNodeInstanceKey?: string
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	startDate!: string
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	endDate!: string
 	state!: 'ACTIVE' | 'COMPLETED' | 'CANCELED'
-	@Int64
+	@Int64String
 	processDefinitionKey!: string
 	tenantId: string | undefined
 }
 
 export class Incident extends LosslessDto {
-	@Int64
+	@Int64String
 	key!: string
-	@Int64
+	@Int64String
 	processDefinitionKey!: LosslessNumber
-	@Int64
+	@Int64String
 	processInstanceKey!: LosslessNumber
 	type!:
 		| 'UNSPECIFIED'
@@ -122,21 +122,21 @@ export class Incident extends LosslessDto {
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	creationTime!: string //
 	state!: 'ACTIVE' | 'RESOLVED'
-	@Int64
+	@Int64String
 	jobKey!: string
 	tenantId: string | undefined
 }
 
 export class FlownodeInstance extends LosslessDto {
-	@Int64
+	@Int64String
 	key!: string
-	@Int64
+	@Int64String
 	processInstanceKey!: string
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	startDate!: string
 	/* yyyy-MM-dd'T'HH:mm:ss.SSSZZ */
 	endDate!: string
-	@Int64
+	@Int64String
 	incidentKey?: string
 	type!:
 		| 'UNSPECIFIED'
@@ -170,11 +170,11 @@ export class FlownodeInstance extends LosslessDto {
 }
 
 export class Variable extends LosslessDto {
-	@Int64
+	@Int64String
 	key!: string
-	@Int64
+	@Int64String
 	processInstanceKey!: string
-	@Int64
+	@Int64String
 	scopeKey!: string
 	name!: string
 	/* Always truncated if value is too big in "search" results. In "get object" result it is not truncated. */
@@ -187,7 +187,7 @@ export class ChangeStatus extends LosslessDto {
 	/* What was changed */
 	message!: string
 	/* How many items were deleted */
-	@Int64
+	@Int64String
 	deleted!: string
 }
 
@@ -195,16 +195,16 @@ export class ProcessInstanceStatistics extends LosslessDto {
 	/* The id of the flow node for which the results are aggregated */
 	activityId!: string
 	/* The total number of active instances of the flow node */
-	@Int64
+	@Int64String
 	active!: string
 	/* The total number of canceled instances of the flow node */
-	@Int64
+	@Int64String
 	canceled!: string
 	/* The total number of incidents for the flow node */
-	@Int64
+	@Int64String
 	incidents!: string
 	/* The total number of completed instances of the flow node */
-	@Int64
+	@Int64String
 	completed!: string
 }
 

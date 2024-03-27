@@ -12,10 +12,6 @@ Install the SDK as a dependency:
 npm i @camunda8/sdk
 ```
 
-## A note on entity key types in the JavaScript SDK
-
-Entity keys in Camunda 8 are stored and represented as int64 numbers. The range of int64 extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, int64 keys are serialised by the SDK as the JavaScript `string` type. See [this issue](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/78) for more details.
-
 ## Usage
 
 In this release, the functionality of the Camunda Platform 8 is exposed via dedicated clients for the component APIs.
@@ -39,6 +35,14 @@ The configuration for the SDK can be done by any combination of environment vari
 Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment.
 
 The configuration object fields and the environment variables have exactly the same names. See the file `src/lib/Configuration.ts` for a complete list of configuration.
+
+## A note on how int64 is handled in the JavaScript SDK
+
+Entity keys in Camunda 8 are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/78) for more details.
+
+Some number values - for example: "_total returned results_ " - may be specified as `int64` in the API specifications. Although these numbers will usually not contain unsafe values, they are always serialised to `string`.
+
+For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated Dto object to decode them reliably. If no Dto is specified, the default behaviour of the SDK is to serialise all numbers to JavaScript `number`, and if a number value is detected at runtime that cannot be accurately stored as `number`, to throw an Exception.
 
 ## OAuth
 
@@ -189,3 +193,26 @@ The SDK uses the [`debug`](https://github.com/debug-js/debug) library. To enable
 | `camunda:grpc`         | Zeebe gRPC channel   |
 | `camunda:worker`       | Zeebe Worker         |
 | `camunda:zeebeclient`  | Zeebe Client         |
+
+## Typing of Zeebe Worker Variables
+
+The variable payload in a Zeebe Worker task handler is available as an object `job.variables`. By default, this is of type `any`.
+
+The `ZBClient.createWorker()` method accepts an `inputVariableDto` to control the parsing of number values and provide design-time type information. Passing an `inputVariableDto` class to a Zeebe worker is optional. If a Dto class is passed to the Zeebe Worker, it is used for two purposes:
+
+1. To provide design-time type information on the `job.variables` object.
+2. To specify the parsing of JSON number fields. These can potentially represent int64 values that cannot be represented accurately by the JavaScript `number` type. With a Dto, you can specify that a specific JSON number fields be parsed losslessly to a `string` or `BigInt`.
+
+There are three strategies:
+
+1. The default (when no Dto is passed in) is "Safe Parsing". All JSON number fields are parsed to a JavaScript `number`. If the parser encounters a number value that cannot be accurately represented as `number`, the parser will throw an exception (causing a job failure). This ensures that your application does not receive inaccurate number values.
+
+2. You can pass in a Dto class that extends `SafeLosslessDto`. This allows you to get design time type safety, and map the parsing of number value fields. Unmapped number value fields will be parsed to a `number` and an exception will be thrown if an unsafe number value is encountered at runtime.
+
+3. You can pass in a Dto class that extends `LosslessDto`. This allows you to get design time type safety, and map the parsing of expected number value fields. If an unmapped number value field is encountered at runtime, it will be parsed to a `number`. If it contains an unsafe value, it will parsed to a `LosslessNumber`.
+
+## Typing of Custom Headers
+
+The Zeebe worker receives custom headers as `job.customHeaders`. The `ZBClient.createWorker()` method accepts a `customHeadersDto` to control the behaviour of custom header parsing of number values and provide design-time type information.
+
+This follows the same strategies as the job variables, as previously described.
