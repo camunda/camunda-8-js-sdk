@@ -1,3 +1,6 @@
 import { cleanUp } from './jest.cleanup'
 
-export default async () => cleanUp()
+export default async () => {
+	console.log('Running global setup...')
+	cleanUp()
+}

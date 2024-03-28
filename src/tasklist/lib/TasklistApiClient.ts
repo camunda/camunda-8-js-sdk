@@ -9,6 +9,7 @@ import {
 	constructOAuthProvider,
 	createUserAgentString,
 	losslessParse,
+	losslessStringify,
 } from 'lib'
 
 import { IOAuthProvider } from '../../oauth'
@@ -219,7 +220,7 @@ export class TasklistApiClient {
 		const headers = await this.getHeaders()
 		return this.rest
 			.post(`tasks/${taskId}/variables/search`, {
-				body: JSON.stringify({
+				body: losslessStringify({
 					variableNames: variableNames || [],
 					includeVariables: includeVariables || {},
 				}),
@@ -260,7 +261,7 @@ export class TasklistApiClient {
 		const headers = await this.getHeaders()
 		return this.rest
 			.patch(`tasks/${taskId}/assign`, {
-				body: JSON.stringify({
+				body: losslessStringify({
 					assignee,
 					allowOverrideAssignment,
 				}),
@@ -286,7 +287,7 @@ export class TasklistApiClient {
 		return this.rest
 			.patch(`tasks/${taskId}/complete`, {
 				headers,
-				body: JSON.stringify({
+				body: losslessStringify({
 					variables: encodeTaskVariablesForAPIRequest(variables || {}),
 				}),
 				parseJson: (text) => losslessParse(text, TaskResponse),

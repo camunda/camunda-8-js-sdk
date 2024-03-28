@@ -10,6 +10,7 @@ import {
 	LosslessDto,
 	RequireConfiguration,
 	constructOAuthProvider,
+	losslessStringify,
 } from 'lib'
 import { IOAuthProvider } from 'oauth'
 import promiseRetry from 'promise-retry'
@@ -809,7 +810,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		evaluateDecisionRequest: Grpc.EvaluateDecisionRequest
 	): Promise<Grpc.EvaluateDecisionResponse> {
 		// the gRPC API call needs a JSON string, but we accept a JSON object, so we transform it here
-		const variables = JSON.stringify(
+		const variables = losslessStringify(
 			evaluateDecisionRequest.variables
 		) as unknown as ZB.JSONDoc
 		return this.executeOperation('evaluateDecision', () =>
@@ -887,7 +888,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			const req = Utils.deepClone(modifyProcessInstanceRequest)
 			req?.activateInstructions?.forEach((a) =>
 				a.variableInstructions.forEach(
-					(v) => (v.variables = JSON.stringify(v.variables))
+					(v) => (v.variables = losslessStringify(v.variables))
 				)
 			)
 			return this.grpc.modifyProcessInstanceSync({
@@ -1074,7 +1075,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		*/
 		const variables =
 			typeof request.variables === 'object'
-				? JSON.stringify(request.variables)
+				? losslessStringify(request.variables)
 				: request.variables
 
 		return this.executeOperation('setVariables', () =>

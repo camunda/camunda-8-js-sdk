@@ -133,6 +133,7 @@ export class OAuthProvider implements IOAuthProvider {
 	}
 
 	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
+		debug(`Token request for ${audienceType}`)
 		// tslint:disable-next-line: no-console
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
@@ -160,9 +161,9 @@ export class OAuthProvider implements IOAuthProvider {
 			// check expiry and evict in-memory and file cache if expired
 			if (this.isExpired(token)) {
 				this.evictFromMemoryCache(audienceType)
-				trace(`In-memory token ${token.token_type} is expired`)
+				trace(`In-memory token ${token.audience} is expired`)
 			} else {
-				trace(`Using in-memory cached token ${token.token_type}`)
+				trace(`Using in-memory cached token ${token.audience}`)
 				return this.tokenCache[key].access_token
 			}
 		}
@@ -175,9 +176,9 @@ export class OAuthProvider implements IOAuthProvider {
 				// check expiry and evict in-memory and file cache if expired
 				if (this.isExpired(cachedToken)) {
 					this.evictFromFileCache({ audienceType, clientId: clientIdToUse })
-					trace(`File cached token ${cachedToken.token_type} is expired`)
+					trace(`File cached token ${cachedToken.audience} is expired`)
 				} else {
-					trace(`Using file cached token ${cachedToken.token_type}`)
+					trace(`Using file cached token ${cachedToken.audience}`)
 					return cachedToken.access_token
 				}
 			}

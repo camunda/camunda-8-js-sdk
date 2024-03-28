@@ -1,5 +1,4 @@
-import { losslessParse } from 'lib'
-import { stringify } from 'lossless-json'
+import { losslessParse, losslessStringify } from 'lib'
 
 import { Job } from './interfaces-1.0'
 import { ActivatedJob } from './interfaces-grpc-1.0'
@@ -37,7 +36,7 @@ export function stringifyVariables<
 	V extends T & { variables: string },
 >(request: T): V {
 	const variables = request.variables || {}
-	const variablesString = stringify(variables)
+	const variablesString = losslessStringify(variables)
 	return Object.assign({}, request, { variables: variablesString }) as V
 }
 

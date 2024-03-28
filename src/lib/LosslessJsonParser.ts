@@ -6,6 +6,8 @@
  * converted to `bigint`. All other numbers are converted to `number`. Throws if a number cannot be safely converted.
  *
  * It also handles nested Dtos by using the `@ChildDto` decorator.
+ *
+ * More details on the design here: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/81#issuecomment-2022213859
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -112,12 +114,14 @@ function parseWithAnnotations<T>(
 			}
 		} else {
 			if (Reflect.hasMetadata('type:int64', dto.prototype, key)) {
-				debug(`Parsing int64 field ${key}`)
+				debug(`Parsing int64 field ${key} to string`)
 				if (value) {
 					if (isLosslessNumber(value)) {
 						instance[key] = (value as LosslessNumber).toString()
 					} else {
-						throw new Error(`Received ${typeof value} for int64 field ${key}`)
+						throw new Error(
+							`Received ${typeof value} value for Int64String field ${key}, expected number value`
+						)
 					}
 				}
 			} else if (Reflect.hasMetadata('type:bigint', dto.prototype, key)) {
@@ -126,7 +130,9 @@ function parseWithAnnotations<T>(
 					if (isLosslessNumber(value)) {
 						instance[key] = BigInt((value as LosslessNumber).toString())
 					} else {
-						throw new Error(`Received ${typeof value} for bigint field ${key}`)
+						throw new Error(
+							`Received ${typeof value} value for bigint field ${key}, expected number value`
+						)
 					}
 				}
 			} else {
@@ -153,7 +159,7 @@ function parseArrayWithAnnotations<T>(
  * Convert all `LosslessNumber` instances to a number or throw if any are unsafe
  */
 function convertLosslessNumbersToNumberOrThrow<T>(obj: any): T {
-	debug(`Converting LosslessNumbers to numbers`)
+	debug(`Parsing LosslessNumbers to numbers for ${obj.constructor.name}`)
 	let currentKey = ''
 	try {
 		Object.keys(obj).forEach((key) => {
@@ -179,4 +185,39 @@ function convertLosslessNumbersToNumberOrThrow<T>(obj: any): T {
 		)
 	}
 	return obj
+}
+
+export function losslessStringify<T extends LosslessDto>(
+	obj: T,
+	isTopLevel = true
+): string {
+	const isLosslessDto = obj instanceof LosslessDto
+
+	debug(`Stringifying ${isLosslessDto ? obj.constructor.name : 'object'}`)
+	if (!isLosslessDto) {
+		debug(`Object is not a LosslessDto. Stringifying as normal JSON.`)
+	}
+
+	const newObj: any = Array.isArray(obj) ? [] : {}
+
+	Object.keys(obj).forEach((key) => {
+		const value = obj[key]
+
+		if (typeof value === 'object' && value !== null) {
+			// If the value is an object or array, recurse into it
+			newObj[key] = losslessStringify(value, false)
+		} else if (Reflect.getMetadata('type:int64', obj, key)) {
+			// If the property is decorated with @Int64String, convert the string to a LosslessNumber
+			debug(`Stringifying int64 string field ${key}`)
+			newObj[key] = new LosslessNumber(value)
+		} else if (Reflect.getMetadata('type:bigint', obj, key)) {
+			// If the property is decorated with @BigIntValue, convert the bigint to a LosslessNumber
+			debug(`Stringifying bigint field ${key}`)
+			newObj[key] = new LosslessNumber(value.toString())
+		} else {
+			newObj[key] = value
+		}
+	})
+
+	return isTopLevel ? (stringify(newObj) as string) : newObj
 }

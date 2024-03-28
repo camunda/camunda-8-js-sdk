@@ -9,6 +9,7 @@ import {
 	constructOAuthProvider,
 	createUserAgentString,
 	losslessParse,
+	losslessStringify,
 } from 'lib'
 import { IOAuthProvider } from 'oauth'
 
@@ -468,7 +469,7 @@ export class OperateApiClient {
 		return this.rest
 			.post('variables/search', {
 				headers,
-				body: JSON.stringify(body),
+				body: losslessStringify(body),
 			})
 			.json()
 	}
@@ -491,7 +492,7 @@ export class OperateApiClient {
 		const vars: { items: Variable[] } = await this.rest
 			.post('variables/search', {
 				headers,
-				body: JSON.stringify(body),
+				body: losslessStringify(body),
 			})
 			.json()
 		return vars.items.reduce(

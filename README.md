@@ -201,18 +201,37 @@ The variable payload in a Zeebe Worker task handler is available as an object `j
 The `ZBClient.createWorker()` method accepts an `inputVariableDto` to control the parsing of number values and provide design-time type information. Passing an `inputVariableDto` class to a Zeebe worker is optional. If a Dto class is passed to the Zeebe Worker, it is used for two purposes:
 
 1. To provide design-time type information on the `job.variables` object.
-2. To specify the parsing of JSON number fields. These can potentially represent int64 values that cannot be represented accurately by the JavaScript `number` type. With a Dto, you can specify that a specific JSON number fields be parsed losslessly to a `string` or `BigInt`.
+2. To specify the parsing of JSON number fields. These can potentially represent `int64` values that cannot be represented accurately by the JavaScript `number` type. With a Dto, you can specify that a specific JSON number fields be parsed losslessly to a `string` or `BigInt`.
 
-There are three strategies:
+With no Dto specified, there is no design-time type safety. At run-time, all JSON numbers are converted to the JavaScript `number` type. If a variable field has a number value that cannot be safely represented using the JavaScript number type (a value greater than 2^53 -1) then an exception is thrown.
 
-1. The default (when no Dto is passed in) is "Safe Parsing". All JSON number fields are parsed to a JavaScript `number`. If the parser encounters a number value that cannot be accurately represented as `number`, the parser will throw an exception (causing a job failure). This ensures that your application does not receive inaccurate number values.
+To provide a Dto, extend the `LosslessDto` class, like so:
 
-2. You can pass in a Dto class that extends `SafeLosslessDto`. This allows you to get design time type safety, and map the parsing of number value fields. Unmapped number value fields will be parsed to a `number` and an exception will be thrown if an unsafe number value is encountered at runtime.
+```typescript
+class MyVariableDto extends LosslessDto {
+	name!: string
+	maybeAge?: number
+	@Int64String
+	veryBigNumber!: string
+	@BigIntValue
+	veryBigInteger!: bigint
+}
+```
 
-3. You can pass in a Dto class that extends `LosslessDto`. This allows you to get design time type safety, and map the parsing of expected number value fields. If an unmapped number value field is encountered at runtime, it will be parsed to a `number`. If it contains an unsafe value, it will parsed to a `LosslessNumber`.
+In this case, `veryBigNumber` is an `int64` value. It is transferred as a JSON number on the wire, but the parser will parse it into a `string` so that no loss of precision occurs. Similarly, `veryBigInteger` is a very large integer value. In this case, we direct the parser to parse this variable field as a `bigint`.
+
+You can nest Dtos like this:
+
+```typescript
+class MyLargerDto extends LosslessDto {
+	id!: string
+	@ChildDto(MyVariableDto)
+	entry!: MyVariableDto
+}
+```
 
 ## Typing of Custom Headers
 
 The Zeebe worker receives custom headers as `job.customHeaders`. The `ZBClient.createWorker()` method accepts a `customHeadersDto` to control the behaviour of custom header parsing of number values and provide design-time type information.
 
-This follows the same strategies as the job variables, as previously described.
+This follows the same strategy as the job variables, as previously described.
