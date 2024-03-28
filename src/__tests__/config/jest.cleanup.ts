@@ -6,16 +6,16 @@ import path from 'path'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('tsconfig-paths').register()
 
+import { OAuthProvider } from 'oauth'
 import { OperateApiClient } from 'operate'
 import { BpmnParser, ZeebeGrpcClient } from 'zeebe'
 
 export const cleanUp = async () => {
-	console.log('_dirname', __dirname)
-	console.log(process.cwd())
 	// Your cleanup process here.
-	console.log(
-		'Running global setup: cleanup test process instances before all tests...'
-	)
+	console.log('Removing all cached OAuth tokens...')
+	const o = new OAuthProvider()
+	o.flushFileCache()
+	console.log('Removing any running test process instances...')
 	const filePath = path.join(__dirname, '..', 'testdata')
 	const files = fs
 		.readdirSync(filePath)

@@ -8,8 +8,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
-	parseArrayWithAnnotations,
-	parseWithAnnotations,
+	losslessParse,
+	losslessStringify,
 } from 'lib'
 import { IOAuthProvider } from 'oauth'
 
@@ -230,7 +230,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`decision-definitions/${decisionDefinitionKey}`, {
 			headers,
-			parseJson: (text) => parseWithAnnotations(text, DecisionDefinition),
+			parseJson: (text) => losslessParse(text, DecisionDefinition),
 		}).json()
 	}
 
@@ -252,7 +252,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`decision-instances/${decisionInstanceKey}`, {
 			headers,
-			parseJson: (text) => parseWithAnnotations(text, DecisionInstance),
+			parseJson: (text) => losslessParse(text, DecisionInstance),
 		}).json()
 	}
 	/**
@@ -345,8 +345,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`process-instances/${processInstanceKey}/statistics`, {
 			headers,
-			parseJson: (text) =>
-				parseArrayWithAnnotations(text, ProcessInstanceStatistics),
+			parseJson: (text) => losslessParse(text, ProcessInstanceStatistics),
 		}).json()
 	}
 
@@ -411,7 +410,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`incidents/${key}`, {
 			headers,
-			parseJson: (text) => parseWithAnnotations(text, Incident),
+			parseJson: (text) => losslessParse(text, Incident),
 		}).json()
 	}
 
@@ -435,7 +434,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`flownode-instances/${key}`, {
 			headers,
-			parseJson: (text) => parseWithAnnotations(text, FlownodeInstance),
+			parseJson: (text) => losslessParse(text, FlownodeInstance),
 		}).json()
 	}
 
@@ -470,7 +469,7 @@ export class OperateApiClient {
 		return this.rest
 			.post('variables/search', {
 				headers,
-				body: JSON.stringify(body),
+				body: losslessStringify(body),
 			})
 			.json()
 	}
@@ -493,7 +492,7 @@ export class OperateApiClient {
 		const vars: { items: Variable[] } = await this.rest
 			.post('variables/search', {
 				headers,
-				body: JSON.stringify(body),
+				body: losslessStringify(body),
 			})
 			.json()
 		return vars.items.reduce(
@@ -545,7 +544,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`drd/${key}`, {
 			headers,
-			parseJson: (text) => parseWithAnnotations(text, DecisionRequirements),
+			parseJson: (text) => losslessParse(text, DecisionRequirements),
 		}).json()
 	}
 

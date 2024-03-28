@@ -6,6 +6,7 @@ import {
 } from '@grpc/grpc-js/build/src/call'
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
+import { LosslessDto } from 'lib'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import * as uuid from 'uuid'
 
@@ -34,32 +35,36 @@ const CapacityEvent = {
 	Empty: 'CAPACITY_EMPTY',
 }
 
-export interface ZBWorkerBaseConstructor<T> {
-	grpcClient: ZB.ZBGrpc
-	id: string | null
-	taskType: string
-	options: ZB.ZBWorkerOptions<T> & ZBClientOptions
-	idColor: Chalk
-	zbClient: ZeebeGrpcClient
-	log: StatefulLogInterceptor
-}
-
 export interface ZBWorkerConstructorConfig<
 	WorkerInputVariables,
 	CustomHeaderShape,
 	WorkerOutputVariables,
-> extends ZBWorkerBaseConstructor<WorkerInputVariables> {
+> {
+	grpcClient: ZB.ZBGrpc
+	id: string | null
+	taskType: string
+	options: ZB.ZBWorkerOptions<WorkerInputVariables> & ZBClientOptions
+	idColor: Chalk
+	zbClient: ZeebeGrpcClient
+	log: StatefulLogInterceptor
 	taskHandler: ZB.ZBWorkerTaskHandler<
 		WorkerInputVariables,
 		CustomHeaderShape,
 		WorkerOutputVariables
 	>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	inputVariableDto?: { new (...args: any[]): Readonly<WorkerInputVariables> }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
 }
 
 export class ZBWorkerBase<
-	WorkerInputVariables,
-	CustomHeaderShape,
-	WorkerOutputVariables,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	WorkerInputVariables = any,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	CustomHeaderShape = any,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	WorkerOutputVariables = any,
 > extends TypedEmitter<typeof ConnectionStatusEvent> {
 	private static readonly DEFAULT_JOB_ACTIVATION_TIMEOUT =
 		Duration.seconds.of(60)
@@ -67,7 +72,6 @@ export class ZBWorkerBase<
 	public activeJobs = 0
 	public grpcClient: ZB.ZBGrpc
 	public maxJobsToActivate: number
-	public jobBatchMinSize: number
 	public taskType: string
 	public timeout: MaybeTimeDuration
 	public pollCount = 0
@@ -98,6 +102,14 @@ export class ZBWorkerBase<
 	private backPressureRetryCount: number = 0
 	private fetchVariable: (keyof WorkerInputVariables)[] | undefined
 	private tenantId?: string
+	private inputVariableDto: {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		new (obj: any): WorkerInputVariables
+	}
+	private customHeadersDto: {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		new (...args: any[]): CustomHeaderShape
+	}
 
 	constructor({
 		grpcClient,
@@ -107,6 +119,8 @@ export class ZBWorkerBase<
 		taskHandler,
 		taskType,
 		zbClient,
+		inputVariableDto,
+		customHeadersDto,
 	}: ZBWorkerConstructorConfig<
 		WorkerInputVariables,
 		CustomHeaderShape,
@@ -120,6 +134,18 @@ export class ZBWorkerBase<
 		if (!taskHandler) {
 			throw new Error('Missing taskHandler')
 		}
+		this.inputVariableDto =
+			inputVariableDto ??
+			(LosslessDto as {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (obj: any): WorkerInputVariables
+			})
+		this.customHeadersDto =
+			customHeadersDto ??
+			(LosslessDto as {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (obj: any): CustomHeaderShape
+			})
 		this.tenantId = options.tenantId
 		this.taskHandler = taskHandler
 		this.taskType = taskType
@@ -127,10 +153,6 @@ export class ZBWorkerBase<
 			options.maxJobsToActivate || ZBWorkerBase.DEFAULT_MAX_ACTIVE_JOBS
 		this.activeJobsThresholdForReactivation =
 			this.maxJobsToActivate * MIN_ACTIVE_JOBS_RATIO_BEFORE_ACTIVATING_JOBS
-		this.jobBatchMinSize = Math.min(
-			options.jobBatchMinSize ?? 0,
-			this.maxJobsToActivate
-		)
 		this.timeout =
 			options.timeout || ZBWorkerBase.DEFAULT_JOB_ACTIVATION_TIMEOUT
 
@@ -583,7 +605,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			parseVariablesAndCustomHeadersToJSON<
 				WorkerInputVariables,
 				CustomHeaderShape
-			>(job)
+			>(job, this.inputVariableDto, this.customHeadersDto)
 		)
 		this.handleJobs(jobs)
 	}

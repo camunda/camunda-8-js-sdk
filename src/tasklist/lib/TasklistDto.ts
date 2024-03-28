@@ -1,4 +1,4 @@
-import { Int64, LosslessDto } from 'lib'
+import { Int64String, LosslessDto } from 'lib'
 
 export type TaskState = 'COMPLETED' | 'CREATED' | 'CANCELED' | 'FAILED'
 
@@ -172,7 +172,7 @@ export class TaskResponse extends LosslessDto {
 	/* Reference to the ID of a deployed form. If the form is not deployed, this property is null. */
 	formId!: string
 	/* Reference to the version of a deployed form. If the form is not deployed, this property is null. */
-	@Int64
+	@Int64String
 	formVersion?: string
 	/* Is the form embedded for this task? If there is no form, this property is null. */
 	isFormEmbedded?: boolean
@@ -219,7 +219,7 @@ export class Form extends LosslessDto {
 	id!: string
 	processDefinitionId!: string
 	schema!: string
-	@Int64
+	@Int64String
 	version!: string
 	tenantId!: string
 	isDeleted!: boolean

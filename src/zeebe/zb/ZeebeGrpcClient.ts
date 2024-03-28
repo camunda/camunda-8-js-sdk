@@ -3,18 +3,20 @@ import * as path from 'path'
 
 import chalk from 'chalk'
 import d from 'debug'
+import {
+	CamundaEnvironmentConfigurator,
+	CamundaPlatform8Configuration,
+	DeepPartial,
+	LosslessDto,
+	RequireConfiguration,
+	constructOAuthProvider,
+	losslessStringify,
+} from 'lib'
 import { IOAuthProvider } from 'oauth'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import { v4 as uuid } from 'uuid'
 
-import {
-	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
-	RequireConfiguration,
-	constructOAuthProvider,
-} from '../../lib'
 import {
 	BpmnParser,
 	parseVariables,
@@ -239,15 +241,39 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		Variables = ZB.IInputVariables,
 		CustomHeaders = ZB.ICustomHeaders,
 	>(
-		request: Grpc.ActivateJobsRequest
+		request: Grpc.ActivateJobsRequest & {
+			inputVariableDto?: {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (...args: any[]): Readonly<Variables>
+			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaders> }
+		}
 	): Promise<ZB.Job<Variables, CustomHeaders>[]> {
+		const { inputVariableDto, customHeadersDto, ...req } = request
+		const inputVariableDtoToUse =
+			inputVariableDto ??
+			(LosslessDto as {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (obj: any): Variables
+			})
+		const customHeadersDtoToUse =
+			customHeadersDto ??
+			(LosslessDto as {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (obj: any): CustomHeaders
+			})
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			try {
-				const stream = await this.grpc.activateJobsStream(request)
+				const stream = await this.grpc.activateJobsStream(req)
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
 					const jobs = res.jobs.map((job) =>
-						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(job)
+						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
+							job,
+							inputVariableDtoToUse,
+							customHeadersDtoToUse
+						)
 					)
 
 					resolve(jobs)
@@ -784,7 +810,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		evaluateDecisionRequest: Grpc.EvaluateDecisionRequest
 	): Promise<Grpc.EvaluateDecisionResponse> {
 		// the gRPC API call needs a JSON string, but we accept a JSON object, so we transform it here
-		const variables = JSON.stringify(
+		const variables = losslessStringify(
 			evaluateDecisionRequest.variables
 		) as unknown as ZB.JSONDoc
 		return this.executeOperation('evaluateDecision', () =>
@@ -862,7 +888,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			const req = Utils.deepClone(modifyProcessInstanceRequest)
 			req?.activateInstructions?.forEach((a) =>
 				a.variableInstructions.forEach(
-					(v) => (v.variables = JSON.stringify(v.variables))
+					(v) => (v.variables = losslessStringify(v.variables))
 				)
 			)
 			return this.grpc.modifyProcessInstanceSync({
@@ -1049,7 +1075,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		*/
 		const variables =
 			typeof request.variables === 'object'
-				? JSON.stringify(request.variables)
+				? losslessStringify(request.variables)
 				: request.variables
 
 		return this.executeOperation('setVariables', () =>

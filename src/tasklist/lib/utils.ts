@@ -1,3 +1,5 @@
+import { losslessStringify } from 'lib'
+
 type JSON = string | number | boolean | JSON[] | JSONDoc[]
 export interface JSONDoc {
 	[key: string]: JSON
@@ -9,7 +11,7 @@ export interface JSONDoc {
  */
 export const escape = (variable: JSON) => {
 	if (typeof variable === 'object') {
-		return `${JSON.stringify(variable)}`
+		return `${losslessStringify(variable)}`
 	}
 	if (typeof variable === 'string') {
 		return `"${variable}"`

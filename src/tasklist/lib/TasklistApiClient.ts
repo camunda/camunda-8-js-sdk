@@ -8,8 +8,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
-	parseArrayWithAnnotations,
-	parseWithAnnotations,
+	losslessParse,
+	losslessStringify,
 } from 'lib'
 
 import { IOAuthProvider } from '../../oauth'
@@ -164,8 +164,7 @@ export class TasklistApiClient {
 			.post(url, {
 				json: this.replaceDatesWithString(query),
 				headers,
-				parseJson: (text) =>
-					parseArrayWithAnnotations(text, TaskSearchResponse),
+				parseJson: (text) => losslessParse(text, TaskSearchResponse),
 			})
 			.json()
 	}
@@ -199,7 +198,7 @@ export class TasklistApiClient {
 					processDefinitionKey,
 					version,
 				},
-				parseJson: (text) => parseWithAnnotations(text, Form),
+				parseJson: (text) => losslessParse(text, Form),
 				headers,
 			})
 			.json()
@@ -221,7 +220,7 @@ export class TasklistApiClient {
 		const headers = await this.getHeaders()
 		return this.rest
 			.post(`tasks/${taskId}/variables/search`, {
-				body: JSON.stringify({
+				body: losslessStringify({
 					variableNames: variableNames || [],
 					includeVariables: includeVariables || {},
 				}),
@@ -262,12 +261,12 @@ export class TasklistApiClient {
 		const headers = await this.getHeaders()
 		return this.rest
 			.patch(`tasks/${taskId}/assign`, {
-				body: JSON.stringify({
+				body: losslessStringify({
 					assignee,
 					allowOverrideAssignment,
 				}),
 				headers,
-				parseJson: (text) => parseWithAnnotations(text, TaskResponse),
+				parseJson: (text) => losslessParse(text, TaskResponse),
 			})
 			.json()
 	}
@@ -288,10 +287,10 @@ export class TasklistApiClient {
 		return this.rest
 			.patch(`tasks/${taskId}/complete`, {
 				headers,
-				body: JSON.stringify({
+				body: losslessStringify({
 					variables: encodeTaskVariablesForAPIRequest(variables || {}),
 				}),
-				parseJson: (text) => parseWithAnnotations(text, TaskResponse),
+				parseJson: (text) => losslessParse(text, TaskResponse),
 			})
 			.json()
 	}
@@ -307,7 +306,7 @@ export class TasklistApiClient {
 		return this.rest
 			.patch(`tasks/${taskId}/unassign`, {
 				headers,
-				parseJson: (text) => parseWithAnnotations(text, TaskResponse),
+				parseJson: (text) => losslessParse(text, TaskResponse),
 			})
 			.json()
 	}
