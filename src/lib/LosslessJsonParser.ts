@@ -24,23 +24,67 @@ import 'reflect-metadata'
 const debug = d('lossless-json-parser')
 
 /**
- * Decorate Dto string fields as @Int64String to specify that the JSON number property should be parsed as a string.
+ * Decorate Dto string fields as `@Int64String` to specify that the JSON number property should be parsed as a string.
+ * @example
+ * ```typescript
+ * class MyDto extends LosslessDto {
+ *   @Int64String
+ *   int64NumberField!: string
+ *   @BigIntValue
+ *   bigintField!: bigint
+ *   @ChildDto(MyChildDto)
+ *   childDtoField!: MyChildDto
+ *   normalField!: string
+ *   normalNumberField!: number
+ *   maybePresentField?: string
+ * }
+ * ```
  */
 export function Int64String(target: any, propertyKey: string | symbol): void {
 	Reflect.defineMetadata('type:int64', true, target, propertyKey)
 }
 
 /**
- * Decorate Dto bigint fields as @BigInt to specify that the JSON number property should be parsed as a bigint.
- * @param target
- * @param propertKey
+ * Decorate Dto bigint fields as `@BigInt` to specify that the JSON number property should be parsed as a bigint.
+ * @example
+ * ```typescript
+ * class MyDto extends LosslessDto {
+ *   @Int64String
+ *   int64NumberField!: string
+ *   @BigIntValue
+ *   bigintField!: bigint
+ *   @ChildDto(MyChildDto)
+ *   childDtoField!: MyChildDto
+ *   normalField!: string
+ *   normalNumberField!: number
+ *   maybePresentField?: string
+ * }
+ * ```
  */
 export function BigIntValue(target: any, propertKey: string | symbol): void {
 	Reflect.defineMetadata('type:bigint', true, target, propertKey)
 }
 
 /**
- * Decorate a Dto object field as @ChildDto to specify that the JSON object property should be parsed as a child Dto.
+ * Decorate a Dto object field as `@ChildDto` to specify that the JSON object property should be parsed as a child Dto.
+ * @example
+ * ```typescript
+ *
+ * class MyChildDto extends LosslessDto {
+ *   someField!: string
+ * }
+ *
+ * class MyDto extends LosslessDto {
+ *   @Int64String
+ *   int64NumberField!: string
+ *   @BigIntValue
+ *   bigintField!: bigint
+ *   @ChildDto(MyChildDto)
+ *   childDtoField!: MyChildDto
+ *   normalField!: string
+ *   normalNumberField!: number
+ *   maybePresentField?: string
+ * }
  */
 export function ChildDto(childClass: any) {
 	return function (target: any, propertyKey: string | symbol) {
@@ -48,6 +92,23 @@ export function ChildDto(childClass: any) {
 	}
 }
 
+/**
+ * Extend the LosslessDto class with your own Dto classes to enable lossless parsing of int64 values.
+ * Decorate fields with `@Int64String` or `@BigIntValue` to specify how int64 JSON numbers should be parsed.
+ * @example
+ * ```typescript
+ * class MyDto extends LosslessDto {
+ *   @Int64String
+ *   int64NumberField: string
+ *   @BigIntValue
+ *   bigintField: bigint
+ *   @ChildDto(MyChildDto)
+ *   childDtoField: MyChildDto
+ *   normalField: string
+ *   normalNumberField: number
+ * }
+ * ```
+ */
 export class LosslessDto {
 	constructor(obj: any) {
 		if (obj) {
@@ -114,13 +175,13 @@ function parseWithAnnotations<T>(
 			}
 		} else {
 			if (Reflect.hasMetadata('type:int64', dto.prototype, key)) {
-				debug(`Parsing int64 field ${key} to string`)
+				debug(`Parsing int64 field "${key}" to string`)
 				if (value) {
 					if (isLosslessNumber(value)) {
 						instance[key] = (value as LosslessNumber).toString()
 					} else {
 						throw new Error(
-							`Received ${typeof value} value for Int64String field ${key}, expected number value`
+							`Unexpected type: Received JSON ${typeof value} value for Int64String Dto field "${key}", expected number`
 						)
 					}
 				}
@@ -131,7 +192,7 @@ function parseWithAnnotations<T>(
 						instance[key] = BigInt((value as LosslessNumber).toString())
 					} else {
 						throw new Error(
-							`Received ${typeof value} value for bigint field ${key}, expected number value`
+							`Unexpected type: Received JSON ${typeof value} value for BigIntValue Dto field "${key}", expected number`
 						)
 					}
 				}

@@ -151,6 +151,56 @@ test('LosslessJsonParser parses unexpected numbers as number at runtime', () => 
 	expect((parsedDto as any).age).toBe(42)
 })
 
+test('LosslessJsonParser is ok with missing optional fields at runtime', () => {
+	class InputVariables extends LosslessDto {
+		name!: string
+		@Int64String
+		key!: string
+		@BigIntValue
+		bigInt!: bigint
+		@Int64String
+		optionalKey?: string
+	}
+
+	const json = `{
+			"name": "John Doe",
+			"key": 12345678901234567890,
+			"age": 42,
+			"bigInt": 12345678901234567890
+		}`
+	const parsedDto = losslessParse(json, InputVariables)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	expect((parsedDto as any).age).toBe(42)
+})
+
+test('LosslessJsonParser will throw if an unexpected type is encountered at runtime', () => {
+	class InputVariables extends LosslessDto {
+		name!: string
+		@Int64String
+		key!: string
+		@BigIntValue
+		bigInt!: bigint
+		@Int64String
+		optionalKey?: string
+	}
+
+	const json = `{
+			"name": "John Doe",
+			"key": 12345678901234567890,
+			"age": 42,
+			"bigInt": 12345678901234567890,
+			"optionalKey": "optional"
+		}`
+	let threw = false
+	try {
+		losslessParse(json, InputVariables)
+	} catch (e) {
+		expect((e as Error).message.includes('Unexpected type')).toBe(true)
+		threw = true
+	}
+	expect(threw).toBe(true)
+})
+
 test('LosslessJsonParser throws for unexpected unsafe numbers at runtime', () => {
 	class InputVariables extends LosslessDto {
 		name!: string
