@@ -573,6 +573,29 @@ export interface ModifyProcessInstanceRequest {
 
 export type ModifyProcessInstanceResponse = Record<string, never>
 
+export interface MigrateProcessInstanceRequest {
+	// key of the process instance to migrate
+	processInstanceKey: string
+	// the migration plan that defines target process and element mappings
+	migrationPlan: MigrationPlan
+}
+
+interface MigrationPlan {
+	// the key of process definition to migrate the process instance to
+	targetProcessDefinitionKey: string
+	// the mapping instructions describe how to map elements from the source process definition to the target process definition
+	mappingInstructions: MappingInstruction[]
+}
+
+interface MappingInstruction {
+	// the element id to migrate from
+	sourceElementId: string
+	// the element id to migrate into
+	targetElementId: string
+}
+
+export type MigrateProcessInstanceResponse = Record<string, never>
+
 export type EvaluateDecisionRequest =
 	| {
 			/**
