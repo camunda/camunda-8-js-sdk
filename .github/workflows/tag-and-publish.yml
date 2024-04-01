@@ -14,7 +14,7 @@ jobs:
       name: publish
     services:
       elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.5
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.19
         env:
           discovery.type: single-node
           cluster.name: docker-cluster
