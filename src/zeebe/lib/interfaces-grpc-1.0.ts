@@ -319,7 +319,7 @@ export interface DecisionMetadata {
 	 * the assigned decision key, which acts as a unique identifier for this
 	 * decision
 	 */
-	decisionKey: number
+	decisionKey: string
 	/**
 	 * the dmn ID of the decision requirements graph that this decision is part
 	 * of, as parsed during deployment
@@ -329,7 +329,7 @@ export interface DecisionMetadata {
 	 * the assigned key of the decision requirements graph that this decision is
 	 * part of
 	 */
-	decisionRequirementsKey: number
+	decisionRequirementsKey: string
 	/** the tenant id of the deployed decision */
 	tenantId: string
 }
@@ -348,7 +348,7 @@ export interface DecisionRequirementsMetadata {
 	 * the assigned decision requirements key, which acts as a unique identifier
 	 * for this decision requirements
 	 */
-	decisionRequirementsKey: number
+	decisionRequirementsKey: string
 	/**
 	 * the resource name (see: Resource.name) from which this decision
 	 * requirements was parsed
@@ -367,7 +367,7 @@ export interface FormMetadata {
 	/** the assigned form version */
 	readonly version: number
 	/** the assigned key, which acts as a unique identifier for this form */
-	readonly formKey: number
+	readonly formKey: string
 	/** the resource name */
 	readonly resourceName: string
 	/** the tenant id of the deployed form */
@@ -396,7 +396,7 @@ export type Deployment =
 
 export interface DeployResourceResponse<T> {
 	/** the unique key identifying the deployment */
-	readonly key: number
+	readonly key: string
 	/** a list of deployed resources, e.g. processes */
 	readonly deployments: T[]
 	/** the tenant id of the deployed resources */
@@ -439,7 +439,7 @@ export interface PublishMessageRequest<Variables = IInputVariables> {
 
 export interface PublishMessageResponse {
 	/** the unique ID of the message that was published */
-	key: number
+	key: string
 	/** the tenantId of the message */
 	tenantId: string
 }

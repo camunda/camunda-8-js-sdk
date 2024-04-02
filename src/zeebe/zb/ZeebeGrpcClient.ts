@@ -899,8 +899,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @param migrateProcessInstanceRequest
-	 * @returns
+	 * @since 8.5.0
 	 */
 	public migrateProcessInstance(
 		migrateProcessInstanceRequest: Grpc.MigrateProcessInstanceRequest
