@@ -898,6 +898,18 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
+	 *
+	 * @since 8.5.0
+	 */
+	public migrateProcessInstance(
+		migrateProcessInstanceRequest: Grpc.MigrateProcessInstanceRequest
+	): Promise<Grpc.MigrateProcessInstanceResponse> {
+		return this.executeOperation('migrateProcessInstance', () =>
+			this.grpc.migrateProcessInstanceSync(migrateProcessInstanceRequest)
+		)
+	}
+
+	/**
 	 * @description Publish a message to the broker for correlation with a workflow instance. See [this tutorial](https://docs.camunda.io/docs/guides/message-correlation/) for a detailed description of message correlation.
 	 * @example
 	 * ```

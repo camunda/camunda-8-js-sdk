@@ -20,6 +20,8 @@ import {
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FailJobRequest,
+	MigrateProcessInstanceRequest,
+	MigrateProcessInstanceResponse,
 	ModifyProcessInstanceRequest,
 	ModifyProcessInstanceResponse,
 	ProcessInstanceCreationStartInstruction,
@@ -420,6 +422,9 @@ export interface ZBGrpc extends GrpcClient {
 	cancelProcessInstanceSync(processInstanceKey: {
 		processInstanceKey: string | number
 	}): Promise<void>
+	migrateProcessInstanceSync(
+		request: MigrateProcessInstanceRequest
+	): Promise<MigrateProcessInstanceResponse>
 	modifyProcessInstanceSync(
 		request: ModifyProcessInstanceRequest
 	): Promise<ModifyProcessInstanceResponse>
