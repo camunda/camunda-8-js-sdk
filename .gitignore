@@ -133,3 +133,5 @@ dist
 
 *.env
 !docker/.env
+
+docs
