@@ -7,3 +7,16 @@ src
 .vscode
 .husky
 docs
+coverage
+zeebe-extra
+commitlint.config.js
+.editorconfig
+.eslintrc.js
+.prettier*
+prettier*
+ts-jest.log
+.eslintignore
+.releaserc
+typedoc.json
+lerna.json
+docker*

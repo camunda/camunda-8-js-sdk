@@ -161,9 +161,9 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 })
 
-// Added test for https://github.com/camunda-community-hub/camunda-saas-oauth-nodejs/issues/8
+// Added test for https://github.com/camunda/camunda-saas-oauth-nodejs/issues/8
 // "Can not renew expired token"
-// Updated test for https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/3
+// Updated test for https://github.com/camunda/camunda-8-js-sdk/issues/3
 // "Remove expiry timer from oAuth token implementation"
 test('In-memory cache is populated and evicted after timeout', (done) => {
 	const delay = (timeout: number) =>
@@ -216,7 +216,7 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 	})
 })
 
-// Added test for https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/62
+// Added test for https://github.com/camunda/camunda-8-js-sdk/issues/62
 // "OAuth token refresh has a race condition"
 test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS', (done) => {
 	const delay = (timeout: number) =>
@@ -529,7 +529,7 @@ test('Can set a custom user agent', () => {
 	expect(o.userAgentString.includes(' modeler')).toBe(true)
 })
 
-// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 test('Passes no audience for Modeler API when self-hosted', (done) => {
 	const serverPort3006 = 3006
 	const o = new OAuthProvider({
@@ -563,7 +563,7 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 	o.getToken('MODELER')
 })
 
-// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 test('Throws if you try to get a Modeler token from SaaS without console creds', async () => {
 	let thrown = false
 	const o = new OAuthProvider({
@@ -586,7 +586,7 @@ test('Throws if you try to get a Modeler token from SaaS without console creds',
 		})
 })
 
-// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 test('Throws if you try to get a Modeler token from Self-hosted without application creds', async () => {
 	let thrown = false
 	const o = new OAuthProvider({

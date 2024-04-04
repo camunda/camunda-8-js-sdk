@@ -75,7 +75,7 @@ const getMainEnv = () =>
 			optional: true,
 			// No default for this, because on Self-Managed it's not needed, and we omit it if the user doesn't set it.
 			// However, if someone sets up Self-Managed in a way that needs it, we let them set one.
-			// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+			// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 		},
 		/** The audience parameter for an Optimize OAuth token request. Defaults to optimize.camunda.io */
 		CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE: {
