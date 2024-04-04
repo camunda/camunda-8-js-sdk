@@ -3,7 +3,7 @@ name: Multitenant Integration Tests
 on: [push]
 
 jobs:
-  local_integration:
+  local_multitenancy_integration:
     runs-on: ubuntu-latest
     environment:
       name: selfhosted
