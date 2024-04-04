@@ -1,4 +1,4 @@
-name: Tag and publish a new version
+name: Publish a new version
 
 on:
   push:
@@ -13,10 +13,10 @@ jobs:
       name: selfhosted
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "18" # Specify a Node.js version
 
@@ -146,11 +146,11 @@ jobs:
       name: publish
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
@@ -165,6 +165,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Checkout alpha branch
+        if: github.ref == 'refs/heads/main'
+        uses: actions/checkout@v2
+        with:
+          ref: alpha
+
+      - name: Merge main into alpha
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git fetch origin main
+          git merge origin/main
+
+      - name: Push changes
+        if: github.ref == 'refs/heads/main'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: alpha
 
       - name: Deploy Docs
         if: github.ref == 'refs/heads/main'
