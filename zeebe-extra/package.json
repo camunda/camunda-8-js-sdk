@@ -18,13 +18,13 @@
 		"Uber",
 		"Cadence"
 	],
-	"homepage": "https://camunda-community-hub.github.io/camunda-8-js-sdk/",
+	"homepage": "https://camunda.github.io/camunda-8-js-sdk/",
 	"bugs": {
-		"url": "https://github.com/camunda-community-hub/camunda-8-js-sdk/issues"
+		"url": "https://github.com/camunda/camunda-8-js-sdk/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+		"url": "git+https://github.com/camunda/camunda-8-js-sdk.git"
 	},
 	"private": false,
 	"publishConfig": {

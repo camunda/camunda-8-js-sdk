@@ -16,11 +16,6 @@ jobs:
         with:
           node-version: "18" # Specify a Node.js version
 
-      # This is to force nx arch-specific packages to correctly install
-      # This is to work around https://github.com/npm/cli/issues/4828
-      - name: Remove package-lock.json
-        run: rm -f package-lock.json
-
       - name: Install dependencies
         run: npm install
 
