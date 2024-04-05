@@ -1,3 +1,10 @@
+# [8.5.0-alpha.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0-alpha.3...v8.5.0-alpha.4) (2024-04-05)
+
+
+### Bug Fixes
+
+* **repo:** use ts-patch to transform module mapping in output ([#112](https://github.com/camunda/camunda-8-js-sdk/issues/112)) ([7efdcf3](https://github.com/camunda/camunda-8-js-sdk/commit/7efdcf3478a0d68b4f1cbc62c1526ba7275008b0)), closes [#110](https://github.com/camunda/camunda-8-js-sdk/issues/110)
+
 # [8.5.0-alpha.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0-alpha.2...v8.5.0-alpha.3) (2024-04-05)
 
 
