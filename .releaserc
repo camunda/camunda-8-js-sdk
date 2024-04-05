@@ -8,7 +8,25 @@
   ],
   "repositoryUrl": "https://github.com/camunda/camunda-8-js-sdk.git",
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "releaseRules": [
+          {
+            "type": "feat",
+            "release": "patch"
+          },
+          {
+            "type": "release",
+            "release": "patch"
+          },
+          {
+            "type": "minor",
+            "release": "minor"
+          }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     [

@@ -19,9 +19,9 @@ To get started with contributing, please follow these steps:
 
 ## A note on commit messages
 
-The repository uses []`semantic-release`](https://github.com/semantic-release/semantic-release) to create releases. Because we track the Camunda 8 Platform minor version, we need to treat feature implementation during a minor release cycle as a `fix` rather than a `feature`.
+The repository uses []`semantic-release`](https://github.com/semantic-release/semantic-release) to create releases. Because we track the Camunda 8 Platform minor version, we treat feature implementation during a minor release cycle as a patch release rather than a minor release.
 
-Creating a commit with a `feature` commit message will cause the package version minor release number to increment, which we only do when Camunda 8 Platform releases a new minor version.
+Creating a commit with a `feat` commit message will cause the package version patch release number to increment. To update the minor version, a commit with the type `minor` is needed.
 
 ## Running tests
 
