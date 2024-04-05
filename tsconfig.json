@@ -24,7 +24,8 @@
 		"plugins": [
 			{
 				"name": "typescript-tslint-plugin"
-			}
+			},
+			{ "transform": "typescript-transform-paths", "afterDeclarations": true }
 		],
 		"baseUrl": "./src",
 		"paths": {
@@ -34,7 +35,8 @@
 			"modeler": ["./modeler"],
 			"tasklist": ["./tasklist"],
 			"optimize": ["./optimize"],
-			"c8console": ["./c8console"]
+			"c8console": ["./c8console"],
+			"zeebe": ["./zeebe"]
 		}
 	},
 	"exclude": ["node_modules", "src/__tests__/*"]
