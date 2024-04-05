@@ -8,7 +8,7 @@
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc --project tsconfig.json",
 		"docs": "rm -rf ./docs && typedoc",
-		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration --testPathIgnorePatterns local-integration --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --testPathIgnorePatterns __tests__/config",
+		"test": "CAMUNDA_UNIT_TEST=true jest --detectOpenHandles --testPathIgnorePatterns integration --testPathIgnorePatterns local-integration --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --testPathIgnorePatterns __tests__/config",
 		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns __tests__/config --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true -u",
 		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns __tests__/config - --detectOpenHandles --verbose true -u",
 		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration -u",
