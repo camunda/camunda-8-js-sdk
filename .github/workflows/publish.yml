@@ -7,6 +7,24 @@ on:
       - alpha
 
 jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Unit Tests
+        run: |
+          npm run test
+
   local_integration:
     runs-on: ubuntu-latest
     environment:
@@ -55,7 +73,6 @@ jobs:
 
   local_multitenancy_integration:
     runs-on: ubuntu-latest
-    needs: local_integration
     environment:
       name: selfhosted
     steps:
@@ -140,7 +157,13 @@ jobs:
           CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 10000 #89: Intermittent 401 unauthorised in integration tests
 
   tag-and-publish:
-    needs: saas_integration
+    needs:
+      [
+        saas_integration,
+        local_multitenancy_integration,
+        local_integration,
+        unit-tests,
+      ]
     runs-on: ubuntu-latest
     environment:
       name: publish
