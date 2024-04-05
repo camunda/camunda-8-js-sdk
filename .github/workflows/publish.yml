@@ -120,7 +120,6 @@ jobs:
         run: docker-compose -f docker/docker-compose-multitenancy.yml -f docker/docker-compose-modeler.yaml down
 
   saas_integration:
-    needs: local_multitenancy_integration
     runs-on: ubuntu-latest
     environment: integration
     steps:
