@@ -4,6 +4,14 @@
 
 This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See details on why [this is not in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79)).
 
+# What does "supported" mean?
+
+This is the official supported-by-Camunda Nodejs SDK for Camunda Platform 8.
+
+The Node.js SDK will not always support all features of Camunda Platform 8 immediately upon their release. Complete API coverage for a platform release will lag behind the platform release.
+
+Prioritisation of implementing features is influenced by customer demand.
+
 ## Using the SDK in your project
 
 Install the SDK as a dependency:
