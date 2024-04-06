@@ -1,10 +1,6 @@
-name: Publish a new version
+name: Pull Request tests
 
-on:
-  push:
-    branches:
-      - main
-      - alpha
+on: [pull_request]
 
 jobs:
   unit-tests:
@@ -19,7 +15,7 @@ jobs:
           node-version: "18" # Specify a Node.js version
 
       - name: Install dependencies
-        run: npm i
+        run: npm install
 
       - name: Build
         run: npm run build
@@ -157,62 +153,3 @@ jobs:
           CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
           CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 10000 #89: Intermittent 401 unauthorised in integration tests
-
-  tag-and-publish:
-    needs:
-      [
-        saas_integration,
-        local_multitenancy_integration,
-        local_integration,
-        unit-tests,
-      ]
-    runs-on: ubuntu-latest
-    environment:
-      name: publish
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-      - name: Install
-        run: npm i
-      - name: Build
-        run: npm run build
-      - name: Build Docs
-        run: npm run docs
-      - name: Semantic Release
-        run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Checkout alpha branch
-        if: github.ref == 'refs/heads/main'
-        uses: actions/checkout@v2
-        with:
-          ref: alpha
-
-      - name: Merge main into alpha
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git fetch origin main
-          git merge origin/main
-
-      - name: Push changes
-        if: github.ref == 'refs/heads/main'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: alpha
-
-      - name: Deploy Docs
-        if: github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: docs
-          branch: gh-pages
