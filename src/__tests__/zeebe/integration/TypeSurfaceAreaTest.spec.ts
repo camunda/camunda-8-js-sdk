@@ -1,6 +1,5 @@
-import { ZBWorkerTaskHandler } from 'zeebe/types'
-
 import { ZeebeGrpcClient } from '../../../zeebe/index'
+import { ZBWorkerTaskHandler } from '../../../zeebe/types'
 
 jest.setTimeout(7000)
 

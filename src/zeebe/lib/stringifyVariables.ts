@@ -1,4 +1,4 @@
-import { losslessParse, losslessStringify } from 'lib'
+import { losslessParse, losslessStringify } from '../../lib'
 
 import { Job } from './interfaces-1.0'
 import { ActivatedJob } from './interfaces-grpc-1.0'

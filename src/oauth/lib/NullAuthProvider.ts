@@ -1,5 +1,6 @@
 import debug from 'debug'
-import { IOAuthProvider } from 'oauth'
+
+import { IOAuthProvider } from '..'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'
 

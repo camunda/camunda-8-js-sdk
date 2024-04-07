@@ -1,8 +1,7 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
-import { DeployResourceResponse, ProcessDeployment } from 'zeebe/types'
-
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
+import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
 suppressZeebeLogging()
 

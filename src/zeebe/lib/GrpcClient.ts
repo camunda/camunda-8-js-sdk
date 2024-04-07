@@ -12,9 +12,10 @@ import {
 import { VerifyOptions } from '@grpc/grpc-js/build/src/channel-credentials'
 import { Options, PackageDefinition, loadSync } from '@grpc/proto-loader'
 import d from 'debug'
-import { CamundaPlatform8Configuration, createUserAgentString } from 'lib'
-import { IOAuthProvider } from 'oauth'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
+
+import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
+import { IOAuthProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'

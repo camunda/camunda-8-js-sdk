@@ -1,4 +1,4 @@
-import { OperateApiClient } from 'operate'
+import { OperateApiClient } from '../../operate'
 
 const operate = createClient()
 

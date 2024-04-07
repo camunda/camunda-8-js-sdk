@@ -3,6 +3,10 @@ import * as path from 'path'
 
 import chalk from 'chalk'
 import d from 'debug'
+import promiseRetry from 'promise-retry'
+import { Duration, MaybeTimeDuration } from 'typed-duration'
+import { v4 as uuid } from 'uuid'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -11,12 +15,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	losslessStringify,
-} from 'lib'
-import { IOAuthProvider } from 'oauth'
-import promiseRetry from 'promise-retry'
-import { Duration, MaybeTimeDuration } from 'typed-duration'
-import { v4 as uuid } from 'uuid'
-
+} from '../../lib'
+import { IOAuthProvider } from '../../oauth'
 import {
 	BpmnParser,
 	parseVariables,

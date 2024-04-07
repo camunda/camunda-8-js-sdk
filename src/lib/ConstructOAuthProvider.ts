@@ -1,4 +1,4 @@
-import { NullAuthProvider, OAuthProvider } from 'oauth'
+import { NullAuthProvider, OAuthProvider } from '../oauth'
 
 import { CamundaPlatform8Configuration } from './Configuration'
 
