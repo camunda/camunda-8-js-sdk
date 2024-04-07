@@ -3,6 +3,8 @@ import https from 'https'
 import * as os from 'os'
 
 import { debug } from 'debug'
+import fetch from 'node-fetch'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -10,9 +12,7 @@ import {
 	GetCertificateAuthority,
 	RequireConfiguration,
 	createUserAgentString,
-} from 'lib'
-import fetch from 'node-fetch'
-
+} from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'

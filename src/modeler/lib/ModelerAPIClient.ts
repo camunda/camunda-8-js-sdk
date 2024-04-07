@@ -1,5 +1,6 @@
 import d from 'debug'
 import got, { Response } from 'got'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -7,8 +8,8 @@ import {
 	GetCertificateAuthority,
 	constructOAuthProvider,
 	createUserAgentString,
-} from 'lib'
-import { IOAuthProvider } from 'oauth'
+} from '../../lib'
+import { IOAuthProvider } from '../../oauth'
 
 import * as Dto from './ModelerDto'
 

@@ -1,5 +1,6 @@
 import { debug as d } from 'debug'
 import got from 'got'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -10,8 +11,8 @@ import {
 	createUserAgentString,
 	losslessParse,
 	losslessStringify,
-} from 'lib'
-import { IOAuthProvider } from 'oauth'
+} from '../../lib'
+import { IOAuthProvider } from '../../oauth'
 
 import {
 	ChangeStatus,

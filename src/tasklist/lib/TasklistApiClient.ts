@@ -1,5 +1,6 @@
 import { debug } from 'debug'
 import got from 'got'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -10,8 +11,7 @@ import {
 	createUserAgentString,
 	losslessParse,
 	losslessStringify,
-} from 'lib'
-
+} from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
 import {

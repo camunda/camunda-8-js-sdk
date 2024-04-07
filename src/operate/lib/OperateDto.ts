@@ -1,5 +1,6 @@
-import { ChildDto, Int64String, LosslessDto } from 'lib'
 import { LosslessNumber } from 'lossless-json'
+
+import { ChildDto, Int64String, LosslessDto } from '../../lib'
 
 export class DecisionDefinition extends LosslessDto {
 	id!: string

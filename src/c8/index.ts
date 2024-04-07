@@ -1,15 +1,15 @@
-import { AdminApiClient } from 'admin'
+import { AdminApiClient } from '../admin'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-} from 'lib'
-import { ModelerApiClient } from 'modeler'
-import { OAuthProvider } from 'oauth'
-import { OperateApiClient } from 'operate'
-import { OptimizeApiClient } from 'optimize'
-import { TasklistApiClient } from 'tasklist'
-import { ZeebeGrpcClient } from 'zeebe'
+} from '../lib'
+import { ModelerApiClient } from '../modeler'
+import { OAuthProvider } from '../oauth'
+import { OperateApiClient } from '../operate'
+import { OptimizeApiClient } from '../optimize'
+import { TasklistApiClient } from '../tasklist'
+import { ZeebeGrpcClient } from '../zeebe'
 
 /**
  * A single point of configuration for all Camunda Platform 8 clients.

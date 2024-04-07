@@ -1,5 +1,6 @@
 import d from 'debug'
 import got from 'got'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -8,8 +9,7 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
-} from 'lib'
-
+} from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
 import * as Dto from './AdminDto'
