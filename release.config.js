@@ -36,6 +36,7 @@ module.exports = {
 			'@semantic-release/release-notes-generator',
 			{
 				writerOpts: {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					transform: (commit, context) => {
 						let body = commit.body || ''
 						let footer = commit.footer || ''

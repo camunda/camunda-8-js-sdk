@@ -34,7 +34,8 @@
 	},
 	"husky": {
 		"hooks": {
-			"pre-commit": "lint-staged"
+			"pre-commit": "lint-staged",
+			"commit-msg": "node scripts/formatCommitMessage $1 && npx commitlint -E HUSKY_GIT_PARAMS"
 		}
 	},
 	"ts-jest": {
