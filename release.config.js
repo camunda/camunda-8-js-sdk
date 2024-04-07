@@ -38,11 +38,14 @@ module.exports = {
 				writerOpts: {
 					transform: (commit, context) => {
 						let body = commit.body || ''
+						let footer = commit.footer || ''
 
-						// Wrap long lines
+						// Wrap long lines in body and footer
 						body = body.replace(/(.{1,100})/g, '$1\n')
+						footer = footer.replace(/(.{1,100})/g, '$1\n')
 
 						commit.body = body
+						commit.footer = footer
 
 						return commit
 					},
