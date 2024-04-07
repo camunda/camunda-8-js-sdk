@@ -27,5 +27,8 @@
 		],
 		"import/newline-after-import": "error",
 		"prettier/prettier": "error"
+	},
+	"env": {
+		"node": true
 	}
 }

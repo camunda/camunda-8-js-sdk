@@ -37,13 +37,15 @@ export class Camunda8 {
 	private tasklistApiClient?: TasklistApiClient
 	private zeebeGrpcClient?: ZeebeGrpcClient
 	private configuration: CamundaPlatform8Configuration
-	private oAuthProvider: OAuthProvider
+	private oAuthProvider?: OAuthProvider
 
 	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
-
-		this.oAuthProvider = new OAuthProvider({ config: this.configuration })
+		// Respect Oauth disabled flag
+		if (!this.configuration.CAMUNDA_OAUTH_DISABLED) {
+			this.oAuthProvider = new OAuthProvider({ config: this.configuration })
+		}
 	}
 
 	public getOperateApiClient(): OperateApiClient {
@@ -96,7 +98,7 @@ export class Camunda8 {
 		return this.tasklistApiClient
 	}
 
-	public getZeebeApiClient(): ZeebeGrpcClient {
+	public getZeebeGrpcApiClient(): ZeebeGrpcClient {
 		if (!this.zeebeGrpcClient) {
 			this.zeebeGrpcClient = new ZeebeGrpcClient({
 				config: this.configuration,
