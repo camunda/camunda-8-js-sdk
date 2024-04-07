@@ -1,0 +1,9 @@
+{
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true
+	},
+	"include": ["*.js"]
+}
