@@ -41,3 +41,5 @@ const admin = camunda.getAdminApiClient()
 const operate = camunda.getOperateApiClient()
 
 // console.log(operate)
+
+console.log('Smoke test passed!')

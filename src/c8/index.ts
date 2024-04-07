@@ -42,6 +42,7 @@ export class Camunda8 {
 	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
+		// Respect Oauth disabled flag
 		if (!this.configuration.CAMUNDA_OAUTH_DISABLED) {
 			this.oAuthProvider = new OAuthProvider({ config: this.configuration })
 		}
