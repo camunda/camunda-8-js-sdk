@@ -6,9 +6,10 @@ import path from 'path'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('tsconfig-paths').register()
 
-import { OAuthProvider } from 'oauth'
-import { OperateApiClient } from 'operate'
 import { BpmnParser, ZeebeGrpcClient } from 'zeebe'
+
+import { OAuthProvider } from '../../oauth'
+import { OperateApiClient } from '../../operate'
 
 export const cleanUp = async () => {
 	// Your cleanup process here.
