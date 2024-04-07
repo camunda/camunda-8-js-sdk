@@ -17,6 +17,10 @@
             "release": "patch"
           },
           {
+            "type": "fix",
+            "release": "patch"
+          },
+          {
             "type": "release",
             "release": "patch"
           },
