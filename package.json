@@ -15,6 +15,7 @@
 		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns multitenancy --testPathIgnorePatterns __tests__/config -u",
 		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns __tests__/config local-integration --detectOpenHandles --verbose true",
 		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles --testPathIgnorePatterns __tests__/config disconnection",
+		"test:smoketest": "npm run build && node smoke-test/smoke-test.js && npx tsd --typings dist/",
 		"prepublishOnly": "npm run build && npm run test",
 		"commit": "cz",
 		"prepare": "husky install",
@@ -73,6 +74,9 @@
 			"prettier --write"
 		]
 	},
+	"tsd": {
+		"directory": "test-d"
+	},
 	"devDependencies": {
 		"@commitlint/cli": "^18.4.3",
 		"@commitlint/config-conventional": "^18.4.3",
@@ -102,6 +106,7 @@
 		"shx": "^0.3.4",
 		"ts-jest": "^29.1.1",
 		"tsconfig-paths": "^4.2.0",
+		"tsd": "^0.31.0",
 		"typedoc": "^0.25.9",
 		"typedoc-plugin-include-example": "^1.2.0",
 		"typedoc-plugin-missing-exports": "^2.2.0",
