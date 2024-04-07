@@ -1,6 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
 import { v4 as uuid } from 'uuid'
 
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 

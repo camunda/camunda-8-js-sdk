@@ -1,5 +1,4 @@
-import { BigIntValue, Int64String, LosslessDto } from 'lib'
-
+import { BigIntValue, Int64String, LosslessDto } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 test("Let's test worker handler signatures", () => {

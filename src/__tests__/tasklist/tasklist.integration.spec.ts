@@ -1,14 +1,13 @@
 import { join } from 'path'
 
-import { OperateApiClient } from 'operate'
+import { OperateApiClient } from '../../operate'
+import { TasklistApiClient } from '../../tasklist/index'
+import { ZeebeGrpcClient } from '../../zeebe'
 import {
 	CreateProcessInstanceResponse,
 	DeployResourceResponse,
 	ProcessDeployment,
-} from 'zeebe/types'
-
-import { TasklistApiClient } from '../../tasklist/index'
-import { ZeebeGrpcClient } from '../../zeebe'
+} from '../../zeebe/types'
 
 jest.setTimeout(25000) // increase timeout to allow Tasklist application to create tasks
 

@@ -1,6 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
 import { Duration } from 'typed-duration'
 
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 

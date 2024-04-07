@@ -1,5 +1,4 @@
-import { EnvironmentSetup } from 'lib'
-
+import { EnvironmentSetup } from '../../lib'
 import { OptimizeApiClient } from '../../optimize/lib/OptimizeApiClient'
 
 beforeAll(() => {

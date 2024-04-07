@@ -1,6 +1,5 @@
-import { EnvironmentSetup } from 'lib'
-
 import { AdminApiClient } from '../../admin/index'
+import { EnvironmentSetup } from '../../lib'
 
 beforeAll(() => {
 	EnvironmentSetup.storeEnv()

@@ -1,9 +1,9 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
 import { v4 as uuid } from 'uuid'
-import { DeployResourceResponse, ProcessDeployment } from 'zeebe/types'
 
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
+import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
 jest.setTimeout(45000)
 let test1: DeployResourceResponse<ProcessDeployment>
