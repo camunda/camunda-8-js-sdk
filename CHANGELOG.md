@@ -1,3 +1,10 @@
+# [8.5.0-alpha.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0-alpha.5...v8.5.0-alpha.6) (2024-04-08)
+
+
+### Bug Fixes
+
+* **issue118:** add smoke test and type surface tests ([fe0c709](https://github.com/camunda/camunda-8-js-sdk/commit/fe0c70925cf3df610b049e776eed5bffe56ef604)), closes [#118](https://github.com/camunda/camunda-8-js-sdk/issues/118)
+
 # [8.5.0-alpha.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0-alpha.4...v8.5.0-alpha.5) (2024-04-07)
 
 
