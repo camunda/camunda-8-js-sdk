@@ -2,7 +2,9 @@
 
 [![NPM](https://nodei.co/npm/@camunda8/sdk.png)](https://www.npmjs.com/package/@camunda8/sdk)
 
-This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See details on why [this is not in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79)).
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
 
 ## What does "supported" mean?
 
