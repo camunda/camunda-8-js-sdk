@@ -1,4 +1,4 @@
-import { IOAuthProvider } from 'oauth'
+import { IOAuthProvider } from '../oauth'
 
 import { CamundaPlatform8Configuration, DeepPartial } from './Configuration'
 

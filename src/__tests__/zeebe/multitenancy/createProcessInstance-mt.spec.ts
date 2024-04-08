@@ -1,6 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
-import { ZeebeGrpcClient } from 'zeebe'
-import { DeployResourceResponse, ProcessDeployment } from 'zeebe/types'
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
+import { ZeebeGrpcClient } from '../../../zeebe'
+import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
 suppressZeebeLogging()
 let res: DeployResourceResponse<ProcessDeployment>

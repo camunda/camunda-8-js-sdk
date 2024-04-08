@@ -7,7 +7,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Features
 
-- **tasklist:** enable multiple clusters via constructor options ([#16](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/16)) ([fb12e25](https://github.com/camunda-community-hub/camunda-8-js-sdk/commit/fb12e258321e6bba03d11d38119c740f0e242773))
+- **tasklist:** enable multiple clusters via constructor options ([#16](https://github.com/camunda/camunda-8-js-sdk/issues/16)) ([fb12e25](https://github.com/camunda/camunda-8-js-sdk/commit/fb12e258321e6bba03d11d38119c740f0e242773))
 
 # 8.3.1
 
@@ -15,7 +15,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 _New shiny stuff_
 
-- You can now deploy forms to the Zeebe broker using `ZBClient.deployResource()`. See [#332](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/332) for more details.
+- You can now deploy forms to the Zeebe broker using `ZBClient.deployResource()`. See [#332](https://github.com/camunda/zeebe-client-node-js/issues/332) for more details.
 
 # 8.3.0
 
@@ -23,31 +23,31 @@ _New shiny stuff_
 
 _Changes in APIs or behaviour that may affect existing applications that use zeebe-node._
 
-- Several method signatures for `CreateProcessInstance` and `CreateProcessInstanceWithResult` have been removed, leaving only the method that takes an object parameter. See [#330](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/330#issuecomment-1672535320) for more details.
+- Several method signatures for `CreateProcessInstance` and `CreateProcessInstanceWithResult` have been removed, leaving only the method that takes an object parameter. See [#330](https://github.com/camunda/zeebe-client-node-js/issues/330#issuecomment-1672535320) for more details.
 
 ## Known Issues
 
 _Things that don't work or don't work as expected, and which will be addressed in a future release_
 
-- The `onConnectionError` event fires correctly for Camunda SaaS, but fires a false positive when connecting to a Self-Managed instance. See [#340](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/340) for more details.
+- The `onConnectionError` event fires correctly for Camunda SaaS, but fires a false positive when connecting to a Self-Managed instance. See [#340](https://github.com/camunda/zeebe-client-node-js/issues/340) for more details.
 
 ## New Features
 
 _New shiny stuff._
 
-- Camunda Platform 8.3.0 introduces multi-tenancy. To support this, the Node.js client adds an optional `tenantId` parameter to `DeployResource`, `DeployProcess`, `CreateProcessInstance`, `CreateProcessInstanceWithResult`, and `PublishMessage`. You can also specify a `tenantId` in the ZBClient constructor or via the environment variable `ZEEBE_TENANT_ID`. In the case that you specify it via the environment or constructor, it will be transparently added to all method invocations. See [#330](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/330) for more details.
+- Camunda Platform 8.3.0 introduces multi-tenancy. To support this, the Node.js client adds an optional `tenantId` parameter to `DeployResource`, `DeployProcess`, `CreateProcessInstance`, `CreateProcessInstanceWithResult`, and `PublishMessage`. You can also specify a `tenantId` in the ZBClient constructor or via the environment variable `ZEEBE_TENANT_ID`. In the case that you specify it via the environment or constructor, it will be transparently added to all method invocations. See [#330](https://github.com/camunda/zeebe-client-node-js/issues/330) for more details.
 - `@grpc/grpc-js` has been updated to 1.9.7, and `@grpc/proto-loader` has been updated to 0.7.10.
 
 _Things that were broken and are now fixed._
 
-- The `onReady` and `onConnection` event tests now pass, so these events should be usable. See [#215](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/215) for more details.
+- The `onReady` and `onConnection` event tests now pass, so these events should be usable. See [#215](https://github.com/camunda/zeebe-client-node-js/issues/215) for more details.
 
 ## Fixes
 
 _Things that were broken and are now fixed._
 
-- An error message "Grpc Stream Error: 16 UNAUTHENTICATED: Failed to parse bearer token, see cause for details" would be logged intermittently. This was because under particular conditions an expired token cached on disk could be used for API calls. To prevent this, the disk-cached token is evicted at the same time as the in-memory token. See [#336](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/336) for more details.
-- The `onReady` and `onConnection` event tests now pass for Camunda SaaS. The `onReady` event fires correctly for Self-Managed started with docker-compose. See [#215](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/215) and [#340](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/340) for more details.
+- An error message "Grpc Stream Error: 16 UNAUTHENTICATED: Failed to parse bearer token, see cause for details" would be logged intermittently. This was because under particular conditions an expired token cached on disk could be used for API calls. To prevent this, the disk-cached token is evicted at the same time as the in-memory token. See [#336](https://github.com/camunda/zeebe-client-node-js/issues/336) for more details.
+- The `onReady` and `onConnection` event tests now pass for Camunda SaaS. The `onReady` event fires correctly for Self-Managed started with docker-compose. See [#215](https://github.com/camunda/zeebe-client-node-js/issues/215) and [#340](https://github.com/camunda/zeebe-client-node-js/issues/340) for more details.
 
 # Version 8.2.5
 
@@ -55,7 +55,7 @@ _Things that were broken and are now fixed._
 
 _New shiny stuff._
 
-- Throwing a BPMN Error, either from the `ZBClient` or in the job handler of a `ZBWorker`, accepted an error message and an error code. The gRPC API for ThrowError now accepts a `variables` field, but the Node client did not allow you to set variables along with the error code and message. The Node client now accepts an object for `job.error` that includes a `variables` field, as does `ZBClient.throwError`, allowing you to set variables when throwing a BPMN error. See [#323](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/323), the README file, and the [Client API documentation](https://camunda-community-hub.github.io/zeebe-client-node-js/) for more details.
+- Throwing a BPMN Error, either from the `ZBClient` or in the job handler of a `ZBWorker`, accepted an error message and an error code. The gRPC API for ThrowError now accepts a `variables` field, but the Node client did not allow you to set variables along with the error code and message. The Node client now accepts an object for `job.error` that includes a `variables` field, as does `ZBClient.throwError`, allowing you to set variables when throwing a BPMN error. See [#323](https://github.com/camunda/zeebe-client-node-js/issues/323), the README file, and the [Client API documentation](https://camunda.github.io/zeebe-client-node-js/) for more details.
 
 ## Chores
 
@@ -69,7 +69,7 @@ _Things that shouldn't have a visible impact._
 
 _Things that were broken and are now fixed._
 
-- Custom root certificates were not being passed to the Camunda SaaS OAuth provider. This caused a failure to connect when an SSL terminating firewall that uses a custom root certificate sits between the client and Camunda SaaS. Custom root certificates are now passed to the Camunda SaaS OAuth provider, and are used when making the connection. Thanks to [@nikku](https://github.com/nikku) for reporting this and providing the patch. See [#319](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/319) for more details.
+- Custom root certificates were not being passed to the Camunda SaaS OAuth provider. This caused a failure to connect when an SSL terminating firewall that uses a custom root certificate sits between the client and Camunda SaaS. Custom root certificates are now passed to the Camunda SaaS OAuth provider, and are used when making the connection. Thanks to [@nikku](https://github.com/nikku) for reporting this and providing the patch. See [#319](https://github.com/camunda/zeebe-client-node-js/issues/319) for more details.
 
 # Version 8.2.3
 
@@ -77,7 +77,7 @@ _Things that were broken and are now fixed._
 
 _Things that were broken and are now fixed._
 
-- The object signature for `job.fail()` did not correctly apply an explicit value for `retries`. As a result, job retries would decrement automatically if this signature and option were used. The value is now correctly parsed and applied, and job retry count can be explicitly set in the `job.fail()` command with the object signature. Thanks to [@patozgg](https://github.com/patozgg) for reporting this. See [#316](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/316) for more details.
+- The object signature for `job.fail()` did not correctly apply an explicit value for `retries`. As a result, job retries would decrement automatically if this signature and option were used. The value is now correctly parsed and applied, and job retry count can be explicitly set in the `job.fail()` command with the object signature. Thanks to [@patozgg](https://github.com/patozgg) for reporting this. See [#316](https://github.com/camunda/zeebe-client-node-js/issues/316) for more details.
 
 # Version 8.2.2
 
@@ -93,13 +93,13 @@ _Things that shouldn't have a visible impact._
 
 _New shiny stuff._
 
-- Add `ZBClient.broadcastSignal`, enabling the client to broadcast a signal. See [#312](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/312) for more details.
+- Add `ZBClient.broadcastSignal`, enabling the client to broadcast a signal. See [#312](https://github.com/camunda/zeebe-client-node-js/issues/312) for more details.
 
 ## Fixes
 
 _Things that were broken and are now fixed._
 
-- Previously, the `timeToLive` property of `ZBClient.publishMessage` was required, although it was documented as optional. In this release, both `timeToLive` and `variables` have been made optional. If no value is supplied for `timeToLive`, it defaults to 0. Thanks to [@nhomble]() for raising this issue. See [#311](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/311) for more details.
+- Previously, the `timeToLive` property of `ZBClient.publishMessage` was required, although it was documented as optional. In this release, both `timeToLive` and `variables` have been made optional. If no value is supplied for `timeToLive`, it defaults to 0. Thanks to [@nhomble]() for raising this issue. See [#311](https://github.com/camunda/zeebe-client-node-js/issues/311) for more details.
 
 # Version 8.2.0
 
@@ -107,7 +107,7 @@ _Things that were broken and are now fixed._
 
 _New shiny stuff._
 
-- Add `ZBClient.evaluateDecision`, enabling a DMN table to be evaluated on a Zeebe 8.2 and later broker. See [#296](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/296) for more details.
+- Add `ZBClient.evaluateDecision`, enabling a DMN table to be evaluated on a Zeebe 8.2 and later broker. See [#296](https://github.com/camunda/zeebe-client-node-js/issues/296) for more details.
 
 # Version 8.1.8
 
@@ -115,7 +115,7 @@ _New shiny stuff._
 
 _Things that were broken and are now fixed._
 
-- The OAuth token was being evicted from the in-memory cache immediately, resulting in the file cache being used for every request. This release correctly sets the expiry time for the in-memory token cache. See [#307](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/307) for more details. Thanks to [@walliee](https://github.com/Walliee) for the fix.
+- The OAuth token was being evicted from the in-memory cache immediately, resulting in the file cache being used for every request. This release correctly sets the expiry time for the in-memory token cache. See [#307](https://github.com/camunda/zeebe-client-node-js/issues/307) for more details. Thanks to [@walliee](https://github.com/Walliee) for the fix.
 
 # Version 8.1.7
 
@@ -123,7 +123,7 @@ _Things that were broken and are now fixed._
 
 _Things that were broken and are now fixed._
 
-- With `cacheOnDisk` disabled, the OAuthProvider could cause excessive requests to the token endpoint, leading to blacklisting and denial-of-service. This version makes several adjustments to mitigate this: it caches the token in memory, reuses a single inflight request to the token endpoint, and backs off the token endpoint on a request failure. See [#301](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/301) for more details. Thanks to [@nhomble](https://github.com/nhomble) for raising this issue.
+- With `cacheOnDisk` disabled, the OAuthProvider could cause excessive requests to the token endpoint, leading to blacklisting and denial-of-service. This version makes several adjustments to mitigate this: it caches the token in memory, reuses a single inflight request to the token endpoint, and backs off the token endpoint on a request failure. See [#301](https://github.com/camunda/zeebe-client-node-js/issues/301) for more details. Thanks to [@nhomble](https://github.com/nhomble) for raising this issue.
 
 # Version 8.1.6
 
@@ -139,8 +139,8 @@ _Things that shouldn't have a visible impact._
 
 _New shiny stuff._
 
-- The ZBClient now implements the `modifyProcessInstance` API, introduced in Zeebe 8.1. This allows you to modify a running process instance, moving execution tokens and changing variables. This can be used, for example, to migrate a running process instance to a new version of the process model. See [#294](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/294) for more details.
-- The ZBClient `createProcessInstance` method now allows you to specify `startInstructions` (introduced in Zeebe 8.1), allowing you to start a new process instance from an arbitrary point. Along with `modifyProcessInstance`, this is a powerful primitive for building migration functionality. See [[#295](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/295)] for more details.
+- The ZBClient now implements the `modifyProcessInstance` API, introduced in Zeebe 8.1. This allows you to modify a running process instance, moving execution tokens and changing variables. This can be used, for example, to migrate a running process instance to a new version of the process model. See [#294](https://github.com/camunda/zeebe-client-node-js/issues/294) for more details.
+- The ZBClient `createProcessInstance` method now allows you to specify `startInstructions` (introduced in Zeebe 8.1), allowing you to start a new process instance from an arbitrary point. Along with `modifyProcessInstance`, this is a powerful primitive for building migration functionality. See [[#295](https://github.com/camunda/zeebe-client-node-js/issues/295)] for more details.
 
 # Version 8.1.4
 
@@ -148,14 +148,14 @@ _New shiny stuff._
 
 _Things that were broken and are now fixed._
 
-- The @grpc dependencies are now pinned to a specific version - 1.8.7 for grpc-js and 0.7.4 for proto-loader. This is to avoid broken upstream dependencies impacting installs. Previously, with the dependency unpinned, an install on different days could result in a library that worked, or did not work, depending on the state of the upstream libraries. Now, the same dependencies are installed every time, resulting in a consistent experience. Thanks to [@nikku](https://github.com/nikku) and [@barmac](https://github.com/barmac) from the [Camunda Modeler](https://github.com/camunda/camunda-modeler) team for identifying this. See [#290](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/290) for more context.
-- The `docker` subdirectory is back, with a `docker-compose.yml` file to start a local broker for testing purposes. See [#289](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/289) for more details.
+- The @grpc dependencies are now pinned to a specific version - 1.8.7 for grpc-js and 0.7.4 for proto-loader. This is to avoid broken upstream dependencies impacting installs. Previously, with the dependency unpinned, an install on different days could result in a library that worked, or did not work, depending on the state of the upstream libraries. Now, the same dependencies are installed every time, resulting in a consistent experience. Thanks to [@nikku](https://github.com/nikku) and [@barmac](https://github.com/barmac) from the [Camunda Modeler](https://github.com/camunda/camunda-modeler) team for identifying this. See [#290](https://github.com/camunda/zeebe-client-node-js/issues/290) for more context.
+- The `docker` subdirectory is back, with a `docker-compose.yml` file to start a local broker for testing purposes. See [#289](https://github.com/camunda/zeebe-client-node-js/issues/289) for more details.
 
 ## New Features
 
 _New shiny stuff._
 
-- A custom SSL certificate is now able to be used for the oAuth endpoint. The `got` library used for the token exchange needs the certificate explicitly, and it can now be passed in as a `customRootCert` property to the `oAuth` property in the ZBClient constructor. Thanks to [luca-waldmann-cimt](https://github.com/luca-waldmann-cimt) for the feature. See [#284](https://github.com/camunda-community-hub/zeebe-client-node-js/pull/284) for more details.
+- A custom SSL certificate is now able to be used for the oAuth endpoint. The `got` library used for the token exchange needs the certificate explicitly, and it can now be passed in as a `customRootCert` property to the `oAuth` property in the ZBClient constructor. Thanks to [luca-waldmann-cimt](https://github.com/luca-waldmann-cimt) for the feature. See [#284](https://github.com/camunda/zeebe-client-node-js/pull/284) for more details.
 
 # Version 8.1.2
 
@@ -163,13 +163,13 @@ _New shiny stuff._
 
 _Things that were broken and are now fixed._
 
-- In 8.1.1, the update to the version of `got` introduced a regression that broke the OAuth token request with certain gateway configurations. This is now reverted, and a test has been introduced to ensure this regression does not happen again. See [#280](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/280) for more details.
+- In 8.1.1, the update to the version of `got` introduced a regression that broke the OAuth token request with certain gateway configurations. This is now reverted, and a test has been introduced to ensure this regression does not happen again. See [#280](https://github.com/camunda/zeebe-client-node-js/issues/280) for more details.
 
 ## New Features
 
 _New shiny stuff._
 
-- Applications can now extend the user agent identifier by setting a value for the environment variable `ZEEBE_CLIENT_CUSTOM_AGENT_STRING`. This will be appended to the standard user agent string. See [#279](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/279) for more details.
+- Applications can now extend the user agent identifier by setting a value for the environment variable `ZEEBE_CLIENT_CUSTOM_AGENT_STRING`. This will be appended to the standard user agent string. See [#279](https://github.com/camunda/zeebe-client-node-js/issues/279) for more details.
 
 # Version 8.1.1
 
@@ -177,7 +177,7 @@ _New shiny stuff._
 
 _Things that shouldn't have a visible impact._
 
-- Bump got to 11.8.5 to fix [CVE-2022-33987](https://github.com/advisories/GHSA-pfrx-2q88-qq97). Thanks to [@nithinssabu](https://github.com/nithinssabu) for the PR. See [#275](https://github.com/camunda-community-hub/zeebe-client-node-js/pull/275) for more detail.
+- Bump got to 11.8.5 to fix [CVE-2022-33987](https://github.com/advisories/GHSA-pfrx-2q88-qq97). Thanks to [@nithinssabu](https://github.com/nithinssabu) for the PR. See [#275](https://github.com/camunda/zeebe-client-node-js/pull/275) for more detail.
 
 # Version 8.1
 
@@ -191,9 +191,9 @@ _Changes in APIs or behaviour that may affect existing applications that use zee
 
 _Things that were broken and are now fixed._
 
-- Previously, the `connectionTolerance` option to `createWorker` did not take a `MaybeTimeDuration`, requiring users to provide a number (the value units is milliseconds). The signature has now been fixed, and `connectionTolerance` can now take a number or a typed Duration. See [#260](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/260) for more detail. Thanks to [@dancrumb](https://github.com/dancrumb) for reporting this.
-- Previously, the autogenerated code for a BPMN model used the deprecated worker constructor and did not return the job acknowledgement token. It now uses the object constructor and correctly returns the job acknowledgement token. See [#257](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/257) for more details. Thanks to [@megankirkbride](https://github.com/megankirkbride) for reporting this issue.
-- Previously, the OAuth token request sent by the library used JSON encoding. This worked with Camunda SaaS, but would fail with Keycloak in self-managed. The library now correctly encodes the request as x-www-form-urlencoded. See [#272](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/272) for more details. Thanks to [@AdrianErnstLGLN](https://github.com/AdrianErnstLGLN) for reporting this issue and providing a patch.
+- Previously, the `connectionTolerance` option to `createWorker` did not take a `MaybeTimeDuration`, requiring users to provide a number (the value units is milliseconds). The signature has now been fixed, and `connectionTolerance` can now take a number or a typed Duration. See [#260](https://github.com/camunda/zeebe-client-node-js/issues/260) for more detail. Thanks to [@dancrumb](https://github.com/dancrumb) for reporting this.
+- Previously, the autogenerated code for a BPMN model used the deprecated worker constructor and did not return the job acknowledgement token. It now uses the object constructor and correctly returns the job acknowledgement token. See [#257](https://github.com/camunda/zeebe-client-node-js/issues/257) for more details. Thanks to [@megankirkbride](https://github.com/megankirkbride) for reporting this issue.
+- Previously, the OAuth token request sent by the library used JSON encoding. This worked with Camunda SaaS, but would fail with Keycloak in self-managed. The library now correctly encodes the request as x-www-form-urlencoded. See [#272](https://github.com/camunda/zeebe-client-node-js/issues/272) for more details. Thanks to [@AdrianErnstLGLN](https://github.com/AdrianErnstLGLN) for reporting this issue and providing a patch.
 
 # Version 8.0.3
 
@@ -201,7 +201,7 @@ _Things that were broken and are now fixed._
 
 _Things that were broken and are now fixed._
 
-- Previously, the `fetchVariable` option passed to `createWorker` had no effect. All variables were always fetched by workers. This option setting is now respected, allowing you to constrain the variables fetched by workers. See [#264](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/264) for details. Thanks to [@Veckatimest](https://github.com/Veckatimest) for reporting this.
+- Previously, the `fetchVariable` option passed to `createWorker` had no effect. All variables were always fetched by workers. This option setting is now respected, allowing you to constrain the variables fetched by workers. See [#264](https://github.com/camunda/zeebe-client-node-js/issues/264) for details. Thanks to [@Veckatimest](https://github.com/Veckatimest) for reporting this.
 
 # Version 8.0.2
 
@@ -209,7 +209,7 @@ _Things that were broken and are now fixed._
 
 _Things that were broken and are now fixed._
 
-- Custom SSL certificates configured via environment variables now work correctly. See [PR #263](https://github.com/camunda-community-hub/zeebe-client-node-js/pull/263) for the details. Thanks to [@barmac](https://github.com/barmac) for the PR.
+- Custom SSL certificates configured via environment variables now work correctly. See [PR #263](https://github.com/camunda/zeebe-client-node-js/pull/263) for the details. Thanks to [@barmac](https://github.com/barmac) for the PR.
 
 # Version 8.0.0
 
@@ -219,7 +219,7 @@ Version 8.0.0 is the release to support Camunda Platform 8. The semver change do
 
 _New shiny stuff._
 
-- Zeebe 8.0.0 and later support an optional retry backoff for failed jobs. This is a communication to the broker about how long it should delay before making the job available for activation again. This is implemented as a new interface for `job.fail`. See [[#248](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/248)] for more details.
+- Zeebe 8.0.0 and later support an optional retry backoff for failed jobs. This is a communication to the broker about how long it should delay before making the job available for activation again. This is implemented as a new interface for `job.fail`. See [[#248](https://github.com/camunda/zeebe-client-node-js/issues/248)] for more details.
 
 # Version 2.4.0
 
@@ -227,13 +227,13 @@ _New shiny stuff._
 
 _Changes in APIs or behaviour that may affect existing applications that use zeebe-node._
 
-- The C-based gRPC implementation has been removed in this release. It is unmaintained, and does not build with Node 17. The Zeebe Node client now uses the pure JS gRPC implementation and requires Node version 12.22.5+, 14.17.5+, or 16.6.1+. See [#201](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/201) and [#247](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/247) for more details.
+- The C-based gRPC implementation has been removed in this release. It is unmaintained, and does not build with Node 17. The Zeebe Node client now uses the pure JS gRPC implementation and requires Node version 12.22.5+, 14.17.5+, or 16.6.1+. See [#201](https://github.com/camunda/zeebe-client-node-js/issues/201) and [#247](https://github.com/camunda/zeebe-client-node-js/issues/247) for more details.
 
 ## Known Issues
 
 _Things that don't work or don't work as expected, and which will be addressed in a future release_
 
-- The `onConnectionError` and `onReady` events do not work as expected. Applications that rely on these should not upgrade until this is fixed. See [#215](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/215).
+- The `onConnectionError` and `onReady` events do not work as expected. Applications that rely on these should not upgrade until this is fixed. See [#215](https://github.com/camunda/zeebe-client-node-js/issues/215).
 
 # Version 1.3.5
 
@@ -241,8 +241,8 @@ _Things that don't work or don't work as expected, and which will be addressed i
 
 _Things that were broken and are now fixed._
 
-- Incident resolution via `ZBClient.resolveIncident()` now works. Thanks to [mrsateeshp](https://github.com/mrsateeshp) for the Pull Request. See [#242](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/242) for more details.
-- Auth token retries now have an automatic back-off to avoid saturating the endpoint and getting blacklisted if invalid credentials are supplied. See [#244](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/244) for more details.
+- Incident resolution via `ZBClient.resolveIncident()` now works. Thanks to [mrsateeshp](https://github.com/mrsateeshp) for the Pull Request. See [#242](https://github.com/camunda/zeebe-client-node-js/issues/242) for more details.
+- Auth token retries now have an automatic back-off to avoid saturating the endpoint and getting blacklisted if invalid credentials are supplied. See [#244](https://github.com/camunda/zeebe-client-node-js/issues/244) for more details.
 
 # Version 1.3.3
 
@@ -250,13 +250,13 @@ _Things that were broken and are now fixed._
 
 _Changes in APIs or behaviour that may affect existing applications that use zeebe-node._
 
-- Previously, you could pass an entire URL to the `clusterId` field in the `camundaCloud` option in the `ZBClient` constructor. The library would parse this and extract the cluster ID. With the changes to support multiple regions, this no longer works. From version 1.4.0, you must pass in only the cluster Id, not the complete URL. See [#232](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/232).
+- Previously, you could pass an entire URL to the `clusterId` field in the `camundaCloud` option in the `ZBClient` constructor. The library would parse this and extract the cluster ID. With the changes to support multiple regions, this no longer works. From version 1.4.0, you must pass in only the cluster Id, not the complete URL. See [#232](https://github.com/camunda/zeebe-client-node-js/issues/232).
 
 ## New Features
 
 _New shiny stuff._
 
-- With Camunda Cloud 1.1, the DNS schema for the hosted service has been upgraded to include regions. To support this, the `camundaCloud` object in the ZBClient constructor now has an optional `clusterRegion` field. When no value is specified it defaults to `bru-2` (Belgium). See [#232](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/232).
+- With Camunda Cloud 1.1, the DNS schema for the hosted service has been upgraded to include regions. To support this, the `camundaCloud` object in the ZBClient constructor now has an optional `clusterRegion` field. When no value is specified it defaults to `bru-2` (Belgium). See [#232](https://github.com/camunda/zeebe-client-node-js/issues/232).
 
 ## Chores
 
@@ -271,7 +271,7 @@ _Things that shouldn't have a visible impact._
 
 _Things that were broken and are now fixed._
 
-- Setting `maxRetries` and `maxRetryTimeout` in the ZBClient constructor had no effect. Only setting the environment variables `ZEEBE_CLIENT_MAX_RETRIES` and `ZEEBE_CLIENT_MAX_RETRY_TIMEOUT` had an effect. Now, the constructor options take effect. The constructor options will be overridden by the environment variables if those are set. See [#228](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/228).
+- Setting `maxRetries` and `maxRetryTimeout` in the ZBClient constructor had no effect. Only setting the environment variables `ZEEBE_CLIENT_MAX_RETRIES` and `ZEEBE_CLIENT_MAX_RETRY_TIMEOUT` had an effect. Now, the constructor options take effect. The constructor options will be overridden by the environment variables if those are set. See [#228](https://github.com/camunda/zeebe-client-node-js/issues/228).
 
 # Version 1.3.1
 
@@ -279,7 +279,7 @@ _Things that were broken and are now fixed._
 
 _Things that were broken and are now fixed._
 
-- The user agent was added to requests for an OAuth token, but not for gRPC calls. It is now set in the gRPC call metadata for all gRPC calls. Thanks to [@zelldon](https://github.com/Zelldon) for opening the issue and helping track it down. See [#225](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/225).
+- The user agent was added to requests for an OAuth token, but not for gRPC calls. It is now set in the gRPC call metadata for all gRPC calls. Thanks to [@zelldon](https://github.com/Zelldon) for opening the issue and helping track it down. See [#225](https://github.com/camunda/zeebe-client-node-js/issues/225).
 
 # Version 1.3.0
 
@@ -291,22 +291,22 @@ Versions 1.0 - 1.2 were released two years ago, under the old numbering scheme. 
 
 _Things that don't work or don't work as expected, and which will be addressed in a future release_
 
-- `onReady` and `onConnectionError` events are not firing reliably. At the moment, the `onConnectionError` is called even when a gateway is present and accessible, and `onReady` is not called. See [#215](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/215).
-- The TLS connection does not work with self-managed Zeebe brokers secured with TLS. See [#218](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/218) and [#219](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/219).
-- An exception in the gRPC layer can cause an application to exit. The workaround for this at the moment is to add a handler on the process for uncaught exceptions. See [#217](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/217).
+- `onReady` and `onConnectionError` events are not firing reliably. At the moment, the `onConnectionError` is called even when a gateway is present and accessible, and `onReady` is not called. See [#215](https://github.com/camunda/zeebe-client-node-js/issues/215).
+- The TLS connection does not work with self-managed Zeebe brokers secured with TLS. See [#218](https://github.com/camunda/zeebe-client-node-js/issues/218) and [#219](https://github.com/camunda/zeebe-client-node-js/issues/219).
+- An exception in the gRPC layer can cause an application to exit. The workaround for this at the moment is to add a handler on the process for uncaught exceptions. See [#217](https://github.com/camunda/zeebe-client-node-js/issues/217).
 
 ## Breaking changes
 
 _Changes in APIs or behaviour that may affect existing applications that use zeebe-node._
 
-- The Zeebe API has changed in 1.0.0 and uses a gRPC protocol that is incompatible with pre-1.0.0 brokers. _The 1.0.0 package will not work with a pre-1.0.0 broker_. Nor will a pre-1.0.0 version of `zeebe-node` work with a 1.0.0 broker. See [#208](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/208).
-- The worker task handler has a new type signature: `job => Promise<JOB_ACTION_ACKNOWLEDGEMENT>`. This means that all code branches in the worker handler must return a `complete` method call (deprecated), or one of the new `job.complete`, `job.fail`, `job.error`, `job.forward`, or `job.cancelWorkflowInstance` methods. This signature means that the type system can now do an exhaustiveness check to detect code paths that will always time out in the worker. See [#210](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/210).
+- The Zeebe API has changed in 1.0.0 and uses a gRPC protocol that is incompatible with pre-1.0.0 brokers. _The 1.0.0 package will not work with a pre-1.0.0 broker_. Nor will a pre-1.0.0 version of `zeebe-node` work with a 1.0.0 broker. See [#208](https://github.com/camunda/zeebe-client-node-js/issues/208).
+- The worker task handler has a new type signature: `job => Promise<JOB_ACTION_ACKNOWLEDGEMENT>`. This means that all code branches in the worker handler must return a `complete` method call (deprecated), or one of the new `job.complete`, `job.fail`, `job.error`, `job.forward`, or `job.cancelWorkflowInstance` methods. This signature means that the type system can now do an exhaustiveness check to detect code paths that will always time out in the worker. See [#210](https://github.com/camunda/zeebe-client-node-js/issues/210).
 
 ## Deprecations
 
 _Things that are deprecated and will be removed in a future release. Existing code will work for now, but should be migrated at some point. New code should not use these features._
 
-- The previous methods with the word `workflow` in them (e.g.: `deployWorkflow`, `startWorkflowInstance`) are deprecated. In the 1.0.0 package they transparently call the new methods with `process` in them (e.g.: `deployProcess`, `startProcessInstance`), so existing code does not need to be rewritten. However, new code should not use these deprecated methods. These methods are scheduled to be removed in whichever comes first: the 1.2.0 release, or three months from the release of the 1.0.0 release. See [#208](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/208).
+- The previous methods with the word `workflow` in them (e.g.: `deployWorkflow`, `startWorkflowInstance`) are deprecated. In the 1.0.0 package they transparently call the new methods with `process` in them (e.g.: `deployProcess`, `startProcessInstance`), so existing code does not need to be rewritten. However, new code should not use these deprecated methods. These methods are scheduled to be removed in whichever comes first: the 1.2.0 release, or three months from the release of the 1.0.0 release. See [#208](https://github.com/camunda/zeebe-client-node-js/issues/208).
 - The `complete` parameter in the worker task handler callback is deprecated, and will be removed in a future release. Use the new methods on the `job` object instead.
 - The non-object constructors for `createWorker` are deprecated, and will be removed in a future release. Use the object constructor instead.
 
@@ -314,9 +314,9 @@ _Things that are deprecated and will be removed in a future release. Existing co
 
 _New shiny stuff._
 
-- The worker task handler now has a new signature: `job => Promise<JOB_ACTION_ACKNOWLEDGEMENT>`. The `complete` parameter is deprecated, and the job object now has the methods `job.complete`, `job.fail`, `job.error`, `job.forward`. See [#209](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/209).
-- The `job` object has a new method `job.cancelWorkflowInstance`. This allows you to cancel a workflow from within a worker, and return a `Promise<JOB_ACTION_ACKNOWLEDGEMENT>` in the worker handler. See [#211](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/211).
-- Attempting to call two outcome methods on a job (for example: `job.complete()` and `job.fail()`, or the deprecated `complete.success()` and `complete.error()`) will now log an error to the console, alerting you to the behaviour and identifying the task type of the worker. See [#213](https://github.com/camunda-community-hub/zeebe-client-node-js/issues/213).
+- The worker task handler now has a new signature: `job => Promise<JOB_ACTION_ACKNOWLEDGEMENT>`. The `complete` parameter is deprecated, and the job object now has the methods `job.complete`, `job.fail`, `job.error`, `job.forward`. See [#209](https://github.com/camunda/zeebe-client-node-js/issues/209).
+- The `job` object has a new method `job.cancelWorkflowInstance`. This allows you to cancel a workflow from within a worker, and return a `Promise<JOB_ACTION_ACKNOWLEDGEMENT>` in the worker handler. See [#211](https://github.com/camunda/zeebe-client-node-js/issues/211).
+- Attempting to call two outcome methods on a job (for example: `job.complete()` and `job.fail()`, or the deprecated `complete.success()` and `complete.error()`) will now log an error to the console, alerting you to the behaviour and identifying the task type of the worker. See [#213](https://github.com/camunda/zeebe-client-node-js/issues/213).
 
 # Version 0.26.0
 

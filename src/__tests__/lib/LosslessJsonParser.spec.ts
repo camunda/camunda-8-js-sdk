@@ -5,8 +5,8 @@ import {
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
-} from 'lib'
-import { ProcessInstanceStatistics } from 'operate/lib/OperateDto'
+} from '../../lib'
+import { ProcessInstanceStatistics } from '../../operate/lib/OperateDto'
 
 test('LosslessJsonParser correctly handles nested Dtos', () => {
 	class DecisionInstanceOutput extends LosslessDto {

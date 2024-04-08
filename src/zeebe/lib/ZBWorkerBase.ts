@@ -6,10 +6,10 @@ import {
 } from '@grpc/grpc-js/build/src/call'
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
-import { LosslessDto } from 'lib'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import * as uuid from 'uuid'
 
+import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
 import { ConnectionStatusEvent } from './ConnectionStatusEvent'

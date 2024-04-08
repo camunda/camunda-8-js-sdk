@@ -25,17 +25,7 @@
 			{
 				"name": "typescript-tslint-plugin"
 			}
-		],
-		"baseUrl": "./src",
-		"paths": {
-			"lib": ["./lib"],
-			"oauth": ["./oauth"],
-			"operate": ["./operate"],
-			"modeler": ["./modeler"],
-			"tasklist": ["./tasklist"],
-			"optimize": ["./optimize"],
-			"c8console": ["./c8console"]
-		}
+		]
 	},
-	"exclude": ["node_modules", "src/__tests__/*"]
+	"exclude": ["node_modules", "src/__tests__/*", "test-d"]
 }

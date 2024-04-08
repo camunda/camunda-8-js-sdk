@@ -1,5 +1,4 @@
-import { EnvironmentSetup } from 'lib'
-
+import { EnvironmentSetup } from '../../lib'
 import { TasklistApiClient } from '../../tasklist/index'
 
 beforeAll(() => {

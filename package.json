@@ -1,26 +1,24 @@
 {
 	"name": "@camunda8/sdk",
-	"version": "8.3.0",
+	"version": "8.5.0-alpha.6",
 	"description": "",
 	"main": "dist/index.js",
 	"scripts": {
-		"build": "npm run clean && npm run compile",
+		"build": "npm run clean && npm run compile && shx mkdir dist/proto && shx cp src/proto/zeebe.proto dist/proto/",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"compile": "tsc --project tsconfig.json",
 		"docs": "rm -rf ./docs && typedoc",
-		"test": "jest --detectOpenHandles --testPathIgnorePatterns integration local-integration disconnection multitenancy",
+		"test": "CAMUNDA_UNIT_TEST=true jest --detectOpenHandles --testPathIgnorePatterns integration --testPathIgnorePatterns local-integration --testPathIgnorePatterns disconnection --testPathIgnorePatterns multitenancy --testPathIgnorePatterns __tests__/config",
 		"test:integration": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns __tests__/config --testPathIgnorePatterns multitenancy --detectOpenHandles --verbose true -u",
 		"test:multitenancy": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns __tests__/config - --detectOpenHandles --verbose true -u",
 		"test:local": "jest --runInBand --verbose true --detectOpenHandles local-integration -u",
 		"test:local-integration": "jest --runInBand --detectOpenHandles --verbose --testPathIgnorePatterns disconnection --testPathIgnorePatterns admin --testPathIgnorePatterns multitenancy --testPathIgnorePatterns __tests__/config -u",
 		"test:docker": "jest --runInBand --testPathIgnorePatterns disconnection --testPathIgnorePatterns __tests__/config local-integration --detectOpenHandles --verbose true",
 		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles --testPathIgnorePatterns __tests__/config disconnection",
-		"test&docs": "npm test && npm run docs",
-		"publish": "npm run build && npm run test && lerna publish",
+		"test:smoketest": "npm run build && node smoke-test/smoke-test.js && npx tsd --typings dist/",
+		"prepublishOnly": "npm run build && npm run test",
 		"commit": "cz",
-		"publish:canary": "npm run build && npm run test && lerna publish --canary",
 		"prepare": "husky install",
-		"prepublishOnly": "npm run build",
 		"lint": "eslint 'src/**/*.{ts,tsx}'",
 		"format": "prettier --write 'src/**/*.ts'"
 	},
@@ -33,7 +31,7 @@
 	"license": "Apache 2.0",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/camunda-community-hub/camunda-8-js-sdk.git"
+		"url": "git+https://github.com/camunda/camunda-8-js-sdk.git"
 	},
 	"husky": {
 		"hooks": {
@@ -57,19 +55,6 @@
 				}
 			]
 		},
-		"moduleNameMapper": {
-			"^lib$": "<rootDir>/src/lib",
-			"^oauth/(.*)$": "<rootDir>/src/oauth/$1",
-			"^operate/(.*)$": "<rootDir>/src/operate/$1",
-			"^operate$": "<rootDir>/src/operate",
-			"^utils$": "<rootDir>/src/utils",
-			"^oauth$": "<rootDir>/src/oauth",
-			"^tasklist$": "<rootDir>/src/tasklist",
-			"^optimize$": "<rootDir>/src/optimize",
-			"^modeler$": "<rootDir>/src/modeler",
-			"^admin$": "<rootDir>/src/admin",
-			"^zeebe$": "<rootDir>/src/zeebe"
-		},
 		"preset": "ts-jest",
 		"testEnvironment": "node",
 		"testPathIgnorePatterns": [
@@ -88,6 +73,9 @@
 		"packages/**/*.ts": [
 			"prettier --write"
 		]
+	},
+	"tsd": {
+		"directory": "test-d"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^18.4.3",
@@ -115,8 +103,10 @@
 		"lint-staged": "^15.2.0",
 		"prettier": "^3.1.1",
 		"semantic-release": "^22.0.12",
+		"shx": "^0.3.4",
 		"ts-jest": "^29.1.1",
 		"tsconfig-paths": "^4.2.0",
+		"tsd": "^0.31.0",
 		"typedoc": "^0.25.9",
 		"typedoc-plugin-include-example": "^1.2.0",
 		"typedoc-plugin-missing-exports": "^2.2.0",

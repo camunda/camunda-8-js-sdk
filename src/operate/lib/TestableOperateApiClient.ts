@@ -1,4 +1,4 @@
-import { ClientConstructor } from 'lib'
+import { ClientConstructor } from '../../lib'
 
 import { OperateApiClient } from './OperateApiClient'
 import { Query } from './OperateDto'

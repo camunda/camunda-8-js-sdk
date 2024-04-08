@@ -7,7 +7,7 @@
  *
  * It also handles nested Dtos by using the `@ChildDto` decorator.
  *
- * More details on the design here: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/81#issuecomment-2022213859
+ * More details on the design here: https://github.com/camunda/camunda-8-js-sdk/issues/81#issuecomment-2022213859
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

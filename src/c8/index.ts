@@ -1,15 +1,15 @@
-import { AdminApiClient } from 'admin'
+import { AdminApiClient } from '../admin'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-} from 'lib'
-import { ModelerApiClient } from 'modeler'
-import { OAuthProvider } from 'oauth'
-import { OperateApiClient } from 'operate'
-import { OptimizeApiClient } from 'optimize'
-import { TasklistApiClient } from 'tasklist'
-import { ZeebeGrpcClient } from 'zeebe'
+} from '../lib'
+import { ModelerApiClient } from '../modeler'
+import { OAuthProvider } from '../oauth'
+import { OperateApiClient } from '../operate'
+import { OptimizeApiClient } from '../optimize'
+import { TasklistApiClient } from '../tasklist'
+import { ZeebeGrpcClient } from '../zeebe'
 
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
@@ -37,13 +37,15 @@ export class Camunda8 {
 	private tasklistApiClient?: TasklistApiClient
 	private zeebeGrpcClient?: ZeebeGrpcClient
 	private configuration: CamundaPlatform8Configuration
-	private oAuthProvider: OAuthProvider
+	private oAuthProvider?: OAuthProvider
 
 	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
-
-		this.oAuthProvider = new OAuthProvider({ config: this.configuration })
+		// Respect Oauth disabled flag
+		if (!this.configuration.CAMUNDA_OAUTH_DISABLED) {
+			this.oAuthProvider = new OAuthProvider({ config: this.configuration })
+		}
 	}
 
 	public getOperateApiClient(): OperateApiClient {
@@ -96,7 +98,7 @@ export class Camunda8 {
 		return this.tasklistApiClient
 	}
 
-	public getZeebeApiClient(): ZeebeGrpcClient {
+	public getZeebeGrpcApiClient(): ZeebeGrpcClient {
 		if (!this.zeebeGrpcClient) {
 			this.zeebeGrpcClient = new ZeebeGrpcClient({
 				config: this.configuration,

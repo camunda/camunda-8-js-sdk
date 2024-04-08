@@ -64,7 +64,7 @@ sudo apt install -y build-essential
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
 source ~/.bashrc
 nvm install 14
-git clone https://github.com/camunda-community-hub/zeebe-client-node-js.git
+git clone https://github.com/camunda/zeebe-client-node-js.git
 cd zeebe-client-node-js
 npm i
 

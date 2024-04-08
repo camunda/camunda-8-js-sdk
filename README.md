@@ -2,7 +2,21 @@
 
 [![NPM](https://nodei.co/npm/@camunda8/sdk.png)](https://www.npmjs.com/package/@camunda8/sdk)
 
-This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See details on why [this is not in a web browser](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/79)).
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
+
+## What does "supported" mean?
+
+This is the official supported-by-Camunda Nodejs SDK for Camunda Platform 8.
+
+The Node.js SDK will not always support all features of Camunda Platform 8 immediately upon their release. Complete API coverage for a platform release will lag behind the platform release.
+
+Prioritisation of implementing features is influenced by customer demand.
+
+## Semantic versioning
+
+The SDK package tracks Camunda Platform 8 minor versioning. Feature releases to support current Platform minor version features result in a patch release of the SDK.
 
 ## Using the SDK in your project
 
@@ -38,7 +52,7 @@ The configuration object fields and the environment variables have exactly the s
 
 ## A note on how int64 is handled in the JavaScript SDK
 
-Entity keys in Camunda 8 are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/78) for more details.
+Entity keys in Camunda 8 are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda/camunda-8-js-sdk/issues/78) for more details.
 
 Some number values - for example: "_total returned results_ " - may be specified as `int64` in the API specifications. Although these numbers will usually not contain unsafe values, they are always serialised to `string`.
 
@@ -184,7 +198,7 @@ The SDK uses the [`debug`](https://github.com/debug-js/debug) library. To enable
 
 | Value                  | Component            |
 | ---------------------- | -------------------- |
-| `camunda:adminconsole` | Administration API    |
+| `camunda:adminconsole` | Administration API   |
 | `camunda:modeler`      | Modeler API          |
 | `camunda:operate`      | Operate API          |
 | `camunda:optimize`     | Optimize API         |

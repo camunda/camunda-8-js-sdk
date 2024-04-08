@@ -6,7 +6,8 @@
 		"zeebe",
 		"github",
 		"modeler",
-		"operate"
+		"operate",
+		"camunda8"
 	],
 	"editor.formatOnSave": true,
 

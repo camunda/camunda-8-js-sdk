@@ -3,6 +3,8 @@ import https from 'https'
 import * as os from 'os'
 
 import { debug } from 'debug'
+import fetch from 'node-fetch'
+
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -10,9 +12,7 @@ import {
 	GetCertificateAuthority,
 	RequireConfiguration,
 	createUserAgentString,
-} from 'lib'
-import fetch from 'node-fetch'
-
+} from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'
@@ -138,7 +138,7 @@ export class OAuthProvider implements IOAuthProvider {
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
 		// Otherwise we use the application credential set, unless a Console credential set exists.
-		// See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 		const requestingFromSaaSConsole =
 			this.isCamundaSaaS &&
 			(audienceType === 'CONSOLE' || audienceType === 'MODELER')
@@ -231,7 +231,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private addAudienceIfNeeded(audienceType: TokenGrantAudienceType) {
 		/** If we are running on Self-Managed (ie: not Camunda SaaS), and no explicit audience was set,
 		 * we should not include an audience in the token request.
-		 * See: https://github.com/camunda-community-hub/camunda-8-js-sdk/issues/60
+		 * See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 		 */
 		if (
 			audienceType === 'MODELER' &&

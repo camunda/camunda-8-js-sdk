@@ -1,5 +1,4 @@
-import { EnvironmentSetup } from 'lib'
-
+import { EnvironmentSetup } from '../../lib'
 import { ModelerApiClient } from '../../modeler/index'
 
 beforeAll(() => {

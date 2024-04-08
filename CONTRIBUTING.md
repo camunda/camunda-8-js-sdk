@@ -7,22 +7,31 @@ Thank you for considering contributing to @camunda8/sdk! We welcome contribution
 To get started with contributing, please follow these steps:
 
 1. Fork the repository and clone it to your local machine.
-2. Install the dependencies by running `npm install`.
-3. Make your changes or additions to the codebase.
-4. Write tests to cover your changes and ensure existing tests pass.
-5. Run the tests using `npm test` to make sure everything is working correctly.
-6. Commit your changes and push them to your forked repository.
-7. Submit a pull request to the main repository.
+2. Check out the `alpha` branch. This is the development branch.
+3. Install the dependencies by running `npm install`.
+4. Make your changes or additions to the codebase.
+5. Write tests to cover your changes and ensure existing tests pass.
+6. Run the tests using `npm test` to make sure everything is working correctly. See below for details on running integration tests.
+7. Commit your changes and push them to your forked repository. Use [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/) format for the commit message. See the note below.
+8. Submit a pull request to the main repository.
+9. When your PR is merged into the `alpha` branch, an alpha package is published to NPM.
+10. When the `alpha` branch is merged into `main`, a new package is published to NPM.
+
+## A note on commit messages
+
+The repository uses []`semantic-release`](https://github.com/semantic-release/semantic-release) to create releases. Because we track the Camunda 8 Platform minor version, we treat feature implementation during a minor release cycle as a patch release rather than a minor release.
+
+Creating a commit with a `feat` commit message will cause the package version patch release number to increment. To update the minor version, a commit with the type `minor` is needed.
 
 ## Running tests
 
-Run all the unit tests with `lerna run test`.
+Run all the unit tests with `npm run test`.
 
 ### Integration tests
 
 Integration tests can be run against Self-Managed or against Camunda SaaS.
 
-To run integration tests against Camunda SaaS, but credentials for a Camunda SaaS API Client with scopes for all components in the environment, then run the integration tests against Camunda SaaS with `lerna run test:integration`.
+To run integration tests against Camunda SaaS, but credentials for a Camunda SaaS API Client with scopes for all components in the environment, then run the integration tests against Camunda SaaS with `npm run test:integration`.
 
 To run the integration tests against Self-Managed, you can use either your own Self-Managed instance, or start one locally using Docker.
 
@@ -79,6 +88,8 @@ export CAMUNDA_TEST_TYPE='local'
 export CAMUNDA_TENANT_ID='<default>'
 ```
 
+Now run the integration tests against Self-Managed with `npm run test:multitenancy`.
+
 ## Code Style
 
 We follow a specific code style in our project to maintain consistency. Please make sure to adhere to the following guidelines:
@@ -88,11 +99,11 @@ We follow a specific code style in our project to maintain consistency. Please m
 
 ## Issue Reporting
 
-If you encounter any bugs or issues while using @camunda/sdk, please report them in the [issue tracker](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues). Provide as much detail as possible, including steps to reproduce the issue.
+If you encounter any bugs or issues while using @camunda/sdk, please report them in the [issue tracker](https://github.com/camunda/camunda-8-js-sdk/issues). Provide as much detail as possible, including steps to reproduce the issue.
 
 ## Feature Requests
 
-If you have any ideas or feature requests for @camunda/sdk, please submit them in the [issue tracker](https://github.com/camunda-community-hub/camunda-8-js-sdk/issues). We appreciate your feedback and suggestions.
+If you have any ideas or feature requests for @camunda/sdk, please submit them in the [issue tracker](https://github.com/camunda/camunda-8-js-sdk/issues). We appreciate your feedback and suggestions.
 
 ## License
 
@@ -100,6 +111,6 @@ By contributing to @camunda/sdk, you agree that your contributions will be licen
 
 ## Contact
 
-If you have any questions or need further assistance, feel free to reach out to us at [your-email@example.com].
+If you have any questions or need further assistance, open an issue in the repository.
 
 Happy contributing!

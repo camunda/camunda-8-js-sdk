@@ -1,7 +1,6 @@
 import fs from 'fs'
 
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
-
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { BpmnParser, ZeebeGrpcClient } from '../../../zeebe/index'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'

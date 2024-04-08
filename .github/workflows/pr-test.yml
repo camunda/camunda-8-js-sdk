@@ -1,0 +1,155 @@
+name: Pull Request tests
+
+on: [pull_request]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and Smoke Test
+        run: npm run test:smoketest
+
+      - name: Run Unit Tests
+        run: |
+          npm run test
+
+  local_integration:
+    runs-on: ubuntu-latest
+    environment:
+      name: selfhosted
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo kill -9 $(sudo lsof -t -i:8084)
+
+      - name: Set up Docker
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} registry.camunda.cloud
+
+      - name: Set up Docker Compose
+        run: |
+          docker-compose -f docker/docker-compose.yml -f docker/docker-compose-modeler.yaml up -d
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:local-integration
+        env:
+          CAMUNDA_SECURE_CONNECTION: false
+          ZEEBE_ADDRESS: localhost:26500
+          ZEEBE_CLIENT_ID: zeebe
+          ZEEBE_CLIENT_SECRET: zecret
+          CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+          CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
+          CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
+          CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8083
+          CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker/docker-compose.yml -f docker/docker-compose-modeler.yaml down
+
+  local_multitenancy_integration:
+    runs-on: ubuntu-latest
+    environment:
+      name: selfhosted
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo kill -9 $(sudo lsof -t -i:8084)
+
+      - name: Set up Docker
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} registry.camunda.cloud
+
+      - name: Set up Docker Compose
+        run: |
+          docker-compose -f docker/docker-compose-multitenancy.yml -f docker/docker-compose-modeler.yaml up -d
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:multitenancy
+        env:
+          CAMUNDA_SECURE_CONNECTION: false
+          ZEEBE_ADDRESS: localhost:26500
+          ZEEBE_CLIENT_ID: zeebe
+          ZEEBE_CLIENT_SECRET: zecret
+          CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+          CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
+          CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
+          CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8083
+          CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
+          # Needed for Multi-Tenancy
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker/docker-compose-multitenancy.yml -f docker/docker-compose-modeler.yaml down
+
+  saas_integration:
+    runs-on: ubuntu-latest
+    environment: integration
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:integration
+        env:
+          ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
+          ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
+          ZEEBE_AUTHORIZATION_SERVER_URL: ${{ secrets.ZEEBE_AUTHORIZATION_SERVER_URL }}
+          ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
+          ZEEBE_TOKEN_AUDIENCE: ${{ secrets.ZEEBE_TOKEN_AUDIENCE }}
+          CAMUNDA_CREDENTIALS_SCOPES: ${{ secrets.CAMUNDA_CREDENTIALS_SCOPES }}
+          CAMUNDA_OAUTH_URL: ${{ secrets.CAMUNDA_OAUTH_URL }}
+          CAMUNDA_TASKLIST_BASE_URL: ${{ secrets.CAMUNDA_TASKLIST_BASE_URL }}
+          CAMUNDA_OPERATE_BASE_URL: ${{ secrets.CAMUNDA_OPERATE_BASE_URL }}
+          CAMUNDA_OPTIMIZE_BASE_URL: ${{ secrets.CAMUNDA_OPTIMIZE_BASE_URL }}
+          CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
+          CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
+          CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
+          CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
+          CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
+          CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 10000 #89: Intermittent 401 unauthorised in integration tests

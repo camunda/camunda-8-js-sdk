@@ -1,5 +1,4 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from 'lib'
-
+import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 jest.setTimeout(30000)

@@ -1,7 +1,6 @@
-import { EnvironmentSetup } from 'lib'
-import { TestableOperateApiClient } from 'operate/lib/TestableOperateApiClient'
-
+import { EnvironmentSetup } from '../../lib'
 import { OperateApiClient } from '../../operate'
+import { TestableOperateApiClient } from '../../operate/lib/TestableOperateApiClient'
 
 beforeAll(() => {
 	EnvironmentSetup.storeEnv()

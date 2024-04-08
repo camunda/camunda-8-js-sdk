@@ -1,4 +1,4 @@
-import { losslessStringify } from 'lib'
+import { losslessStringify } from '../../lib'
 
 type JSON = string | number | boolean | JSON[] | JSONDoc[]
 export interface JSONDoc {
