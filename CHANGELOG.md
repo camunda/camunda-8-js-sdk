@@ -1,3 +1,13 @@
+# [8.5.0](https://github.com/camunda/camunda-8-js-sdk/compare/v8.4.1...v8.5.0) (2024-04-08)
+
+
+### Bug Fixes
+
+* **issue118:** add smoke test and type surface tests ([fe0c709](https://github.com/camunda/camunda-8-js-sdk/commit/fe0c70925cf3df610b049e776eed5bffe56ef604)), closes [#118](https://github.com/camunda/camunda-8-js-sdk/issues/118)
+* **repo:** add note on "supported" ([#107](https://github.com/camunda/camunda-8-js-sdk/issues/107)) ([fc45d61](https://github.com/camunda/camunda-8-js-sdk/commit/fc45d618bc459a06fbf76bd6907511d08e1f583b)), closes [#70](https://github.com/camunda/camunda-8-js-sdk/issues/70)
+* **repo:** make fix type commits release a new package ([ded83cf](https://github.com/camunda/camunda-8-js-sdk/commit/ded83cfaf437a2f62a5ef134d7616538facda614))
+* **repo:** only git commit on npm publish success ([9012764](https://github.com/camunda/camunda-8-js-sdk/commit/901276451845c5dbd926af0a6563d5564d3e87b9))
+* **repo:** use ts-patch to transform module mapping in output ([#112](https://github.com/camunda/camunda-8-js-sdk/issues/112)) ([7efdcf3](https://github.com/camunda/camunda-8-js-sdk/commit/7efdcf3478a0d68b4f1cbc62c1526ba7275008b0)), closes [#110](https://github.com/camunda/camunda-8-js-sdk/issues/110)
 
 ## [8.4.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.4.0...v8.4.1) (2024-04-08)
 
