@@ -192,25 +192,6 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           HUSKY: 0
 
-      - name: Checkout alpha branch
-        if: github.ref == 'refs/heads/main'
-        uses: actions/checkout@v2
-        with:
-          ref: alpha
-
-      - name: Merge main into alpha
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git fetch origin main
-          git merge origin/main
-
-      - name: Push changes
-        if: github.ref == 'refs/heads/main'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: alpha
-
       - name: Deploy Docs
         if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
