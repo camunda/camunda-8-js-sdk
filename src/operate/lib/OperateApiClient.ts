@@ -1,4 +1,3 @@
-import { debug as d } from 'debug'
 import got from 'got'
 
 import {
@@ -31,8 +30,6 @@ import {
 import { parseSearchResults } from './parseSearchResults'
 
 const OPERATE_API_VERSION = 'v1'
-
-const debug = d('camunda:operate')
 
 type JSONDoc = { [key: string]: string | boolean | number | JSONDoc }
 type EnhanceWithTenantIdIfMissing<T> = T extends {
@@ -95,20 +92,23 @@ export class OperateApiClient {
 			https: {
 				certificateAuthority,
 			},
+			handlers: [
+				(options, next) => {
+					if (Object.isFrozen(options.context)) {
+						options.context = { ...options.context }
+					}
+					Error.captureStackTrace(options.context)
+
+					return next(options)
+				},
+			],
 			hooks: {
 				beforeError: [
 					(error) => {
-						const { request } = error
-						if (request) {
-							debug(`Error in request to ${request.options.url.href}`)
-							debug(
-								`Request headers: ${JSON.stringify(request.options.headers)}`
-							)
-							debug(`Error: ${error.code} - ${error.message}`)
-
-							// Attach more contextual information to the error object
-							error.message += ` (request to ${request.options.url.href})`
-						}
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						;(error as any).source = (error as any).options.context.stack.split(
+							'\n'
+						)
 						return error
 					},
 				],
