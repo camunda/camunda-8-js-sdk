@@ -2,6 +2,7 @@ import { LosslessNumber } from 'lossless-json'
 
 import { OperateApiClient } from '../../operate'
 import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
+import { ZeebeGrpcClient } from '../../zeebe'
 
 jest.setTimeout(15000)
 describe('Operate Integration', () => {
@@ -32,4 +33,21 @@ describe('Operate Integration', () => {
 		const defs = await c.searchProcessDefinitions(query)
 		expect(defs.total).toBeGreaterThanOrEqual(0)
 	})
+})
+
+test('getJSONVariablesforProcess works', async () => {
+	const c = new OperateApiClient()
+	const zeebe = new ZeebeGrpcClient()
+	await zeebe.deployResource({
+		processFilename: 'src/__tests__/testdata/operate-straightthrough.bpmn',
+	})
+	const p = await zeebe.createProcessInstanceWithResult({
+		bpmnProcessId: 'operate-straightthrough',
+		variables: {
+			foo: 'bar',
+		},
+	})
+	await new Promise((res) => setTimeout(() => res(null), 5000))
+	const res = await c.getJSONVariablesforProcess(p.processInstanceKey)
+	expect(res.foo).toBe('bar')
 })
