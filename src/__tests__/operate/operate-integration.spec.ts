@@ -39,7 +39,7 @@ test('getJSONVariablesforProcess works', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({
-		processFilename: 'src/__tests__/testdata/operate-straightthrough.bpmn',
+		processFilename: 'src/__tests__/testdata/Operate-StraightThrough.bpmn',
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
 		bpmnProcessId: 'operate-straightthrough',
