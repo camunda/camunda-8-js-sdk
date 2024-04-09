@@ -37,7 +37,9 @@ describe('Operate Integration', () => {
 
 test('getJSONVariablesforProcess works', async () => {
 	const c = new OperateApiClient()
-	const zeebe = new ZeebeGrpcClient()
+	const zeebe = new ZeebeGrpcClient({
+		config: { CAMUNDA_OAUTH_DISABLED: true },
+	})
 	await zeebe.deployResource({
 		processFilename: 'src/__tests__/testdata/operate-straightthrough.bpmn',
 	})
