@@ -36,7 +36,7 @@ describe('Operate Integration', () => {
 })
 
 test('getJSONVariablesforProcess works', async () => {
-	const c = new OperateApiClient()
+	const c = new OperateApiClient({ config: { CAMUNDA_OAUTH_DISABLED: true } })
 	const zeebe = new ZeebeGrpcClient({
 		config: { CAMUNDA_OAUTH_DISABLED: true },
 	})
