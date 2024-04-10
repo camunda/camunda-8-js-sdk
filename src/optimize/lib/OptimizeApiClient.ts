@@ -8,6 +8,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -25,6 +27,7 @@ import { ReportResults } from './ReportResults'
 
 /**
  * @description The high-level API client for Optimize.
+ * @throws {RESTError} If the request fails
  * @example
  * ```
  * const optimize = new OptimizeApiClient()
@@ -73,25 +76,9 @@ export class OptimizeApiClient {
 			https: {
 				certificateAuthority,
 			},
-			handlers: [
-				(options, next) => {
-					if (Object.isFrozen(options.context)) {
-						options.context = { ...options.context }
-					}
-					Error.captureStackTrace(options.context)
-					return next(options)
-				},
-			],
+			handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [
-					(error) => {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						;(error as any).source = (error as any).options.context.stack.split(
-							'\n'
-						)
-						return error
-					},
-				],
+				beforeError: [gotBeforeErrorHook],
 			},
 		})
 	}
@@ -121,6 +108,7 @@ export class OptimizeApiClient {
 	 * If sharing had been previously enabled and then disabled, re-enabling sharing will allow users to access previously shared URLs under the same address as before. Calling this endpoint when sharing is already enabled will have no effect.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/configuration/enable-sharing/)
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 *  ```typescript
 	 * const client = new OptimizeApiClient()
@@ -143,6 +131,7 @@ export class OptimizeApiClient {
 	 * When sharing is disabled, previously shared URLs will no longer be accessible. Upon re-enabling sharing, the previously shared URLs will work once again under the same address as before. Calling this endpoint when sharing is already disabled will have no effect.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/configuration/disable-sharing/)
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 *  ```typescript
 	 * const client = new OptimizeApiClient()
@@ -164,7 +153,7 @@ export class OptimizeApiClient {
 	 * The response contains a list of IDs of the dashboards existing in the collection with the given collection ID.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/dashboard/get-dashboard-ids/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @param collectionId The ID of the collection for which to retrieve the dashboard IDs.
 	 * @example
 	 * ```
@@ -197,6 +186,7 @@ export class OptimizeApiClient {
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/dashboard/export-dashboard-definitions/)
 	 *
+	 * @throws {RESTError} If the request fails
 	 * @param dashboardIds Array of dashboard ids
 	 * @example
 	 * ```
@@ -220,7 +210,7 @@ export class OptimizeApiClient {
 	 * @description This API allows users to retrieve all report IDs from a given collection. The response contains a list of IDs of the reports existing in the collection with the given collection ID.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/get-report-ids/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @param collectionId the id of the collection
 	 * @example
 	 * ```
@@ -239,7 +229,7 @@ export class OptimizeApiClient {
 	 * @description The report deletion API allows you to delete reports by ID from Optimize.
 	 *
 	 * [Camunda 8 documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/delete-report/)
-	 *
+	 *	@throws {RESTError} If the request fails
 	 * @param reportId The ID of the report you wish to delete
 	 *
 	 * @example
@@ -263,7 +253,7 @@ export class OptimizeApiClient {
 	 * The obtained list of entity exports can be imported into other Optimize systems either using the dedicated import API or via UI.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/export-report-definitions/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @param reportIds array of report IDs
 	 * @example
 	 * ```
@@ -288,6 +278,7 @@ export class OptimizeApiClient {
 	 * @param reportId
 	 * @param limit
 	 * @param paginationTimeoutSec
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const client = new OptimizeApiClient()
@@ -325,6 +316,7 @@ export class OptimizeApiClient {
 	 *
 	 * Especially if this data changes over time, it is advisable to use this REST API to persist external variable updates to Optimize, as otherwise Optimize may not be aware of data changes in the external system.
 	 * @param variables
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const variables = [
@@ -363,7 +355,7 @@ export class OptimizeApiClient {
 	 * @description The purpose of Health-Readiness REST API is to return information indicating whether Optimize is ready to be used.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/health-readiness/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const client = new OptimizeApiClient()
@@ -387,6 +379,7 @@ export class OptimizeApiClient {
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/import-entities/)
 	 *
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const entities = [
@@ -433,6 +426,7 @@ export class OptimizeApiClient {
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/variable-labeling/)
 	 *
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const variableLabels =  {

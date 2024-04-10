@@ -9,6 +9,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -16,6 +18,10 @@ import * as Dto from './AdminDto'
 
 const debug = d('camunda:adminconsole')
 
+/**
+ * This class provides methods to interact with the Camunda Admin API.
+ * @throws {RESTError} An error that may occur during API operations.
+ */
 export class AdminApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
@@ -44,25 +50,9 @@ export class AdminApiClient {
 			https: {
 				certificateAuthority,
 			},
-			handlers: [
-				(options, next) => {
-					if (Object.isFrozen(options.context)) {
-						options.context = { ...options.context }
-					}
-					Error.captureStackTrace(options.context)
-					return next(options)
-				},
-			],
+			handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [
-					(error) => {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						;(error as any).source = (error as any).options.context.stack.split(
-							'\n'
-						)
-						return error
-					},
-				],
+				beforeError: [gotBeforeErrorHook],
 			},
 		})
 		debug('prefixUrl', `${baseUrl}/clusters`)
@@ -82,6 +72,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Get an array of the current API clients for this cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClients) for more details.
+	 * @throws {RESTError}
 	 * @param clusterUuid - The cluster UUID
 	 *
 	 */
@@ -94,7 +85,7 @@ export class AdminApiClient {
 
 	/**
 	 * @description Create a new API client for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateClient) for more details.
-	 * @returns
+	 * @throws {RESTError}
 	 */
 	async createClient(req: {
 		clusterUuid: string
@@ -117,6 +108,7 @@ export class AdminApiClient {
 	 * @description Get the details of an API client. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClient) for more details.
 	 * @param clusterUuid
 	 * @param clientId
+	 * @throws {RESTError}
 	 * @returns
 	 */
 	async getClient(
@@ -133,6 +125,7 @@ export class AdminApiClient {
 	 * @description See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteClient) for more details.
 	 * @param clusterUuid
 	 * @param clientId
+	 * @throws {RESTError}
 	 */
 	async deleteClient(clusterUuid: string, clientId: string): Promise<null> {
 		const headers = await this.getHeaders()
@@ -146,6 +139,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Return an array of clusters. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClusters) for more details.
+	 * @throws {RESTError}
 	 */
 	async getClusters(): Promise<Dto.Cluster[]> {
 		const headers = await this.getHeaders()
@@ -157,6 +151,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Create a new cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateCluster) for more details.
+	 * @throws {RESTError}
 	 */
 	async createCluster(
 		createClusterRequest: Dto.CreateClusterBody
@@ -173,6 +168,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Retrieve the metadata for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetCluster) for more details.
+	 * @throws {RESTError}
 	 *
 	 */
 	async getCluster(clusterUuid: string): Promise<Dto.Cluster> {
@@ -185,6 +181,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Delete a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteCluster) for more details.
+	 * @throws {RESTError}
 	 *
 	 */
 	async deleteCluster(clusterUuid: string): Promise<null> {
@@ -199,6 +196,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Retrieve the available parameters for cluster creation. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetParameters) for more details.
+	 * @throws {RESTError}
 	 */
 	async getParameters(): Promise<Dto.Parameters> {
 		const headers = await this.getHeaders()
@@ -210,6 +208,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Retrieve the connector secrets. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetSecrets) for more details.
+	 * @throws {RESTError}
 	 */
 	async getSecrets(clusterUuid: string): Promise<{ [key: string]: string }> {
 		const headers = await this.getHeaders()
@@ -221,6 +220,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Create a new connector secret. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateSecret) for more details.
+	 * @throws {RESTError}
 	 */
 	async createSecret({
 		clusterUuid,
@@ -242,6 +242,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Delete a connector secret. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteSecret) for more details.
+	 * @throws {RESTError}
 	 */
 	async deleteSecret(clusterUuid: string, secretName: string): Promise<null> {
 		const headers = await this.getHeaders()
@@ -255,6 +256,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Add one or more IPs to the whitelist for the cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpdateIpWhitelist) for more details.
+	 * @throws {RESTError}
 	 * @param ipwhitelist
 	 * @returns
 	 */
@@ -266,7 +268,7 @@ export class AdminApiClient {
 				ip: string
 			},
 		]
-	) {
+	): Promise<null> {
 		const headers = await this.getHeaders()
 		return this.rest
 			.put(`${clusterUuid}/ipwhitelist`, {
@@ -281,6 +283,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Retrieve a list of members and pending invites for your organisation. See the [API Documentation]() for more details.
+	 * @throws {RESTError}
 	 */
 	async getUsers(): Promise<Dto.Member[]> {
 		const headers = await this.getHeaders()
@@ -294,6 +297,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Add a member. See the [API Documentation]() for more details.
+	 * @throws {RESTError}
 	 *
 	 */
 	async createMember(
@@ -312,6 +316,7 @@ export class AdminApiClient {
 	/**
 	 *
 	 * @description Delete a member from your organization. See the [API Documentation]() for more details.
+	 * @throws {RESTError}
 	 *
 	 */
 	async deleteMember(email: string): Promise<null> {

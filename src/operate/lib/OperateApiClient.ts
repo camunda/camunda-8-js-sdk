@@ -8,6 +8,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
 } from '../../lib'
@@ -67,6 +69,7 @@ export class OperateApiClient {
 	 * ```
 	 * const operate = new OperateApiClient()
 	 * ```
+	 * @throws {RESTError} An error that may occur during API operations.
 	 */
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -92,26 +95,9 @@ export class OperateApiClient {
 			https: {
 				certificateAuthority,
 			},
-			handlers: [
-				(options, next) => {
-					if (Object.isFrozen(options.context)) {
-						options.context = { ...options.context }
-					}
-					Error.captureStackTrace(options.context)
-
-					return next(options)
-				},
-			],
+			handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [
-					(error) => {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						;(error as any).source = (error as any).options.context.stack.split(
-							'\n'
-						)
-						return error
-					},
-				],
+				beforeError: [gotBeforeErrorHook],
 			},
 		})
 		this.tenantId = config.CAMUNDA_TENANT_ID
@@ -154,6 +140,7 @@ export class OperateApiClient {
 	 * @description Search and retrieve process definitions.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/docs/apis-clients/operate-api/#process-definition)
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const query: Query<ProcessDefinition> = {
@@ -187,7 +174,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Retrieve the metadata for a specific process definition, by key.
-	 *
+	 * @throws {RESTError}
 	 * [Camunda 8 Documentation](https://docs.camunda.io/docs/apis-clients/operate-api/#process-definition)
 	 * @example
 	 * ```
@@ -213,6 +200,10 @@ export class OperateApiClient {
 		}).text()
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	public async searchDecisionDefinitions(
 		query: Query<DecisionDefinition>
 	): Promise<SearchResults<DecisionDefinition>> {
@@ -225,6 +216,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getDecisionDefinition(
 		decisionDefinitionKey: number | string
 	): Promise<DecisionDefinition> {
@@ -235,6 +229,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchDecisionInstances(
 		query: Query<DecisionInstance>
 	): Promise<SearchResults<DecisionInstance>> {
@@ -247,6 +244,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getDecisionInstance(
 		decisionInstanceKey: number | string
 	): Promise<DecisionInstance> {
@@ -258,6 +258,7 @@ export class OperateApiClient {
 	}
 	/**
 	 * @description Search and retrieve process instances.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -298,6 +299,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Retrieve a specific process instance by id.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -315,6 +317,7 @@ export class OperateApiClient {
 
 	/**
 	 * @description Delete a specific process instance by key.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -339,6 +342,7 @@ export class OperateApiClient {
 
 	/**
 	 * @description Get the statistics for a process instance, grouped by flow nodes
+	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceStatistics(
 		processInstanceKey: number | string
@@ -352,6 +356,7 @@ export class OperateApiClient {
 
 	/**
 	 * @description Get sequence flows of process instance by key
+	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceSequenceFlows(
 		processInstanceKey: number | string
@@ -365,6 +370,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Search and retrieve incidents.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -400,6 +406,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Retrieve an incident by incident key.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -415,6 +422,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchFlownodeInstances(
 		query: Query<FlownodeInstance>
 	): Promise<SearchResults<FlownodeInstance>> {
@@ -429,6 +439,9 @@ export class OperateApiClient {
 			.json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getFlownodeInstance(
 		key: number | string
 	): Promise<FlownodeInstance> {
@@ -439,6 +452,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchVariables(
 		query: Query<Variable>
 	): Promise<SearchResults<Variable>> {
@@ -455,6 +471,7 @@ export class OperateApiClient {
 
 	/**
 	 * @description Retrieve the variables for a Process Instance, given its key
+	 * @throws {RESTError}
 	 * @param processInstanceKey
 	 * @returns
 	 */
@@ -478,7 +495,7 @@ export class OperateApiClient {
 	/**
 	 * @description Retrieve the variables for a Process Instance as an object, given its key
 	 * @param processInstanceKey
-	 * @returns
+	 * @throws {RESTError}
 	 */
 	public async getJSONVariablesforProcess<T extends { [key: string]: JSONDoc }>(
 		processInstanceKey: number | string
@@ -518,6 +535,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Return a variable identified by its variable key
+	 * @throws {RESTError}
 	 * @returns
 	 */
 	public async getVariables(variableKey: number | string): Promise<Variable> {
@@ -527,6 +545,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchDecisionRequirements(query: Query<DecisionRequirements>) {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
@@ -549,6 +570,9 @@ export class OperateApiClient {
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getDecisionRequirementsXML(key: string | number) {
 		const headers = await this.getHeaders()
 		return this.rest(`drd/${key}/xml`, {

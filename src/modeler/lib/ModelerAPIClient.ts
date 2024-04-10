@@ -8,6 +8,8 @@ import {
 	GetCertificateAuthority,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -44,25 +46,9 @@ export class ModelerApiClient {
 				certificateAuthority,
 			},
 			responseType: 'json',
-			handlers: [
-				(options, next) => {
-					if (Object.isFrozen(options.context)) {
-						options.context = { ...options.context }
-					}
-					Error.captureStackTrace(options.context)
-					return next(options)
-				},
-			],
+			handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [
-					(error) => {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						;(error as any).source = (error as any).options.context.stack.split(
-							'\n'
-						)
-						return error
-					},
-				],
+				beforeError: [gotBeforeErrorHook],
 			},
 		})
 		debug(`baseUrl: ${prefixUrl}`)
@@ -97,6 +83,7 @@ export class ModelerApiClient {
 	/**
 	 * Adds a new collaborator to a project or modifies the permission level of an existing collaborator.
 	 * Note: Only users that are part of the authorized organization (see GET /api/v1/info) and logged in to Web Modeler at least once can be added to a project.
+	 * @throws {RESTError}
 	 */
 	async addCollaborator(req: Dto.CreateCollaboratorDto): Promise<null> {
 		const headers = await this.getHeaders()
@@ -114,6 +101,7 @@ export class ModelerApiClient {
 	 * sort specifies by which fields and direction (ASC/DESC) the result should be sorted.
 	 * page specifies the page number to return.
 	 * size specifies the number of items per page. The default value is 10.
+	 * @throws {RESTError}
 	 */
 	async searchCollaborators(
 		req: Dto.PubSearchDtoProjectCollaboratorDto
@@ -129,6 +117,11 @@ export class ModelerApiClient {
 			) as Promise<Dto.PubSearchResultDtoProjectCollaboratorDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 * @returns
+	 */
 	async deleteCollaborator({
 		email,
 		projectId,
@@ -165,7 +158,9 @@ export class ModelerApiClient {
 	 *
 	 * The value of content.version is managed by Web Modeler and will be updated automatically.
 	 *
-	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/").
+	 * This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * @throws {RESTError}
 	 */
 	async createFile(req: Dto.CreateFileDto): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
@@ -185,6 +180,7 @@ export class ModelerApiClient {
 	 * facilitates the processing of path-like structures within file and folder names.
 	 *
 	 * Does this throw if it is not found?
+	 * @throws {RESTError}
 	 */
 	async getFile(fileId: string): Promise<Dto.FileDto> {
 		const headers = await this.getHeaders()
@@ -195,7 +191,9 @@ export class ModelerApiClient {
 
 	/**
 	 * Deletes a file.
-	 * Note: Deleting a file will also delete other resources attached to the file (comments, call activity/business rule task links, milestones and shares) which might have side-effects. Deletion of resources is recursive and cannot be undone.
+	 * Note: Deleting a file will also delete other resources attached to the file (comments, call activity/business rule task links, milestones and shares) which might have side-effects.
+	 * Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteFile(fileId: string): Promise<null> {
 		const headers = await this.getHeaders()
@@ -217,7 +215,9 @@ export class ModelerApiClient {
 	 * The value of content.name can only be changed via name.
 	 * The value of content.id is not updatable.
 	 * The value of content.version is managed by Web Modeler and will be updated automatically.
-	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/").
+	 * This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * @throws {RESTError}
 	 */
 	async updateFile(
 		fileId: string,
@@ -252,7 +252,9 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 * size specifies the number of items per page. The default value is 10.
 	 *
-	 * Note: The simplePath transform any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transform any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/").
+	 * This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * @throws {RESTError}
 	 */
 	async searchFiles(
 		req: Dto.PubSearchDtoFileMetadataDto
@@ -275,6 +277,7 @@ export class ModelerApiClient {
 	 * When projectId is given and parentId is either null or omitted altogether, the folder will be created in the root of the project.
 	 *
 	 * When projectId and parentId are both given, they must be consistent - i.e. the parent folder is in the project.
+	 * @throws {RESTError}
 	 */
 	async createFolder(req: Dto.CreateFolderDto): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
@@ -286,6 +289,11 @@ export class ModelerApiClient {
 			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 * @returns
+	 */
 	async getFolder(folderId: string): Promise<Dto.FolderDto> {
 		const headers = await this.getHeaders()
 		return this.rest(`folders/${folderId}`, {
@@ -296,6 +304,7 @@ export class ModelerApiClient {
 	/**
 	 *
 	 * Deletes an empty folder. A folder is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteFolder(folderId: string): Promise<null> {
 		const headers = await this.getHeaders()
@@ -316,6 +325,7 @@ export class ModelerApiClient {
 	 * When projectId is given and parentId is either null or omitted altogether, the file will be moved to the root of the project.
 	 *
 	 * When projectId and parentId are both given, they must be consistent - i.e. the new parent folder is in the new project.
+	 * @throws {RESTError}
 	 */
 	async updateFolder(
 		folderId: string,
@@ -330,6 +340,10 @@ export class ModelerApiClient {
 			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async getInfo(): Promise<Dto.InfoDto> {
 		const headers = await this.getHeaders()
 		return this.rest(`info`, {
@@ -337,6 +351,10 @@ export class ModelerApiClient {
 		}).then(this.decodeResponseOrThrow) as Promise<Dto.InfoDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async createMilestone(
 		req: Dto.CreateMilestoneDto
 	): Promise<Dto.MilestoneMetadataDto> {
@@ -349,6 +367,10 @@ export class ModelerApiClient {
 			.then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async getMilestone(milestoneId: string): Promise<Dto.MilestoneDto> {
 		const headers = await this.getHeaders()
 		return this.rest(`milestones/${milestoneId}`, {
@@ -358,6 +380,7 @@ export class ModelerApiClient {
 
 	/**
 	 * Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteMilestone(milestoneId: string) {
 		const headers = await this.getHeaders()
@@ -368,6 +391,7 @@ export class ModelerApiClient {
 
 	/**
 	 * Returns a link to a visual comparison between two milestones where the milestone referenced by milestone1Id acts as a baseline to compare the milestone referenced by milestone2Id against.
+	 * @throws {RESTError}
 	 */
 	async getMilestoneComparison(
 		milestone1Id: string,
@@ -401,6 +425,7 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 *
 	 * size specifies the number of items per page. The default value is 10.
+	 * @throws {RESTError}
 	 */
 	async searchMilestones(
 		req: Dto.PubSearchDtoMilestoneMetadataDto
@@ -418,6 +443,7 @@ export class ModelerApiClient {
 
 	/**
 	 * Creates a new project. This project will be created without any collaborators, so it will not be visible in the UI by default. To assign collaborators, use `addCollaborator()`.
+	 * @throws {RESTError}
 	 */
 	async createProject(name: string): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
@@ -429,6 +455,11 @@ export class ModelerApiClient {
 			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 * @returns
+	 */
 	async getProject(projectId: string): Promise<Dto.ProjectDto> {
 		const headers = await this.getHeaders()
 		return this.rest(`projects/${projectId}`, {
@@ -437,7 +468,8 @@ export class ModelerApiClient {
 	}
 
 	/**
-	 * This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * @description This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteProject(projectId: string) {
 		const headers = await this.getHeaders()
@@ -448,6 +480,10 @@ export class ModelerApiClient {
 			.then(this.decodeResponseOrThrow)
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async renameProject(
 		projectId: string,
 		name: string
@@ -484,6 +520,7 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 *
 	 * size specifies the number of items per page. The default value is 10.
+	 * @throws {RESTError}
 	 */
 	async searchProjects(
 		req: Dto.PubSearchDtoProjectMetadataDto
