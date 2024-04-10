@@ -9,6 +9,8 @@ import {
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
 } from '../../lib'
@@ -77,25 +79,9 @@ export class TasklistApiClient {
 			https: {
 				certificateAuthority,
 			},
-			handlers: [
-				(options, next) => {
-					if (Object.isFrozen(options.context)) {
-						options.context = { ...options.context }
-					}
-					Error.captureStackTrace(options.context)
-					return next(options)
-				},
-			],
+			handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [
-					(error) => {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						;(error as any).source = (error as any).options.context.stack.split(
-							'\n'
-						)
-						return error
-					},
-				],
+				beforeError: [gotBeforeErrorHook],
 			},
 		})
 		trace(`prefixUrl: ${prefixUrl}`)
@@ -136,6 +122,7 @@ export class TasklistApiClient {
 	/**
 	 * @description Query Tasklist for a list of tasks. See the [API documentation](https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/tasks/).
 	 * @throws Status 400 - An error is returned when more than one search parameters among [`searchAfter`, `searchAfterOrEqual`, `searchBefore`, `searchBeforeOrEqual`] are present in request
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const tasklist = new TasklistApiClient()
@@ -173,7 +160,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Return a task by id, or throw if not found.
-	 * @throws Will throw if no task of the given taskId exists
+	 * @throws {RESTError} Will throw if no task of the given taskId exists
 	 * @returns
 	 */
 	public async getTask(taskId: string): Promise<TaskResponse> {
@@ -187,6 +174,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Get the form details by form id and processDefinitionKey.
+	 * @throws {RESTError}
 	 */
 	public async getForm(
 		formId: string,
@@ -208,7 +196,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description This method returns a list of task variables for the specified taskId and variableNames. If the variableNames parameter is empty, all variables associated with the task will be returned.
-	 * @throws Status 404 - An error is returned when the task with the taskId is not found.
+	 * @throws {RESTError}
 	 */
 	public async getVariables({
 		taskId,
@@ -246,6 +234,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Assign a task with taskId to assignee or the active user.
+	 * @throws {RESTError}
 	 * @throws Status 400 - An error is returned when the task is not active (not in the CREATED state).
 	 * Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
 	 * Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
@@ -275,6 +264,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Complete a task with taskId and optional variables
+	 * @throws {RESTError}
 	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
 	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
 	 * @throws Status 400 An error is returned if the task is not assigned to the current user.
@@ -302,6 +292,7 @@ export class TasklistApiClient {
 	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
 	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
 	 * @throws Status 404 An error is returned when the task with the taskId is not found.
+	 * @throws {RESTError}
 	 */
 	public async unassignTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
