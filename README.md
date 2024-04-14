@@ -34,7 +34,7 @@ In this release, the functionality of Camunda 8 is exposed via dedicated clients
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8()
-const zeebe = c8.getZeebeGrpcClient()
+const zeebe = c8.getZeebeGrpcApiClient()
 const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
