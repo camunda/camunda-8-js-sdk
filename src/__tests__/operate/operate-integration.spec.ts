@@ -1,3 +1,4 @@
+import { HTTPError } from 'got'
 import { RESTError } from 'lib'
 import { LosslessNumber } from 'lossless-json'
 
@@ -92,6 +93,7 @@ test('test error type', async () => {
 			// `string`
 
 			expect((e.response?.body as string).includes('404')).toBe(true)
+			expect(e instanceof HTTPError).toBe(true)
 			return false
 		})
 	expect(res).toBe(false)

@@ -21,7 +21,7 @@ import { ZeebeGrpcClient } from '../zeebe'
  * import { Camunda8 } from '@camunda8/sdk'
  *
  * const c8 = new Camunda8()
- * const zeebe = c8.getZeebeGrpcClient()
+ * const zeebe = c8.getZeebeGrpcApiClient()
  * const operate = c8.getOperateApiClient()
  * const optimize = c8.getOptimizeApiClient()
  * const tasklist = c8.getTasklistApiClient()
@@ -35,7 +35,7 @@ export class Camunda8 {
 	private modelerApiClient?: ModelerApiClient
 	private optimizeApiClient?: OptimizeApiClient
 	private tasklistApiClient?: TasklistApiClient
-	private zeebeGrpcClient?: ZeebeGrpcClient
+	private zeebeGrpcApiClient?: ZeebeGrpcClient
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider?: OAuthProvider
 
@@ -99,12 +99,12 @@ export class Camunda8 {
 	}
 
 	public getZeebeGrpcApiClient(): ZeebeGrpcClient {
-		if (!this.zeebeGrpcClient) {
-			this.zeebeGrpcClient = new ZeebeGrpcClient({
+		if (!this.zeebeGrpcApiClient) {
+			this.zeebeGrpcApiClient = new ZeebeGrpcClient({
 				config: this.configuration,
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
-		return this.zeebeGrpcClient
+		return this.zeebeGrpcApiClient
 	}
 }

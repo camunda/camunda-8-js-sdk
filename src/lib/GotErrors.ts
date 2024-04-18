@@ -1,7 +1,7 @@
 import * as Got from 'got'
 
 export type RESTError =
-	| Got.HTTPError
+	| (Got.HTTPError & { statusCode: number })
 	| Got.RequestError
 	| Got.ReadError
 	| Got.ParseError
