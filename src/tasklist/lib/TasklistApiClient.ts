@@ -6,6 +6,7 @@ import {
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCertificateAuthority,
+	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
@@ -13,6 +14,7 @@ import {
 	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -76,11 +78,15 @@ export class TasklistApiClient {
 
 		this.rest = got.extend({
 			prefixUrl,
+			retry: GotRetryConfig,
 			https: {
 				certificateAuthority,
 			},
 			handlers: [gotErrorHandler],
 			hooks: {
+				beforeRetry: [
+					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+				],
 				beforeError: [gotBeforeErrorHook],
 			},
 		})

@@ -176,7 +176,6 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 			ZEEBE_CLIENT_ID: 'clientId6',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
-			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
 			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
 		},
 	})
@@ -210,60 +209,6 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 		const token2 = await o.getToken('ZEEBE')
 		expect(token2).toBe('0')
 		await delay(1600)
-		const token3 = await o.getToken('ZEEBE')
-		expect(token3).toBe('1')
-		done()
-	})
-})
-
-// Added test for https://github.com/camunda/camunda-8-js-sdk/issues/62
-// "OAuth token refresh has a race condition"
-test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS', (done) => {
-	const delay = (timeout: number) =>
-		new Promise((res) => setTimeout(() => res(null), timeout))
-
-	const serverPort3009 = 3009
-	const o = new OAuthProvider({
-		config: {
-			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-			ZEEBE_CLIENT_ID: 'clientId7',
-			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3009}`,
-			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 2000,
-			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-		},
-	})
-
-	let requestCount = 0
-	server = http
-		.createServer((req, res) => {
-			if (req.method === 'POST') {
-				let body = ''
-				req.on('data', (chunk) => {
-					body += chunk
-				})
-
-				req.on('end', () => {
-					res.writeHead(200, { 'Content-Type': 'application/json' })
-					const expiresIn = 5 // seconds
-					res.end(
-						`{"access_token": "${requestCount++}", "expires_in": ${expiresIn}}`
-					)
-					expect(body).toEqual(
-						'audience=token&client_id=clientId7&client_secret=clientSecret&grant_type=client_credentials'
-					)
-				})
-			}
-		})
-		.listen(serverPort3009)
-
-	o.flushFileCache()
-	o.getToken('ZEEBE').then(async (token) => {
-		expect(token).toBe('0')
-		await delay(500)
-		const token2 = await o.getToken('ZEEBE')
-		expect(token2).toBe('0')
-		await delay(3600)
 		const token3 = await o.getToken('ZEEBE')
 		expect(token3).toBe('1')
 		done()

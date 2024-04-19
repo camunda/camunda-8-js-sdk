@@ -6,11 +6,13 @@ import {
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCertificateAuthority,
+	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
 	gotErrorHandler,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -45,13 +47,18 @@ export class AdminApiClient {
 		const certificateAuthority = GetCertificateAuthority(config)
 
 		this.userAgentString = createUserAgentString(config)
+		const prefixUrl = `${baseUrl}/clusters`
 		this.rest = got.extend({
-			prefixUrl: `${baseUrl}/clusters`,
+			prefixUrl,
+			retry: GotRetryConfig,
 			https: {
 				certificateAuthority,
 			},
 			handlers: [gotErrorHandler],
 			hooks: {
+				beforeRetry: [
+					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+				],
 				beforeError: [gotBeforeErrorHook],
 			},
 		})
