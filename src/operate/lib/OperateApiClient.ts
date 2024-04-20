@@ -5,6 +5,7 @@ import {
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCertificateAuthority,
+	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
@@ -12,6 +13,7 @@ import {
 	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -92,11 +94,15 @@ export class OperateApiClient {
 
 		this.rest = got.extend({
 			prefixUrl,
+			retry: GotRetryConfig,
 			https: {
 				certificateAuthority,
 			},
 			handlers: [gotErrorHandler],
 			hooks: {
+				beforeRetry: [
+					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+				],
 				beforeError: [gotBeforeErrorHook],
 			},
 		})
@@ -188,6 +194,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`process-definitions/${processDefinitionKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, ProcessDefinition),
 		}).json()
 	}
 
@@ -312,6 +319,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`process-instances/${processInstanceKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, ProcessInstance),
 		}).json()
 	}
 
@@ -332,6 +340,7 @@ export class OperateApiClient {
 			const res = this.rest.delete(`process-instances/${processInstanceKey}`, {
 				headers,
 				throwHttpErrors: false,
+				parseJson: (text) => losslessParse(text, ChangeStatus),
 			})
 			res.catch((e) => console.log(e))
 			return res.json()
@@ -513,6 +522,7 @@ export class OperateApiClient {
 				body: losslessStringify(body),
 			})
 			.json()
+
 		return vars.items.reduce(
 			(prev, curr) => ({
 				...prev,
@@ -542,6 +552,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`variables/${variableKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, Variable),
 		}).json()
 	}
 

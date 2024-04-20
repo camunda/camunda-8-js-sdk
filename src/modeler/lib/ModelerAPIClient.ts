@@ -6,10 +6,12 @@ import {
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCertificateAuthority,
+	GotRetryConfig,
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
 	gotErrorHandler,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -42,12 +44,15 @@ export class ModelerApiClient {
 
 		this.rest = got.extend({
 			prefixUrl,
+			retry: GotRetryConfig,
 			https: {
 				certificateAuthority,
 			},
-			responseType: 'json',
 			handlers: [gotErrorHandler],
 			hooks: {
+				beforeRetry: [
+					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+				],
 				beforeError: [gotBeforeErrorHook],
 			},
 		})
@@ -73,7 +78,7 @@ export class ModelerApiClient {
 		}
 		// 204: No Content
 		if (res.statusCode === 204) {
-			return null
+			return '{}'
 		}
 		const err = new Error(res.statusMessage) as unknown as { code: number }
 		err.code = res.statusCode
@@ -112,8 +117,8 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(
-				this.decodeResponseOrThrow
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoProjectCollaboratorDto>
 	}
 
@@ -169,7 +174,9 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.FileMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
@@ -186,7 +193,9 @@ export class ModelerApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`files/${fileId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.FileDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.FileDto>
 	}
 
 	/**
@@ -227,7 +236,9 @@ export class ModelerApiClient {
 		return this.rest(`files/${fileId}`, {
 			headers,
 			body: JSON.stringify(update),
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.FileMetadataDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
@@ -263,8 +274,8 @@ export class ModelerApiClient {
 		return this.rest(`files/search`, {
 			headers,
 			body: JSON.stringify(req),
-		}).then(
-			this.decodeResponseOrThrow
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
 		) as Promise<Dto.PubSearchResultDtoFileMetadataDto>
 	}
 
@@ -286,7 +297,9 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FolderMetadataDto>
 	}
 
 	/**
@@ -298,7 +311,9 @@ export class ModelerApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`folders/${folderId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.FolderDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.FolderDto>
 	}
 
 	/**
@@ -337,7 +352,9 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(update),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FolderMetadataDto>
 	}
 
 	/**
@@ -348,7 +365,9 @@ export class ModelerApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`info`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.InfoDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.InfoDto>
 	}
 
 	/**
@@ -364,7 +383,9 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.MilestoneMetadataDto>
 	}
 
 	/**
@@ -375,7 +396,9 @@ export class ModelerApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`milestones/${milestoneId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.MilestoneDto>
 	}
 
 	/**
@@ -436,8 +459,8 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(
-				this.decodeResponseOrThrow
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoMilestoneMetadataDto>
 	}
 
@@ -452,7 +475,9 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify({ name }),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.ProjectMetadataDto>
 	}
 
 	/**
@@ -464,7 +489,9 @@ export class ModelerApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`projects/${projectId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.ProjectDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.ProjectDto>
 	}
 
 	/**
@@ -477,7 +504,7 @@ export class ModelerApiClient {
 			.delete(`projects/${projectId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow)
+			.then((res) => JSON.parse(this.decodeResponseOrThrow(res)))
 	}
 
 	/**
@@ -494,7 +521,9 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify({ name }),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.ProjectMetadataDto>
 	}
 
 	/**
@@ -531,8 +560,8 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(
-				this.decodeResponseOrThrow
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoProjectMetadataDto>
 	}
 }

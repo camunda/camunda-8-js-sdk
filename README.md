@@ -112,12 +112,6 @@ const c8 = new Camunda8({
 
 If the cache directory does not exist, the SDK will attempt to create it (recursively). If the SDK is unable to create it, or the directory exists but is not writeable by your application, the SDK will throw an exception.
 
-### Token refresh
-
-Token refresh timing relative to expiration is controlled by the `CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS` value. By default, this is 1000ms. Tokens are renewed this amount of time before they expire.
-
-If you experience intermittent `401: Unauthorized` errors, this may not be sufficient time to refresh the token before it expires in your infrastructure. Increase this value to force a token to be refreshed before it expires.
-
 ## Connection configuration examples
 
 ### Self-Managed

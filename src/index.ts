@@ -8,7 +8,7 @@ import * as Optimize from './optimize'
 import * as Tasklist from './tasklist'
 import * as Zeebe from './zeebe'
 
-export { RESTError } from './lib'
+export { /*HTTPError,*/ RESTError } from './lib'
 
 export const Dto = { ChildDto, BigIntValue, Int64String, LosslessDto }
 

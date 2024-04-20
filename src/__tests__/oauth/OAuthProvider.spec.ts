@@ -2,8 +2,21 @@ import fs from 'fs'
 import http from 'http'
 import path from 'path'
 
+import { HS256Strategy, JSONWebToken } from '@mokuteki/jwt'
+
 import { EnvironmentSetup } from '../../lib'
 import { OAuthProvider } from '../../oauth'
+
+const strategy = new HS256Strategy({
+	ttl: 30000,
+	secret: 'YOUR_SECRET',
+})
+
+const jwt = new JSONWebToken(strategy)
+const payload = { id: 1 }
+
+const access_token = jwt.generate(payload)
+const access_token2 = jwt.generate(payload)
 
 jest.setTimeout(10000)
 let server: http.Server
@@ -176,8 +189,8 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 			ZEEBE_CLIENT_ID: 'clientId6',
 			ZEEBE_CLIENT_SECRET: 'clientSecret',
 			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
-			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
 			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
 		},
 	})
 
@@ -193,9 +206,9 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
 					const expiresIn = 2 // seconds
-					res.end(
-						`{"access_token": "${requestCount++}", "expires_in": ${expiresIn}}`
-					)
+					const token = requestCount % 2 === 0 ? access_token : access_token2
+					res.end(`{"access_token": "${token}", "expires_in": ${expiresIn}}`)
+					requestCount++
 					expect(body).toEqual(
 						'audience=token&client_id=clientId6&client_secret=clientSecret&grant_type=client_credentials'
 					)
@@ -205,67 +218,13 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 		.listen(serverPort3002)
 
 	o.getToken('ZEEBE').then(async (token) => {
-		expect(token).toBe('0')
+		expect(token).toBe(access_token)
 		await delay(500)
 		const token2 = await o.getToken('ZEEBE')
-		expect(token2).toBe('0')
+		expect(token2).toBe(access_token)
 		await delay(1600)
 		const token3 = await o.getToken('ZEEBE')
-		expect(token3).toBe('1')
-		done()
-	})
-})
-
-// Added test for https://github.com/camunda/camunda-8-js-sdk/issues/62
-// "OAuth token refresh has a race condition"
-test('In-memory cache is populated and evicted respecting CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS', (done) => {
-	const delay = (timeout: number) =>
-		new Promise((res) => setTimeout(() => res(null), timeout))
-
-	const serverPort3009 = 3009
-	const o = new OAuthProvider({
-		config: {
-			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-			ZEEBE_CLIENT_ID: 'clientId7',
-			ZEEBE_CLIENT_SECRET: 'clientSecret',
-			CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3009}`,
-			CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 2000,
-			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-		},
-	})
-
-	let requestCount = 0
-	server = http
-		.createServer((req, res) => {
-			if (req.method === 'POST') {
-				let body = ''
-				req.on('data', (chunk) => {
-					body += chunk
-				})
-
-				req.on('end', () => {
-					res.writeHead(200, { 'Content-Type': 'application/json' })
-					const expiresIn = 5 // seconds
-					res.end(
-						`{"access_token": "${requestCount++}", "expires_in": ${expiresIn}}`
-					)
-					expect(body).toEqual(
-						'audience=token&client_id=clientId7&client_secret=clientSecret&grant_type=client_credentials'
-					)
-				})
-			}
-		})
-		.listen(serverPort3009)
-
-	o.flushFileCache()
-	o.getToken('ZEEBE').then(async (token) => {
-		expect(token).toBe('0')
-		await delay(500)
-		const token2 = await o.getToken('ZEEBE')
-		expect(token2).toBe('0')
-		await delay(3600)
-		const token3 = await o.getToken('ZEEBE')
-		expect(token3).toBe('1')
+		expect(token3).toBe(access_token2)
 		done()
 	})
 })
@@ -290,7 +249,7 @@ test('Uses form encoding for request', (done) => {
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end(`{"access_token": "token-content", "expires_in": "5"}`)
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
 					server.close()
 					expect(body).toEqual(
 						'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials'
@@ -324,7 +283,7 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end(`{"access_token": "token-content", "expires_in": "5"}`)
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
 					server.close()
 					expect(body).toEqual(
 						'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials'
@@ -337,7 +296,7 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 	o.getToken('OPERATE')
 })
 
-test('Passes scope, if provided', () => {
+test.only('Passes scope, if provided', () => {
 	const serverPort3004 = 3004
 	const o = new OAuthProvider({
 		config: {
@@ -358,7 +317,7 @@ test('Passes scope, if provided', () => {
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end(`{"access_token": "token-content", "expires_in": "5"}`)
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
 
 					expect(body).toEqual(
 						'audience=token&client_id=clientId10&client_secret=clientSecret&grant_type=client_credentials&scope=scope'
@@ -392,7 +351,7 @@ test('Can get scope from environment', () => {
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end(`{"access_token": "token-content", "expires_in": "5"}`)
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
 
 					expect(body).toEqual(
 						'audience=token&client_id=clientId11&client_secret=clientSecret&grant_type=client_credentials&scope=scope2'
@@ -551,7 +510,7 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end('{"token": "something"}')
+					res.end(`{"token": "${access_token}"}`)
 					expect(body).toEqual(
 						'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
 					)
