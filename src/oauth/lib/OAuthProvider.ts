@@ -3,6 +3,7 @@ import https from 'https'
 import * as os from 'os'
 
 import { debug } from 'debug'
+import { jwtDecode } from 'jwt-decode'
 import fetch from 'node-fetch'
 
 import {
@@ -41,6 +42,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private consoleClientSecret: string | undefined
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
+	private refreshWindow: number
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -59,6 +61,8 @@ export class OAuthProvider implements IOAuthProvider {
 
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
+
+		this.refreshWindow = config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
@@ -332,8 +336,10 @@ export class OAuthProvider implements IOAuthProvider {
 		token: Token
 	}) {
 		const key = this.getCacheKey(audience)
-		const d = new Date()
-		token.expiry = d.setSeconds(d.getSeconds()) + token.expires_in * 1000
+
+		const decoded = jwtDecode(token.access_token)
+
+		token.expiry = decoded.exp ?? 0
 		this.tokenCache[key] = token
 	}
 
@@ -371,14 +377,14 @@ export class OAuthProvider implements IOAuthProvider {
 		token: Token
 		clientId: string
 	}) {
-		const d = new Date()
 		const file = this.getCachedTokenFileName(clientId, audience)
+		const decoded = jwtDecode(token.access_token)
 
 		fs.writeFile(
 			file,
 			JSON.stringify({
 				...token,
-				expiry: d.setSeconds(d.getSeconds() + token.expires_in),
+				expiry: decoded.exp ?? 0,
 			}),
 			(e) => {
 				if (!e) {
@@ -396,7 +402,10 @@ export class OAuthProvider implements IOAuthProvider {
 	private isExpired(token: Token) {
 		const d = new Date()
 		const currentTime = d.setSeconds(d.getSeconds())
-		const tokenIsExpired = currentTime >= token.expiry
+		// If the token has 10 seconds (by default) or less left, renew it.
+		// The Identity server token cache is cleared 30 seconds before the token expires, allowing us to renew it
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/125
+		const tokenIsExpired = currentTime >= token.expiry - this.refreshWindow
 		return tokenIsExpired
 	}
 

@@ -14,6 +14,12 @@ const getMainEnv = () =>
 			optional: true,
 			default: false,
 		},
+		/** How soon in milliseconds before its expiration time a cached OAuth token should be considered expired. Defaults to 1000 */
+		CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: {
+			type: 'number',
+			optional: true,
+			default: 1000,
+		},
 		/** The address for the Zeebe Gateway. Defaults to localhost:26500 */
 		ZEEBE_ADDRESS: {
 			type: 'string',

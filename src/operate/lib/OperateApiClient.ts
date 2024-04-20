@@ -194,6 +194,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`process-definitions/${processDefinitionKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, ProcessDefinition),
 		}).json()
 	}
 
@@ -318,6 +319,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`process-instances/${processInstanceKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, ProcessInstance),
 		}).json()
 	}
 
@@ -338,6 +340,7 @@ export class OperateApiClient {
 			const res = this.rest.delete(`process-instances/${processInstanceKey}`, {
 				headers,
 				throwHttpErrors: false,
+				parseJson: (text) => losslessParse(text, ChangeStatus),
 			})
 			res.catch((e) => console.log(e))
 			return res.json()
@@ -549,6 +552,7 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 		return this.rest(`variables/${variableKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, Variable),
 		}).json()
 	}
 
