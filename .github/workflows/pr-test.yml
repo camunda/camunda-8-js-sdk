@@ -92,7 +92,7 @@ jobs:
 
       - name: Set up Docker
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} registry.camunda.cloud
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username josh.wulf@camunda.com --password-stdin registry.camunda.cloud
 
       - name: Set up Docker Compose
         run: |
