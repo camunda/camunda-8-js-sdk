@@ -296,7 +296,7 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 	o.getToken('OPERATE')
 })
 
-test.only('Passes scope, if provided', () => {
+test('Passes scope, if provided', () => {
 	const serverPort3004 = 3004
 	const o = new OAuthProvider({
 		config: {
@@ -510,7 +510,7 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end(`{"token": "${access_token}"}`)
+					res.end(`{"access_token": "${access_token}"}`)
 					expect(body).toEqual(
 						'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
 					)

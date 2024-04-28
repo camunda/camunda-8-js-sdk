@@ -1,18 +1,20 @@
 import * as fs from 'fs'
-import https from 'https'
 import * as os from 'os'
 
 import { debug } from 'debug'
+import got from 'got'
 import { jwtDecode } from 'jwt-decode'
-import fetch from 'node-fetch'
 
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCertificateAuthority,
+	GotRetryConfig,
 	RequireConfiguration,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 } from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
@@ -29,7 +31,6 @@ export class OAuthProvider implements IOAuthProvider {
 	private authServerUrl: string
 	private clientId: string | undefined
 	private clientSecret: string | undefined
-	private customRootCert?: Buffer
 	private useFileCache: boolean
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
@@ -43,6 +44,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
+	private rest: typeof got
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -83,11 +85,18 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
+		const certificateAuthority = GetCertificateAuthority(config)
 
-		const customRootCert = GetCertificateAuthority(config)
-		this.customRootCert = customRootCert
-			? Buffer.from(customRootCert)
-			: undefined
+		this.rest = got.extend({
+			retry: GotRetryConfig,
+			https: {
+				certificateAuthority,
+			},
+			handlers: [gotErrorHandler],
+			hooks: {
+				beforeError: [gotBeforeErrorHook],
+			},
+		})
 
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
 		this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
@@ -125,6 +134,20 @@ export class OAuthProvider implements IOAuthProvider {
 						'If you are running on AWS Lambda, set the HOME environment variable of your lambda function to /tmp'
 				)
 			}
+
+			const certificateAuthority = GetCertificateAuthority(config)
+
+			this.rest = got.extend({
+				// prefixUrl,
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		}
 
 		this.isCamundaSaaS = this.authServerUrl.includes(
@@ -134,7 +157,6 @@ export class OAuthProvider implements IOAuthProvider {
 
 	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
 		debug(`Token request for ${audienceType}`)
-		// tslint:disable-next-line: no-console
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
 		// Otherwise we use the application credential set, unless a Console credential set exists.
@@ -261,45 +283,26 @@ export class OAuthProvider implements IOAuthProvider {
 		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
 
-		if (this.customRootCert) {
-			trace('Using custom root certificate')
-		}
-
-		const customAgent = this.customRootCert
-			? new https.Agent({ ca: this.customRootCert })
-			: undefined
-
 		const options = {
-			agent: customAgent,
-			method: 'POST',
 			body: bodyWithScope,
 			headers: {
 				'content-type': 'application/x-www-form-urlencoded',
 				'user-agent': this.userAgentString,
+				accept: '*/*',
 			},
 		}
-		const optionsWithAgent = this.customRootCert
-			? { ...options, agent: customAgent }
-			: options
+
 		trace(`Making token request to the token endpoint: `)
 		trace(`  ${this.authServerUrl}`)
-		trace(optionsWithAgent)
-		return fetch(this.authServerUrl, optionsWithAgent)
+		trace(options)
+		return this.rest
+			.post(this.authServerUrl, options)
 			.catch((e) => {
 				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
 				console.log(e)
 				throw e
 			})
-			.then((res) =>
-				res.json().catch(() => {
-					trace(
-						`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
-					)
-					throw new Error(
-						`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
-					)
-				})
-			)
+			.then((res) => JSON.parse(res.body))
 			.then((t) => {
 				trace(
 					`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
@@ -314,6 +317,10 @@ export class OAuthProvider implements IOAuthProvider {
 					throw new Error(
 						`Failed to get token: ${t.error} - ${t.error_description}`
 					)
+				}
+				if (t.access_token === undefined) {
+					console.error(audienceType, t)
+					throw new Error('Failed to get token: no access_token in response')
 				}
 				const token = { ...(t as Token), audience: audienceType }
 				if (this.useFileCache) {
@@ -336,11 +343,16 @@ export class OAuthProvider implements IOAuthProvider {
 		token: Token
 	}) {
 		const key = this.getCacheKey(audience)
+		try {
+			const decoded = jwtDecode(token.access_token)
 
-		const decoded = jwtDecode(token.access_token)
-
-		token.expiry = decoded.exp ?? 0
-		this.tokenCache[key] = token
+			token.expiry = decoded.exp ?? 0
+			this.tokenCache[key] = token
+		} catch (e) {
+			console.error('audience', audience)
+			console.error('token', token.access_token)
+			throw e
+		}
 	}
 
 	private retrieveFromFileCache(
