@@ -3,6 +3,8 @@ import { ZeebeGrpcClient } from '../../../zeebe/index'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
+jest.setTimeout(15000)
+
 suppressZeebeLogging()
 
 let res: DeployResourceResponse<ProcessDeployment> | undefined
@@ -21,15 +23,12 @@ afterAll(async () => {
 const zbc = new ZeebeGrpcClient()
 
 test('ZeebeGrpcClient can migrate a process instance', async () => {
-	expect(true).toBe(true)
 	// Deploy a process model
-
 	res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/MigrateProcess-Version-1.bpmn',
 	})
 
 	// Create an instance of the process model
-
 	const processInstance = await zbc.createProcessInstance({
 		bpmnProcessId: 'migrant-work',
 		variables: {},
@@ -62,6 +61,7 @@ test('ZeebeGrpcClient can migrate a process instance', async () => {
 	})
 
 	// Migrate the process instance to the updated process model
+
 	await zbc.migrateProcessInstance({
 		processInstanceKey: processInstance.processInstanceKey,
 		migrationPlan: {
@@ -105,7 +105,7 @@ test('ZeebeGrpcClient can migrate a process instance', async () => {
 			},
 		})
 	})
-
+	await zbc.close()
 	expect(instanceKey).toBe(processInstance.processInstanceKey)
 	expect(processVersion).toBe('2')
 })

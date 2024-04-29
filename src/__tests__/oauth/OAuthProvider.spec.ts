@@ -16,7 +16,6 @@ const jwt = new JSONWebToken(strategy)
 const payload = { id: 1 }
 
 const access_token = jwt.generate(payload)
-const access_token2 = jwt.generate(payload)
 
 jest.setTimeout(10000)
 let server: http.Server
@@ -194,6 +193,16 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 		},
 	})
 
+	const strategy = new HS256Strategy({
+		ttl: 2000,
+		secret: 'YOUR_SECRET',
+	})
+
+	const jwt = new JSONWebToken(strategy)
+	const payload = { id: 1 }
+
+	const access_token = jwt.generate(payload)
+
 	let requestCount = 0
 	server = http
 		.createServer((req, res) => {
@@ -206,7 +215,7 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
 					const expiresIn = 2 // seconds
-					const token = requestCount % 2 === 0 ? access_token : access_token2
+					const token = `${access_token}${requestCount}`
 					res.end(`{"access_token": "${token}", "expires_in": ${expiresIn}}`)
 					requestCount++
 					expect(body).toEqual(
@@ -218,13 +227,13 @@ test('In-memory cache is populated and evicted after timeout', (done) => {
 		.listen(serverPort3002)
 
 	o.getToken('ZEEBE').then(async (token) => {
-		expect(token).toBe(access_token)
+		expect(token).toBe(`${access_token}0`)
 		await delay(500)
 		const token2 = await o.getToken('ZEEBE')
-		expect(token2).toBe(access_token)
+		expect(token2).toBe(`${access_token}0`)
 		await delay(1600)
 		const token3 = await o.getToken('ZEEBE')
-		expect(token3).toBe(access_token2)
+		expect(token3).toBe(`${access_token}1`)
 		done()
 	})
 })
@@ -296,7 +305,7 @@ test('Uses a custom audience for an Operate token, if one is configured', (done)
 	o.getToken('OPERATE')
 })
 
-test.only('Passes scope, if provided', () => {
+test('Passes scope, if provided', () => {
 	const serverPort3004 = 3004
 	const o = new OAuthProvider({
 		config: {
@@ -510,7 +519,7 @@ test('Passes no audience for Modeler API when self-hosted', (done) => {
 
 				req.on('end', () => {
 					res.writeHead(200, { 'Content-Type': 'application/json' })
-					res.end(`{"token": "${access_token}"}`)
+					res.end(`{"access_token": "${access_token}"}`)
 					expect(body).toEqual(
 						'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
 					)

@@ -16,7 +16,7 @@ afterAll(async () => {
 	restoreZeebeLogging()
 })
 
-jest.setTimeout(15000)
+jest.setTimeout(20000)
 describe('Operate Integration', () => {
 	xtest('It can get the Incident', async () => {
 		const c = new OperateApiClient()
@@ -61,7 +61,7 @@ test('getJSONVariablesforProcess works', async () => {
 	})
 
 	// Wait for Operate to catch up.
-	await new Promise((res) => setTimeout(() => res(null), 12000))
+	await new Promise((res) => setTimeout(() => res(null), 15000))
 	// Make sure that the process instance exists in Operate.
 	const process = await c.getProcessInstance(p.processInstanceKey)
 	// If this fails, it is probably a timing issue.
