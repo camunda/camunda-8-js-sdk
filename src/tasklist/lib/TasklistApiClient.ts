@@ -5,7 +5,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -47,7 +47,7 @@ const TASKLIST_API_VERSION = 'v1'
 export class TasklistApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest!: typeof got
 
 	/**
 	 * @example
@@ -74,21 +74,21 @@ export class TasklistApiClient {
 		)
 		const prefixUrl = `${baseUrl}/${TASKLIST_API_VERSION}`
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
+		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
+			this.rest = got.extend({
+				prefixUrl,
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeRetry: [
+						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+					],
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		})
 		trace(`prefixUrl: ${prefixUrl}`)
 	}

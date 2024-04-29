@@ -4,7 +4,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -63,7 +63,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 export class OperateApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest!: typeof got
 	private tenantId: string | undefined
 
 	/**
@@ -88,23 +88,23 @@ export class OperateApiClient {
 			'CAMUNDA_OPERATE_BASE_URL'
 		)
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
 		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
 
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
+		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
+			this.rest = got.extend({
+				prefixUrl,
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeRetry: [
+						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+					],
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		})
 		this.tenantId = config.CAMUNDA_TENANT_ID
 	}

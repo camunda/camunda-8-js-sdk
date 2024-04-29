@@ -9,7 +9,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	createUserAgentString,
@@ -44,7 +44,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
-	private rest: typeof got
+	private rest!: typeof got
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -85,17 +85,17 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeError: [gotBeforeErrorHook],
-			},
+		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
+			this.rest = got.extend({
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		})
 
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
@@ -134,20 +134,6 @@ export class OAuthProvider implements IOAuthProvider {
 						'If you are running on AWS Lambda, set the HOME environment variable of your lambda function to /tmp'
 				)
 			}
-
-			const certificateAuthority = GetCertificateAuthority(config)
-
-			this.rest = got.extend({
-				// prefixUrl,
-				retry: GotRetryConfig,
-				https: {
-					certificateAuthority,
-				},
-				handlers: [gotErrorHandler],
-				hooks: {
-					beforeError: [gotBeforeErrorHook],
-				},
-			})
 		}
 
 		this.isCamundaSaaS = this.authServerUrl.includes(

@@ -110,8 +110,7 @@ test('test error type', async () => {
 			// `string`
 			expect((e.response?.body as string).includes('404')).toBe(true)
 			if (e instanceof HTTPError) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				expect((e as any).statusCode).toBe(404)
+				expect(e.statusCode).toBe(404)
 			}
 			expect(e instanceof HTTPError).toBe(true)
 			return false

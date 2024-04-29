@@ -5,7 +5,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -27,7 +27,7 @@ const debug = d('camunda:adminconsole')
 export class AdminApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest!: typeof got
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -44,23 +44,23 @@ export class AdminApiClient {
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
 		this.userAgentString = createUserAgentString(config)
 		const prefixUrl = `${baseUrl}/clusters`
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
+		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
+			this.rest = got.extend({
+				prefixUrl,
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeRetry: [
+						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+					],
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		})
 		debug('prefixUrl', `${baseUrl}/clusters`)
 	}

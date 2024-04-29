@@ -4,7 +4,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -46,7 +46,7 @@ import { ReportResults } from './ReportResults'
  */
 export class OptimizeApiClient {
 	private userAgentString: string
-	private rest: typeof got
+	private rest!: typeof got
 	private oAuthProvider: IOAuthProvider
 
 	/**
@@ -71,22 +71,23 @@ export class OptimizeApiClient {
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
 		const prefixUrl = `${baseUrl}/api`
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
+
+		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
+			this.rest = got.extend({
+				prefixUrl,
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeRetry: [
+						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+					],
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		})
 	}
 

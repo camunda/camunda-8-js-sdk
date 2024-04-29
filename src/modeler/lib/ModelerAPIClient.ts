@@ -5,7 +5,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	constructOAuthProvider,
 	createUserAgentString,
@@ -24,7 +24,7 @@ const API_VERSION = 'v1'
 export class ModelerApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest!: typeof got
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -40,21 +40,21 @@ export class ModelerApiClient {
 		this.userAgentString = createUserAgentString(config)
 		const prefixUrl = `${modelerApiUrl}/${API_VERSION}`
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
+		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
+			this.rest = got.extend({
+				prefixUrl,
+				retry: GotRetryConfig,
+				https: {
+					certificateAuthority,
+				},
+				handlers: [gotErrorHandler],
+				hooks: {
+					beforeRetry: [
+						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
+					],
+					beforeError: [gotBeforeErrorHook],
+				},
+			})
 		})
 		debug(`baseUrl: ${prefixUrl}`)
 	}
