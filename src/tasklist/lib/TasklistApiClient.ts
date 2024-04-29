@@ -218,7 +218,7 @@ export class TasklistApiClient {
 			.post(`tasks/${taskId}/variables/search`, {
 				body: losslessStringify({
 					variableNames: variableNames || [],
-					includeVariables: includeVariables || {},
+					includeVariables: includeVariables || [],
 				}),
 				headers,
 			})
