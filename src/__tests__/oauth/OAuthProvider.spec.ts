@@ -1,5 +1,7 @@
+import { exec } from 'child_process'
 import fs from 'fs'
 import http from 'http'
+import os from 'os'
 import path from 'path'
 
 import { HS256Strategy, JSONWebToken } from '@mokuteki/jwt'
@@ -152,6 +154,19 @@ test('Throws in the constructor if the token cache is not writable', () => {
 
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	fs.mkdirSync(tokenCacheDir, 0o400)
+	// Make the directory read-only on Windows
+	if (os.platform() === 'win32') {
+		exec(
+			`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W`,
+			(error, stdout, stderr) => {
+				if (error) {
+					console.error(`exec error: ${error}`)
+				}
+				console.log(`stdout: ${stdout}`)
+				console.error(`stderr: ${stderr}`)
+			}
+		)
+	}
 	expect(fs.existsSync(tokenCacheDir)).toBe(true)
 	let thrown = false
 	try {
