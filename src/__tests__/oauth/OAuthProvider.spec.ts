@@ -157,13 +157,15 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	// Make the directory read-only on Windows
 	if (os.platform() === 'win32') {
 		exec(
-			`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W`,
+			`icacls ${tokenCacheDir} /grant:r Everyone:(OI)(CI)R /inheritance:r`,
 			(error, stdout, stderr) => {
 				if (error) {
 					console.error(`exec error: ${error}`)
 				}
 				console.log(`stdout: ${stdout}`)
-				console.error(`stderr: ${stderr}`)
+				if (console.error) {
+					console.error(`stderr: ${stderr}`)
+				}
 			}
 		)
 	}
@@ -182,8 +184,24 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	} catch {
 		thrown = true
 	}
-	expect(thrown).toBe(true)
+
+	// Make the directory writeable on Windows, so it can be deleted
+	if (os.platform() === 'win32') {
+		exec(
+			`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`,
+			(error, stdout, stderr) => {
+				if (error) {
+					console.error(`exec error: ${error}`)
+				}
+				console.log(`stdout: ${stdout}`)
+				if (console.error) {
+					console.error(`stderr: ${stderr}`)
+				}
+			}
+		)
+	}
 	removeCacheDir(tokenCacheDir)
+	expect(thrown).toBe(true)
 
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 })
