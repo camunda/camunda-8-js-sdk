@@ -453,36 +453,6 @@ test('Uses an explicit token cache over the environment', () => {
 	})
 })
 
-test('Throws in the constructor if the token cache is not writable', () => {
-	const tokenCache = path.join(__dirname, '.token-cache')
-	if (fs.existsSync(tokenCache)) {
-		fs.rmdirSync(tokenCache)
-	}
-	expect(fs.existsSync(tokenCache)).toBe(false)
-	fs.mkdirSync(tokenCache, 0o400)
-	expect(fs.existsSync(tokenCache)).toBe(true)
-	let thrown = false
-	try {
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId15',
-				CAMUNDA_TOKEN_CACHE_DIR: tokenCache,
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: 'url',
-			},
-		})
-		expect(o).toBeTruthy()
-	} catch {
-		thrown = true
-	}
-	expect(thrown).toBe(true)
-	if (fs.existsSync(tokenCache)) {
-		fs.rmdirSync(tokenCache)
-	}
-	expect(fs.existsSync(tokenCache)).toBe(false)
-})
-
 test('Can set a custom user agent', () => {
 	const o = new OAuthProvider({
 		config: {

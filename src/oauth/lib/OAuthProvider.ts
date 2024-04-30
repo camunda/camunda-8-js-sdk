@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as os from 'os'
+import path from 'path'
 
 import { debug } from 'debug'
 import got from 'got'
@@ -127,7 +128,13 @@ export class OAuthProvider implements IOAuthProvider {
 						recursive: true,
 					})
 				}
-				fs.accessSync(this.cacheDir, fs.constants.W_OK)
+				// Try to write a temporary file to the directory
+				const tempfilename = path.join(this.cacheDir, 'temp.txt')
+				if (fs.existsSync(tempfilename)) {
+					fs.unlinkSync(tempfilename) // Remove the temporary file
+				}
+				fs.writeFileSync(tempfilename, 'test')
+				fs.unlinkSync(tempfilename) // Remove the temporary file
 			} catch (e) {
 				throw new Error(
 					`FATAL: Cannot write to OAuth cache dir ${this.cacheDir}\n` +
