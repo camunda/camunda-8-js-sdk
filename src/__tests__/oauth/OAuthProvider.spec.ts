@@ -155,9 +155,10 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	fs.mkdirSync(tokenCacheDir, 0o400)
 	// Make the directory read-only on Windows
+	// Note that this requires administrative privileges
 	if (os.platform() === 'win32') {
 		exec(
-			`icacls ${tokenCacheDir} /grant:r Everyone:(OI)(CI)R /inheritance:r`,
+			`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W /inheritance:r`,
 			(error, stdout, stderr) => {
 				if (error) {
 					console.error(`exec error: ${error}`)
@@ -186,6 +187,7 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	}
 
 	// Make the directory writeable on Windows, so it can be deleted
+	// Note that this requires administrative privileges
 	if (os.platform() === 'win32') {
 		exec(
 			`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`,
