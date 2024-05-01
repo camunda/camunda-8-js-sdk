@@ -63,7 +63,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 export class OperateApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest!: typeof got
+	private rest: Promise<typeof got>
 	private tenantId: string | undefined
 
 	/**
@@ -90,22 +90,26 @@ export class OperateApiClient {
 
 		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
 
-		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
-			this.rest = got.extend({
-				prefixUrl,
-				retry: GotRetryConfig,
-				https: {
-					certificateAuthority,
-				},
-				handlers: [gotErrorHandler],
-				hooks: {
-					beforeRetry: [
-						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-					],
-					beforeError: [gotBeforeErrorHook],
-				},
-			})
-		})
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
+					},
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
+
 		this.tenantId = config.CAMUNDA_TENANT_ID
 	}
 
@@ -168,7 +172,8 @@ export class OperateApiClient {
 	): Promise<SearchResults<ProcessDefinition>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('process-definitions/search', {
 				json,
 				headers,
@@ -192,7 +197,8 @@ export class OperateApiClient {
 		processDefinitionKey: number | string
 	): Promise<ProcessDefinition> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-definitions/${processDefinitionKey}`, {
+		const rest = await this.rest
+		return rest(`process-definitions/${processDefinitionKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, ProcessDefinition),
 		}).json()
@@ -202,7 +208,9 @@ export class OperateApiClient {
 		processDefinitionKey: number | string
 	): Promise<string> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-definitions/${processDefinitionKey}/xml`, {
+		const rest = await this.rest
+
+		return rest(`process-definitions/${processDefinitionKey}/xml`, {
 			headers,
 		}).text()
 	}
@@ -216,7 +224,9 @@ export class OperateApiClient {
 	): Promise<SearchResults<DecisionDefinition>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest('decision-definitions/search', {
+		const rest = await this.rest
+
+		return rest('decision-definitions/search', {
 			headers,
 			parseJson: (text) => parseSearchResults(text, DecisionDefinition),
 			json,
@@ -230,7 +240,9 @@ export class OperateApiClient {
 		decisionDefinitionKey: number | string
 	): Promise<DecisionDefinition> {
 		const headers = await this.getHeaders()
-		return this.rest(`decision-definitions/${decisionDefinitionKey}`, {
+		const rest = await this.rest
+
+		return rest(`decision-definitions/${decisionDefinitionKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, DecisionDefinition),
 		}).json()
@@ -244,7 +256,9 @@ export class OperateApiClient {
 	): Promise<SearchResults<DecisionInstance>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest('decision-instances/search', {
+		const rest = await this.rest
+
+		return rest('decision-instances/search', {
 			headers,
 			parseJson: (text) => parseSearchResults(text, DecisionInstance),
 			json,
@@ -258,7 +272,9 @@ export class OperateApiClient {
 		decisionInstanceKey: number | string
 	): Promise<DecisionInstance> {
 		const headers = await this.getHeaders()
-		return this.rest(`decision-instances/${decisionInstanceKey}`, {
+		const rest = await this.rest
+
+		return rest(`decision-instances/${decisionInstanceKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, DecisionInstance),
 		}).json()
@@ -290,8 +306,10 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 
 		const json = this.addTenantIdToFilter(query)
+		const rest = await this.rest
+
 		try {
-			return this.rest
+			return rest
 				.post('process-instances/search', {
 					json,
 					headers,
@@ -317,7 +335,9 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ProcessInstance> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-instances/${processInstanceKey}`, {
+		const rest = await this.rest
+
+		return rest(`process-instances/${processInstanceKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, ProcessInstance),
 		}).json()
@@ -336,8 +356,10 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ChangeStatus> {
 		const headers = await this.getHeaders()
+		const rest = await this.rest
+
 		try {
-			const res = this.rest.delete(`process-instances/${processInstanceKey}`, {
+			const res = rest.delete(`process-instances/${processInstanceKey}`, {
 				headers,
 				throwHttpErrors: false,
 				parseJson: (text) => losslessParse(text, ChangeStatus),
@@ -357,7 +379,9 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ProcessInstanceStatistics[]> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-instances/${processInstanceKey}/statistics`, {
+		const rest = await this.rest
+
+		return rest(`process-instances/${processInstanceKey}/statistics`, {
 			headers,
 			parseJson: (text) => losslessParse(text, ProcessInstanceStatistics),
 		}).json()
@@ -371,7 +395,9 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<string[]> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-instances/${processInstanceKey}/sequence-flows`, {
+		const rest = await this.rest
+
+		return rest(`process-instances/${processInstanceKey}/sequence-flows`, {
 			headers,
 		}).json()
 	}
@@ -403,7 +429,9 @@ export class OperateApiClient {
 	): Promise<SearchResults<Incident>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('incidents/search', {
 				json,
 				headers,
@@ -425,7 +453,9 @@ export class OperateApiClient {
 	 */
 	public async getIncident(key: number | string): Promise<Incident> {
 		const headers = await this.getHeaders()
-		return this.rest(`incidents/${key}`, {
+		const rest = await this.rest
+
+		return rest(`incidents/${key}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, Incident),
 		}).json()
@@ -439,7 +469,9 @@ export class OperateApiClient {
 	): Promise<SearchResults<FlownodeInstance>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('flownode-instances/search', {
 				headers,
 				json,
@@ -455,7 +487,9 @@ export class OperateApiClient {
 		key: number | string
 	): Promise<FlownodeInstance> {
 		const headers = await this.getHeaders()
-		return this.rest(`flownode-instances/${key}`, {
+		const rest = await this.rest
+
+		return rest(`flownode-instances/${key}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, FlownodeInstance),
 		}).json()
@@ -469,7 +503,9 @@ export class OperateApiClient {
 	): Promise<SearchResults<Variable>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('variables/search', {
 				headers,
 				json,
@@ -493,7 +529,9 @@ export class OperateApiClient {
 				processInstanceKey,
 			},
 		}
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('variables/search', {
 				headers,
 				body: losslessStringify(body),
@@ -516,7 +554,9 @@ export class OperateApiClient {
 			},
 			size: 1000,
 		}
-		const vars: { items: Variable[] } = await this.rest
+		const rest = await this.rest
+
+		const vars: { items: Variable[] } = await rest
 			.post('variables/search', {
 				headers,
 				body: losslessStringify(body),
@@ -550,7 +590,9 @@ export class OperateApiClient {
 	 */
 	public async getVariables(variableKey: number | string): Promise<Variable> {
 		const headers = await this.getHeaders()
-		return this.rest(`variables/${variableKey}`, {
+		const rest = await this.rest
+
+		return rest(`variables/${variableKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, Variable),
 		}).json()
@@ -562,7 +604,9 @@ export class OperateApiClient {
 	public async searchDecisionRequirements(query: Query<DecisionRequirements>) {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('drd/search', {
 				headers,
 				json,
@@ -575,7 +619,9 @@ export class OperateApiClient {
 		key: string | number
 	): Promise<DecisionRequirements> {
 		const headers = await this.getHeaders()
-		return this.rest(`drd/${key}`, {
+		const rest = await this.rest
+
+		return rest(`drd/${key}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, DecisionRequirements),
 		}).json()
@@ -586,7 +632,9 @@ export class OperateApiClient {
 	 */
 	public async getDecisionRequirementsXML(key: string | number) {
 		const headers = await this.getHeaders()
-		return this.rest(`drd/${key}/xml`, {
+		const rest = await this.rest
+
+		return rest(`drd/${key}/xml`, {
 			headers,
 		}).text()
 	}

@@ -46,7 +46,7 @@ import { ReportResults } from './ReportResults'
  */
 export class OptimizeApiClient {
 	private userAgentString: string
-	private rest!: typeof got
+	private rest: Promise<typeof got>
 	private oAuthProvider: IOAuthProvider
 
 	/**
@@ -73,22 +73,25 @@ export class OptimizeApiClient {
 
 		const prefixUrl = `${baseUrl}/api`
 
-		GetCustomCertificateBuffer(config).then((certificateAuthority) => {
-			this.rest = got.extend({
-				prefixUrl,
-				retry: GotRetryConfig,
-				https: {
-					certificateAuthority,
-				},
-				handlers: [gotErrorHandler],
-				hooks: {
-					beforeRetry: [
-						makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-					],
-					beforeError: [gotBeforeErrorHook],
-				},
-			})
-		})
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
+					},
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 	}
 
 	private async getHeaders(auth = true) {
@@ -125,7 +128,8 @@ export class OptimizeApiClient {
 	 */
 	async enableSharing() {
 		const headers = await this.getHeaders()
-		return this.rest.post('public/share/enable', {
+		const rest = await this.rest
+		return rest.post('public/share/enable', {
 			body: '',
 			headers,
 		})
@@ -148,7 +152,8 @@ export class OptimizeApiClient {
 	 */
 	async disableSharing() {
 		const headers = await this.getHeaders()
-		return this.rest.post('public/share/disable', {
+		const rest = await this.rest
+		return rest.post('public/share/disable', {
 			body: '',
 			headers,
 		})
@@ -171,7 +176,8 @@ export class OptimizeApiClient {
 	 */
 	async getDashboardIds(collectionId: number): Promise<DashboardCollection> {
 		const headers = await this.getHeaders()
-		return this.rest(`public/dashboard?collectionId=${collectionId}`, {
+		const rest = await this.rest
+		return rest(`public/dashboard?collectionId=${collectionId}`, {
 			headers,
 		}).json()
 	}
@@ -179,7 +185,8 @@ export class OptimizeApiClient {
 	// Camunda 7-only
 	// async deleteDashboard(dashboardId: string) {
 	//     const headers = await this.getHeaders()
-	//     return this.rest.delete(`dashboard/${dashboardId}`, {
+	//     const rest = await this.rest
+	//     return rest.delete(`dashboard/${dashboardId}`, {
 	//         headers,
 	//         ...this.gotOptions
 	//     })
@@ -206,7 +213,8 @@ export class OptimizeApiClient {
 		dashboardIds: string[]
 	): Promise<Array<DashboardDefinition | SingleProcessReport>> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('public/export/dashboard/definition/json', {
 				body: JSON.stringify(dashboardIds),
 				headers,
@@ -228,7 +236,8 @@ export class OptimizeApiClient {
 	 */
 	async getReportIds(collectionId: number): Promise<ReportCollection> {
 		const headers = await this.getHeaders()
-		return this.rest(`report?collectionId=${collectionId}`, {
+		const rest = await this.rest
+		return rest(`report?collectionId=${collectionId}`, {
 			headers,
 		}).json()
 	}
@@ -248,7 +257,8 @@ export class OptimizeApiClient {
 	 */
 	async deleteReport(reportId: string) {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`public/report/${reportId}`, {
 				headers,
 			})
@@ -273,7 +283,8 @@ export class OptimizeApiClient {
 		reportIds: string[]
 	): Promise<Array<SingleProcessReport>> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('public/export/dashboard/definition/json', {
 				body: JSON.stringify(reportIds),
 				headers,
@@ -312,7 +323,8 @@ export class OptimizeApiClient {
 	// async ingestEventBatch(events: CloudEventV1<any>[]) {
 	//     const body = JSON.stringify(events)
 	//     const headers = await this.getHeaders()
-	//     return this.rest.post(`ingestion/event/batch`, {
+	//     const rest = await this.rest
+	//      return rest.post(`ingestion/event/batch`, {
 	//         body,
 	//         headers,
 	//         ...this.gotOptions
@@ -351,7 +363,8 @@ export class OptimizeApiClient {
 	 */
 	async ingestExternalVariable(variables: Variable[]) {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('ingestion/variable', {
 				body: JSON.stringify(variables),
 				headers,
@@ -377,7 +390,8 @@ export class OptimizeApiClient {
 	 */
 	async getReadiness() {
 		const headers = await this.getHeaders(false)
-		return this.rest('readyz', {
+		const rest = await this.rest
+		return rest('readyz', {
 			headers,
 		}).json()
 	}
@@ -423,7 +437,8 @@ export class OptimizeApiClient {
 		entities: unknown
 	): Promise<EntityImportResponse> {
 		const headers = await this.getHeaders()
-		return this.rest(`public/import?collectionId=${collectionId}`, {
+		const rest = await this.rest
+		return rest(`public/import?collectionId=${collectionId}`, {
 			headers,
 			body: JSON.stringify(entities),
 		}).json()
@@ -463,7 +478,8 @@ export class OptimizeApiClient {
 	 */
 	async labelVariables(variableLabels: VariableLabels) {
 		const headers = await this.getHeaders()
-		return this.rest('public/variables/labels', {
+		const rest = await this.rest
+		return rest('public/variables/labels', {
 			headers,
 			body: JSON.stringify(variableLabels),
 		}).json()

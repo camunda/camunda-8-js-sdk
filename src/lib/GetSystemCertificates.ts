@@ -43,8 +43,6 @@ import os from 'os'
 
 let _cachedCertificates
 
-module.exports = getSystemCertificates
-
 /**
  * Get certificates from the system keychain.
  *
