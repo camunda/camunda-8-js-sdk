@@ -1,4 +1,4 @@
-import { exec } from 'child_process'
+import { execSync } from 'child_process'
 import fs from 'fs'
 import http from 'http'
 import os from 'os'
@@ -158,18 +158,7 @@ test('Throws in the constructor if the token cache is not writable', () => {
 		expect(fs.existsSync(tokenCacheDir)).toBe(true)
 		// Make the directory read-only on Windows
 		// Note that this requires administrative privileges
-		exec(
-			`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W /inheritance:r`,
-			(error, stdout, stderr) => {
-				if (error) {
-					console.error(`exec error: ${error}`)
-				}
-				console.log(`stdout: ${stdout}`)
-				if (console.error) {
-					console.error(`stderr: ${stderr}`)
-				}
-			}
-		)
+		execSync(`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W /inheritance:r`)
 	} else {
 		// Make the directory read-only on Unix
 		fs.mkdirSync(tokenCacheDir, 0o400)
@@ -194,18 +183,7 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	// Make the directory writeable on Windows, so it can be deleted
 	// Note that this requires administrative privileges
 	if (os.platform() === 'win32') {
-		exec(
-			`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`,
-			(error, stdout, stderr) => {
-				if (error) {
-					console.error(`exec error: ${error}`)
-				}
-				console.log(`stdout: ${stdout}`)
-				if (console.error) {
-					console.error(`stderr: ${stderr}`)
-				}
-			}
-		)
+		execSync(`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`)
 	}
 	removeCacheDir(tokenCacheDir)
 	// I don't know why, but I can't get the test to throw in GitHub CI on Windows
