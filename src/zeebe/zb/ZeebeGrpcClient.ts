@@ -134,6 +134,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			'ZEEBE_ADDRESS'
 		)
 
+		debug('Gateway address: ', this.gatewayAddress)
+
 		this.useTLS = config.CAMUNDA_SECURE_CONNECTION
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const rootCertsPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH

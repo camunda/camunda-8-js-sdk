@@ -153,10 +153,11 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	removeCacheDir(tokenCacheDir)
 
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
-	fs.mkdirSync(tokenCacheDir, 0o400)
-	// Make the directory read-only on Windows
-	// Note that this requires administrative privileges
 	if (os.platform() === 'win32') {
+		fs.mkdirSync(tokenCacheDir)
+		expect(fs.existsSync(tokenCacheDir)).toBe(true)
+		// Make the directory read-only on Windows
+		// Note that this requires administrative privileges
 		exec(
 			`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W /inheritance:r`,
 			(error, stdout, stderr) => {
@@ -169,8 +170,12 @@ test('Throws in the constructor if the token cache is not writable', () => {
 				}
 			}
 		)
+	} else {
+		// Make the directory read-only on Unix
+		fs.mkdirSync(tokenCacheDir, 0o400)
+		expect(fs.existsSync(tokenCacheDir)).toBe(true)
 	}
-	expect(fs.existsSync(tokenCacheDir)).toBe(true)
+
 	let thrown = false
 	try {
 		const o = new OAuthProvider({

@@ -120,13 +120,12 @@ test('gRPC server with self-signed certificate', (done) => {
 				return
 			}
 
-			server.start()
-
 			const zbc = new ZeebeGrpcClient({
 				config: {
 					CAMUNDA_OAUTH_DISABLED: true,
 					ZEEBE_ADDRESS: 'localhost:50051',
 					CAMUNDA_CUSTOM_ROOT_CERT_PATH: path.join(__dirname, 'localhost.crt'),
+					CAMUNDA_SECURE_CONNECTION: true,
 					zeebeGrpcSettings: {
 						ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
 					},
