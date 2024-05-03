@@ -39,7 +39,6 @@
 
 import cp from 'child_process'
 import fs from 'fs/promises'
-import os from 'os'
 
 let _cachedCertificates
 
@@ -71,23 +70,18 @@ async function readCaCertificates() {
 }
 
 async function readWindowsCaCertificates() {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const winCA = require('win-ca')
-	const ders: string[] = []
-	const store = new winCA.Crypt32()
-	try {
-		let der = store.next()
-		while (der) {
-			ders.push(der)
-			der = store.next()
-		}
-	} finally {
-		store.done()
-	}
+	const pems = await new Promise<string[]>((resolve) => {
+		const list: string[] = []
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		require('win-ca/api')({
+			format: 1 /* PEM-format (text, Base64-encoded) */,
+			store: ['root', 'ca'],
+			ondata: list,
+			onend: () => resolve(list),
+		})
+	})
 
-	const certs = new Set(ders.map(derToPem))
-
-	return Array.from(certs)
+	return pems
 }
 
 async function readMacCaCertificates() {
@@ -140,15 +134,15 @@ function spawnPromise(command, args) {
 	})
 }
 
-function derToPem(blob) {
-	const lines = ['-----BEGIN CERTIFICATE-----']
-	const der = blob.toString('base64')
-	for (let i = 0; i < der.length; i += 64) {
-		lines.push(der.substr(i, 64))
-	}
-	lines.push('-----END CERTIFICATE-----', '')
-	return lines.join(os.EOL)
-}
+// function derToPem(blob) {
+// 	const lines = ['-----BEGIN CERTIFICATE-----']
+// 	const der = blob.toString('base64')
+// 	for (let i = 0; i < der.length; i += 64) {
+// 		lines.push(der.substr(i, 64))
+// 	}
+// 	lines.push('-----END CERTIFICATE-----', '')
+// 	return lines.join(os.EOL)
+// }
 
 function splitCerts(certs) {
 	return certs
