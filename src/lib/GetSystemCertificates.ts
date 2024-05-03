@@ -80,7 +80,7 @@ async function readWindowsCaCertificates() {
 			onend: () => resolve(list),
 		})
 	})
-
+	console.log(pems)
 	return pems
 }
 
