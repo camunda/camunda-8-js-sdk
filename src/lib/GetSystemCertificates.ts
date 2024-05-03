@@ -72,7 +72,7 @@ async function readCaCertificates() {
 
 async function readWindowsCaCertificates() {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const winCA = require('vscode-windows-ca-certs')
+	const winCA = require('win-ca')
 	const ders: string[] = []
 	const store = new winCA.Crypt32()
 	try {

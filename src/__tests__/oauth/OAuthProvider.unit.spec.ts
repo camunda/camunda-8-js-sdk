@@ -186,14 +186,7 @@ test('Throws in the constructor if the token cache is not writable', () => {
 		execSync(`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`)
 	}
 	removeCacheDir(tokenCacheDir)
-	// I don't know why, but I can't get the test to throw in GitHub CI on Windows
-	// Unknown if it will throw on Windows in other environments
-	if (os.platform() === 'win32') {
-		expect(thrown).toBe(false)
-	} else {
-		expect(thrown).toBe(true)
-	}
-
+	expect(thrown).toBe(true)
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 })
 
