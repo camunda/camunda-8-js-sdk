@@ -22,6 +22,7 @@ export const cleanUp = async () => {
 	})
 	o.flushFileCache()
 	if (process.env.CAMUNDA_UNIT_TEST == 'true') {
+		// We are not running in an integration environment, so we can skip the rest of the cleanup
 		return
 	}
 	console.log('Removing any running test process instances...')

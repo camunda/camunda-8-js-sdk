@@ -162,6 +162,7 @@ export class GrpcClient extends EventEmitter {
 		this.config = config
 		this.userAgentString = createUserAgentString(config)
 		this.host = host
+		debug('Host:', host)
 		this.oAuth = oAuth
 		this.longPoll = options.longPoll
 		this.connectionTolerance = Duration.milliseconds.from(connectionTolerance)
@@ -194,6 +195,8 @@ export class GrpcClient extends EventEmitter {
 					customSSL?.verifyOptions
 				)
 			: credentials.createInsecure()
+		debug('useTLS:', useTLS)
+		debug('channelCredentials:', channelCredentials)
 		// Options documented here: https://github.com/grpc/grpc/blob/master/include/grpc/impl/codegen/grpc_types.h
 		this.client = new proto[service](host, channelCredentials, {
 			/**
@@ -286,7 +289,7 @@ export class GrpcClient extends EventEmitter {
 				this.listNameMethods.push(methodName)
 
 				this[`${methodName}Stream`] = async (data) => {
-					debug(`Calling ${methodName}Stream...`)
+					debug(`Calling ${methodName}Stream...`, host)
 					if (this.closing) {
 						// tslint:disable-next-line: no-console
 						console.log('Short-circuited on channel closed') // @DEBUG
@@ -370,7 +373,7 @@ export class GrpcClient extends EventEmitter {
 				}
 
 				this[`${methodName}Sync`] = (data) => {
-					debug(`Calling ${methodName}Sync...`)
+					debug(`Calling ${methodName}Sync...`, host)
 
 					if (this.closing) {
 						debug(`Aborting ${methodName}Sync due to client closing.`)

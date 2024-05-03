@@ -5,7 +5,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
@@ -47,7 +47,7 @@ const TASKLIST_API_VERSION = 'v1'
 export class TasklistApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest: Promise<typeof got>
 
 	/**
 	 * @example
@@ -74,22 +74,25 @@ export class TasklistApiClient {
 		)
 		const prefixUrl = `${baseUrl}/${TASKLIST_API_VERSION}`
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
-		})
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
+					},
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 		trace(`prefixUrl: ${prefixUrl}`)
 	}
 
@@ -155,7 +158,8 @@ export class TasklistApiClient {
 		const url = 'tasks/search'
 
 		trace(`Requesting ${url}`)
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(url, {
 				json: this.replaceDatesWithString(query),
 				headers,
@@ -171,7 +175,8 @@ export class TasklistApiClient {
 	 */
 	public async getTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.get(`tasks/${taskId}`, {
 				headers,
 			})
@@ -188,7 +193,8 @@ export class TasklistApiClient {
 		version?: string | number
 	): Promise<Form> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.get(`forms/${formId}`, {
 				searchParams: {
 					processDefinitionKey,
@@ -214,7 +220,8 @@ export class TasklistApiClient {
 		includeVariables?: { name: string; alwaysReturnFullValue: boolean }[]
 	}): Promise<VariableSearchResponse[]> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`tasks/${taskId}/variables/search`, {
 				body: losslessStringify({
 					variableNames: variableNames || [],
@@ -231,7 +238,8 @@ export class TasklistApiClient {
 	 */
 	public async getVariable(variableId: string): Promise<Variable> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.get(`variables/${variableId}`, {
 				headers,
 			})
@@ -256,7 +264,8 @@ export class TasklistApiClient {
 		allowOverrideAssignment?: boolean
 	}): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`tasks/${taskId}/assign`, {
 				body: losslessStringify({
 					assignee,
@@ -282,7 +291,8 @@ export class TasklistApiClient {
 		variables?: JSONDoc
 	): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`tasks/${taskId}/complete`, {
 				headers,
 				body: losslessStringify({
@@ -302,7 +312,8 @@ export class TasklistApiClient {
 	 */
 	public async unassignTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`tasks/${taskId}/unassign`, {
 				headers,
 				parseJson: (text) => losslessParse(text, TaskResponse),

@@ -1,5 +1,7 @@
+import { execSync } from 'child_process'
 import fs from 'fs'
 import http from 'http'
+import os from 'os'
 import path from 'path'
 
 import { HS256Strategy, JSONWebToken } from '@mokuteki/jwt'
@@ -151,8 +153,18 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	removeCacheDir(tokenCacheDir)
 
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
-	fs.mkdirSync(tokenCacheDir, 0o400)
-	expect(fs.existsSync(tokenCacheDir)).toBe(true)
+	if (os.platform() === 'win32') {
+		fs.mkdirSync(tokenCacheDir)
+		expect(fs.existsSync(tokenCacheDir)).toBe(true)
+		// Make the directory read-only on Windows
+		// Note that this requires administrative privileges
+		execSync(`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W /inheritance:r`)
+	} else {
+		// Make the directory read-only on Unix
+		fs.mkdirSync(tokenCacheDir, 0o400)
+		expect(fs.existsSync(tokenCacheDir)).toBe(true)
+	}
+
 	let thrown = false
 	try {
 		const o = new OAuthProvider({
@@ -167,9 +179,14 @@ test('Throws in the constructor if the token cache is not writable', () => {
 	} catch {
 		thrown = true
 	}
-	expect(thrown).toBe(true)
-	removeCacheDir(tokenCacheDir)
 
+	// Make the directory writeable on Windows, so it can be deleted
+	// Note that this requires administrative privileges
+	if (os.platform() === 'win32') {
+		execSync(`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`)
+	}
+	removeCacheDir(tokenCacheDir)
+	expect(thrown).toBe(true)
 	expect(fs.existsSync(tokenCacheDir)).toBe(false)
 })
 
@@ -451,36 +468,6 @@ test('Uses an explicit token cache over the environment', () => {
 		}
 		expect(fs.existsSync(tokenCache)).toBe(false)
 	})
-})
-
-test('Throws in the constructor if the token cache is not writable', () => {
-	const tokenCache = path.join(__dirname, '.token-cache')
-	if (fs.existsSync(tokenCache)) {
-		fs.rmdirSync(tokenCache)
-	}
-	expect(fs.existsSync(tokenCache)).toBe(false)
-	fs.mkdirSync(tokenCache, 0o400)
-	expect(fs.existsSync(tokenCache)).toBe(true)
-	let thrown = false
-	try {
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId15',
-				CAMUNDA_TOKEN_CACHE_DIR: tokenCache,
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: 'url',
-			},
-		})
-		expect(o).toBeTruthy()
-	} catch {
-		thrown = true
-	}
-	expect(thrown).toBe(true)
-	if (fs.existsSync(tokenCache)) {
-		fs.rmdirSync(tokenCache)
-	}
-	expect(fs.existsSync(tokenCache)).toBe(false)
 })
 
 test('Can set a custom user agent', () => {

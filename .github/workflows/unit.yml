@@ -23,3 +23,23 @@ jobs:
       - name: Run Unit Tests
         run: |
           npm run test
+  unit-tests-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Unit Tests
+        run: |
+          npm run test

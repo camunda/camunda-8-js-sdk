@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as os from 'os'
+import path from 'path'
 
 import { debug } from 'debug'
 import got from 'got'
@@ -9,7 +10,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	createUserAgentString,
@@ -44,7 +45,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
-	private rest: typeof got
+	private rest: Promise<typeof got>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -85,18 +86,19 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeError: [gotBeforeErrorHook],
-			},
-		})
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
+					},
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
 		this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
@@ -127,27 +129,19 @@ export class OAuthProvider implements IOAuthProvider {
 						recursive: true,
 					})
 				}
-				fs.accessSync(this.cacheDir, fs.constants.W_OK)
+				// Try to write a temporary file to the directory
+				const tempfilename = path.join(this.cacheDir, 'temp.txt')
+				if (fs.existsSync(tempfilename)) {
+					fs.unlinkSync(tempfilename) // Remove the temporary file
+				}
+				fs.writeFileSync(tempfilename, 'test')
+				fs.unlinkSync(tempfilename) // Remove the temporary file
 			} catch (e) {
 				throw new Error(
 					`FATAL: Cannot write to OAuth cache dir ${this.cacheDir}\n` +
 						'If you are running on AWS Lambda, set the HOME environment variable of your lambda function to /tmp'
 				)
 			}
-
-			const certificateAuthority = GetCertificateAuthority(config)
-
-			this.rest = got.extend({
-				// prefixUrl,
-				retry: GotRetryConfig,
-				https: {
-					certificateAuthority,
-				},
-				handlers: [gotErrorHandler],
-				hooks: {
-					beforeError: [gotBeforeErrorHook],
-				},
-			})
 		}
 
 		this.isCamundaSaaS = this.authServerUrl.includes(
@@ -295,44 +289,48 @@ export class OAuthProvider implements IOAuthProvider {
 		trace(`Making token request to the token endpoint: `)
 		trace(`  ${this.authServerUrl}`)
 		trace(options)
-		return this.rest
-			.post(this.authServerUrl, options)
-			.catch((e) => {
-				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
-				console.log(e)
-				throw e
-			})
-			.then((res) => JSON.parse(res.body))
-			.then((t) => {
-				trace(
-					`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
-						t,
-						null,
-						2
-					)}`
-				)
-				const isTokenError = (t: unknown): t is TokenError =>
-					!!(t as TokenError).error
-				if (isTokenError(t)) {
-					throw new Error(
-						`Failed to get token: ${t.error} - ${t.error_description}`
+		return this.rest.then((rest) =>
+			rest
+				.post(this.authServerUrl, options)
+				.catch((e) => {
+					console.log(
+						`Erroring requesting token for Client Id ${clientIdToUse}`
 					)
-				}
-				if (t.access_token === undefined) {
-					console.error(audienceType, t)
-					throw new Error('Failed to get token: no access_token in response')
-				}
-				const token = { ...(t as Token), audience: audienceType }
-				if (this.useFileCache) {
-					this.sendToFileCache({
-						audience: audienceType,
-						token,
-						clientId: clientIdToUse,
-					})
-				}
-				this.sendToMemoryCache({ audience: audienceType, token })
-				return token.access_token
-			})
+					console.log(e)
+					throw e
+				})
+				.then((res) => JSON.parse(res.body))
+				.then((t) => {
+					trace(
+						`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
+							t,
+							null,
+							2
+						)}`
+					)
+					const isTokenError = (t: unknown): t is TokenError =>
+						!!(t as TokenError).error
+					if (isTokenError(t)) {
+						throw new Error(
+							`Failed to get token: ${t.error} - ${t.error_description}`
+						)
+					}
+					if (t.access_token === undefined) {
+						console.error(audienceType, t)
+						throw new Error('Failed to get token: no access_token in response')
+					}
+					const token = { ...(t as Token), audience: audienceType }
+					if (this.useFileCache) {
+						this.sendToFileCache({
+							audience: audienceType,
+							token,
+							clientId: clientIdToUse,
+						})
+					}
+					this.sendToMemoryCache({ audience: audienceType, token })
+					return token.access_token
+				})
+		)
 	}
 
 	private sendToMemoryCache({

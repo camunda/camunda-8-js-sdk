@@ -5,7 +5,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	constructOAuthProvider,
 	createUserAgentString,
@@ -24,7 +24,7 @@ const API_VERSION = 'v1'
 export class ModelerApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest: Promise<typeof got>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -40,22 +40,25 @@ export class ModelerApiClient {
 		this.userAgentString = createUserAgentString(config)
 		const prefixUrl = `${modelerApiUrl}/${API_VERSION}`
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			prefixUrl,
-			retry: GotRetryConfig,
-			https: {
-				certificateAuthority,
-			},
-			handlers: [gotErrorHandler],
-			hooks: {
-				beforeRetry: [
-					makeBeforeRetryHandlerFor401TokenRetry(this.getHeaders.bind(this)),
-				],
-				beforeError: [gotBeforeErrorHook],
-			},
-		})
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
+					},
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 		debug(`baseUrl: ${prefixUrl}`)
 	}
 
@@ -135,7 +138,8 @@ export class ModelerApiClient {
 		email: string
 	}): Promise<null> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`project/${projectId}collaborators/${email}`, {
 				headers,
 			})
@@ -169,7 +173,8 @@ export class ModelerApiClient {
 	 */
 	async createFile(req: Dto.CreateFileDto): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`files`, {
 				headers,
 				body: JSON.stringify(req),
@@ -191,7 +196,8 @@ export class ModelerApiClient {
 	 */
 	async getFile(fileId: string): Promise<Dto.FileDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/${fileId}`, {
+		const rest = await this.rest
+		return rest(`files/${fileId}`, {
 			headers,
 		}).then((res) =>
 			JSON.parse(this.decodeResponseOrThrow(res))
@@ -206,7 +212,8 @@ export class ModelerApiClient {
 	 */
 	async deleteFile(fileId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/${fileId}`, {
+		const rest = await this.rest
+		return rest(`files/${fileId}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow) as Promise<null>
 	}
@@ -233,7 +240,8 @@ export class ModelerApiClient {
 		update: Dto.UpdateFileDto
 	): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/${fileId}`, {
+		const rest = await this.rest
+		return rest(`files/${fileId}`, {
 			headers,
 			body: JSON.stringify(update),
 		}).then((res) =>
@@ -271,7 +279,8 @@ export class ModelerApiClient {
 		req: Dto.PubSearchDtoFileMetadataDto
 	): Promise<Dto.PubSearchResultDtoFileMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/search`, {
+		const rest = await this.rest
+		return rest(`files/search`, {
 			headers,
 			body: JSON.stringify(req),
 		}).then((res) =>
@@ -292,7 +301,8 @@ export class ModelerApiClient {
 	 */
 	async createFolder(req: Dto.CreateFolderDto): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`folders`, {
 				headers,
 				body: JSON.stringify(req),
@@ -309,7 +319,8 @@ export class ModelerApiClient {
 	 */
 	async getFolder(folderId: string): Promise<Dto.FolderDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`folders/${folderId}`, {
+		const rest = await this.rest
+		return rest(`folders/${folderId}`, {
 			headers,
 		}).then((res) =>
 			JSON.parse(this.decodeResponseOrThrow(res))
@@ -323,7 +334,8 @@ export class ModelerApiClient {
 	 */
 	async deleteFolder(folderId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`folders/${folderId}`, {
 				headers,
 			})
@@ -347,7 +359,8 @@ export class ModelerApiClient {
 		update: Dto.UpdateFolderDto
 	): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`folders/${folderId}`, {
 				headers,
 				body: JSON.stringify(update),
@@ -363,7 +376,8 @@ export class ModelerApiClient {
 	 */
 	async getInfo(): Promise<Dto.InfoDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`info`, {
+		const rest = await this.rest
+		return rest(`info`, {
 			headers,
 		}).then((res) =>
 			JSON.parse(this.decodeResponseOrThrow(res))
@@ -378,7 +392,8 @@ export class ModelerApiClient {
 		req: Dto.CreateMilestoneDto
 	): Promise<Dto.MilestoneMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`milestones`, {
 				headers,
 				body: JSON.stringify(req),
@@ -394,7 +409,8 @@ export class ModelerApiClient {
 	 */
 	async getMilestone(milestoneId: string): Promise<Dto.MilestoneDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`milestones/${milestoneId}`, {
+		const rest = await this.rest
+		return rest(`milestones/${milestoneId}`, {
 			headers,
 		}).then((res) =>
 			JSON.parse(this.decodeResponseOrThrow(res))
@@ -407,7 +423,8 @@ export class ModelerApiClient {
 	 */
 	async deleteMilestone(milestoneId: string) {
 		const headers = await this.getHeaders()
-		return this.rest(`milestones/${milestoneId}`, {
+		const rest = await this.rest
+		return rest(`milestones/${milestoneId}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow)
 	}
@@ -421,7 +438,8 @@ export class ModelerApiClient {
 		milestone2Id: string
 	): Promise<string> {
 		const headers = await this.getHeaders()
-		return this.rest(`milestones/compare/${milestone1Id}...${milestone2Id}`, {
+		const rest = await this.rest
+		return rest(`milestones/compare/${milestone1Id}...${milestone2Id}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow) as Promise<string>
 	}
@@ -454,7 +472,8 @@ export class ModelerApiClient {
 		req: Dto.PubSearchDtoMilestoneMetadataDto
 	): Promise<Dto.PubSearchResultDtoMilestoneMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`milestones/search`, {
 				headers,
 				body: JSON.stringify(req),
@@ -470,7 +489,8 @@ export class ModelerApiClient {
 	 */
 	async createProject(name: string): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`projects`, {
 				headers,
 				body: JSON.stringify({ name }),
@@ -487,7 +507,8 @@ export class ModelerApiClient {
 	 */
 	async getProject(projectId: string): Promise<Dto.ProjectDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`projects/${projectId}`, {
+		const rest = await this.rest
+		return rest(`projects/${projectId}`, {
 			headers,
 		}).then((res) =>
 			JSON.parse(this.decodeResponseOrThrow(res))
@@ -500,7 +521,8 @@ export class ModelerApiClient {
 	 */
 	async deleteProject(projectId: string) {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`projects/${projectId}`, {
 				headers,
 			})
@@ -516,7 +538,8 @@ export class ModelerApiClient {
 		name: string
 	): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`projects/${projectId}`, {
 				headers,
 				body: JSON.stringify({ name }),
@@ -555,7 +578,8 @@ export class ModelerApiClient {
 		req: Dto.PubSearchDtoProjectMetadataDto
 	): Promise<Dto.PubSearchResultDtoProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`projects/search`, {
 				headers,
 				body: JSON.stringify(req),
