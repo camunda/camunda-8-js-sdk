@@ -1,3 +1,31 @@
+## [8.5.1-alpha.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1-alpha.3...v8.5.1-alpha.4) (2024-05-03)
+
+
+### Features
+
+* **repo:** load system certs when custom cert specified ([afce0a7](https://github.com/camunda/camunda-8-js-sdk/commit/afce0a78ec81294ab4282ea1cd1e1d80d9244f71)), closes [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#141](https://github.com/camunda/camunda-8-js-sdk/issues/141)
+
+## [8.5.1-alpha.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1-alpha.2...v8.5.1-alpha.3) (2024-04-29)
+
+
+### Bug Fixes
+
+* **tasklist:** correct default value of includeVariables parameter in tasklist variables search ([#136](https://github.com/camunda/camunda-8-js-sdk/issues/136)) ([23af921](https://github.com/camunda/camunda-8-js-sdk/commit/23af921769f67e77c68182f3efb2d7509560e514))
+
+## [8.5.1-alpha.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1-alpha.1...v8.5.1-alpha.2) (2024-04-20)
+
+
+### Features
+
+* **repo:** add status code to HTTPError type ([#135](https://github.com/camunda/camunda-8-js-sdk/issues/135)) ([cfea141](https://github.com/camunda/camunda-8-js-sdk/commit/cfea14173c4ddc005df142cc139db961a235cd53)), closes [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125)
+
+## [8.5.1-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0...v8.5.1-alpha.1) (2024-04-09)
+
+
+### Features
+
+* **repo:** add stack traces to async REST errors ([#131](https://github.com/camunda/camunda-8-js-sdk/issues/131)) ([ef8d9c6](https://github.com/camunda/camunda-8-js-sdk/commit/ef8d9c6b58a8864d66b6f8f1b008256cc9acf187))
+
 # [8.5.0](https://github.com/camunda/camunda-8-js-sdk/compare/v8.4.1...v8.5.0) (2024-04-08)
 
 

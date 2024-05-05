@@ -6,6 +6,8 @@
 
 This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
 
+Full API Docs are [here](https://camunda.github.io/camunda-8-js-sdk/). See the QUICKSTART.md file in [the repository](https://github.com/camunda/camunda-8-js-sdk) for a quick start.
+
 ## What does "supported" mean?
 
 This is the official supported-by-Camunda Nodejs SDK for Camunda Platform 8.
@@ -34,7 +36,7 @@ In this release, the functionality of Camunda 8 is exposed via dedicated clients
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8()
-const zeebe = c8.getZeebeGrpcClient()
+const zeebe = c8.getZeebeGrpcApiClient()
 const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
@@ -109,12 +111,6 @@ const c8 = new Camunda8({
 ```
 
 If the cache directory does not exist, the SDK will attempt to create it (recursively). If the SDK is unable to create it, or the directory exists but is not writeable by your application, the SDK will throw an exception.
-
-### Token refresh
-
-Token refresh timing relative to expiration is controlled by the `CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS` value. By default, this is 1000ms. Tokens are renewed this amount of time before they expire.
-
-If you experience intermittent `401: Unauthorized` errors, this may not be sufficient time to refresh the token before it expires in your infrastructure. Increase this value to force a token to be refreshed before it expires.
 
 ## Connection configuration examples
 

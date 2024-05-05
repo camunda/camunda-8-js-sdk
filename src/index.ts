@@ -8,6 +8,8 @@ import * as Optimize from './optimize'
 import * as Tasklist from './tasklist'
 import * as Zeebe from './zeebe'
 
+export { /*HTTPError,*/ RESTError } from './lib'
+
 export const Dto = { ChildDto, BigIntValue, Int64String, LosslessDto }
 
 export { Admin, Auth, Camunda8, Modeler, Operate, Optimize, Tasklist, Zeebe }

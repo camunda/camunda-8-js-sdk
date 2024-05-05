@@ -5,9 +5,13 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
+	GotRetryConfig,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -20,7 +24,7 @@ const API_VERSION = 'v1'
 export class ModelerApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest: Promise<typeof got>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -36,32 +40,25 @@ export class ModelerApiClient {
 		this.userAgentString = createUserAgentString(config)
 		const prefixUrl = `${modelerApiUrl}/${API_VERSION}`
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			prefixUrl,
-			https: {
-				certificateAuthority,
-			},
-			responseType: 'json',
-			hooks: {
-				beforeError: [
-					(error) => {
-						const { request } = error
-						if (request) {
-							debug(`Error in request to ${request.options.url.href}`)
-							debug(
-								`Request headers: ${JSON.stringify(request.options.headers)}`
-							)
-							debug(`Error: ${error.code} - ${error.message}`)
-							// Attach more contextual information to the error object
-							error.message += ` (request to ${request.options.url.href})`
-						}
-						return error
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
 					},
-				],
-			},
-		})
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 		debug(`baseUrl: ${prefixUrl}`)
 	}
 
@@ -84,7 +81,7 @@ export class ModelerApiClient {
 		}
 		// 204: No Content
 		if (res.statusCode === 204) {
-			return null
+			return '{}'
 		}
 		const err = new Error(res.statusMessage) as unknown as { code: number }
 		err.code = res.statusCode
@@ -94,6 +91,7 @@ export class ModelerApiClient {
 	/**
 	 * Adds a new collaborator to a project or modifies the permission level of an existing collaborator.
 	 * Note: Only users that are part of the authorized organization (see GET /api/v1/info) and logged in to Web Modeler at least once can be added to a project.
+	 * @throws {RESTError}
 	 */
 	async addCollaborator(req: Dto.CreateCollaboratorDto): Promise<null> {
 		const headers = await this.getHeaders()
@@ -111,6 +109,7 @@ export class ModelerApiClient {
 	 * sort specifies by which fields and direction (ASC/DESC) the result should be sorted.
 	 * page specifies the page number to return.
 	 * size specifies the number of items per page. The default value is 10.
+	 * @throws {RESTError}
 	 */
 	async searchCollaborators(
 		req: Dto.PubSearchDtoProjectCollaboratorDto
@@ -121,11 +120,16 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(
-				this.decodeResponseOrThrow
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoProjectCollaboratorDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 * @returns
+	 */
 	async deleteCollaborator({
 		email,
 		projectId,
@@ -134,7 +138,8 @@ export class ModelerApiClient {
 		email: string
 	}): Promise<null> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`project/${projectId}collaborators/${email}`, {
 				headers,
 			})
@@ -162,16 +167,21 @@ export class ModelerApiClient {
 	 *
 	 * The value of content.version is managed by Web Modeler and will be updated automatically.
 	 *
-	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/").
+	 * This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * @throws {RESTError}
 	 */
 	async createFile(req: Dto.CreateFileDto): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`files`, {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.FileMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
@@ -182,21 +192,28 @@ export class ModelerApiClient {
 	 * facilitates the processing of path-like structures within file and folder names.
 	 *
 	 * Does this throw if it is not found?
+	 * @throws {RESTError}
 	 */
 	async getFile(fileId: string): Promise<Dto.FileDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/${fileId}`, {
+		const rest = await this.rest
+		return rest(`files/${fileId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.FileDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.FileDto>
 	}
 
 	/**
 	 * Deletes a file.
-	 * Note: Deleting a file will also delete other resources attached to the file (comments, call activity/business rule task links, milestones and shares) which might have side-effects. Deletion of resources is recursive and cannot be undone.
+	 * Note: Deleting a file will also delete other resources attached to the file (comments, call activity/business rule task links, milestones and shares) which might have side-effects.
+	 * Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteFile(fileId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/${fileId}`, {
+		const rest = await this.rest
+		return rest(`files/${fileId}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow) as Promise<null>
 	}
@@ -214,17 +231,22 @@ export class ModelerApiClient {
 	 * The value of content.name can only be changed via name.
 	 * The value of content.id is not updatable.
 	 * The value of content.version is managed by Web Modeler and will be updated automatically.
-	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transforms any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/").
+	 * This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * @throws {RESTError}
 	 */
 	async updateFile(
 		fileId: string,
 		update: Dto.UpdateFileDto
 	): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/${fileId}`, {
+		const rest = await this.rest
+		return rest(`files/${fileId}`, {
 			headers,
 			body: JSON.stringify(update),
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.FileMetadataDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
@@ -249,17 +271,20 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 * size specifies the number of items per page. The default value is 10.
 	 *
-	 * Note: The simplePath transform any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/"). This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * Note: The simplePath transform any occurrences of slashes ("/") in file and folder names into an escape sequence consisting of a backslash followed by a slash ("\/").
+	 * This form of escaping facilitates the processing of path-like structures within file and folder names.
+	 * @throws {RESTError}
 	 */
 	async searchFiles(
 		req: Dto.PubSearchDtoFileMetadataDto
 	): Promise<Dto.PubSearchResultDtoFileMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`files/search`, {
+		const rest = await this.rest
+		return rest(`files/search`, {
 			headers,
 			body: JSON.stringify(req),
-		}).then(
-			this.decodeResponseOrThrow
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
 		) as Promise<Dto.PubSearchResultDtoFileMetadataDto>
 	}
 
@@ -272,31 +297,45 @@ export class ModelerApiClient {
 	 * When projectId is given and parentId is either null or omitted altogether, the folder will be created in the root of the project.
 	 *
 	 * When projectId and parentId are both given, they must be consistent - i.e. the parent folder is in the project.
+	 * @throws {RESTError}
 	 */
 	async createFolder(req: Dto.CreateFolderDto): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`folders`, {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FolderMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 * @returns
+	 */
 	async getFolder(folderId: string): Promise<Dto.FolderDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`folders/${folderId}`, {
+		const rest = await this.rest
+		return rest(`folders/${folderId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.FolderDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.FolderDto>
 	}
 
 	/**
 	 *
 	 * Deletes an empty folder. A folder is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteFolder(folderId: string): Promise<null> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`folders/${folderId}`, {
 				headers,
 			})
@@ -313,65 +352,94 @@ export class ModelerApiClient {
 	 * When projectId is given and parentId is either null or omitted altogether, the file will be moved to the root of the project.
 	 *
 	 * When projectId and parentId are both given, they must be consistent - i.e. the new parent folder is in the new project.
+	 * @throws {RESTError}
 	 */
 	async updateFolder(
 		folderId: string,
 		update: Dto.UpdateFolderDto
 	): Promise<Dto.FolderMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`folders/${folderId}`, {
 				headers,
 				body: JSON.stringify(update),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.FolderMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FolderMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async getInfo(): Promise<Dto.InfoDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`info`, {
+		const rest = await this.rest
+		return rest(`info`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.InfoDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.InfoDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async createMilestone(
 		req: Dto.CreateMilestoneDto
 	): Promise<Dto.MilestoneMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`milestones`, {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.MilestoneMetadataDto>
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async getMilestone(milestoneId: string): Promise<Dto.MilestoneDto> {
 		const headers = await this.getHeaders()
-		return this.rest(`milestones/${milestoneId}`, {
+		const rest = await this.rest
+		return rest(`milestones/${milestoneId}`, {
 			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.MilestoneDto>
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.MilestoneDto>
 	}
 
 	/**
 	 * Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteMilestone(milestoneId: string) {
 		const headers = await this.getHeaders()
-		return this.rest(`milestones/${milestoneId}`, {
+		const rest = await this.rest
+		return rest(`milestones/${milestoneId}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow)
 	}
 
 	/**
 	 * Returns a link to a visual comparison between two milestones where the milestone referenced by milestone1Id acts as a baseline to compare the milestone referenced by milestone2Id against.
+	 * @throws {RESTError}
 	 */
 	async getMilestoneComparison(
 		milestone1Id: string,
 		milestone2Id: string
 	): Promise<string> {
 		const headers = await this.getHeaders()
-		return this.rest(`milestones/compare/${milestone1Id}...${milestone2Id}`, {
+		const rest = await this.rest
+		return rest(`milestones/compare/${milestone1Id}...${milestone2Id}`, {
 			headers,
 		}).then(this.decodeResponseOrThrow) as Promise<string>
 	}
@@ -398,64 +466,87 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 *
 	 * size specifies the number of items per page. The default value is 10.
+	 * @throws {RESTError}
 	 */
 	async searchMilestones(
 		req: Dto.PubSearchDtoMilestoneMetadataDto
 	): Promise<Dto.PubSearchResultDtoMilestoneMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`milestones/search`, {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(
-				this.decodeResponseOrThrow
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoMilestoneMetadataDto>
 	}
 
 	/**
 	 * Creates a new project. This project will be created without any collaborators, so it will not be visible in the UI by default. To assign collaborators, use `addCollaborator()`.
+	 * @throws {RESTError}
 	 */
 	async createProject(name: string): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`projects`, {
 				headers,
 				body: JSON.stringify({ name }),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
-	}
-
-	async getProject(projectId: string): Promise<Dto.ProjectDto> {
-		const headers = await this.getHeaders()
-		return this.rest(`projects/${projectId}`, {
-			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<Dto.ProjectDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.ProjectMetadataDto>
 	}
 
 	/**
-	 * This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 *
+	 * @throws {RESTError}
+	 * @returns
+	 */
+	async getProject(projectId: string): Promise<Dto.ProjectDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`projects/${projectId}`, {
+			headers,
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.ProjectDto>
+	}
+
+	/**
+	 * @description This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * @throws {RESTError}
 	 */
 	async deleteProject(projectId: string) {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`projects/${projectId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow)
+			.then((res) => JSON.parse(this.decodeResponseOrThrow(res)))
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	async renameProject(
 		projectId: string,
 		name: string
 	): Promise<Dto.ProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`projects/${projectId}`, {
 				headers,
 				body: JSON.stringify({ name }),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<Dto.ProjectMetadataDto>
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.ProjectMetadataDto>
 	}
 
 	/**
@@ -481,18 +572,20 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 *
 	 * size specifies the number of items per page. The default value is 10.
+	 * @throws {RESTError}
 	 */
 	async searchProjects(
 		req: Dto.PubSearchDtoProjectMetadataDto
 	): Promise<Dto.PubSearchResultDtoProjectMetadataDto> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`projects/search`, {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(
-				this.decodeResponseOrThrow
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoProjectMetadataDto>
 	}
 }

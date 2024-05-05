@@ -5,12 +5,16 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
+	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -43,7 +47,7 @@ const TASKLIST_API_VERSION = 'v1'
 export class TasklistApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest: Promise<typeof got>
 
 	/**
 	 * @example
@@ -70,32 +74,25 @@ export class TasklistApiClient {
 		)
 		const prefixUrl = `${baseUrl}/${TASKLIST_API_VERSION}`
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
-		this.rest = got.extend({
-			prefixUrl,
-			https: {
-				certificateAuthority,
-			},
-			hooks: {
-				beforeError: [
-					(error) => {
-						const { request } = error
-						if (request) {
-							debug(`Error in request to ${request.options.url.href}`)
-							debug(
-								`Request headers: ${JSON.stringify(request.options.headers)}`
-							)
-							debug(`Error: ${error.code} - ${error.message}`)
-
-							// Attach more contextual information to the error object
-							error.message += ` (request to ${request.options.url.href})`
-						}
-						return error
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
 					},
-				],
-			},
-		})
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 		trace(`prefixUrl: ${prefixUrl}`)
 	}
 
@@ -134,6 +131,7 @@ export class TasklistApiClient {
 	/**
 	 * @description Query Tasklist for a list of tasks. See the [API documentation](https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/tasks/).
 	 * @throws Status 400 - An error is returned when more than one search parameters among [`searchAfter`, `searchAfterOrEqual`, `searchBefore`, `searchBeforeOrEqual`] are present in request
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const tasklist = new TasklistApiClient()
@@ -160,7 +158,8 @@ export class TasklistApiClient {
 		const url = 'tasks/search'
 
 		trace(`Requesting ${url}`)
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(url, {
 				json: this.replaceDatesWithString(query),
 				headers,
@@ -171,12 +170,13 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Return a task by id, or throw if not found.
-	 * @throws Will throw if no task of the given taskId exists
+	 * @throws {RESTError} Will throw if no task of the given taskId exists
 	 * @returns
 	 */
 	public async getTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.get(`tasks/${taskId}`, {
 				headers,
 			})
@@ -185,6 +185,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Get the form details by form id and processDefinitionKey.
+	 * @throws {RESTError}
 	 */
 	public async getForm(
 		formId: string,
@@ -192,7 +193,8 @@ export class TasklistApiClient {
 		version?: string | number
 	): Promise<Form> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.get(`forms/${formId}`, {
 				searchParams: {
 					processDefinitionKey,
@@ -206,7 +208,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description This method returns a list of task variables for the specified taskId and variableNames. If the variableNames parameter is empty, all variables associated with the task will be returned.
-	 * @throws Status 404 - An error is returned when the task with the taskId is not found.
+	 * @throws {RESTError}
 	 */
 	public async getVariables({
 		taskId,
@@ -218,11 +220,12 @@ export class TasklistApiClient {
 		includeVariables?: { name: string; alwaysReturnFullValue: boolean }[]
 	}): Promise<VariableSearchResponse[]> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post(`tasks/${taskId}/variables/search`, {
 				body: losslessStringify({
 					variableNames: variableNames || [],
-					includeVariables: includeVariables || {},
+					includeVariables: includeVariables || [],
 				}),
 				headers,
 			})
@@ -235,7 +238,8 @@ export class TasklistApiClient {
 	 */
 	public async getVariable(variableId: string): Promise<Variable> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.get(`variables/${variableId}`, {
 				headers,
 			})
@@ -244,6 +248,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Assign a task with taskId to assignee or the active user.
+	 * @throws {RESTError}
 	 * @throws Status 400 - An error is returned when the task is not active (not in the CREATED state).
 	 * Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
 	 * Status 403 - An error is returned when user doesn't have the permission to assign another user to this task.
@@ -259,7 +264,8 @@ export class TasklistApiClient {
 		allowOverrideAssignment?: boolean
 	}): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`tasks/${taskId}/assign`, {
 				body: losslessStringify({
 					assignee,
@@ -273,6 +279,7 @@ export class TasklistApiClient {
 
 	/**
 	 * @description Complete a task with taskId and optional variables
+	 * @throws {RESTError}
 	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
 	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
 	 * @throws Status 400 An error is returned if the task is not assigned to the current user.
@@ -284,7 +291,8 @@ export class TasklistApiClient {
 		variables?: JSONDoc
 	): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`tasks/${taskId}/complete`, {
 				headers,
 				body: losslessStringify({
@@ -300,10 +308,12 @@ export class TasklistApiClient {
 	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
 	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
 	 * @throws Status 404 An error is returned when the task with the taskId is not found.
+	 * @throws {RESTError}
 	 */
 	public async unassignTask(taskId: string): Promise<TaskResponse> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.patch(`tasks/${taskId}/unassign`, {
 				headers,
 				parseJson: (text) => losslessParse(text, TaskResponse),

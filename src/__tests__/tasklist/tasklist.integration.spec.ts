@@ -47,7 +47,11 @@ describe('TasklistApiClient', () => {
 
 	afterEach(async () => {
 		if (p && p.processInstanceKey) {
-			await zbc.cancelProcessInstance(p.processInstanceKey)
+			await zbc.cancelProcessInstance(p.processInstanceKey).catch((e) => {
+				if (!e.message.includes('NOT_FOUND')) {
+					throw e
+				}
+			})
 		}
 	})
 

@@ -1,17 +1,21 @@
 import * as fs from 'fs'
-import https from 'https'
 import * as os from 'os'
+import path from 'path'
 
 import { debug } from 'debug'
-import fetch from 'node-fetch'
+import got from 'got'
+import { jwtDecode } from 'jwt-decode'
 
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
+	GotRetryConfig,
 	RequireConfiguration,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 } from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
@@ -28,7 +32,6 @@ export class OAuthProvider implements IOAuthProvider {
 	private authServerUrl: string
 	private clientId: string | undefined
 	private clientSecret: string | undefined
-	private customRootCert?: Buffer
 	private useFileCache: boolean
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
@@ -41,7 +44,8 @@ export class OAuthProvider implements IOAuthProvider {
 	private consoleClientSecret: string | undefined
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
-	private tokenRefreshThresholdMs: number
+	private refreshWindow: number
+	private rest: Promise<typeof got>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -60,6 +64,8 @@ export class OAuthProvider implements IOAuthProvider {
 
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
+
+		this.refreshWindow = config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
@@ -80,11 +86,19 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
-
-		const customRootCert = GetCertificateAuthority(config)
-		this.customRootCert = customRootCert
-			? Buffer.from(customRootCert)
-			: undefined
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
+					},
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
 		this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
@@ -108,9 +122,6 @@ export class OAuthProvider implements IOAuthProvider {
 
 		this.camundaModelerOAuthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE
 
-		this.tokenRefreshThresholdMs =
-			config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
-
 		if (this.useFileCache) {
 			try {
 				if (!fs.existsSync(this.cacheDir)) {
@@ -118,7 +129,13 @@ export class OAuthProvider implements IOAuthProvider {
 						recursive: true,
 					})
 				}
-				fs.accessSync(this.cacheDir, fs.constants.W_OK)
+				// Try to write a temporary file to the directory
+				const tempfilename = path.join(this.cacheDir, 'temp.txt')
+				if (fs.existsSync(tempfilename)) {
+					fs.unlinkSync(tempfilename) // Remove the temporary file
+				}
+				fs.writeFileSync(tempfilename, 'test')
+				fs.unlinkSync(tempfilename) // Remove the temporary file
 			} catch (e) {
 				throw new Error(
 					`FATAL: Cannot write to OAuth cache dir ${this.cacheDir}\n` +
@@ -134,7 +151,6 @@ export class OAuthProvider implements IOAuthProvider {
 
 	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
 		debug(`Token request for ${audienceType}`)
-		// tslint:disable-next-line: no-console
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
 		// Otherwise we use the application credential set, unless a Console credential set exists.
@@ -261,71 +277,60 @@ export class OAuthProvider implements IOAuthProvider {
 		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
 
-		if (this.customRootCert) {
-			trace('Using custom root certificate')
-		}
-
-		const customAgent = this.customRootCert
-			? new https.Agent({ ca: this.customRootCert })
-			: undefined
-
 		const options = {
-			agent: customAgent,
-			method: 'POST',
 			body: bodyWithScope,
 			headers: {
 				'content-type': 'application/x-www-form-urlencoded',
 				'user-agent': this.userAgentString,
+				accept: '*/*',
 			},
 		}
-		const optionsWithAgent = this.customRootCert
-			? { ...options, agent: customAgent }
-			: options
+
 		trace(`Making token request to the token endpoint: `)
 		trace(`  ${this.authServerUrl}`)
-		trace(optionsWithAgent)
-		return fetch(this.authServerUrl, optionsWithAgent)
-			.catch((e) => {
-				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
-				console.log(e)
-				throw e
-			})
-			.then((res) =>
-				res.json().catch(() => {
-					trace(
-						`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
+		trace(options)
+		return this.rest.then((rest) =>
+			rest
+				.post(this.authServerUrl, options)
+				.catch((e) => {
+					console.log(
+						`Erroring requesting token for Client Id ${clientIdToUse}`
 					)
-					throw new Error(
-						`Failed to parse response from token endpoint. Status ${res.status}: ${res.statusText}`
-					)
+					console.log(e)
+					throw e
 				})
-			)
-			.then((t) => {
-				trace(
-					`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
-						t,
-						null,
-						2
-					)}`
-				)
-				const isTokenError = (t: unknown): t is TokenError =>
-					!!(t as TokenError).error
-				if (isTokenError(t)) {
-					throw new Error(
-						`Failed to get token: ${t.error} - ${t.error_description}`
+				.then((res) => JSON.parse(res.body))
+				.then((t) => {
+					trace(
+						`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
+							t,
+							null,
+							2
+						)}`
 					)
-				}
-				const token = { ...(t as Token), audience: audienceType }
-				if (this.useFileCache) {
-					this.sendToFileCache({
-						audience: audienceType,
-						token,
-						clientId: clientIdToUse,
-					})
-				}
-				this.sendToMemoryCache({ audience: audienceType, token })
-				return token.access_token
-			})
+					const isTokenError = (t: unknown): t is TokenError =>
+						!!(t as TokenError).error
+					if (isTokenError(t)) {
+						throw new Error(
+							`Failed to get token: ${t.error} - ${t.error_description}`
+						)
+					}
+					if (t.access_token === undefined) {
+						console.error(audienceType, t)
+						throw new Error('Failed to get token: no access_token in response')
+					}
+					const token = { ...(t as Token), audience: audienceType }
+					if (this.useFileCache) {
+						this.sendToFileCache({
+							audience: audienceType,
+							token,
+							clientId: clientIdToUse,
+						})
+					}
+					this.sendToMemoryCache({ audience: audienceType, token })
+					return token.access_token
+				})
+		)
 	}
 
 	private sendToMemoryCache({
@@ -336,9 +341,16 @@ export class OAuthProvider implements IOAuthProvider {
 		token: Token
 	}) {
 		const key = this.getCacheKey(audience)
-		const d = new Date()
-		token.expiry = d.setSeconds(d.getSeconds()) + token.expires_in * 1000
-		this.tokenCache[key] = token
+		try {
+			const decoded = jwtDecode(token.access_token)
+
+			token.expiry = decoded.exp ?? 0
+			this.tokenCache[key] = token
+		} catch (e) {
+			console.error('audience', audience)
+			console.error('token', token.access_token)
+			throw e
+		}
 	}
 
 	private retrieveFromFileCache(
@@ -375,14 +387,14 @@ export class OAuthProvider implements IOAuthProvider {
 		token: Token
 		clientId: string
 	}) {
-		const d = new Date()
 		const file = this.getCachedTokenFileName(clientId, audience)
+		const decoded = jwtDecode(token.access_token)
 
 		fs.writeFile(
 			file,
 			JSON.stringify({
 				...token,
-				expiry: d.setSeconds(d.getSeconds() + token.expires_in),
+				expiry: decoded.exp ?? 0,
 			}),
 			(e) => {
 				if (!e) {
@@ -400,8 +412,10 @@ export class OAuthProvider implements IOAuthProvider {
 	private isExpired(token: Token) {
 		const d = new Date()
 		const currentTime = d.setSeconds(d.getSeconds())
-		const expiryHorizon = token.expiry - this.tokenRefreshThresholdMs
-		const tokenIsExpired = currentTime >= expiryHorizon
+		// If the token has 10 seconds (by default) or less left, renew it.
+		// The Identity server token cache is cleared 30 seconds before the token expires, allowing us to renew it
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/125
+		const tokenIsExpired = currentTime >= token.expiry - this.refreshWindow
 		return tokenIsExpired
 	}
 

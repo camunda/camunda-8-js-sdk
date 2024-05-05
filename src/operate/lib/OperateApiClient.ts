@@ -1,16 +1,19 @@
-import { debug as d } from 'debug'
 import got from 'got'
 
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
+	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -31,8 +34,6 @@ import {
 import { parseSearchResults } from './parseSearchResults'
 
 const OPERATE_API_VERSION = 'v1'
-
-const debug = d('camunda:operate')
 
 type JSONDoc = { [key: string]: string | boolean | number | JSONDoc }
 type EnhanceWithTenantIdIfMissing<T> = T extends {
@@ -62,7 +63,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 export class OperateApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
-	private rest: typeof got
+	private rest: Promise<typeof got>
 	private tenantId: string | undefined
 
 	/**
@@ -70,6 +71,7 @@ export class OperateApiClient {
 	 * ```
 	 * const operate = new OperateApiClient()
 	 * ```
+	 * @throws {RESTError} An error that may occur during API operations.
 	 */
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -86,34 +88,28 @@ export class OperateApiClient {
 			'CAMUNDA_OPERATE_BASE_URL'
 		)
 
-		const certificateAuthority = GetCertificateAuthority(config)
-
 		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
 
-		this.rest = got.extend({
-			prefixUrl,
-			https: {
-				certificateAuthority,
-			},
-			hooks: {
-				beforeError: [
-					(error) => {
-						const { request } = error
-						if (request) {
-							debug(`Error in request to ${request.options.url.href}`)
-							debug(
-								`Request headers: ${JSON.stringify(request.options.headers)}`
-							)
-							debug(`Error: ${error.code} - ${error.message}`)
-
-							// Attach more contextual information to the error object
-							error.message += ` (request to ${request.options.url.href})`
-						}
-						return error
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
 					},
-				],
-			},
-		})
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
+
 		this.tenantId = config.CAMUNDA_TENANT_ID
 	}
 
@@ -154,6 +150,7 @@ export class OperateApiClient {
 	 * @description Search and retrieve process definitions.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/docs/apis-clients/operate-api/#process-definition)
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const query: Query<ProcessDefinition> = {
@@ -175,7 +172,8 @@ export class OperateApiClient {
 	): Promise<SearchResults<ProcessDefinition>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('process-definitions/search', {
 				json,
 				headers,
@@ -187,7 +185,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Retrieve the metadata for a specific process definition, by key.
-	 *
+	 * @throws {RESTError}
 	 * [Camunda 8 Documentation](https://docs.camunda.io/docs/apis-clients/operate-api/#process-definition)
 	 * @example
 	 * ```
@@ -199,8 +197,10 @@ export class OperateApiClient {
 		processDefinitionKey: number | string
 	): Promise<ProcessDefinition> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-definitions/${processDefinitionKey}`, {
+		const rest = await this.rest
+		return rest(`process-definitions/${processDefinitionKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, ProcessDefinition),
 		}).json()
 	}
 
@@ -208,56 +208,80 @@ export class OperateApiClient {
 		processDefinitionKey: number | string
 	): Promise<string> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-definitions/${processDefinitionKey}/xml`, {
+		const rest = await this.rest
+
+		return rest(`process-definitions/${processDefinitionKey}/xml`, {
 			headers,
 		}).text()
 	}
 
+	/**
+	 *
+	 * @throws {RESTError}
+	 */
 	public async searchDecisionDefinitions(
 		query: Query<DecisionDefinition>
 	): Promise<SearchResults<DecisionDefinition>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest('decision-definitions/search', {
+		const rest = await this.rest
+
+		return rest('decision-definitions/search', {
 			headers,
 			parseJson: (text) => parseSearchResults(text, DecisionDefinition),
 			json,
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getDecisionDefinition(
 		decisionDefinitionKey: number | string
 	): Promise<DecisionDefinition> {
 		const headers = await this.getHeaders()
-		return this.rest(`decision-definitions/${decisionDefinitionKey}`, {
+		const rest = await this.rest
+
+		return rest(`decision-definitions/${decisionDefinitionKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, DecisionDefinition),
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchDecisionInstances(
 		query: Query<DecisionInstance>
 	): Promise<SearchResults<DecisionInstance>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest('decision-instances/search', {
+		const rest = await this.rest
+
+		return rest('decision-instances/search', {
 			headers,
 			parseJson: (text) => parseSearchResults(text, DecisionInstance),
 			json,
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getDecisionInstance(
 		decisionInstanceKey: number | string
 	): Promise<DecisionInstance> {
 		const headers = await this.getHeaders()
-		return this.rest(`decision-instances/${decisionInstanceKey}`, {
+		const rest = await this.rest
+
+		return rest(`decision-instances/${decisionInstanceKey}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, DecisionInstance),
 		}).json()
 	}
 	/**
 	 * @description Search and retrieve process instances.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -282,8 +306,10 @@ export class OperateApiClient {
 		const headers = await this.getHeaders()
 
 		const json = this.addTenantIdToFilter(query)
+		const rest = await this.rest
+
 		try {
-			return this.rest
+			return rest
 				.post('process-instances/search', {
 					json,
 					headers,
@@ -298,6 +324,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Retrieve a specific process instance by id.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -308,13 +335,17 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ProcessInstance> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-instances/${processInstanceKey}`, {
+		const rest = await this.rest
+
+		return rest(`process-instances/${processInstanceKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, ProcessInstance),
 		}).json()
 	}
 
 	/**
 	 * @description Delete a specific process instance by key.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -325,10 +356,13 @@ export class OperateApiClient {
 		processInstanceKey: number | string
 	): Promise<ChangeStatus> {
 		const headers = await this.getHeaders()
+		const rest = await this.rest
+
 		try {
-			const res = this.rest.delete(`process-instances/${processInstanceKey}`, {
+			const res = rest.delete(`process-instances/${processInstanceKey}`, {
 				headers,
 				throwHttpErrors: false,
+				parseJson: (text) => losslessParse(text, ChangeStatus),
 			})
 			res.catch((e) => console.log(e))
 			return res.json()
@@ -339,12 +373,15 @@ export class OperateApiClient {
 
 	/**
 	 * @description Get the statistics for a process instance, grouped by flow nodes
+	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceStatistics(
 		processInstanceKey: number | string
 	): Promise<ProcessInstanceStatistics[]> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-instances/${processInstanceKey}/statistics`, {
+		const rest = await this.rest
+
+		return rest(`process-instances/${processInstanceKey}/statistics`, {
 			headers,
 			parseJson: (text) => losslessParse(text, ProcessInstanceStatistics),
 		}).json()
@@ -352,12 +389,15 @@ export class OperateApiClient {
 
 	/**
 	 * @description Get sequence flows of process instance by key
+	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceSequenceFlows(
 		processInstanceKey: number | string
 	): Promise<string[]> {
 		const headers = await this.getHeaders()
-		return this.rest(`process-instances/${processInstanceKey}/sequence-flows`, {
+		const rest = await this.rest
+
+		return rest(`process-instances/${processInstanceKey}/sequence-flows`, {
 			headers,
 		}).json()
 	}
@@ -365,6 +405,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Search and retrieve incidents.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -388,7 +429,9 @@ export class OperateApiClient {
 	): Promise<SearchResults<Incident>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('incidents/search', {
 				json,
 				headers,
@@ -400,6 +443,7 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Retrieve an incident by incident key.
+	 * @throws {RESTError}
 	 * @example
 	 * ```
 	 * const operate = new OperateApiClient()
@@ -409,18 +453,25 @@ export class OperateApiClient {
 	 */
 	public async getIncident(key: number | string): Promise<Incident> {
 		const headers = await this.getHeaders()
-		return this.rest(`incidents/${key}`, {
+		const rest = await this.rest
+
+		return rest(`incidents/${key}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, Incident),
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchFlownodeInstances(
 		query: Query<FlownodeInstance>
 	): Promise<SearchResults<FlownodeInstance>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('flownode-instances/search', {
 				headers,
 				json,
@@ -429,22 +480,32 @@ export class OperateApiClient {
 			.json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getFlownodeInstance(
 		key: number | string
 	): Promise<FlownodeInstance> {
 		const headers = await this.getHeaders()
-		return this.rest(`flownode-instances/${key}`, {
+		const rest = await this.rest
+
+		return rest(`flownode-instances/${key}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, FlownodeInstance),
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchVariables(
 		query: Query<Variable>
 	): Promise<SearchResults<Variable>> {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('variables/search', {
 				headers,
 				json,
@@ -455,6 +516,7 @@ export class OperateApiClient {
 
 	/**
 	 * @description Retrieve the variables for a Process Instance, given its key
+	 * @throws {RESTError}
 	 * @param processInstanceKey
 	 * @returns
 	 */
@@ -467,7 +529,9 @@ export class OperateApiClient {
 				processInstanceKey,
 			},
 		}
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('variables/search', {
 				headers,
 				body: losslessStringify(body),
@@ -478,7 +542,7 @@ export class OperateApiClient {
 	/**
 	 * @description Retrieve the variables for a Process Instance as an object, given its key
 	 * @param processInstanceKey
-	 * @returns
+	 * @throws {RESTError}
 	 */
 	public async getJSONVariablesforProcess<T extends { [key: string]: JSONDoc }>(
 		processInstanceKey: number | string
@@ -490,12 +554,15 @@ export class OperateApiClient {
 			},
 			size: 1000,
 		}
-		const vars: { items: Variable[] } = await this.rest
+		const rest = await this.rest
+
+		const vars: { items: Variable[] } = await rest
 			.post('variables/search', {
 				headers,
 				body: losslessStringify(body),
 			})
 			.json()
+
 		return vars.items.reduce(
 			(prev, curr) => ({
 				...prev,
@@ -518,19 +585,28 @@ export class OperateApiClient {
 	/**
 	 *
 	 * @description Return a variable identified by its variable key
+	 * @throws {RESTError}
 	 * @returns
 	 */
 	public async getVariables(variableKey: number | string): Promise<Variable> {
 		const headers = await this.getHeaders()
-		return this.rest(`variables/${variableKey}`, {
+		const rest = await this.rest
+
+		return rest(`variables/${variableKey}`, {
 			headers,
+			parseJson: (text) => losslessParse(text, Variable),
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async searchDecisionRequirements(query: Query<DecisionRequirements>) {
 		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		return this.rest
+		const rest = await this.rest
+
+		return rest
 			.post('drd/search', {
 				headers,
 				json,
@@ -543,15 +619,22 @@ export class OperateApiClient {
 		key: string | number
 	): Promise<DecisionRequirements> {
 		const headers = await this.getHeaders()
-		return this.rest(`drd/${key}`, {
+		const rest = await this.rest
+
+		return rest(`drd/${key}`, {
 			headers,
 			parseJson: (text) => losslessParse(text, DecisionRequirements),
 		}).json()
 	}
 
+	/**
+	 * @throws {RESTError}
+	 */
 	public async getDecisionRequirementsXML(key: string | number) {
 		const headers = await this.getHeaders()
-		return this.rest(`drd/${key}/xml`, {
+		const rest = await this.rest
+
+		return rest(`drd/${key}/xml`, {
 			headers,
 		}).text()
 	}

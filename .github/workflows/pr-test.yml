@@ -24,6 +24,27 @@ jobs:
         run: |
           npm run test
 
+  unit-tests-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Unit Tests
+        run: |
+          npm run test
+
   local_integration:
     runs-on: ubuntu-latest
     environment:
@@ -46,7 +67,7 @@ jobs:
 
       - name: Set up Docker
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} registry.camunda.cloud
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username joshua.wulf --password-stdin registry.camunda.cloud
 
       - name: Set up Docker Compose
         run: |
@@ -92,7 +113,7 @@ jobs:
 
       - name: Set up Docker
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} registry.camunda.cloud
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username joshua.wulf --password-stdin registry.camunda.cloud
 
       - name: Set up Docker Compose
         run: |
@@ -152,4 +173,39 @@ jobs:
           CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
           CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
-          CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 10000 #89: Intermittent 401 unauthorised in integration tests
+
+  saas_integration_windows:
+    needs: saas_integration
+    runs-on: windows-latest
+    environment: integration
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:integration
+        env:
+          ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
+          ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
+          ZEEBE_AUTHORIZATION_SERVER_URL: ${{ secrets.ZEEBE_AUTHORIZATION_SERVER_URL }}
+          ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
+          ZEEBE_TOKEN_AUDIENCE: ${{ secrets.ZEEBE_TOKEN_AUDIENCE }}
+          CAMUNDA_CREDENTIALS_SCOPES: ${{ secrets.CAMUNDA_CREDENTIALS_SCOPES }}
+          CAMUNDA_OAUTH_URL: ${{ secrets.CAMUNDA_OAUTH_URL }}
+          CAMUNDA_TASKLIST_BASE_URL: ${{ secrets.CAMUNDA_TASKLIST_BASE_URL }}
+          CAMUNDA_OPERATE_BASE_URL: ${{ secrets.CAMUNDA_OPERATE_BASE_URL }}
+          CAMUNDA_OPTIMIZE_BASE_URL: ${{ secrets.CAMUNDA_OPTIMIZE_BASE_URL }}
+          CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
+          CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
+          CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
+          CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
+          CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}

@@ -1,14 +1,17 @@
-import { debug as d } from 'debug'
 import got from 'got'
 
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCertificateAuthority,
+	GetCustomCertificateBuffer,
+	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	gotBeforeErrorHook,
+	gotErrorHandler,
+	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 
@@ -24,10 +27,9 @@ import {
 } from './APIObjects'
 import { ReportResults } from './ReportResults'
 
-const debug = d('camunda:optimize')
-
 /**
  * @description The high-level API client for Optimize.
+ * @throws {RESTError} If the request fails
  * @example
  * ```
  * const optimize = new OptimizeApiClient()
@@ -44,7 +46,7 @@ const debug = d('camunda:optimize')
  */
 export class OptimizeApiClient {
 	private userAgentString: string
-	private rest: typeof got
+	private rest: Promise<typeof got>
 	private oAuthProvider: IOAuthProvider
 
 	/**
@@ -69,32 +71,27 @@ export class OptimizeApiClient {
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 
-		const certificateAuthority = GetCertificateAuthority(config)
+		const prefixUrl = `${baseUrl}/api`
 
-		this.rest = got.extend({
-			prefixUrl: `${baseUrl}/api`,
-			https: {
-				certificateAuthority,
-			},
-			hooks: {
-				beforeError: [
-					(error) => {
-						const { request } = error
-						if (request) {
-							debug(`Error in request to ${request.options.url.href}`)
-							debug(
-								`Request headers: ${JSON.stringify(request.options.headers)}`
-							)
-							debug(`Error: ${error.code} - ${error.message}`)
-
-							// Attach more contextual information to the error object
-							error.message += ` (request to ${request.options.url.href})`
-						}
-						return error
+		this.rest = GetCustomCertificateBuffer(config).then(
+			(certificateAuthority) =>
+				got.extend({
+					prefixUrl,
+					retry: GotRetryConfig,
+					https: {
+						certificateAuthority,
 					},
-				],
-			},
-		})
+					handlers: [gotErrorHandler],
+					hooks: {
+						beforeRetry: [
+							makeBeforeRetryHandlerFor401TokenRetry(
+								this.getHeaders.bind(this)
+							),
+						],
+						beforeError: [gotBeforeErrorHook],
+					},
+				})
+		)
 	}
 
 	private async getHeaders(auth = true) {
@@ -122,6 +119,7 @@ export class OptimizeApiClient {
 	 * If sharing had been previously enabled and then disabled, re-enabling sharing will allow users to access previously shared URLs under the same address as before. Calling this endpoint when sharing is already enabled will have no effect.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/configuration/enable-sharing/)
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 *  ```typescript
 	 * const client = new OptimizeApiClient()
@@ -130,7 +128,8 @@ export class OptimizeApiClient {
 	 */
 	async enableSharing() {
 		const headers = await this.getHeaders()
-		return this.rest.post('public/share/enable', {
+		const rest = await this.rest
+		return rest.post('public/share/enable', {
 			body: '',
 			headers,
 		})
@@ -144,6 +143,7 @@ export class OptimizeApiClient {
 	 * When sharing is disabled, previously shared URLs will no longer be accessible. Upon re-enabling sharing, the previously shared URLs will work once again under the same address as before. Calling this endpoint when sharing is already disabled will have no effect.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/configuration/disable-sharing/)
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 *  ```typescript
 	 * const client = new OptimizeApiClient()
@@ -152,7 +152,8 @@ export class OptimizeApiClient {
 	 */
 	async disableSharing() {
 		const headers = await this.getHeaders()
-		return this.rest.post('public/share/disable', {
+		const rest = await this.rest
+		return rest.post('public/share/disable', {
 			body: '',
 			headers,
 		})
@@ -165,7 +166,7 @@ export class OptimizeApiClient {
 	 * The response contains a list of IDs of the dashboards existing in the collection with the given collection ID.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/dashboard/get-dashboard-ids/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @param collectionId The ID of the collection for which to retrieve the dashboard IDs.
 	 * @example
 	 * ```
@@ -175,7 +176,8 @@ export class OptimizeApiClient {
 	 */
 	async getDashboardIds(collectionId: number): Promise<DashboardCollection> {
 		const headers = await this.getHeaders()
-		return this.rest(`public/dashboard?collectionId=${collectionId}`, {
+		const rest = await this.rest
+		return rest(`public/dashboard?collectionId=${collectionId}`, {
 			headers,
 		}).json()
 	}
@@ -183,7 +185,8 @@ export class OptimizeApiClient {
 	// Camunda 7-only
 	// async deleteDashboard(dashboardId: string) {
 	//     const headers = await this.getHeaders()
-	//     return this.rest.delete(`dashboard/${dashboardId}`, {
+	//     const rest = await this.rest
+	//     return rest.delete(`dashboard/${dashboardId}`, {
 	//         headers,
 	//         ...this.gotOptions
 	//     })
@@ -198,6 +201,7 @@ export class OptimizeApiClient {
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/dashboard/export-dashboard-definitions/)
 	 *
+	 * @throws {RESTError} If the request fails
 	 * @param dashboardIds Array of dashboard ids
 	 * @example
 	 * ```
@@ -209,7 +213,8 @@ export class OptimizeApiClient {
 		dashboardIds: string[]
 	): Promise<Array<DashboardDefinition | SingleProcessReport>> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('public/export/dashboard/definition/json', {
 				body: JSON.stringify(dashboardIds),
 				headers,
@@ -221,7 +226,7 @@ export class OptimizeApiClient {
 	 * @description This API allows users to retrieve all report IDs from a given collection. The response contains a list of IDs of the reports existing in the collection with the given collection ID.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/get-report-ids/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @param collectionId the id of the collection
 	 * @example
 	 * ```
@@ -231,7 +236,8 @@ export class OptimizeApiClient {
 	 */
 	async getReportIds(collectionId: number): Promise<ReportCollection> {
 		const headers = await this.getHeaders()
-		return this.rest(`report?collectionId=${collectionId}`, {
+		const rest = await this.rest
+		return rest(`report?collectionId=${collectionId}`, {
 			headers,
 		}).json()
 	}
@@ -240,7 +246,7 @@ export class OptimizeApiClient {
 	 * @description The report deletion API allows you to delete reports by ID from Optimize.
 	 *
 	 * [Camunda 8 documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/delete-report/)
-	 *
+	 *	@throws {RESTError} If the request fails
 	 * @param reportId The ID of the report you wish to delete
 	 *
 	 * @example
@@ -251,7 +257,8 @@ export class OptimizeApiClient {
 	 */
 	async deleteReport(reportId: string) {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.delete(`public/report/${reportId}`, {
 				headers,
 			})
@@ -264,7 +271,7 @@ export class OptimizeApiClient {
 	 * The obtained list of entity exports can be imported into other Optimize systems either using the dedicated import API or via UI.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/export-report-definitions/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @param reportIds array of report IDs
 	 * @example
 	 * ```
@@ -276,7 +283,8 @@ export class OptimizeApiClient {
 		reportIds: string[]
 	): Promise<Array<SingleProcessReport>> {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('public/export/dashboard/definition/json', {
 				body: JSON.stringify(reportIds),
 				headers,
@@ -289,6 +297,7 @@ export class OptimizeApiClient {
 	 * @param reportId
 	 * @param limit
 	 * @param paginationTimeoutSec
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const client = new OptimizeApiClient()
@@ -314,7 +323,8 @@ export class OptimizeApiClient {
 	// async ingestEventBatch(events: CloudEventV1<any>[]) {
 	//     const body = JSON.stringify(events)
 	//     const headers = await this.getHeaders()
-	//     return this.rest.post(`ingestion/event/batch`, {
+	//     const rest = await this.rest
+	//      return rest.post(`ingestion/event/batch`, {
 	//         body,
 	//         headers,
 	//         ...this.gotOptions
@@ -326,6 +336,7 @@ export class OptimizeApiClient {
 	 *
 	 * Especially if this data changes over time, it is advisable to use this REST API to persist external variable updates to Optimize, as otherwise Optimize may not be aware of data changes in the external system.
 	 * @param variables
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const variables = [
@@ -352,7 +363,8 @@ export class OptimizeApiClient {
 	 */
 	async ingestExternalVariable(variables: Variable[]) {
 		const headers = await this.getHeaders()
-		return this.rest
+		const rest = await this.rest
+		return rest
 			.post('ingestion/variable', {
 				body: JSON.stringify(variables),
 				headers,
@@ -364,7 +376,7 @@ export class OptimizeApiClient {
 	 * @description The purpose of Health-Readiness REST API is to return information indicating whether Optimize is ready to be used.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/health-readiness/)
-	 *
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const client = new OptimizeApiClient()
@@ -378,7 +390,8 @@ export class OptimizeApiClient {
 	 */
 	async getReadiness() {
 		const headers = await this.getHeaders(false)
-		return this.rest('readyz', {
+		const rest = await this.rest
+		return rest('readyz', {
 			headers,
 		}).json()
 	}
@@ -388,6 +401,7 @@ export class OptimizeApiClient {
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/import-entities/)
 	 *
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const entities = [
@@ -423,7 +437,8 @@ export class OptimizeApiClient {
 		entities: unknown
 	): Promise<EntityImportResponse> {
 		const headers = await this.getHeaders()
-		return this.rest(`public/import?collectionId=${collectionId}`, {
+		const rest = await this.rest
+		return rest(`public/import?collectionId=${collectionId}`, {
 			headers,
 			body: JSON.stringify(entities),
 		}).json()
@@ -434,6 +449,7 @@ export class OptimizeApiClient {
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/variable-labeling/)
 	 *
+	 * @throws {RESTError} If the request fails
 	 * @example
 	 * ```
 	 * const variableLabels =  {
@@ -462,7 +478,8 @@ export class OptimizeApiClient {
 	 */
 	async labelVariables(variableLabels: VariableLabels) {
 		const headers = await this.getHeaders()
-		return this.rest('public/variables/labels', {
+		const rest = await this.rest
+		return rest('public/variables/labels', {
 			headers,
 			body: JSON.stringify(variableLabels),
 		}).json()

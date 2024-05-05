@@ -134,6 +134,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			'ZEEBE_ADDRESS'
 		)
 
+		debug('Gateway address: ', this.gatewayAddress)
+
 		this.useTLS = config.CAMUNDA_SECURE_CONNECTION
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const rootCertsPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
@@ -1266,8 +1268,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		retries?: number
 	): Promise<T> {
 		return this.retry
-			? this.retryOnFailure(operationName, operation, retries)
-			: operation()
+			? this.retryOnFailure({ operationName, operation, retries })
+			: this.retryOnFailure({ operationName, operation, retries: 0 })
 	}
 
 	private _onConnectionError(err: Error) {
@@ -1292,12 +1294,17 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * or retries are exhausted.
 	 * @param operation A gRPC command operation that may fail if the broker is not available
 	 */
-	private async retryOnFailure<T>(
-		operationName: string,
-		operation: () => Promise<T>,
-		retries = this.maxRetries
-	): Promise<T> {
+	private async retryOnFailure<T>({
+		operation,
+		operationName,
+		retries = this.maxRetries,
+	}: {
+		operationName: string
+		operation: () => Promise<T>
+		retries?: number
+	}): Promise<T> {
 		let connectionErrorCount = 0
+		let authFailures = 0
 		return promiseRetry(
 			(retry, n) => {
 				if (this.closing || this.grpc.channelClosed) {
@@ -1318,18 +1325,31 @@ export class ZeebeGrpcClient extends TypedEmitter<
 						(err.message.indexOf('14') === 0 ||
 							err.message.indexOf('Stream removed') !== -1) &&
 						!err.message.includes('partition') // Error 14 can be host unavailable (network) or partition unavailable (not network)
+
 					const isBackpressure =
 						err.message.indexOf('8') === 0 || err.code === 8
+
+					const isAuthError = err.message.indexOf('16') === 0
+
 					if (isNetworkError) {
 						if (connectionErrorCount < 0) {
 							this._onConnectionError(err)
 						}
 						connectionErrorCount++
 					}
+
 					if (isNetworkError || isBackpressure) {
 						this.logger.logError(`[${operationName}]: ${err.message}`)
 						retry(err)
 					}
+					// We will retry once, and only once for an auth error. This may be due to a token
+					// expiry edge-case.
+					// See https://github.com/camunda/camunda-8-js-sdk/issues/125
+					if (isAuthError && authFailures === 0) {
+						authFailures = 1
+						retry(err)
+					}
+
 					// The gRPC channel will be closed if close has been called
 					if (this.grpc.channelClosed) {
 						return Promise.resolve(null as unknown as T)
