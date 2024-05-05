@@ -1,3 +1,10 @@
+## [8.5.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0...v8.5.1) (2024-05-05)
+
+
+### Features
+
+* **repo:** load system certs when custom cert specified ([#144](https://github.com/camunda/camunda-8-js-sdk/issues/144)) ([8a47d5e](https://github.com/camunda/camunda-8-js-sdk/commit/8a47d5e9970dd7667d242fb696ca30150b725196)), closes [#131](https://github.com/camunda/camunda-8-js-sdk/issues/131) [#131](https://github.com/camunda/camunda-8-js-sdk/issues/131) [#131](https://github.com/camunda/camunda-8-js-sdk/issues/131) [#135](https://github.com/camunda/camunda-8-js-sdk/issues/135) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#125](https://github.com/camunda/camunda-8-js-sdk/issues/125) [#138](https://github.com/camunda/camunda-8-js-sdk/issues/138) [#136](https://github.com/camunda/camunda-8-js-sdk/issues/136) [#136](https://github.com/camunda/camunda-8-js-sdk/issues/136) [#136](https://github.com/camunda/camunda-8-js-sdk/issues/136) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#141](https://github.com/camunda/camunda-8-js-sdk/issues/141) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#141](https://github.com/camunda/camunda-8-js-sdk/issues/141) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#139](https://github.com/camunda/camunda-8-js-sdk/issues/139) [#141](https://github.com/camunda/camunda-8-js-sdk/issues/141)
+
 ## [8.5.1-alpha.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1-alpha.3...v8.5.1-alpha.4) (2024-05-03)
 
 
