@@ -180,43 +180,47 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			})
 
 			grpcClient.on(ConnectionStatusEvent.connectionError, (err: Error) => {
+				debug('grpcClient emitted error event to ZeebeGrpcClient, err: ', err)
+				this.readied = false
+
 				if (this.connected !== false) {
+					this.connected = false
 					this.onConnectionError?.(err)
 					this.emit(ConnectionStatusEvent.connectionError)
 				}
-				this.connected = false
-				this.readied = false
 			})
 			grpcClient.on(ConnectionStatusEvent.ready, () => {
+				debug('grpcClient emitted ready event to ZeebeGrpcClient')
+				this.connected = true
 				if (!this.readied) {
 					this.onReady?.()
 					this.emit(ConnectionStatusEvent.ready)
 				}
-				this.connected = true
 				this.readied = true
 			})
 			this.logger = log
-
-			// Send command to broker to eagerly fail / prove connection.
-			// This is useful for, for example: the Node-Red client, which wants to
-			// display the connection status.
-			const eagerConnection =
-				config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_EAGER_CONNECT
-			if (eagerConnection ?? false) {
-				this.topology()
-					.then((res) => {
-						this.logger.logDirect(chalk.blueBright('Zeebe cluster topology:'))
-						this.logger.logDirect(res.brokers)
-					})
-					.catch((e) => {
-						// Swallow exception to avoid throwing if retries are off
-						if (e.thisWillNeverHappenYo) {
-							this.emit(ConnectionStatusEvent.unknown)
-						}
-					})
-			}
 			return grpcClient
 		})
+		// Send command to broker to eagerly fail / prove connection.
+		// This is useful for, for example: the Node-Red client, which wants to
+		// display the connection status.
+		const eagerConnection =
+			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_EAGER_CONNECT
+		if (eagerConnection ?? false) {
+			this.topology()
+				.then((res) => {
+					this.logger.logDirect(chalk.blueBright('Zeebe cluster topology:'))
+					this.logger.logDirect(res.brokers)
+					// debug('Emitting ready event')
+					// this.emit(ConnectionStatusEvent.ready)
+				})
+				.catch((e) => {
+					// Swallow exception to avoid throwing if retries are off
+					if (e.thisWillNeverHappenYo) {
+						this.emit(ConnectionStatusEvent.unknown)
+					}
+				})
+		}
 	}
 
 	/**
@@ -462,6 +466,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 */
 	public async close(timeout?: number): Promise<null> {
+		debug('Closing Zeebe Client')
 		this.closePromise =
 			this.closePromise ||
 			new Promise((resolve) => {
