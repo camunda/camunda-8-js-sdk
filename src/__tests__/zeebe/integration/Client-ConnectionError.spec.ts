@@ -25,13 +25,13 @@ test('Calls the onConnectionError handler if there is no broker and eagerConnect
 		}, 7000)
 	}))
 
-test('Sets connected:false if there is no broker and no setting of eagerConnection', () =>
+test('Sets connected:undefined if there is no broker and no setting of eagerConnection', () =>
 	new Promise((done) => {
 		const zbc2 = new ZeebeGrpcClient({
 			config: { ZEEBE_ADDRESS: 'localtoast: 267890' },
 		}) // Broker doesn't exist!!!
 		setTimeout(async () => {
-			expect(zbc2.connected).toBe(false)
+			expect(zbc2.connected).toBe(undefined)
 			await zbc2.close()
 			done(null)
 		}, 5000)
