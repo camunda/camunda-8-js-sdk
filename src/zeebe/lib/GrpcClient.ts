@@ -276,7 +276,8 @@ export class GrpcClient extends EventEmitter {
 		})
 		this.listNameMethods = []
 
-		this.client.waitForReady(10000, (error) =>
+		// See https://github.com/camunda/camunda-8-js-sdk/issues/150
+		this.client.waitForReady(new Date(Date.now() + 10000), (error) =>
 			error
 				? this.emit(MiddlewareSignals.Event.Error, error)
 				: this.emit(MiddlewareSignals.Event.Ready)
