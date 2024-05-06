@@ -276,7 +276,7 @@ export class GrpcClient extends EventEmitter {
 		})
 		this.listNameMethods = []
 
-		this.client.waitForReady(new Date(Date.now() + 10000), (error) =>
+		this.client.waitForReady(10000, (error) =>
 			error
 				? this.emit(MiddlewareSignals.Event.Error, error)
 				: this.emit(MiddlewareSignals.Event.Ready)
