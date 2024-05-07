@@ -1,3 +1,15 @@
+## [8.5.2-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1...v8.5.2-alpha.1) (2024-05-07)
+
+
+### Bug Fixes
+
+* **zeebe:** fix waitForReady deadline ([#151](https://github.com/camunda/camunda-8-js-sdk/issues/151)) ([a88ea2e](https://github.com/camunda/camunda-8-js-sdk/commit/a88ea2e48ab268890dae11917ef065ef4a451cec)), closes [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150)
+
+
+### Features
+
+* **repo:** add CAMUNDA_CUSTOM_ROOT_CERT_STRING parameter ([#146](https://github.com/camunda/camunda-8-js-sdk/issues/146)) ([f828a95](https://github.com/camunda/camunda-8-js-sdk/commit/f828a95a992168a77d477ec987cd50a7c3b96112)), closes [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142) [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142)
+
 ## [8.5.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.0...v8.5.1) (2024-05-05)
 
 
