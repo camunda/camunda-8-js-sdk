@@ -1,3 +1,20 @@
+## [8.5.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1...v8.5.2) (2024-05-07)
+
+
+### Bug Fixes
+
+* **zeebe:** waitForReady deadline not miliseconds, but date ([#148](https://github.com/camunda/camunda-8-js-sdk/issues/148)) ([12db206](https://github.com/camunda/camunda-8-js-sdk/commit/12db206b71a85c8a68a838488da1572efa416d67))
+
+
+### Features
+
+* **repo:** add CAMUNDA_CUSTOM_ROOT_CERT_STRING parameter ([7451a66](https://github.com/camunda/camunda-8-js-sdk/commit/7451a669df42930405aa7b155a3f9e00be30ab55)), closes [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#146](https://github.com/camunda/camunda-8-js-sdk/issues/146) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142) [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142) [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142) [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142) [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142) [#151](https://github.com/camunda/camunda-8-js-sdk/issues/151) [#150](https://github.com/camunda/camunda-8-js-sdk/issues/150) [#142](https://github.com/camunda/camunda-8-js-sdk/issues/142)
+
+
+### Reverts
+
+* Revert "fix(zeebe): waitForReady deadline not miliseconds, but date (#148)" (#149) ([f8c0c7d](https://github.com/camunda/camunda-8-js-sdk/commit/f8c0c7d6131b20036f0b400ddca6eb85939100d2)), closes [#148](https://github.com/camunda/camunda-8-js-sdk/issues/148) [#149](https://github.com/camunda/camunda-8-js-sdk/issues/149)
+
 ## [8.5.2-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1...v8.5.2-alpha.1) (2024-05-07)
 
 
