@@ -40,6 +40,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build and Smoke Test
+        run: npm run test:smoketest
+
       - name: Run Unit Tests
         run: |
           npm run test
