@@ -104,9 +104,7 @@ Here is an example of specifying a different cache directory via the constructor
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-	config: {
-		CAMUNDA_TOKEN_CACHE_DIR: '/tmp/cache',
-	},
+	CAMUNDA_TOKEN_CACHE_DIR: '/tmp/cache',
 })
 ```
 
@@ -149,7 +147,6 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-  config: {
     ZEEBE_ADDRESS: 'localhost:26500'
     ZEEBE_CLIENT_ID: 'zeebe'
     ZEEBE_CLIENT_SECRET: 'zecret'
@@ -160,7 +157,6 @@ const c8 = new Camunda8({
     CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api'
     CAMUNDA_TENANT_ID: '' // We can override values in the env by passing an empty string value
     CAMUNDA_SECURE_CONNECTION: false
-  }
 })
 ```
 
