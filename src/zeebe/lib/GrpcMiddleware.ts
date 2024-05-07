@@ -46,6 +46,10 @@ export class GrpcMiddleware {
 	}
 	public getGrpcClient = () => this.grpcClient
 
+	public close = async () => {
+		clearTimeout(this.blockingTimer)
+	}
+
 	private createInterceptedGrpcClient(config: GrpcClientCtor) {
 		const grpcClient = new GrpcClient(config)
 		const logInterceptor = this.log
@@ -55,7 +59,7 @@ export class GrpcMiddleware {
 				clearTimeout(this.blockingTimer)
 			}
 			_close()
-			return null
+			return
 		}
 		grpcClient.on(MiddlewareSignals.Log.Debug, logInterceptor.logDebug)
 		grpcClient.on(MiddlewareSignals.Log.Info, logInterceptor.logInfo)

@@ -10,26 +10,8 @@ jest.setTimeout(25000)
 let bpmnProcessId: string
 let processDefinitionKey: string
 
-let zbc: ZeebeGrpcClient
-
 beforeAll(async () => {
 	suppressZeebeLogging()
-	const zb = new ZeebeGrpcClient()
-	;({ bpmnProcessId, processDefinitionKey } = (
-		await zb.deployResource({
-			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
-		})
-	).deployments[0].process)
-	await cancelProcesses(processDefinitionKey)
-	await zb.close()
-})
-
-beforeEach(() => {
-	zbc = new ZeebeGrpcClient()
-})
-
-afterEach(async () => {
-	await zbc.close()
 })
 
 afterAll(async () => {
@@ -38,6 +20,13 @@ afterAll(async () => {
 })
 
 test('Throws a business error that is caught in the process', async () => {
+	const zbc = new ZeebeGrpcClient()
+	;({ bpmnProcessId, processDefinitionKey } = (
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
+		})
+	).deployments[0].process)
+	await cancelProcesses(processDefinitionKey)
 	zbc.createWorker({
 		taskHandler: (job) =>
 			job.error('BUSINESS_ERROR', 'Well, that did not work'),
@@ -57,9 +46,18 @@ test('Throws a business error that is caught in the process', async () => {
 		variables: {},
 	})
 	expect(result.variables.bpmnErrorCaught).toBe(true)
+	await zbc.close()
 })
 
 test('Can set variables when throwing a BPMN Error', async () => {
+	const zbc = new ZeebeGrpcClient()
+	;({ bpmnProcessId, processDefinitionKey } = (
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
+		})
+	).deployments[0].process)
+	await cancelProcesses(processDefinitionKey)
+	// This worker takes the first job and throws a BPMN error, setting a variable
 	zbc.createWorker({
 		taskHandler: (job) =>
 			job.error({
@@ -68,8 +66,8 @@ test('Can set variables when throwing a BPMN Error', async () => {
 				variables: { something: 'someValue' },
 			}),
 		taskType: 'throw-bpmn-error-task',
-		timeout: Duration.seconds.of(30),
 	})
+	// This worker is on the business error throw path
 	zbc.createWorker({
 		taskType: 'sad-flow',
 		taskHandler: (job) =>
@@ -83,5 +81,8 @@ test('Can set variables when throwing a BPMN Error', async () => {
 		variables: {},
 	})
 	expect(result.variables.bpmnErrorCaught).toBe(true)
-	// expect(result.variables.something).toBe("someValue")
+	// This is not working, the variable is not being set on 8.5
+	// this may be due to incremental implementation of the feature
+	// expect(result.variables.something).toBe('someValue')
+	await zbc.close()
 })

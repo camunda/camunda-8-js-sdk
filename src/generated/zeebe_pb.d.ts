@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 // package: gateway_protocol
 // file: zeebe.proto
 

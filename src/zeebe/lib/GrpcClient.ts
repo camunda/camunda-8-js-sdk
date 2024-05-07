@@ -430,7 +430,7 @@ export class GrpcClient extends EventEmitter {
 		return this.listNameMethods
 	}
 
-	public close(timeout = 5000): Promise<null> {
+	public close(timeout = 5000): Promise<void> {
 		const STATE_SHUTDOWN = 4
 		const isClosed = (state) => state === STATE_SHUTDOWN
 
@@ -453,7 +453,7 @@ export class GrpcClient extends EventEmitter {
 			if (closed || alreadyClosed) {
 				this.channelClosed = true
 				this.emit(MiddlewareSignals.Log.Info, 'Grpc channel closed')
-				return resolve(null) // setTimeout(() => resolve(), 2000)
+				return resolve() // setTimeout(() => resolve(), 2000)
 			}
 
 			this.emit(
@@ -480,7 +480,7 @@ export class GrpcClient extends EventEmitter {
 						this.emit(MiddlewareSignals.Log.Info, `Closed: ${alreadyClosed}`)
 					}
 					if (alreadyClosed) {
-						return resolve(null)
+						return resolve()
 					}
 				})
 
