@@ -9,8 +9,9 @@ export async function GetCustomCertificateBuffer(
 	config: CamundaPlatform8Configuration
 ): Promise<Buffer | undefined> {
 	const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
+	const customRootCert = config.CAMUNDA_CUSTOM_ROOT_CERT_STRING
 
-	if (!customRootCertPath) {
+	if (!customRootCertPath && !customRootCert) {
 		return undefined
 	}
 	const rootCerts: string[] = []
@@ -21,6 +22,8 @@ export async function GetCustomCertificateBuffer(
 		if (cert) {
 			rootCerts.push(cert)
 		}
+	} else if (customRootCert) {
+		rootCerts.push(customRootCert)
 	}
 
 	// (2) use certificates from OS keychain

@@ -111,6 +111,11 @@ const getMainEnv = () =>
 			type: 'string',
 			optional: true,
 		},
+		/** When using self-signed certificates, provide the root certificate as a string */
+		CAMUNDA_CUSTOM_ROOT_CERT_STRING: {
+			type: 'string',
+			optional: true,
+		},
 		/** When using custom or self-signed certificates, provide the path to the certificate chain */
 		CAMUNDA_CUSTOM_CERT_CHAIN_PATH: {
 			type: 'string',

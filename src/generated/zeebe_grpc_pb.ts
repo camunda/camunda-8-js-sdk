@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict'

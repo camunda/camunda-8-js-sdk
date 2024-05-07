@@ -45,16 +45,17 @@ export class ConnectionFactory {
 			grpcConfig.host
 		)
 		const log = new StatefulLogInterceptor({ characteristics, logConfig })
-		const grpcClient = new GrpcMiddleware({
+		const grpcMiddleware = new GrpcMiddleware({
 			characteristics,
 			config: grpcConfig,
 			log,
-		}).getGrpcClient()
+		})
+		const grpcClient = grpcMiddleware.getGrpcClient()
 		const _close = grpcClient.close.bind(grpcClient)
 		grpcClient.close = async () => {
 			log.close()
 			_close()
-			return null
+			return grpcMiddleware.close()
 		}
 
 		return { grpcClient, log }

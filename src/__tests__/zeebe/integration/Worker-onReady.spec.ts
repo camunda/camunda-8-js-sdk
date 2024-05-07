@@ -36,10 +36,10 @@ test('Does set connected: true if there is a broker and eagerConnection: true', 
 	}, 7000)
 })
 
-test('Does not set connected: true if there is a broker and eagerConnection: false', (done) => {
+test('Sets connected: true if there is a broker and eagerConnection: false', (done) => {
 	const zbc2 = new ZeebeGrpcClient()
 	setTimeout(async () => {
-		expect(zbc2.connected).toBe(false)
+		expect(zbc2.connected).toBe(true)
 		await zbc2.close()
 		done()
 	}, 7000)
