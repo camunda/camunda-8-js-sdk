@@ -74,6 +74,8 @@ test('Can set variables when throwing a BPMN Error', async () => {
 			job.complete({
 				bpmnErrorCaught: true,
 			}),
+		// Debug worker operation to diagnose https://github.com/camunda/camunda-8-js-sdk/issues/143
+		loglevel: 'DEBUG',
 	})
 	const result = await zbc.createProcessInstanceWithResult({
 		bpmnProcessId,
