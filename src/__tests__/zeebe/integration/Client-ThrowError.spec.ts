@@ -81,8 +81,7 @@ test('Can set variables when throwing a BPMN Error', async () => {
 		variables: {},
 	})
 	expect(result.variables.bpmnErrorCaught).toBe(true)
-	// This is not working, the variable is not being set on 8.5
-	// this may be due to incremental implementation of the feature
-	// expect(result.variables.something).toBe('someValue')
+	// This requires output mapping on the error in the BPMN diagram
+	expect(result.variables.something).toBe('someValue')
 	await zbc.close()
 })
