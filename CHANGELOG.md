@@ -1,3 +1,10 @@
+## [8.5.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.2...v8.5.3) (2024-05-08)
+
+
+### Bug Fixes
+
+* **repo:** fix example in README ([#154](https://github.com/camunda/camunda-8-js-sdk/issues/154)) ([#155](https://github.com/camunda/camunda-8-js-sdk/issues/155)) ([4fb36d7](https://github.com/camunda/camunda-8-js-sdk/commit/4fb36d726dc4dc91ed018955eb4548a5f3fe4bff)), closes [#153](https://github.com/camunda/camunda-8-js-sdk/issues/153)
+
 ## [8.5.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.1...v8.5.2) (2024-05-07)
 
 
