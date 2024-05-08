@@ -10,6 +10,7 @@ export async function cancelProcesses(processDefinitionKey: string) {
 		.searchProcessInstances({
 			filter: {
 				processDefinitionKey,
+				state: 'ACTIVE',
 			},
 		})
 		.catch((e) => {

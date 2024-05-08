@@ -23,7 +23,19 @@
 		"lint": "eslint 'src/**/*.{ts,tsx}'",
 		"format": "prettier --write 'src/**/*.ts'"
 	},
-	"keywords": [],
+	"keywords": [
+		"zeebe",
+		"zeebe-node",
+		"camunda",
+		"automation",
+		"bpmn",
+		"camunda 8",
+		"operate",
+		"optimize",
+		"tasklist",
+		"web modeler",
+		"modeler"
+	],
 	"private": false,
 	"publishConfig": {
 		"access": "public"

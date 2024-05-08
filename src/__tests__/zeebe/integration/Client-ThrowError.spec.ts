@@ -27,18 +27,21 @@ test('Throws a business error that is caught in the process', async () => {
 		})
 	).deployments[0].process)
 	await cancelProcesses(processDefinitionKey)
+
 	zbc.createWorker({
-		taskHandler: (job) =>
-			job.error('BUSINESS_ERROR', 'Well, that did not work'),
+		taskHandler: (job) => {
+			return job.error('BUSINESS_ERROR', 'Well, that did not work')
+		},
 		taskType: 'throw-bpmn-error-task',
 		timeout: Duration.seconds.of(30),
 	})
 	zbc.createWorker({
 		taskType: 'sad-flow',
-		taskHandler: (job) =>
-			job.complete({
+		taskHandler: (job) => {
+			return job.complete({
 				bpmnErrorCaught: true,
-			}),
+			})
+		},
 	})
 	const result = await zbc.createProcessInstanceWithResult({
 		bpmnProcessId,
@@ -53,7 +56,7 @@ test('Can set variables when throwing a BPMN Error', async () => {
 	const zbc = new ZeebeGrpcClient()
 	;({ bpmnProcessId, processDefinitionKey } = (
 		await zbc.deployResource({
-			processFilename: './src/__tests__/testdata/Client-ThrowError.bpmn',
+			processFilename: './src/__tests__/testdata/Client-ThrowError-2.bpmn',
 		})
 	).deployments[0].process)
 	await cancelProcesses(processDefinitionKey)
@@ -65,17 +68,15 @@ test('Can set variables when throwing a BPMN Error', async () => {
 				errorMessage: "Well, that didn't work",
 				variables: { something: 'someValue' },
 			}),
-		taskType: 'throw-bpmn-error-task',
+		taskType: 'throw-bpmn-error-task-2',
 	})
 	// This worker is on the business error throw path
 	zbc.createWorker({
-		taskType: 'sad-flow',
+		taskType: 'sad-flow-2',
 		taskHandler: (job) =>
 			job.complete({
 				bpmnErrorCaught: true,
 			}),
-		// Debug worker operation to diagnose https://github.com/camunda/camunda-8-js-sdk/issues/143
-		loglevel: 'DEBUG',
 	})
 	const result = await zbc.createProcessInstanceWithResult({
 		bpmnProcessId,
