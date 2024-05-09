@@ -64,10 +64,13 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 		},
 	})
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	;(c as any).rest.then((r) => console.log(r.defaults.options.https))
+	// ;(c as any).rest.then((r) => console.log(r.defaults.options.https))
 
 	console.log('Trying to get process instance with certificate')
-	const res = await c.getProcessInstance('1')
+	const res = await c.getProcessInstance('1').catch((e) => {
+		console.error(e)
+		throw e
+	})
 	console.log(
 		`Got response from self-signed secured server: ${res.bpmnProcessId}`
 	)
