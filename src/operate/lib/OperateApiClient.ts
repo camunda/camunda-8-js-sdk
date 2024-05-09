@@ -1,3 +1,4 @@
+import { debug } from 'debug'
 import got from 'got'
 
 import {
@@ -32,6 +33,8 @@ import {
 	Variable,
 } from './OperateDto'
 import { parseSearchResults } from './parseSearchResults'
+
+const trace = debug('camunda:operate')
 
 const OPERATE_API_VERSION = 'v1'
 
@@ -80,6 +83,8 @@ export class OperateApiClient {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+		trace('options.config', options?.config)
+		trace('config', config)
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = createUserAgentString(config)

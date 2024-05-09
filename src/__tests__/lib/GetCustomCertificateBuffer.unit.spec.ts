@@ -68,7 +68,11 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 		await c1.getProcessInstance('1')
 	} catch (e) {
 		threw = true
-		expect((e as { code: string }).code).toBe('DEPTH_ZERO_SELF_SIGNED_CERT')
+		const correctErrorOnLinux =
+			(e as { code: string }).code === 'DEPTH_ZERO_SELF_SIGNED_CERT'
+		const correctErrorOnWindows =
+			(e as { code: string }).code === 'self-signed certificate'
+		expect(correctErrorOnLinux || correctErrorOnWindows).toBe(true)
 	}
 	expect(threw).toBe(true)
 	server.close()
