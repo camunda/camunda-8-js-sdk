@@ -2,27 +2,34 @@ import { X509Certificate } from 'crypto'
 import fs from 'fs'
 import path from 'path'
 
+import { debug } from 'debug'
+
 import { CamundaPlatform8Configuration } from './Configuration'
 import { getSystemCertificates } from './GetSystemCertificates'
 
+const trace = debug('camunda:certificate')
+
 export async function GetCustomCertificateBuffer(
 	config: CamundaPlatform8Configuration
-): Promise<Buffer | undefined> {
+): Promise<string | undefined> {
 	const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
 	const customRootCert = config.CAMUNDA_CUSTOM_ROOT_CERT_STRING
 
 	if (!customRootCertPath && !customRootCert) {
+		trace(`No custom root certificate configured`)
 		return undefined
 	}
 	const rootCerts: string[] = []
 
 	if (customRootCertPath) {
+		trace(`Using custom root certificate from file: ${customRootCertPath}`)
 		const cert = readRootCertificate(customRootCertPath)
 
 		if (cert) {
 			rootCerts.push(cert)
 		}
 	} else if (customRootCert) {
+		trace(`Using custom root certificate from string`)
 		rootCerts.push(customRootCert)
 	}
 
@@ -31,10 +38,12 @@ export async function GetCustomCertificateBuffer(
 	rootCerts.push(...systemCertificates)
 
 	if (!rootCerts.length) {
+		trace(`No custom root certificates found`)
 		return undefined
 	}
-
-	return Buffer.from(rootCerts.join('\n'))
+	const output = rootCerts.join('\n')
+	trace(`Custom root certificates:\n${output}`)
+	return output
 }
 
 function readRootCertificate(certPath) {

@@ -53,8 +53,11 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 			CAMUNDA_OPERATE_BASE_URL: 'https://localhost:3012',
 		},
 	})
-
+	console.log('Trying to get process instance with certificate')
 	const res = await c.getProcessInstance('1')
+	console.log(
+		`Got response from self-signed secured server: ${res.bpmnProcessId}`
+	)
 	expect(res.bpmnProcessId).toBe('test')
 	const c1 = new OperateApiClient({
 		config: {
@@ -65,10 +68,15 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 
 	let threw = false
 	try {
+		console.log('Trying to get process instance without certificate')
 		await c1.getProcessInstance('1')
 	} catch (e) {
 		threw = true
-		expect((e as { code: string }).code).toBe('DEPTH_ZERO_SELF_SIGNED_CERT')
+		const correctErrorOnLinux =
+			(e as { code: string }).code === 'DEPTH_ZERO_SELF_SIGNED_CERT'
+		const correctErrorOnWindows =
+			(e as { code: string }).code === 'self-signed certificate'
+		expect(correctErrorOnLinux || correctErrorOnWindows).toBe(true)
 	}
 	expect(threw).toBe(true)
 	server.close()
