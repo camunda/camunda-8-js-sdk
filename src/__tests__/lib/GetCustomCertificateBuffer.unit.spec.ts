@@ -14,6 +14,7 @@ import {
 import { OperateApiClient } from '../../operate'
 import { ZeebeGrpcClient } from '../../zeebe'
 
+let DEBUG
 let server
 afterEach(() => {
 	;(server && server.close && server.close()) ||
@@ -26,7 +27,16 @@ afterEach(() => {
 			}))
 })
 
+beforeAll(() => {
+	DEBUG = process.env.DEBUG
+})
+
+afterAll(() => {
+	process.env.DEBUG = DEBUG
+})
+
 test('Can use a custom root certificate to connect to a REST API', async () => {
+	process.env.DEBUG = 'camunda:certificate'
 	const app = express()
 
 	app.get('/v1/process-instances/:processInstanceKey', (_, res) => {
@@ -41,7 +51,7 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 	server = https.createServer(options, app)
 
 	server.listen(3012, () => {
-		// console.log('Server listening on port 3012')
+		// console.log('Server listening on port 3012')DB
 		// server.close()
 		// done()
 	})
@@ -53,6 +63,9 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 			CAMUNDA_OPERATE_BASE_URL: 'https://localhost:3012',
 		},
 	})
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	;(c as any).rest.then((r) => console.log(r.defaults.options.https))
+
 	console.log('Trying to get process instance with certificate')
 	const res = await c.getProcessInstance('1')
 	console.log(
@@ -83,6 +96,8 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 })
 
 test('gRPC server with self-signed certificate', (done) => {
+	process.env.DEBUG = ''
+
 	// Load the protobuf definition
 	const packageDefinition = loadSync(
 		path.join(__dirname, '..', '..', 'proto', 'zeebe.proto'),
