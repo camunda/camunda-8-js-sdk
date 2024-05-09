@@ -159,7 +159,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			const customSSL = {
 				certChain: certChainPath ? readFileSync(certChainPath) : undefined,
 				privateKey: privateKeyPath ? readFileSync(privateKeyPath) : undefined,
-				rootCerts,
+				rootCerts: rootCerts ? Buffer.from(rootCerts) : undefined,
 			}
 
 			this.customSSL = customSSL

@@ -11,8 +11,7 @@ const trace = debug('camunda:certificate')
 
 export async function GetCustomCertificateBuffer(
 	config: CamundaPlatform8Configuration
-): Promise<Buffer | undefined> {
-	trace(config)
+): Promise<string | undefined> {
 	const customRootCertPath = config.CAMUNDA_CUSTOM_ROOT_CERT_PATH
 	const customRootCert = config.CAMUNDA_CUSTOM_ROOT_CERT_STRING
 
@@ -42,8 +41,9 @@ export async function GetCustomCertificateBuffer(
 		trace(`No custom root certificates found`)
 		return undefined
 	}
-
-	return Buffer.from(rootCerts.join('\n'))
+	const output = rootCerts.join('\n')
+	trace(`Custom root certificates:\n${output}`)
+	return output
 }
 
 function readRootCertificate(certPath) {
