@@ -42,7 +42,8 @@ Put the following credentials in the environment:
 ```bash
 # Self-Managed
 export ZEEBE_SECURE_CONNECTION=false
-export ZEEBE_ADDRESS='localhost:26500'
+export ZEEBE_GRPC_ADDRESS='localhost:26500'
+export ZEEBE_REST_ADDRESS='localhost:8080/v1/'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
 export ZEEBE_AUTHORIZATION_SERVER_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
@@ -74,7 +75,8 @@ To run the multi-tenancy tests, use the following environment variables:
 ```bash
 # Self-Managed
 export ZEEBE_SECURE_CONNECTION=false
-export ZEEBE_ADDRESS='localhost:26500'
+export ZEEBE_GRPC_ADDRESS='localhost:26500'
+export ZEEBE_REST_ADDRESS='localhost:8080/v1/'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
 export ZEEBE_AUTHORIZATION_SERVER_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'

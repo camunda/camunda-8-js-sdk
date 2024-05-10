@@ -20,6 +20,17 @@ const getMainEnv = () =>
 			optional: true,
 			default: 1000,
 		},
+		/** The address for the Zeebe GRPC. */
+		ZEEBE_GRPC_ADDRESS: {
+			type: 'string',
+			optional: true,
+		},
+		/** The address for the Zeebe REST API. Defaults to localhost:8080 */
+		ZEEBE_REST_ADDRESS: {
+			type: 'string',
+			optional: true,
+			default: 'http://localhost:8080',
+		},
 		/** The address for the Zeebe Gateway. Defaults to localhost:26500 */
 		ZEEBE_ADDRESS: {
 			type: 'string',
@@ -364,6 +375,8 @@ export const CamundaEnvironmentVariableDictionary =
 		'CAMUNDA_TOKEN_SCOPE',
 		'CAMUNDA_ZEEBE_OAUTH_AUDIENCE',
 		'GRPC_KEEPALIVE_TIME_MS',
+		'ZEEBE_REST_ADDRESS',
+		'ZEEBE_GRPC_ADDRESS',
 		'ZEEBE_ADDRESS',
 		'ZEEBE_CLIENT_ID',
 		'ZEEBE_CLIENT_SECRET',

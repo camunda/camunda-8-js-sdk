@@ -39,7 +39,8 @@ The environment variables that you need to set are the following (replace with y
 
 ```bash
 # Self-Managed
-export ZEEBE_ADDRESS='localhost:26500'
+export ZEEBE_GRPC_ADDRESS='localhost:26500'
+export ZEEBE_REST_ADDRESS='localhost:8080/v1/'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
 export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
@@ -64,7 +65,8 @@ export CAMUNDA_SECURE_CONNECTION=false
 ### Camunda SaaS configuration
 
 ```bash
-export ZEEBE_ADDRESS='5c34c0a7-...-125615f7a9b9.syd-1.zeebe.camunda.io:443'
+export ZEEBE_GRPC_ADDRESS='5c34c0a7-...-125615f7a9b9.syd-1.zeebe.camunda.io:443'
+export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO...'
 export ZEEBE_CLIENT_SECRET='iJJu-SHg...'
 export CAMUNDA_TASKLIST_BASE_URL='https://syd-1.tasklist.camunda.io/5c34c0a7-...-125615f7a9b9'

@@ -77,7 +77,7 @@ With this environment variable set, the SDK will inject a `NullAuthProvider` tha
 To get a token for use with the application APIs, provide the following configuration fields at a minimum, either via the `Camunda8` constructor or in environment variables:
 
 ```bash
-ZEEBE_ADDRESS
+ZEEBE_GRPC_ADDRESS
 ZEEBE_CLIENT_ID
 ZEEBE_CLIENT_SECRET
 CAMUNDA_OAUTH_URL
@@ -118,7 +118,8 @@ This is the complete environment configuration needed to run against the Dockeri
 
 ```bash
 # Self-Managed
-export ZEEBE_ADDRESS='localhost:26500'
+export ZEEBE_GRPC_ADDRESS='localhost:26500'
+export ZEEBE_REST_ADDRESS='localhost:8080/v1/'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
 export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
@@ -147,15 +148,16 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-    ZEEBE_ADDRESS: 'localhost:26500'
-    ZEEBE_CLIENT_ID: 'zeebe'
-    ZEEBE_CLIENT_SECRET: 'zecret'
-    CAMUNDA_OAUTH_URL: 'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
-    CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082'
-    CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081'
-    CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083'
-    CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api'
-    CAMUNDA_TENANT_ID: '' // We can override values in the env by passing an empty string value
+    ZEEBE_GRPC_ADDRESS: 'localhost:26500',
+    ZEEBE_REST_ADDRESS: 'localhost:8080/v1/',
+    ZEEBE_CLIENT_ID: 'zeebe',
+    ZEEBE_CLIENT_SECRET: 'zecret',
+    CAMUNDA_OAUTH_URL: 'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
+    CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
+    CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
+    CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
+    CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
+    CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
     CAMUNDA_SECURE_CONNECTION: false
 })
 ```
@@ -165,7 +167,8 @@ const c8 = new Camunda8({
 Here is a complete configuration example for connection to Camunda SaaS:
 
 ```bash
-export ZEEBE_ADDRESS='5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
+export ZEEBE_GRPC_ADDRESS='5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
+export ZEEBE_REST_ADDRESS='https://yd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO9TmBnP3zx4Xd8Ho6apgeiZTjn6'
 export ZEEBE_CLIENT_SECRET='iJJu-SHgUtuJTTAMnMLdcb8WGF8s2mHfXhXutEwe8eSbLXn98vUpoxtuLk5uG0en'
 # export CAMUNDA_CREDENTIALS_SCOPES='Zeebe,Tasklist,Operate,Optimize' # What APIs these client creds are authorised for
