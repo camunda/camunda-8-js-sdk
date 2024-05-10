@@ -44,8 +44,10 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 	})
 
 	const options = {
-		key: fs.readFileSync(path.join(__dirname, 'localhost.key')),
-		cert: fs.readFileSync(path.join(__dirname, 'localhost.crt')),
+		// key: fs.readFileSync(path.join(__dirname, 'localhost.key')),
+		// cert: fs.readFileSync(path.join(__dirname, 'localhost.crt')),
+		key: fs.readFileSync(path.join(__dirname, 'ryans-key.pem')),
+		cert: fs.readFileSync(path.join(__dirname, 'ryans-cert.pem')),
 	}
 
 	server = https.createServer(options, app)
@@ -58,7 +60,7 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 
 	const c = new OperateApiClient({
 		config: {
-			CAMUNDA_CUSTOM_ROOT_CERT_PATH: path.join(__dirname, 'localhost.crt'),
+			CAMUNDA_CUSTOM_ROOT_CERT_PATH: path.join(__dirname, 'ryans-cert.pem'), //'localhost.crt'),
 			CAMUNDA_OAUTH_DISABLED: true,
 			CAMUNDA_OPERATE_BASE_URL: 'https://localhost:3012',
 		},
