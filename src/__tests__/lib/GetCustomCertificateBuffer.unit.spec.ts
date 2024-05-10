@@ -46,6 +46,9 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 	const options = {
 		// key: fs.readFileSync(path.join(__dirname, 'localhost.key')),
 		// cert: fs.readFileSync(path.join(__dirname, 'localhost.crt')),
+		// The above certificate works on Linux and Mac, and intermittently fails on Windows
+		// Using this cert/key pair to see if it can address intermittent failures on Windows
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/145
 		key: fs.readFileSync(path.join(__dirname, 'ryans-key.pem')),
 		cert: fs.readFileSync(path.join(__dirname, 'ryans-cert.pem')),
 	}
