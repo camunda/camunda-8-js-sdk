@@ -30,6 +30,8 @@ export class OAuthProvider implements IOAuthProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
 	private cacheDir: string
 	private authServerUrl: string
+	private mTLSPrivateKey: string | undefined
+	private mTLSCertChain: string | undefined
 	private clientId: string | undefined
 	private clientSecret: string | undefined
 	private useFileCache: boolean
@@ -61,6 +63,12 @@ export class OAuthProvider implements IOAuthProvider {
 
 		this.clientId = config.ZEEBE_CLIENT_ID
 		this.clientSecret = config.ZEEBE_CLIENT_SECRET
+		this.mTLSPrivateKey = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
+			? fs.readFileSync(config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH).toString()
+			: undefined
+		this.mTLSCertChain = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
+			? fs.readFileSync(config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH).toString()
+			: undefined
 
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
@@ -284,6 +292,8 @@ export class OAuthProvider implements IOAuthProvider {
 				'user-agent': this.userAgentString,
 				accept: '*/*',
 			},
+			key: this.mTLSPrivateKey,
+			cert: this.mTLSCertChain,
 		}
 
 		trace(`Making token request to the token endpoint: `)
