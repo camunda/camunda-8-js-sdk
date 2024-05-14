@@ -32,9 +32,12 @@ test('Can activate jobs using StreamActivatedJobs RPC', async () => {
 			worker: 'test-worker',
 			taskHandler: async (job) => {
 				expect(job.variables.foo).toBe('bar')
-				const res = job.complete()
+				const res = job.complete({})
 				zbc.close().then(() => resolve(res))
 				return res
+			},
+			inputVariableDto: class {
+				foo!: string
 			},
 			timeout: 3000,
 		})
