@@ -1,3 +1,10 @@
+## [8.5.4-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.3...v8.5.4-alpha.1) (2024-05-15)
+
+
+### Features
+
+* **oauth:** add conditional loading of client key and cert for getting a token ([#161](https://github.com/camunda/camunda-8-js-sdk/issues/161)) ([f05aa8a](https://github.com/camunda/camunda-8-js-sdk/commit/f05aa8aa1670cbceb40a54b3bf4a8e40228ad2c3))
+
 ## [8.5.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.2...v8.5.3) (2024-05-08)
 
 
