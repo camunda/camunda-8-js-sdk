@@ -159,6 +159,7 @@ export class GrpcClient extends EventEmitter {
 	}: GrpcClientCtor) {
 		super()
 		debug('Constructing gRPC client...')
+		debug('oAuth', oAuth)
 		this.config = config
 		this.userAgentString = createUserAgentString(config)
 		this.host = host
@@ -299,6 +300,7 @@ export class GrpcClient extends EventEmitter {
 					let stream: ClientReadableStream<unknown>
 					const timeNormalisedRequest =
 						replaceTimeValuesWithMillisecondNumber(data)
+					debug('TimeNormalisedRequest', timeNormalisedRequest)
 					try {
 						const metadata = await this.getAuthToken()
 

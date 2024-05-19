@@ -1213,9 +1213,25 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			: this.tenantId
 				? [this.tenantId]
 				: []
-		const fetchVariable = req.fetchVariables || []
+
+		const inputVariableDto = req.inputVariableDto
+			? req.inputVariableDto
+			: (LosslessDto as {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					new (obj: any): WorkerInputVariables
+				})
+		const customHeadersDto = req.customHeadersDto
+			? req.customHeadersDto
+			: (LosslessDto as {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					new (obj: any): CustomHeaderShape
+				})
+		const fetchVariable = req.fetchVariables
+		delete req.fetchVariables
 		this.streamWorker.streamJobs({
 			...req,
+			inputVariableDto,
+			customHeadersDto,
 			tenantIds,
 			fetchVariable,
 		})

@@ -1,6 +1,5 @@
 import chalk from 'chalk'
 
-import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
@@ -43,6 +42,12 @@ export class ZBStreamWorker implements IZBJobWorker {
 
 	streamJobs<WorkerInputVariables, CustomHeaderShape, WorkerOutputVariables>(
 		req: StreamActivatedJobsRequest & {
+			inputVariableDto: {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (...args: any[]): Readonly<WorkerInputVariables>
+			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			customHeadersDto: { new (...args: any[]): Readonly<CustomHeaderShape> }
 			taskHandler: ZBWorkerTaskHandler<
 				WorkerInputVariables,
 				CustomHeaderShape,
@@ -50,16 +55,19 @@ export class ZBStreamWorker implements IZBJobWorker {
 			>
 		}
 	) {
-		const { taskHandler, ...streamReq } = req
-		const inputVariableDto = LosslessDto as {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			new (obj: any): WorkerInputVariables
-		}
-		const customHeadersDto = LosslessDto as {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			new (obj: any): CustomHeaderShape
-		}
+		const { taskHandler, inputVariableDto, customHeadersDto, ...streamReq } =
+			req
 		this.grpcClient.streamActivatedJobsStream(streamReq).then((stream) => {
+			stream.on('error', (e) => {
+				console.error(e)
+			})
+			// stream.on('pause', () => console.log('paused'))
+			// stream.on('metadata', (m) => console.log(m))
+			// stream.on('readable', () => console.log('readable'))
+			// stream.on('status', () => console.log('status'))
+			// stream.on('close', () => console.log('close'))
+			// stream.on('end', () => console.log('end'))
+			// stream.on('resume', (n) => console.log('resume', n))
 			stream.on('data', (res: ActivatedJob) => {
 				// Make handlers
 				const job: Job<WorkerInputVariables, CustomHeaderShape> =
