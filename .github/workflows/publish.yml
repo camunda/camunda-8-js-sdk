@@ -54,7 +54,7 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker-compose -f docker/docker-compose.yml -f docker/docker-compose-modeler.yaml up -d
+          docker-compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml up -d
 
       - name: Run Integration Tests
         run: |
@@ -72,7 +72,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker/docker-compose.yml -f docker/docker-compose-modeler.yaml down
+        run: docker-compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml down
 
   local_multitenancy_integration:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker-compose -f docker/docker-compose-multitenancy.yml -f docker/docker-compose-modeler.yaml up -d
+          docker-compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d
 
       - name: Run Integration Tests
         run: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker/docker-compose-multitenancy.yml -f docker/docker-compose-modeler.yaml down
+        run: docker-compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down
 
   saas_integration:
     runs-on: ubuntu-latest
