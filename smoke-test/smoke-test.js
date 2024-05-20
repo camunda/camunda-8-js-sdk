@@ -43,4 +43,8 @@ const operate = camunda.getOperateApiClient()
 
 // console.log(operate)
 
+const zeebeRest = camunda.getZeebeRestClient()
+
+// console.log(zeebeRest)
+
 console.log('Smoke test passed!')

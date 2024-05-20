@@ -37,6 +37,7 @@ import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8()
 const zeebe = c8.getZeebeGrpcApiClient()
+const zeebeRest = c8.getZeebeRestClient()
 const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
@@ -119,7 +120,7 @@ This is the complete environment configuration needed to run against the Dockeri
 ```bash
 # Self-Managed
 export ZEEBE_GRPC_ADDRESS='localhost:26500'
-export ZEEBE_REST_ADDRESS='localhost:8080/v1/'
+export ZEEBE_REST_ADDRESS='http://localhost:8080'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
 export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
@@ -245,3 +246,9 @@ class MyLargerDto extends LosslessDto {
 The Zeebe worker receives custom headers as `job.customHeaders`. The `ZBClient.createWorker()` method accepts a `customHeadersDto` to control the behavior of custom header parsing of number values and provide design-time type information.
 
 This follows the same strategy as the job variables, as previously described.
+
+## Zeebe User Tasks
+
+From 8.5, you can use Zeebe user tasks. See the documentation on [how to migrate to Zeebe user tasks](https://docs.camunda.io/docs/apis-tools/tasklist-api-rest/migrate-to-zeebe-user-tasks/).
+
+The SDK supports the Zeebe REST API. Be sure to set the `ZEEBE_REST_ADDRESS` either via environment variable or configuration field.

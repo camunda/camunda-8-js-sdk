@@ -35,7 +35,7 @@ interface TaskChangeSet {
 	candidateGroups: string[]
 }
 
-export class ZeebeRESTClient {
+export class ZeebeRestClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
 	private rest: Promise<typeof got>
