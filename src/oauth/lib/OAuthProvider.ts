@@ -292,8 +292,10 @@ export class OAuthProvider implements IOAuthProvider {
 				'user-agent': this.userAgentString,
 				accept: '*/*',
 			},
-			key: this.mTLSPrivateKey,
-			cert: this.mTLSCertChain,
+			https: {
+				key: this.mTLSPrivateKey,
+				cert: this.mTLSCertChain,
+			},
 		}
 
 		trace(`Making token request to the token endpoint: `)

@@ -9,6 +9,7 @@ import * as PublishedContract from './lib/interfaces-published-contract'
 
 export * from './zb/ZBWorker'
 export * from './zb/ZeebeGrpcClient'
+export * from './zb/ZeebeRESTClient'
 /** @namespace */
 export const Types = {
 	...Interfaces,
