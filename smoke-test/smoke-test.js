@@ -6,7 +6,8 @@ console.log('Running smoke test...')
 
 const camunda = new Camunda8({
 	CAMUNDA_OAUTH_DISABLED: true,
-	ZEEBE_ADDRESS: 'localhost:26500',
+	ZEEBE_ADDRESS: 'localhost:26500', // to be deprecated
+	ZEEBE_GRPC_ADDRESS: 'localhost:26500',
 	ZEEBE_CLIENT_ID: 'zeebeClientId',
 	ZEEBE_CLIENT_SECRET: 'zeebeClientSecret',
 	CAMUNDA_CONSOLE_BASE_URL: 'http://localhost:8080',
