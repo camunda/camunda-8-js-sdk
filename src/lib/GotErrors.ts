@@ -4,9 +4,19 @@ export class HTTPError extends Got.HTTPError {
 	statusCode: number
 	constructor(response: Got.Response<unknown>) {
 		super(response)
-		const details = JSON.parse((response?.body as string) || '{}')
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		this.statusCode = details.status
+		try {
+			const details = JSON.parse((response?.body as string) || '{}')
+			this.statusCode = details.status
+		} catch (e) {
+			this.statusCode = 0
+			// Sometimes APIs return errors data in plain text (not JSON)
+			// and sometimes we get back an HTML error page (for example: 502 Bad Gateway)
+			// We want to extract and surface plain text errors
+			// and ignore the HTML strings
+			if (!((response.body as string) ?? '<').startsWith('<')) {
+				this.message += ` - ${response.body}`
+			}
+		}
 	}
 }
 

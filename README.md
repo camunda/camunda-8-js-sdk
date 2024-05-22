@@ -37,6 +37,7 @@ import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8()
 const zeebe = c8.getZeebeGrpcApiClient()
+const zeebeRest = c8.getZeebeRestClient()
 const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
@@ -119,7 +120,7 @@ This is the complete environment configuration needed to run against the Dockeri
 ```bash
 # Self-Managed
 export ZEEBE_GRPC_ADDRESS='localhost:26500'
-export ZEEBE_REST_ADDRESS='localhost:8080/v1/'
+export ZEEBE_REST_ADDRESS='http://localhost:8080'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
 export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
@@ -148,17 +149,18 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-    ZEEBE_GRPC_ADDRESS: 'localhost:26500',
-    ZEEBE_REST_ADDRESS: 'localhost:8080/v1/',
-    ZEEBE_CLIENT_ID: 'zeebe',
-    ZEEBE_CLIENT_SECRET: 'zecret',
-    CAMUNDA_OAUTH_URL: 'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
-    CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
-    CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
-    CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
-    CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
-    CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
-    CAMUNDA_SECURE_CONNECTION: false
+	ZEEBE_GRPC_ADDRESS: 'localhost:26500',
+	ZEEBE_REST_ADDRESS: 'http://localhost:8080',
+	ZEEBE_CLIENT_ID: 'zeebe',
+	ZEEBE_CLIENT_SECRET: 'zecret',
+	CAMUNDA_OAUTH_URL:
+		'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
+	CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
+	CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
+	CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
+	CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
+	CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
+	CAMUNDA_SECURE_CONNECTION: false,
 })
 ```
 
@@ -168,7 +170,7 @@ Here is a complete configuration example for connection to Camunda SaaS:
 
 ```bash
 export ZEEBE_GRPC_ADDRESS='5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
-export ZEEBE_REST_ADDRESS='https://yd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
+export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO9TmBnP3zx4Xd8Ho6apgeiZTjn6'
 export ZEEBE_CLIENT_SECRET='iJJu-SHgUtuJTTAMnMLdcb8WGF8s2mHfXhXutEwe8eSbLXn98vUpoxtuLk5uG0en'
 # export CAMUNDA_CREDENTIALS_SCOPES='Zeebe,Tasklist,Operate,Optimize' # What APIs these client creds are authorised for
@@ -244,3 +246,9 @@ class MyLargerDto extends LosslessDto {
 The Zeebe worker receives custom headers as `job.customHeaders`. The `ZBClient.createWorker()` method accepts a `customHeadersDto` to control the behavior of custom header parsing of number values and provide design-time type information.
 
 This follows the same strategy as the job variables, as previously described.
+
+## Zeebe User Tasks
+
+From 8.5, you can use Zeebe user tasks. See the documentation on [how to migrate to Zeebe user tasks](https://docs.camunda.io/docs/apis-tools/tasklist-api-rest/migrate-to-zeebe-user-tasks/).
+
+The SDK supports the Zeebe REST API. Be sure to set the `ZEEBE_REST_ADDRESS` either via environment variable or configuration field.
