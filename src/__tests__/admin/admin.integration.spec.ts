@@ -18,13 +18,14 @@ test('createClient', async () => {
 	const c = new AdminApiClient()
 	const clusters = await c.getClusters()
 	const clusterUuid = clusters[0].uuid
-	c.getClient(clusterUuid, 'testors')
+	const clientName = 'test_generated-delete-me'
+	c.getClient(clusterUuid, clientName)
 		.then((res) => c.deleteClient(clusterUuid, res.ZEEBE_CLIENT_ID))
 		.catch((e) => e)
 
 	const res = await c.createClient({
 		clusterUuid,
-		clientName: 'testors',
+		clientName,
 		permissions: ['Zeebe'],
 	})
 	const client = await c.getClient(clusterUuid, res.clientId)
