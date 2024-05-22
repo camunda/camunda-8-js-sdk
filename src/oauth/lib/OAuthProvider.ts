@@ -355,7 +355,8 @@ export class OAuthProvider implements IOAuthProvider {
 		const key = this.getCacheKey(audience)
 		try {
 			const decoded = jwtDecode(token.access_token)
-
+			trace(`Caching token: ${JSON.stringify(decoded, null, 2)}`)
+			trace(`Caching token for ${audience} in memory. Expiry: ${decoded.exp}`)
 			token.expiry = decoded.exp ?? 0
 			this.tokenCache[key] = token
 		} catch (e) {
@@ -373,9 +374,11 @@ export class OAuthProvider implements IOAuthProvider {
 		const tokenFileName = this.getCachedTokenFileName(clientId, audience)
 		const tokenCachedInFile = fs.existsSync(tokenFileName)
 		if (!tokenCachedInFile) {
+			trace(`No file cached token for ${audience} found`)
 			return null
 		}
 		try {
+			trace(`Reading file cached token for ${audience}`)
 			token = JSON.parse(
 				fs.readFileSync(this.getCachedTokenFileName(clientId, audience), 'utf8')
 			)
@@ -424,10 +427,19 @@ export class OAuthProvider implements IOAuthProvider {
 	private isExpired(token: Token) {
 		const d = new Date()
 		const currentTime = d.setSeconds(d.getSeconds())
+
+		// token.expiry is seconds since Unix Epoch
+		// The Date constructor expects milliseconds since Unix Epoch
+		const tokenExpiryMs = token.expiry * 1000
+
+		trace(`Checking token expiry for ${token.audience}`)
+		trace(`  Current time: ${currentTime}`)
+		trace(`  Token expiry: ${tokenExpiryMs}`)
+
 		// If the token has 10 seconds (by default) or less left, renew it.
 		// The Identity server token cache is cleared 30 seconds before the token expires, allowing us to renew it
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/125
-		const tokenIsExpired = currentTime >= token.expiry - this.refreshWindow
+		const tokenIsExpired = currentTime >= tokenExpiryMs - this.refreshWindow
 		return tokenIsExpired
 	}
 
