@@ -86,19 +86,22 @@ export class ZeebeRestClient {
 	private async getHeaders() {
 		const token = await this.oAuthProvider.getToken('OPERATE')
 
-		return {
+		const headers = {
 			'content-type': 'application/json',
 			authorization: `Bearer ${token}`,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}
+		trace('headers', headers)
+		return headers
 	}
 
 	/* Get the topology of the Zeebe cluster. */
-	public getTopology(): Promise<TopologyResponse> {
+	public async getTopology(): Promise<TopologyResponse> {
+		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
-				.get('topology')
+				.get('topology', { headers })
 				.json()
 				.catch((error) => {
 					trace('error', error)
