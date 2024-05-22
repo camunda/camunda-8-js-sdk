@@ -84,7 +84,7 @@ export class ZeebeRestClient {
 	}
 
 	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('OPERATE')
+		const token = await this.oAuthProvider.getToken('ZEEBE')
 
 		const headers = {
 			'content-type': 'application/json',
