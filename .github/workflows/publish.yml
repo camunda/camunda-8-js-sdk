@@ -142,6 +142,8 @@ jobs:
           npm run test:integration
         env:
           ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
+          ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
+          ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
           ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
           ZEEBE_AUTHORIZATION_SERVER_URL: ${{ secrets.ZEEBE_AUTHORIZATION_SERVER_URL }}
           ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
@@ -179,6 +181,8 @@ jobs:
         env:
           ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
           ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
+          ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
+          ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
           ZEEBE_AUTHORIZATION_SERVER_URL: ${{ secrets.ZEEBE_AUTHORIZATION_SERVER_URL }}
           ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
           ZEEBE_TOKEN_AUDIENCE: ${{ secrets.ZEEBE_TOKEN_AUDIENCE }}
