@@ -1,3 +1,16 @@
+## [8.5.4-alpha.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.4-alpha.1...v8.5.4-alpha.2) (2024-05-22)
+
+
+### Bug Fixes
+
+* **issue137:** support ZEEBE_REST_ADDRESS and ZEEBE_GRPC_ADDRESS environment variables ([#159](https://github.com/camunda/camunda-8-js-sdk/issues/159)) ([41fdca0](https://github.com/camunda/camunda-8-js-sdk/commit/41fdca0fcc9f7221c915dc82317e6609bb5106ee))
+* **oauth:** correctly expire cached token ([#164](https://github.com/camunda/camunda-8-js-sdk/issues/164)) ([c86e550](https://github.com/camunda/camunda-8-js-sdk/commit/c86e550747f23205dac9fe199a38217b3a583f76)), closes [#163](https://github.com/camunda/camunda-8-js-sdk/issues/163)
+
+
+### Features
+
+* **zeebe:** support Zeebe User Task REST API ([022607b](https://github.com/camunda/camunda-8-js-sdk/commit/022607bf77077fdacffdce7f26ce580360d54bf3)), closes [#34](https://github.com/camunda/camunda-8-js-sdk/issues/34)
+
 ## [8.5.4-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.3...v8.5.4-alpha.1) (2024-05-15)
 
 
