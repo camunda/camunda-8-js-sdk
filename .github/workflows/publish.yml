@@ -16,7 +16,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18" # Specify a Node.js version
+          node-version: "20" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm i
@@ -39,7 +39,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18" # Specify a Node.js version
+          node-version: "20" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -85,7 +85,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18" # Specify a Node.js version
+          node-version: "20" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -132,7 +132,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18" # Specify a Node.js version
+          node-version: "20" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -161,7 +161,7 @@ jobs:
 
   saas_integration_windows:
     needs: saas_integration
-    runs-on: windows-latest
+    runs-on: windows-2016
     environment: integration
     steps:
       - name: Check out the repo
@@ -170,7 +170,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18" # Specify a Node.js version
+          node-version: "20" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -216,7 +216,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
           cache: "npm"
       - name: Install
         run: npm i
