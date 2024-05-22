@@ -161,7 +161,7 @@ jobs:
 
   saas_integration_windows:
     needs: saas_integration
-    runs-on: windows-2016
+    runs-on: windows-2019
     environment: integration
     steps:
       - name: Check out the repo
