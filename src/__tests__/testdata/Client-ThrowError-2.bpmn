@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1cjs11a" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.22.0">
-  <bpmn:process id="throw-bpmn-error" name="Throw BPMN Error" isExecutable="true">
+  <bpmn:process id="throw-bpmn-error-2" name="Throw BPMN Error" isExecutable="true">
     <bpmn:subProcess id="SubProcess_0kmfk49" name="Interrupted Subprocess">
       <bpmn:incoming>SequenceFlow_0gyuvi7</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1o5o2aq</bpmn:outgoing>
@@ -12,9 +12,9 @@
       </bpmn:endEvent>
       <bpmn:sequenceFlow id="SequenceFlow_199k4yb" sourceRef="StartEvent_0mp9dxc" targetRef="Task_0bki2a1" />
       <bpmn:sequenceFlow id="SequenceFlow_07t3zxy" sourceRef="Task_0bki2a1" targetRef="EndEvent_1hj6q7z" />
-      <bpmn:serviceTask id="Task_0bki2a1" name="Throw BPMN Error">
+      <bpmn:serviceTask id="Task_0bki2a1" name="Throw BPMN Error 2">
         <bpmn:extensionElements>
-          <zeebe:taskDefinition type="throw-bpmn-error-task" />
+          <zeebe:taskDefinition type="throw-bpmn-error-task-2" />
         </bpmn:extensionElements>
         <bpmn:incoming>SequenceFlow_199k4yb</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_07t3zxy</bpmn:outgoing>
@@ -38,9 +38,9 @@
       <bpmn:incoming>SequenceFlow_1o4en09</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="SequenceFlow_1o4en09" sourceRef="Task_1h8n9x5" targetRef="EndEvent_0cwovsu" />
-    <bpmn:serviceTask id="Task_1h8n9x5" name="Sad Flow">
+    <bpmn:serviceTask id="Task_1h8n9x5" name="Sad Flow 2">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="sad-flow" />
+        <zeebe:taskDefinition type="sad-flow-2" />
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_0uyuklc</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1o4en09</bpmn:outgoing>
@@ -52,7 +52,7 @@
   </bpmn:process>
   <bpmn:error id="Error_1urwctp" name="ERROR" errorCode="BUSINESS_ERROR" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="throw-bpmn-error">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="throw-bpmn-error-2">
       <bpmndi:BPMNShape id="SubProcess_0kmfk49_di" bpmnElement="SubProcess_0kmfk49" isExpanded="true">
         <dc:Bounds x="270" y="110" width="470" height="200" />
       </bpmndi:BPMNShape>

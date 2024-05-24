@@ -24,8 +24,12 @@ export const gotBeforeErrorHook = (error) => {
 	const { request } = error
 	if (error instanceof GotHTTPError) {
 		error = new HTTPError(error.response)
-		const details = JSON.parse((error.response?.body as string) || '{}')
-		error.statusCode = details.status
+		try {
+			const details = JSON.parse((error.response?.body as string) || '{}')
+			error.statusCode = details.status
+		} catch (e) {
+			error.statusCode = 0
+		}
 	}
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	;(error as any).source = (error as any).options.context.stack.split('\n')

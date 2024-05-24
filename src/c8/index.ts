@@ -9,7 +9,7 @@ import { OAuthProvider } from '../oauth'
 import { OperateApiClient } from '../operate'
 import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
-import { ZeebeGrpcClient } from '../zeebe'
+import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
@@ -22,6 +22,7 @@ import { ZeebeGrpcClient } from '../zeebe'
  *
  * const c8 = new Camunda8()
  * const zeebe = c8.getZeebeGrpcApiClient()
+ * const zeebeRest = c8.getZeebeRestClient()
  * const operate = c8.getOperateApiClient()
  * const optimize = c8.getOptimizeApiClient()
  * const tasklist = c8.getTasklistApiClient()
@@ -36,6 +37,7 @@ export class Camunda8 {
 	private optimizeApiClient?: OptimizeApiClient
 	private tasklistApiClient?: TasklistApiClient
 	private zeebeGrpcApiClient?: ZeebeGrpcClient
+	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider?: OAuthProvider
 
@@ -106,5 +108,15 @@ export class Camunda8 {
 			})
 		}
 		return this.zeebeGrpcApiClient
+	}
+
+	public getZeebeRestClient(): ZeebeRestClient {
+		if (!this.zeebeRestClient) {
+			this.zeebeRestClient = new ZeebeRestClient({
+				config: this.configuration,
+				oAuthProvider: this.oAuthProvider,
+			})
+		}
+		return this.zeebeRestClient
 	}
 }

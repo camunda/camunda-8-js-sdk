@@ -131,8 +131,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.tenantId = this.options.tenantId
 
 		this.gatewayAddress = RequireConfiguration(
-			config.ZEEBE_ADDRESS,
-			'ZEEBE_ADDRESS'
+			config.ZEEBE_ADDRESS || config.ZEEBE_GRPC_ADDRESS,
+			'ZEEBE_GRPC_ADDRESS'
 		)
 
 		debug('Gateway address: ', this.gatewayAddress)
@@ -159,7 +159,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			const customSSL = {
 				certChain: certChainPath ? readFileSync(certChainPath) : undefined,
 				privateKey: privateKeyPath ? readFileSync(privateKeyPath) : undefined,
-				rootCerts,
+				rootCerts: rootCerts ? Buffer.from(rootCerts) : undefined,
 			}
 
 			this.customSSL = customSSL
