@@ -173,6 +173,21 @@ const getMainEnv = () =>
 			type: 'string',
 			optional: true,
 		},
+		/** Username for Basic Auth */
+		CAMUNDA_BASIC_AUTH_USERNAME: {
+			type: 'string',
+			optional: true,
+		},
+		/** Username for Basic Auth */
+		CAMUNDA_BASIC_AUTH_PASSWORD: {
+			type: 'string',
+			optional: true,
+		},
+		CAMUNDA_AUTH_STRATEGY: {
+			type: 'string',
+			choices: ['BASIC', 'OAUTH', 'NONE'],
+			default: 'OAUTH',
+		},
 	})
 
 const getZeebeEnv = () =>
@@ -377,6 +392,8 @@ export const CamundaEnvironmentVariableDictionary =
 		'GRPC_KEEPALIVE_TIME_MS',
 		'ZEEBE_REST_ADDRESS',
 		'ZEEBE_GRPC_ADDRESS',
+		'CAMUNDA_BASIC_AUTH_USERNAME',
+		'CAMUNDA_BASIC_AUTH_PASSWORD',
 		'ZEEBE_ADDRESS',
 		'ZEEBE_CLIENT_ID',
 		'ZEEBE_CLIENT_SECRET',

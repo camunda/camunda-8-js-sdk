@@ -61,34 +61,42 @@ Some number values - for example: "_total returned results_ " - may be specified
 
 For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and if a number value is detected at a runtime that cannot be accurately stored as `number`, to throw an exception.
 
-## OAuth
+## Authorization
 
-Calls to APIs are authorized using a token that is obtained via a client id/secret pair exchange, and then passes as an authorization header on API calls. The SDK handles this for you.
+Calls to APIs can be authorized using basic auth or via OAuth - a token that is obtained via a client id/secret pair exchange.
 
-If your Camunda 8 platform is secured using token exchange, provide the client id and secret to the SDK.
+### Disable Auth
 
-### Disable OAuth
+To disable OAuth, set the environment variable `CAMUNDA_OAUTH_STRATEGY=NONE`. You can use this when running against a minimal Zeebe broker in a development environment, for example.
 
-To disable OAuth, set the environment variable `CAMUNDA_OAUTH_DISABLED`. You can use this when running against a minimal Zeebe broker in a development environment, for example.
+### Basic Auth
 
-With this environment variable set, the SDK will inject a `NullAuthProvider` that does nothing.
-
-### Configuring OAuth
-
-To get a token for use with the application APIs, provide the following configuration fields at a minimum, either via the `Camunda8` constructor or in environment variables:
+To use basic auth, set the following values either via the environment or explicitly in code via the constructor:
 
 ```bash
-ZEEBE_GRPC_ADDRESS
-ZEEBE_CLIENT_ID
-ZEEBE_CLIENT_SECRET
-CAMUNDA_OAUTH_URL
+CAMUNDA_AUTH_STRATEGY=BASIC
+CAMUNDA_BASIC_AUTH_USERNAME=....
+CAMUNDA_BASIC_AUTH_PASSWORD=...
+```
+
+### OAuth
+
+If your platform is secured with OAuth token exchange (Camunda SaaS or Self-Managed with Identity), provide the following configuration fields at a minimum, either via the `Camunda8` constructor or in environment variables:
+
+```bash
+CAMUNDA_AUTH_STRATEGY=OAUTH
+ZEEBE_GRPC_ADDRESS=...
+ZEEBE_CLIENT_ID=...
+ZEEBE_CLIENT_SECRET=...
+CAMUNDA_OAUTH_URL=...
 ```
 
 To get a token for the Camunda SaaS Administration API or the Camunda SaaS Modeler API, set the following:
 
 ```bash
-CAMUNDA_CONSOLE_CLIENT_ID
-CAMUNDA_CONSOLE_CLIENT_SECRET
+CAMUNDA_AUTH_STRATEGY=OAUTH
+CAMUNDA_CONSOLE_CLIENT_ID=...
+CAMUNDA_CONSOLE_CLIENT_SECRET=...
 ```
 
 ### Token caching
@@ -123,6 +131,7 @@ export ZEEBE_GRPC_ADDRESS='localhost:26500'
 export ZEEBE_REST_ADDRESS='http://localhost:8080'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
+export CAMUNDA_OAUTH_STRATEGY='OAUTH'
 export CAMUNDA_OAUTH_URL='http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token'
 export CAMUNDA_TASKLIST_BASE_URL='http://localhost:8082'
 export CAMUNDA_OPERATE_BASE_URL='http://localhost:8081'
@@ -153,6 +162,7 @@ const c8 = new Camunda8({
 	ZEEBE_REST_ADDRESS: 'http://localhost:8080',
 	ZEEBE_CLIENT_ID: 'zeebe',
 	ZEEBE_CLIENT_SECRET: 'zecret',
+	CAMUNDA_OAUTH_STRATEGY: 'OAUTH',
 	CAMUNDA_OAUTH_URL:
 		'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
 	CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
@@ -178,6 +188,7 @@ export CAMUNDA_TASKLIST_BASE_URL='https://syd-1.tasklist.camunda.io/5c34c0a7-7f2
 export CAMUNDA_OPTIMIZE_BASE_URL='https://syd-1.optimize.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OPERATE_BASE_URL='https://syd-1.operate.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OAUTH_URL='https://login.cloud.camunda.io/oauth/token'
+export CAMUNDA_AUTH_STRATEGY='OAUTH'
 
 # This is on by default, but we include it in case it got turned off for local tests
 export CAMUNDA_SECURE_CONNECTION=true
