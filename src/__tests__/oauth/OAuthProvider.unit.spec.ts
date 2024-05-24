@@ -4,9 +4,11 @@ import http from 'http'
 import os from 'os'
 import path from 'path'
 
+import auth from 'basic-auth'
+import got from 'got'
 import jwt from 'jsonwebtoken'
 
-import { EnvironmentSetup } from '../../lib'
+import { EnvironmentSetup, constructOAuthProvider } from '../../lib'
 import { OAuthProvider } from '../../oauth'
 
 jest.setTimeout(10000)
@@ -571,6 +573,46 @@ describe('OAuthProvider', () => {
 			})
 			.then(() => {
 				expect(thrown).toBe(true)
+			})
+	})
+
+	it('Can use Basic Auth as a strategy', async () => {
+		const server = http.createServer((req, res) => {
+			const credentials = auth(req)
+
+			if (
+				!credentials ||
+				credentials.name !== 'admin' ||
+				credentials.pass !== 'supersecret'
+			) {
+				res.statusCode = 401
+				res.setHeader('WWW-Authenticate', 'Basic realm="example"')
+				res.end('Access denied')
+			} else {
+				res.end('Access granted')
+			}
+		})
+
+		server.listen(3033, () => {
+			console.log('Server running on port 3033')
+		})
+
+		const oAuthProvider = constructOAuthProvider({
+			CAMUNDA_AUTH_STRATEGY: 'BASIC',
+			CAMUNDA_BASIC_AUTH_PASSWORD: 'supersecret',
+			CAMUNDA_BASIC_AUTH_USERNAME: 'admin',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any)
+		const token = await oAuthProvider.getToken('ZEEBE')
+		await got
+			.get('http://localhost:3033', {
+				headers: {
+					Authorization: 'Basic ' + token,
+				},
+			})
+			.then((res) => {
+				server.close()
+				expect(res).toBeTruthy()
 			})
 	})
 })
