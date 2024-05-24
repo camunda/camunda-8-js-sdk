@@ -134,8 +134,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.tenantId = this.options.tenantId
 
 		this.gatewayAddress = RequireConfiguration(
-			config.ZEEBE_ADDRESS,
-			'ZEEBE_ADDRESS'
+			config.ZEEBE_ADDRESS || config.ZEEBE_GRPC_ADDRESS,
+			'ZEEBE_GRPC_ADDRESS'
 		)
 
 		debug('Gateway address: ', this.gatewayAddress)

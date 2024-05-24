@@ -64,14 +64,13 @@ export class ModelerApiClient {
 
 	private async getHeaders() {
 		const token = await this.oAuthProvider.getToken('MODELER')
-		const auth = `Bearer ${token}`
+		const authorization = `Bearer ${token}`
 		const headers = {
 			'content-type': 'application/json',
-			authorization: auth,
+			authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}
-		debug(auth)
 		return headers
 	}
 
