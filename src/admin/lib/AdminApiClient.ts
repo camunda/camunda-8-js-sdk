@@ -176,7 +176,6 @@ export class AdminApiClient {
 			body: JSON.stringify(createClusterRequest),
 			headers,
 		}
-		debug(req)
 		const rest = await this.rest
 		return rest.post('', req).json()
 	}
