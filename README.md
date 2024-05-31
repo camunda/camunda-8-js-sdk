@@ -269,3 +269,15 @@ This follows the same strategy as the job variables, as previously described.
 From 8.5, you can use Zeebe user tasks. See the documentation on [how to migrate to Zeebe user tasks](https://docs.camunda.io/docs/apis-tools/tasklist-api-rest/migrate-to-zeebe-user-tasks/).
 
 The SDK supports the Zeebe REST API. Be sure to set the `ZEEBE_REST_ADDRESS` either via environment variable or configuration field.
+
+## Job Streaming
+
+The Zeebe gRPC API supports streaming available jobs, rather than polling for them.
+
+The ZeebeGrpcClient method `StreamJobs` allows you to use this API.
+
+Please note that only jobs that become available _after_ the stream is opened are pushed to the client. For jobs that were already activatable _before_ the method is called, you need to use a polling worker.
+
+In this release, this is not handled for you. You must both poll and stream jobs to make sure that you get jobs that were available before your application started as well as jobs that become available after your application starts.
+
+In a subsequent release, the ZeebeWorker will transparently handle this for you.
