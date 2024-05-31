@@ -216,6 +216,12 @@ The SDK uses the [`debug`](https://github.com/debug-js/debug) library. To enable
 | `camunda:worker`       | Zeebe Worker         |
 | `camunda:zeebeclient`  | Zeebe Client         |
 
+Here is an example of turning on debugging for the OAuth and Operate components:
+
+```bash
+DEBUG=camunda:oauth,camunda:operate node app.js
+```
+
 ## Typing of Zeebe worker variables
 
 The variable payload in a Zeebe worker task handler is available as an object `job.variables`. By default, this is of type `any`.

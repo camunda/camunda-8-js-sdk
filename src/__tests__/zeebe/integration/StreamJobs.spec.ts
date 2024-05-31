@@ -27,10 +27,6 @@ test('Can activate jobs using StreamActivatedJobs RPC', async () => {
 			})
 		).deployments[0].process)
 		await cancelProcesses(processDefinitionKey)
-		await zbc.createProcessInstance({
-			bpmnProcessId,
-			variables: { foo: 'bar' },
-		})
 		zbc.streamJobs({
 			type: 'stream-job',
 			worker: 'test-worker',
@@ -45,6 +41,10 @@ test('Can activate jobs using StreamActivatedJobs RPC', async () => {
 			},
 			fetchVariables: [],
 			timeout: 30000,
+		})
+		await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: { foo: 'bar' },
 		})
 	})
 })
