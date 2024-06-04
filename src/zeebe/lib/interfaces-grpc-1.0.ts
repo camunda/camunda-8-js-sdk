@@ -465,6 +465,12 @@ export interface UpdateJobRetriesRequest {
 	retries: number
 }
 
+export interface UpdateJobTimeoutRequest {
+	readonly jobKey: string
+	/** the duration of the new timeout in ms, starting from the current moment */
+	timeout: number
+}
+
 export interface FailJobRequest {
 	readonly jobKey: string
 	retries: number

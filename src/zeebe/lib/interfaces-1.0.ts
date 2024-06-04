@@ -32,6 +32,7 @@ import {
 	ThrowErrorRequest,
 	TopologyResponse,
 	UpdateJobRetriesRequest,
+	UpdateJobTimeoutRequest,
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
@@ -402,6 +403,9 @@ export interface ZBGrpc extends GrpcClient {
 	topologySync(): Promise<TopologyResponse>
 	updateJobRetriesSync(
 		updateJobRetriesRequest: UpdateJobRetriesRequest
+	): Promise<void>
+	updateJobTimeoutSync(
+		updateJobTimeoutRequest: UpdateJobTimeoutRequest
 	): Promise<void>
 	deleteResourceSync: (
 		deleteResourceRequest: DeleteResourceRequest
