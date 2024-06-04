@@ -1215,6 +1215,25 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		)
 	}
 
+	/**
+  Updates the deadline of a job using the timeout (in ms) provided. This can be used
+  for extending or shortening the job deadline.
+
+  Errors:
+    NOT_FOUND:
+      - no job exists with the given key
+
+    INVALID_STATE:
+      - no deadline exists for the given job key
+ 	*/
+	public updateJobTimeout(
+		updateJobTimeoutRequest: Grpc.UpdateJobTimeoutRequest
+	): Promise<void> {
+		return this.executeOperation('updateJobTimeout', async () =>
+			(await this.grpc).updateJobTimeoutSync(updateJobTimeoutRequest)
+		)
+	}
+
 	private constructGrpcClient({
 		grpcConfig,
 		logConfig,
