@@ -1,3 +1,4 @@
+import { ClientReadableStream } from '@grpc/grpc-js'
 import chalk from 'chalk'
 
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
@@ -22,6 +23,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private grpcClient: ZBGrpc
 	private logger: StatefulLogInterceptor
 	private zbClient: ZeebeGrpcClient
+	private streams: ClientReadableStream<unknown>[] = []
 	constructor({
 		grpcClient,
 		log,
@@ -57,37 +59,52 @@ export class ZBStreamWorker implements IZBJobWorker {
 	) {
 		const { taskHandler, inputVariableDto, customHeadersDto, ...streamReq } =
 			req
-		this.grpcClient.streamActivatedJobsStream(streamReq).then((stream) => {
-			stream.on('error', (e) => {
-				console.error(e)
-			})
-			// stream.on('pause', () => console.log('paused'))
-			// stream.on('metadata', (m) => console.log(m))
-			// stream.on('readable', () => console.log('readable'))
-			// stream.on('status', () => console.log('status'))
-			// stream.on('close', () => console.log('close'))
-			// stream.on('end', () => console.log('end'))
-			// stream.on('resume', (n) => console.log('resume', n))
-			stream.on('data', (res: ActivatedJob) => {
-				// Make handlers
-				const job: Job<WorkerInputVariables, CustomHeaderShape> =
-					parseVariablesAndCustomHeadersToJSON<
-						WorkerInputVariables,
-						CustomHeaderShape
-					>(res, inputVariableDto, customHeadersDto)
-				taskHandler(
-					{
-						...job,
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						...this.makeCompleteHandlers(job as any, req.type),
+		return this.grpcClient
+			.streamActivatedJobsStream(streamReq)
+			.then((stream) => {
+				stream.on('error', (e) => {
+					console.error(e)
+				})
+				// stream.on('pause', () => console.log('paused'))
+				// stream.on('metadata', (m) => console.log(m))
+				// stream.on('readable', () => console.log('readable'))
+				// stream.on('status', () => console.log('status'))
+				// stream.on('close', () => console.log('close'))
+				// stream.on('end', () => console.log('end'))
+				// stream.on('resume', (n) => console.log('resume', n))
+				stream.on('data', (res: ActivatedJob) => {
+					// Make handlers
+					const job: Job<WorkerInputVariables, CustomHeaderShape> =
+						parseVariablesAndCustomHeadersToJSON<
+							WorkerInputVariables,
+							CustomHeaderShape
+						>(res, inputVariableDto, customHeadersDto)
+					taskHandler(
+						{
+							...job,
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							...this.makeCompleteHandlers(job as any, req.type),
+						},
+						this
+					)
+				})
+				this.streams.push(stream)
+				return {
+					close: () => {
+						stream.removeAllListeners()
+						stream.cancel()
+						stream.destroy()
 					},
-					this
-				)
+				}
 			})
-		})
 	}
 
 	close() {
+		this.streams.forEach((s) => {
+			s.removeAllListeners()
+			s.cancel()
+			s.destroy()
+		})
 		return this.grpcClient.close()
 	}
 
