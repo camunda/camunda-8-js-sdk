@@ -37,6 +37,7 @@ test('Can activate jobs using StreamActivatedJobs RPC', async () => {
 				expect(job.variables.foo).toBe('bar')
 				const res = job.complete({})
 				if (counter === 3) {
+					zbc.close()
 					resolve(null)
 				}
 				return res
