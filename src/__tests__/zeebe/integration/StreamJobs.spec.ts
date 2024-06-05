@@ -47,17 +47,20 @@ test('Can activate jobs using StreamActivatedJobs RPC', async () => {
 			fetchVariables: [],
 			timeout: 30000,
 		})
-		zbc.createProcessInstance({
-			bpmnProcessId,
-			variables: { foo: 'bar' },
-		})
-		zbc.createProcessInstance({
-			bpmnProcessId,
-			variables: { foo: 'bar' },
-		})
-		zbc.createProcessInstance({
-			bpmnProcessId,
-			variables: { foo: 'bar' },
+		// Wait two seconds to ensure the stream is active
+		new Promise((resolve) => setTimeout(resolve, 2000)).then(() => {
+			zbc.createProcessInstance({
+				bpmnProcessId,
+				variables: { foo: 'bar' },
+			})
+			zbc.createProcessInstance({
+				bpmnProcessId,
+				variables: { foo: 'bar' },
+			})
+			zbc.createProcessInstance({
+				bpmnProcessId,
+				variables: { foo: 'bar' },
+			})
 		})
 	})
 })
