@@ -53,9 +53,13 @@ export const cleanUp = async () => {
 			for (const key of instancesKeys) {
 				try {
 					await zeebe.cancelProcessInstance(key)
+					console.log(`Cancelled process instance ${key}`)
 				} catch (e) {
-					console.log('Error cancelling process instance', key)
+					console.log('Failed to cancel process instance', key)
 					console.log((e as Error).message)
+					console.log(
+						`Don't worry about it - Operate is eventually consistent.`
+					)
 				}
 			}
 		}
