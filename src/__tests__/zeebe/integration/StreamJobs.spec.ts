@@ -18,22 +18,27 @@ afterAll(async () => {
 })
 
 test('Can activate jobs using StreamActivatedJobs RPC', async () => {
-	// eslint-disable-next-line no-async-promise-executor
-	await new Promise(async (resolve) => {
-		const zbc = new ZeebeGrpcClient()
-		;({ bpmnProcessId, processDefinitionKey } = (
-			await zbc.deployResource({
-				processFilename: './src/__tests__/testdata/StreamJobs.bpmn',
-			})
-		).deployments[0].process)
-		await cancelProcesses(processDefinitionKey)
+	const zbc = new ZeebeGrpcClient()
+	;({ bpmnProcessId, processDefinitionKey } = (
+		await zbc.deployResource({
+			processFilename: './src/__tests__/testdata/StreamJobs.bpmn',
+		})
+	).deployments[0].process)
+	await cancelProcesses(processDefinitionKey)
+
+	await new Promise((resolve) => {
+		let counter = 0
 		zbc.streamJobs({
 			type: 'stream-job',
 			worker: 'test-worker',
-			taskHandler: async (job) => {
+			tenantIds: ['<default>'],
+			taskHandler: (job) => {
+				counter++
 				expect(job.variables.foo).toBe('bar')
 				const res = job.complete({})
-				zbc.close().then(() => resolve(res))
+				if (counter === 3) {
+					resolve(null)
+				}
 				return res
 			},
 			inputVariableDto: class {
@@ -42,7 +47,15 @@ test('Can activate jobs using StreamActivatedJobs RPC', async () => {
 			fetchVariables: [],
 			timeout: 30000,
 		})
-		await zbc.createProcessInstance({
+		zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: { foo: 'bar' },
+		})
+		zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: { foo: 'bar' },
+		})
+		zbc.createProcessInstance({
 			bpmnProcessId,
 			variables: { foo: 'bar' },
 		})
