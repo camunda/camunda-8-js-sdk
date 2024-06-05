@@ -32,7 +32,9 @@ import { ZBSimpleLogger } from '../lib/SimpleLogger'
 import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
 import { ZBJsonLogger } from '../lib/ZBJsonLogger'
+import { ZBStreamWorker } from '../lib/ZBStreamWorker'
 import * as ZB from '../lib/interfaces-1.0'
+import { ZBWorkerTaskHandler } from '../lib/interfaces-1.0'
 import * as Grpc from '../lib/interfaces-grpc-1.0'
 import {
 	Loglevel,
@@ -91,6 +93,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private customSSL?: CustomSSL
 	private tenantId?: string
 	private config: CamundaPlatform8Configuration
+	private streamWorker?: ZBStreamWorker
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -472,8 +475,14 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			new Promise((resolve) => {
 				// Prevent the creation of more workers
 				this.closing = true
+
 				Promise.all(this.workers.map((w) => w.close(timeout)))
 					.then(async () => (await this.grpc).close(timeout))
+					.then(async () => {
+						if (this.streamWorker) {
+							await this.streamWorker.close()
+						}
+					})
 					.then(async () => {
 						this.emit(ConnectionStatusEvent.close)
 						;(await this.grpc).removeAllListeners()
@@ -1108,6 +1117,128 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
+	 * @description Create a worker that uses the StreamActivatedJobs RPC to activate jobs.
+	 * @example
+	 * ```
+	 * const zbc = new ZB.ZeebeGrpcClient()
+	 *
+	 * const zbWorker = zbc.streamJobs({
+	 *   type: 'demo-service',
+	 *   worker: 'my-worker-uuid',
+	 *   taskHandler: myTaskHandler,
+	 * 	 timeout: 30000 // 30 seconds
+	 * })
+	 *
+	 * // A job handler must return one of job.complete, job.fail, job.error, or job.forward
+	 * // Note: unhandled exceptions in the job handler cause the library to call job.fail
+	 * async function myTaskHandler(job) {
+	 *   zbWorker.log('Task variables', job.variables)
+	 *
+	 *   // Task worker business logic goes here
+	 *   const updateToBrokerVariables = {
+	 *     updatedProperty: 'newValue',
+	 *   }
+	 *
+	 *   const res = await callExternalSystem(job.variables)
+	 *
+	 *   if (res.code === 'SUCCESS') {
+	 *     return job.complete({
+	 *        ...updateToBrokerVariables,
+	 *        ...res.values
+	 *     })
+	 *   }
+	 *   if (res.code === 'BUSINESS_ERROR') {
+	 *     return job.error({
+	 *       code: res.errorCode,
+	 *       message: res.message
+	 *     })
+	 *   }
+	 *   if (res.code === 'ERROR') {
+	 *     return job.fail({
+	 *        errorMessage: res.message,
+	 *        retryBackOff: 2000
+	 *     })
+	 *   }
+	 * }
+	 * ```
+	 */
+	public streamJobs<
+		WorkerInputVariables = ZB.IInputVariables,
+		CustomHeaderShape = ZB.ICustomHeaders,
+		WorkerOutputVariables = ZB.IOutputVariables,
+	>(
+		req: Pick<
+			Grpc.StreamActivatedJobsRequest,
+			'type' | 'worker' | 'timeout'
+		> & {
+			inputVariableDto?: {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				new (...args: any[]): Readonly<WorkerInputVariables>
+			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
+			tenantIds?: string[]
+			fetchVariables?: string[]
+			taskHandler: ZBWorkerTaskHandler<
+				WorkerInputVariables,
+				CustomHeaderShape,
+				WorkerOutputVariables
+			>
+		}
+	) {
+		if (!this.streamWorker) {
+			// Give worker its own gRPC connection
+			const { grpcClient, log } = this.constructGrpcClient({
+				grpcConfig: {
+					namespace: 'ZBWorker',
+					tasktype: 'streamJobsAPI',
+				},
+				logConfig: {
+					_tag: 'ZBWORKER',
+					colorise: true,
+					loglevel: this.options.loglevel,
+					namespace: ['ZBStreamWorker', this.options.logNamespace]
+						.join(' ')
+						.trim(),
+				},
+			})
+			this.streamWorker = new ZBStreamWorker({
+				grpcClient,
+				log,
+				zbClient: this,
+			})
+		}
+		const tenantIds = req.tenantIds
+			? req.tenantIds
+			: this.tenantId
+				? [this.tenantId]
+				: []
+
+		const inputVariableDto = req.inputVariableDto
+			? req.inputVariableDto
+			: (LosslessDto as {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					new (obj: any): WorkerInputVariables
+				})
+		const customHeadersDto = req.customHeadersDto
+			? req.customHeadersDto
+			: (LosslessDto as {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					new (obj: any): CustomHeaderShape
+				})
+		const fetchVariable = req.fetchVariables
+		delete req.fetchVariables
+		return this.streamWorker.streamJobs({
+			...req,
+			inputVariableDto,
+			customHeadersDto,
+			tenantIds,
+			fetchVariable,
+		})
+	}
+
+	/**
+	 *
 	 * @description Fail a job by throwing a business error (i.e. non-technical) that occurs while processing a job.
 	 * The error is handled in the workflow by an error catch event.
 	 * If there is no error catch event with the specified `errorCode` then an incident will be raised instead.
@@ -1212,6 +1343,25 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	): Promise<void> {
 		return this.executeOperation('updateJobRetries', async () =>
 			(await this.grpc).updateJobRetriesSync(updateJobRetriesRequest)
+		)
+	}
+
+	/**
+  Updates the deadline of a job using the timeout (in ms) provided. This can be used
+  for extending or shortening the job deadline.
+
+  Errors:
+    NOT_FOUND:
+      - no job exists with the given key
+
+    INVALID_STATE:
+      - no deadline exists for the given job key
+ 	*/
+	public updateJobTimeout(
+		updateJobTimeoutRequest: Grpc.UpdateJobTimeoutRequest
+	): Promise<void> {
+		return this.executeOperation('updateJobTimeout', async () =>
+			(await this.grpc).updateJobTimeoutSync(updateJobTimeoutRequest)
 		)
 	}
 

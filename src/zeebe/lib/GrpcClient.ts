@@ -272,6 +272,26 @@ export class GrpcClient extends EventEmitter {
 			 */
 			'grpc.http2.max_pings_without_data':
 				this.config.zeebeGrpcSettings.GRPC_HTTP2_MAX_PINGS_WITHOUT_DATA,
+			/**
+			 * Default compression algorithm for the channel, applies to sending messages.
+			 *
+			 * Possible values for this option are:
+			 * - `0` - No compression
+			 * - `1` - Compress with DEFLATE algorithm
+			 * - `2` - Compress with GZIP algorithm
+			 * - `3` - Stream compression with GZIP algorithm
+			 */
+			'grpc.default_compression_algorithm': 2,
+			/**
+			 * Default compression level for the channel, applies to receiving messages.
+			 *
+			 * Possible values for this option are:
+			 * - `0` - None
+			 * - `1` - Low level
+			 * - `2` - Medium level
+			 * - `3` - High level
+			 */
+			'grpc.default_compression_level': 2,
 			interceptors: [this.interceptor],
 		})
 		this.listNameMethods = []
@@ -299,6 +319,7 @@ export class GrpcClient extends EventEmitter {
 					let stream: ClientReadableStream<unknown>
 					const timeNormalisedRequest =
 						replaceTimeValuesWithMillisecondNumber(data)
+					debug('TimeNormalisedRequest', timeNormalisedRequest)
 					try {
 						const metadata = await this.getAuthToken()
 

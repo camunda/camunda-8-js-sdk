@@ -15,12 +15,12 @@ export interface StreamActivatedJobsRequest {
 	 * a job returned after this call will not be activated by another call until the
 	 * timeout (in ms) has been reached
 	 */
-	timeout: number
+	timeout: MaybeTimeDuration
 	/**
 	 * a list of variables to fetch as the job variables; if empty, all visible variables at
 	 * the time of activation for the scope of the job will be returned
 	 */
-	fetchVariable: string[]
+	fetchVariable?: string[]
 	/**
 	 * a list of identifiers of tenants for which to stream jobs
 	 */
@@ -463,6 +463,12 @@ export interface PublishStartMessageRequest<Variables = IProcessVariables> {
 export interface UpdateJobRetriesRequest {
 	readonly jobKey: string
 	retries: number
+}
+
+export interface UpdateJobTimeoutRequest {
+	readonly jobKey: string
+	/** the duration of the new timeout in ms, starting from the current moment */
+	timeout: number
 }
 
 export interface FailJobRequest {

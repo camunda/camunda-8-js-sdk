@@ -2,8 +2,6 @@ import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
 import { MaybeTimeDuration } from 'typed-duration'
 
-import { ZBWorker } from '../zb/ZBWorker'
-
 import { GrpcClient } from './GrpcClient'
 import {
 	ActivateJobsRequest,
@@ -29,9 +27,11 @@ import {
 	PublishMessageResponse,
 	ResolveIncidentRequest,
 	SetVariablesRequestOnTheWire,
+	StreamActivatedJobsRequest,
 	ThrowErrorRequest,
 	TopologyResponse,
 	UpdateJobRetriesRequest,
+	UpdateJobTimeoutRequest,
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
@@ -196,6 +196,12 @@ export interface ZeebeJob<
 > extends Job<WorkerInputVariables, CustomHeaderShape>,
 		JobCompletionInterface<WorkerOutputVariables> {}
 
+export interface IZBJobWorker {
+	log: (msg) => void
+	debug: (msg) => void
+	error: (msg) => void
+}
+
 export type ZBWorkerTaskHandler<
 	WorkerInputVariables = IInputVariables,
 	CustomHeaderShape = ICustomHeaders,
@@ -204,11 +210,7 @@ export type ZBWorkerTaskHandler<
 	job: Readonly<
 		ZeebeJob<WorkerInputVariables, CustomHeaderShape, WorkerOutputVariables>
 	>,
-	worker: ZBWorker<
-		WorkerInputVariables,
-		CustomHeaderShape,
-		WorkerOutputVariables
-	>
+	worker: IZBJobWorker
 ) => MustReturnJobActionAcknowledgement
 
 export interface ZBLoggerOptions {
@@ -403,6 +405,9 @@ export interface ZBGrpc extends GrpcClient {
 	updateJobRetriesSync(
 		updateJobRetriesRequest: UpdateJobRetriesRequest
 	): Promise<void>
+	updateJobTimeoutSync(
+		updateJobTimeoutRequest: UpdateJobTimeoutRequest
+	): Promise<void>
 	deleteResourceSync: (
 		deleteResourceRequest: DeleteResourceRequest
 	) => Promise<Record<string, never>>
@@ -429,6 +434,9 @@ export interface ZBGrpc extends GrpcClient {
 		request: ModifyProcessInstanceRequest
 	): Promise<ModifyProcessInstanceResponse>
 	setVariablesSync(request: SetVariablesRequestOnTheWire): Promise<void>
+	streamActivatedJobsStream: (
+		req: StreamActivatedJobsRequest
+	) => Promise<ClientReadableStream<unknown>>
 	resolveIncidentSync(
 		resolveIncidentRequest: ResolveIncidentRequest
 	): Promise<void>
