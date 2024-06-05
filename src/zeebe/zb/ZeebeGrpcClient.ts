@@ -1228,7 +1228,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				})
 		const fetchVariable = req.fetchVariables
 		delete req.fetchVariables
-		this.streamWorker.streamJobs({
+		return this.streamWorker.streamJobs({
 			...req,
 			inputVariableDto,
 			customHeadersDto,
