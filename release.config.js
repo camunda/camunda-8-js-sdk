@@ -2,7 +2,7 @@
 module.exports = {
 	branches: [
 		'main',
-		{ name: 'stable/8.5', range: '8.5.x' },
+		{ name: 'stable/8.5', range: '8.5.x', channel: 'stable-8-5' },
 		{
 			name: 'alpha',
 			prerelease: true,
