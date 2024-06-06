@@ -2,6 +2,7 @@
 module.exports = {
 	branches: [
 		'main',
+		'stable/8.5',
 		{
 			name: 'alpha',
 			prerelease: true,
