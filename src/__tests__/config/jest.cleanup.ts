@@ -35,7 +35,6 @@ export const cleanUp = async () => {
 	const processIds = (bpmn as any[]).map(
 		(b) => b?.['bpmn:definitions']?.['bpmn:process']?.['@_id']
 	)
-	const operate = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient({
 		config: {
 			zeebeGrpcSettings: { ZEEBE_CLIENT_LOG_LEVEL: 'NONE' },
@@ -43,23 +42,36 @@ export const cleanUp = async () => {
 	})
 	for (const id of processIds) {
 		if (id) {
-			const res = await operate.searchProcessInstances({
-				filter: { bpmnProcessId: id, state: 'ACTIVE' },
-			})
-			const instancesKeys = res.items.map((instance) => instance.key)
-			if (instancesKeys.length > 0) {
-				console.log(`Cancelling ${instancesKeys.length} instances for ${id}`)
-			}
-			for (const key of instancesKeys) {
-				try {
-					await zeebe.cancelProcessInstance(key)
-					console.log(`Cancelled process instance ${key}`)
-				} catch (e) {
-					console.log('Failed to cancel process instance', key)
-					console.log((e as Error).message)
+			// Are we running in a multi-tenant environment?
+			const multiTenant = !!process.env.CAMUNDA_TENANT_ID
+			const tenantIds = multiTenant
+				? ['<default>', 'red', 'green']
+				: [undefined]
+			for (const tenantId of tenantIds) {
+				const operate = new OperateApiClient({
+					config: {
+						CAMUNDA_TENANT_ID: tenantId,
+					},
+				})
+				const res = await operate.searchProcessInstances({
+					filter: { bpmnProcessId: id, state: 'ACTIVE' },
+				})
+				const instancesKeys = res.items.map((instance) => instance.key)
+				if (instancesKeys.length > 0) {
 					console.log(
-						`Don't worry about it - Operate is eventually consistent.`
+						`Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
 					)
+				}
+				for (const key of instancesKeys) {
+					try {
+						await zeebe.cancelProcessInstance(key)
+						console.log(`Cancelled process instance ${key}`)
+					} catch (e) {
+						if (!(e as Error).message.startsWith('5 NOT_FOUND')) {
+							console.log('Failed to cancel process instance', key)
+							console.log((e as Error).message)
+						}
+					}
 				}
 			}
 		}

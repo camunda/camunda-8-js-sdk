@@ -56,6 +56,7 @@ export interface ZBWorkerConstructorConfig<
 	inputVariableDto?: { new (...args: any[]): Readonly<WorkerInputVariables> }
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
+	tenantIds: string[] | [string] | undefined
 }
 
 export class ZBWorkerBase<
@@ -101,7 +102,6 @@ export class ZBWorkerBase<
 	private pollMutex: boolean = false
 	private backPressureRetryCount: number = 0
 	private fetchVariable: (keyof WorkerInputVariables)[] | undefined
-	private tenantId?: string
 	private inputVariableDto: {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		new (obj: any): WorkerInputVariables
@@ -110,6 +110,7 @@ export class ZBWorkerBase<
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		new (...args: any[]): CustomHeaderShape
 	}
+	private tenantIds: string[] | [string] | undefined
 
 	constructor({
 		grpcClient,
@@ -121,6 +122,7 @@ export class ZBWorkerBase<
 		zbClient,
 		inputVariableDto,
 		customHeadersDto,
+		tenantIds,
 	}: ZBWorkerConstructorConfig<
 		WorkerInputVariables,
 		CustomHeaderShape,
@@ -128,6 +130,7 @@ export class ZBWorkerBase<
 	>) {
 		super()
 		options = options || {}
+		this.tenantIds = tenantIds
 		if (!taskType) {
 			throw new Error('Missing taskType')
 		}
@@ -146,7 +149,6 @@ export class ZBWorkerBase<
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				new (obj: any): CustomHeaderShape
 			})
-		this.tenantId = options.tenantId
 		this.taskHandler = taskHandler
 		this.taskType = taskType
 		this.maxJobsToActivate =
@@ -560,7 +562,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			type: this.taskType,
 			worker: this.id,
 			fetchVariable: this.fetchVariable as string[],
-			tenantIds: this.tenantId ? [this.tenantId] : undefined,
+			tenantIds: this.tenantIds,
 		}
 
 		this.logger.logDebug(
