@@ -444,6 +444,11 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			taskHandler: config.taskHandler,
 			taskType: config.taskType,
 			zbClient: this,
+			tenantIds: config.tenantIds
+				? config.tenantIds
+				: this.tenantId
+					? [this.tenantId]
+					: undefined,
 		})
 		this.workers.push(worker)
 		return worker
@@ -1118,16 +1123,22 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	/**
 	 *
 	 * @description Create a worker that uses the StreamActivatedJobs RPC to activate jobs.
+	 * **NOTE**: This will only stream jobs created *after* the worker is started.
+	 * To activate existing jobs, use `activateJobs` or `createWorker`.
 	 * @example
 	 * ```
 	 * const zbc = new ZB.ZeebeGrpcClient()
 	 *
-	 * const zbWorker = zbc.streamJobs({
+	 * const zbStreamWorker = zbc.streamJobs({
 	 *   type: 'demo-service',
 	 *   worker: 'my-worker-uuid',
 	 *   taskHandler: myTaskHandler,
 	 * 	 timeout: 30000 // 30 seconds
 	 * })
+	 *
+	 * ....
+	 * // Close the worker stream when done
+	 * zbStreamWorker.close()
 	 *
 	 * // A job handler must return one of job.complete, job.fail, job.error, or job.forward
 	 * // Note: unhandled exceptions in the job handler cause the library to call job.fail
@@ -1169,7 +1180,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	>(
 		req: Pick<
 			Grpc.StreamActivatedJobsRequest,
-			'type' | 'worker' | 'timeout'
+			'type' | 'worker' | 'timeout' | 'tenantIds'
 		> & {
 			inputVariableDto?: {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -65,13 +65,6 @@ export class ZBStreamWorker implements IZBJobWorker {
 				stream.on('error', (e) => {
 					console.error(e)
 				})
-				// stream.on('pause', () => console.log('paused'))
-				// stream.on('metadata', (m) => console.log(m))
-				// stream.on('readable', () => console.log('readable'))
-				// stream.on('status', () => console.log('status'))
-				// stream.on('close', () => console.log('close'))
-				// stream.on('end', () => console.log('end'))
-				// stream.on('resume', (n) => console.log('resume', n))
 				stream.on('data', (res: ActivatedJob) => {
 					// Make handlers
 					const job: Job<WorkerInputVariables, CustomHeaderShape> =
