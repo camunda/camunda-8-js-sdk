@@ -1,3 +1,5 @@
+## [8.6.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.0...v8.6.1) (2024-06-10)
+
 ## [8.6.1-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.0...v8.6.1-alpha.1) (2024-06-07)
 
 
