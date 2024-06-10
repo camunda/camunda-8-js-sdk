@@ -1,3 +1,10 @@
+## [8.5.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.5...v8.5.6) (2024-06-10)
+
+
+### Features
+
+* **zeebe:** add multi-tenant support to workers ([#176](https://github.com/camunda/camunda-8-js-sdk/issues/176)) ([434f697](https://github.com/camunda/camunda-8-js-sdk/commit/434f6976c6c87dee3c55f98d4139fd3eeb91be60)), closes [#171](https://github.com/camunda/camunda-8-js-sdk/issues/171)
+
 ## [8.5.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.4...v8.5.5) (2024-06-06)
 
 
