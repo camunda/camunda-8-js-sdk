@@ -269,6 +269,10 @@ export interface Job<
 	 * All visible variables in the task scope, computed at activation time.
 	 */
 	readonly variables: Readonly<Variables>
+	/**
+	 * TenantId of the job in a multi-tenant cluster
+	 */
+	readonly tenantId: string
 }
 
 export interface ZBWorkerOptions<InputVars = IInputVariables> {
@@ -373,6 +377,10 @@ export interface ZBWorkerConfig<
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
+	/**
+	 * An optional array of tenantIds if you want this to be a multi-tenant worker.
+	 */
+	tenantIds?: string[]
 }
 
 export interface BroadcastSignalReq {
