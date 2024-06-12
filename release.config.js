@@ -1,12 +1,6 @@
 // eslint-disable-next-line no-undef
 module.exports = {
-	branches: [
-		'main',
-		{
-			name: 'alpha',
-			prerelease: true,
-		},
-	],
+	branches: ['main'],
 	repositoryUrl: 'https://github.com/camunda/camunda-8-js-sdk.git',
 	plugins: [
 		[

@@ -6,6 +6,8 @@ Thank you for considering contributing to @camunda8/sdk! We welcome contribution
 
 To get started with contributing, please follow these steps:
 
+It's a good idea to discuss your contribution in an issue in the repository first, to align on the approach - particularly if it is a new feature.
+
 1. Fork the repository and clone it to your local machine.
 2. Check out the `alpha` branch. This is the development branch.
 3. Install the dependencies by running `npm install`.
@@ -13,13 +15,14 @@ To get started with contributing, please follow these steps:
 5. Write tests to cover your changes and ensure existing tests pass.
 6. Run the tests using `npm test` to make sure everything is working correctly. See below for details on running integration tests.
 7. Commit your changes and push them to your forked repository. Use [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/) format for the commit message. See the note below.
-8. Submit a pull request to the main repository.
-9. When your PR is merged into the `alpha` branch, an alpha package is published to NPM.
-10. When the `alpha` branch is merged into `main`, a new package is published to NPM.
+8. Submit a pull request against `alpha`.
+9. If any changes are needed they will be requested.
+10. Your PR will be merged to `alpha` and the integration tests run in CI.
+11. When the `alpha` branch is merged into `main`, a new package is published to NPM.
 
 ## A note on commit messages
 
-The repository uses []`semantic-release`](https://github.com/semantic-release/semantic-release) to create releases. Because we track the Camunda 8 Platform minor version, we treat feature implementation during a minor release cycle as a patch release rather than a minor release.
+The repository uses [`semantic-release`](https://github.com/semantic-release/semantic-release) to create releases. Because we track the Camunda 8 Platform minor version, we treat feature implementation during a minor release cycle as a patch release rather than a minor release.
 
 Creating a commit with a `feat` commit message will cause the package version patch release number to increment. To update the minor version, a commit with the type `minor` is needed.
 
