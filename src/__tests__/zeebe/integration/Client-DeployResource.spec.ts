@@ -61,3 +61,18 @@ test('deploys a Form', async () => {
 	})
 	expect(result.deployments[0].form).not.toBeNull()
 })
+test.only('deploys multiple resources', async () => {
+	const result = await zbc.deployResources([
+		{
+			processFilename: './src/__tests__/testdata/Client-DeployWorkflow.bpmn',
+		},
+		{
+			decisionFilename: './src/__tests__/testdata/quarantine-duration.dmn',
+		},
+		{
+			form: fs.readFileSync('./src/__tests__/testdata/form_1.form'),
+			name: 'form_1.form',
+		},
+	])
+	expect(result.deployments.length).toBe(4)
+})
