@@ -1,3 +1,10 @@
+## [8.6.1-alpha.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.1-alpha.1...v8.6.1-alpha.2) (2024-06-12)
+
+
+### Bug Fixes
+
+* **zeebe:** security fix for grpc-js dependency update ([#180](https://github.com/camunda/camunda-8-js-sdk/issues/180)) ([f43d956](https://github.com/camunda/camunda-8-js-sdk/commit/f43d956744e025253aa916855999371ca0cebebb))
+
 ## [8.6.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.0...v8.6.1) (2024-06-10)
 
 ## [8.6.1-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.0...v8.6.1-alpha.1) (2024-06-07)
