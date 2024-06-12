@@ -95,7 +95,7 @@ export class OptimizeApiClient {
 	}
 
 	private async getHeaders(auth = true) {
-		const token = await this.oAuthProvider.getToken('OPERATE')
+		const token = await this.oAuthProvider.getToken('OPTIMIZE')
 
 		const authHeader: { authorization: string } | Record<string, never> = auth
 			? {
