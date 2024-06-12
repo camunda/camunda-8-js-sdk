@@ -1,10 +1,10 @@
-name: Publish a new version
+name: Integration tests
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - alpha
 
 jobs:
   unit-tests:
@@ -19,7 +19,7 @@ jobs:
           node-version: "20" # Specify a Node.js version
 
       - name: Install dependencies
-        run: npm i
+        run: npm install
 
       - name: Build and Smoke Test
         run: npm run test:smoketest
@@ -27,6 +27,27 @@ jobs:
       - name: Run Unit Tests
         run: |
           npm run test
+
+  # unit-tests-windows:
+  #   runs-on: windows-2019
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+
+  #     - name: Use Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20" # Specify a Node.js version
+
+  #     - name: Install dependencies
+  #       run: npm install
+
+  #     - name: Build
+  #       run: npm run build
+
+  #     - name: Run Unit Tests
+  #       run: |
+  #         npm run test
 
   local_integration:
     runs-on: ubuntu-latest
@@ -160,79 +181,39 @@ jobs:
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
 
   # saas_integration_windows:
-  #   needs: saas_integration
-  #   runs-on: windows-2019
-  #   environment: integration
-  #   steps:
-  #     - name: Check out the repo
-  #       uses: actions/checkout@v4
+  # needs: saas_integration
+  # runs-on: windows-2019
+  # environment: integration
+  # steps:
+  #   - name: Check out the repo
+  #     uses: actions/checkout@v4
 
-  #     - name: Use Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "20" # Specify a Node.js version
+  #   - name: Use Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: "20" # Specify a Node.js version
 
-  #     - name: Install dependencies
-  #       run: npm install
+  #   - name: Install dependencies
+  #     run: npm install
 
-  #     - name: Run Integration Tests
-  #       run: |
-  #         npm run test:integration
-  #       env:
-  #         ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
-  #         ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
-  #         ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
-  #         ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
-  #         ZEEBE_AUTHORIZATION_SERVER_URL: ${{ secrets.ZEEBE_AUTHORIZATION_SERVER_URL }}
-  #         ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
-  #         ZEEBE_TOKEN_AUDIENCE: ${{ secrets.ZEEBE_TOKEN_AUDIENCE }}
-  #         CAMUNDA_CREDENTIALS_SCOPES: ${{ secrets.CAMUNDA_CREDENTIALS_SCOPES }}
-  #         CAMUNDA_OAUTH_URL: ${{ secrets.CAMUNDA_OAUTH_URL }}
-  #         CAMUNDA_TASKLIST_BASE_URL: ${{ secrets.CAMUNDA_TASKLIST_BASE_URL }}
-  #         CAMUNDA_OPERATE_BASE_URL: ${{ secrets.CAMUNDA_OPERATE_BASE_URL }}
-  #         CAMUNDA_OPTIMIZE_BASE_URL: ${{ secrets.CAMUNDA_OPTIMIZE_BASE_URL }}
-  #         CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
-  #         CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
-  #         CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
-  #         CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
-  #         CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
-  tag-and-publish:
-    needs: [
-        saas_integration,
-        # saas_integration_windows,
-        local_multitenancy_integration,
-        local_integration,
-        unit-tests,
-      ]
-    runs-on: ubuntu-latest
-    environment:
-      name: publish
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - name: Install
-        run: npm i
-      - name: Build
-        run: npm run build
-      - name: Build Docs
-        run: npm run docs
-      - name: Semantic Release
-        run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          HUSKY: 0
-
-      - name: Deploy Docs
-        if: github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: docs
-          branch: gh-pages
+  #   - name: Run Integration Tests
+  #     run: |
+  #       npm run test:integration
+  #     env:
+  #       ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
+  #       ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
+  #       ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
+  #       ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
+  #       ZEEBE_AUTHORIZATION_SERVER_URL: ${{ secrets.ZEEBE_AUTHORIZATION_SERVER_URL }}
+  #       ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
+  #       ZEEBE_TOKEN_AUDIENCE: ${{ secrets.ZEEBE_TOKEN_AUDIENCE }}
+  #       CAMUNDA_CREDENTIALS_SCOPES: ${{ secrets.CAMUNDA_CREDENTIALS_SCOPES }}
+  #       CAMUNDA_OAUTH_URL: ${{ secrets.CAMUNDA_OAUTH_URL }}
+  #       CAMUNDA_TASKLIST_BASE_URL: ${{ secrets.CAMUNDA_TASKLIST_BASE_URL }}
+  #       CAMUNDA_OPERATE_BASE_URL: ${{ secrets.CAMUNDA_OPERATE_BASE_URL }}
+  #       CAMUNDA_OPTIMIZE_BASE_URL: ${{ secrets.CAMUNDA_OPTIMIZE_BASE_URL }}
+  #       CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
+  #       CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
+  #       CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
+  #       CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL }}
+  #       CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
