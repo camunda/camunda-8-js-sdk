@@ -281,3 +281,31 @@ Please note that only jobs that become available _after_ the stream is opened ar
 In this release, this is not handled for you. You must both poll and stream jobs to make sure that you get jobs that were available before your application started as well as jobs that become available after your application starts.
 
 In a subsequent release, the ZeebeWorker will transparently handle this for you.
+
+## Multi-tenant workers
+
+Workers, both polling and streaming, can be multi-tenanted, requesting jobs from more than one tenant.
+
+Example:
+
+```typescript
+client.createWorker({
+	taskHandler: (job) => {
+		console.log(job.tenantId) // '<default>' | 'green'
+		return job.complete()
+	},
+	taskType: 'multi-tenant-work',
+	tenantIds: ['<default>', 'green'],
+})
+
+client.streamJobs({
+	taskHandler: async (job) => {
+		console.log(job.tenantId) // '<default>' | 'green'
+		return job.complete()
+	},
+	type: 'multi-tenant-stream-work',
+	tenantIds: ['<default>', 'green'],
+	worker: 'stream-worker',
+	timeout: 2000,
+})
+```
