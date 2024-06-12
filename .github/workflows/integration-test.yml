@@ -1,4 +1,4 @@
-name: Pull Request tests
+name: Integration tests
 
 on:
   workflow_dispatch:
