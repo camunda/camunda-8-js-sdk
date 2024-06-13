@@ -1,3 +1,10 @@
+## [8.5.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.7...v8.5.8) (2024-06-13)
+
+
+### Bug Fixes
+
+* specify the correct audience when getting an Optimize auth token ([#185](https://github.com/camunda/camunda-8-js-sdk/issues/185)) ([a6a642a](https://github.com/camunda/camunda-8-js-sdk/commit/a6a642a78948844694d04263b25eeafc0cabf9e7))
+
 ## [8.5.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.6...v8.5.7) (2024-06-11)
 
 
