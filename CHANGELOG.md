@@ -1,3 +1,10 @@
+## [8.5.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.8...v8.5.9) (2024-06-13)
+
+
+### Bug Fixes
+
+* **optimize:** fix labelVariables method ([40ff8be](https://github.com/camunda/camunda-8-js-sdk/commit/40ff8bea1b1a58882e0a794253b1b65403b987d6))
+
 ## [8.5.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.5.7...v8.5.8) (2024-06-13)
 
 
