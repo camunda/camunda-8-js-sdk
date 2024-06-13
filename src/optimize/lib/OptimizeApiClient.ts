@@ -479,9 +479,11 @@ export class OptimizeApiClient {
 	async labelVariables(variableLabels: VariableLabels) {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest('public/variables/labels', {
-			headers,
-			body: JSON.stringify(variableLabels),
-		}).json()
+		return rest
+			.post('public/variables/labels', {
+				headers,
+				body: JSON.stringify(variableLabels),
+			})
+			.json()
 	}
 }
