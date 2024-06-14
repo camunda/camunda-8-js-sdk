@@ -26,13 +26,13 @@ const ZEEBE_REST_API_VERSION = 'v1'
  */
 interface TaskChangeSet {
 	/* The due date of the task. Reset by providing an empty String. */
-	dueDate: Date | string
+	dueDate?: Date | string
 	/* The follow-up date of the task. Reset by providing an empty String. */
-	followUpDate: Date | string
+	followUpDate?: Date | string
 	/* The list of candidate users of the task. Reset by providing an empty list. */
-	candidateUsers: string[]
+	candidateUsers?: string[]
 	/* The list of candidate groups of the task. Reset by providing an empty list. */
-	candidateGroups: string[]
+	candidateGroups?: string[]
 }
 
 export class ZeebeRestClient {
@@ -111,27 +111,29 @@ export class ZeebeRestClient {
 	}
 
 	/* Completes a user task with the given key. */
-	public completeUserTask({
+	public async completeUserTask({
 		userTaskKey,
-		variables,
+		variables = {},
 		action = 'complete',
 	}: {
 		userTaskKey: string
-		variables: Record<string, unknown>
-		action: string
+		variables?: Record<string, unknown>
+		action?: string
 	}) {
+		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest.post(`user-tasks/${userTaskKey}/completion`, {
 				body: JSON.stringify({
 					variables,
 					action,
 				}),
+				headers,
 			})
 		)
 	}
 
 	/* Assigns a user task with the given key to the given assignee. */
-	public assignTask({
+	public async assignTask({
 		userTaskKey,
 		assignee,
 		allowOverride = true,
@@ -142,6 +144,8 @@ export class ZeebeRestClient {
 		allowOverride?: boolean
 		action: string
 	}) {
+		const headers = await this.getHeaders()
+
 		return this.rest.then((rest) =>
 			rest.post(`user-tasks/${userTaskKey}/assignment`, {
 				body: JSON.stringify({
@@ -149,28 +153,34 @@ export class ZeebeRestClient {
 					action,
 					assignee,
 				}),
+				headers,
 			})
 		)
 	}
 
 	/** Update a user task with the given key. */
-	public updateTask({
+	public async updateTask({
 		userTaskKey,
 		changeset,
 	}: {
 		userTaskKey: string
 		changeset: TaskChangeSet
 	}) {
+		const headers = await this.getHeaders()
+
 		return this.rest.then((rest) =>
 			rest.post(`user-tasks/${userTaskKey}/update`, {
 				body: JSON.stringify(changeset),
+				headers,
 			})
 		)
 	}
 	/* Removes the assignee of a task with the given key. */
-	public removeAssignee({ userTaskKey }: { userTaskKey: string }) {
+	public async removeAssignee({ userTaskKey }: { userTaskKey: string }) {
+		const headers = await this.getHeaders()
+
 		return this.rest.then((rest) =>
-			rest.delete(`user-tasks/${userTaskKey}/assignee`)
+			rest.delete(`user-tasks/${userTaskKey}/assignee`, { headers })
 		)
 	}
 }
