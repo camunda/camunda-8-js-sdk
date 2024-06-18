@@ -1,3 +1,10 @@
+## [8.6.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.5...v8.6.6) (2024-06-18)
+
+
+### Bug Fixes
+
+* **optimize:** fix exportReportDefinitions REST call path ([e5f5da7](https://github.com/camunda/camunda-8-js-sdk/commit/e5f5da7bf1e5ab7752fad622d150ec3dfe3e8f47)), closes [#192](https://github.com/camunda/camunda-8-js-sdk/issues/192)
+
 ## [8.6.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.4...v8.6.5) (2024-06-18)
 
 
