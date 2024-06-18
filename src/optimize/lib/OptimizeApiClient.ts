@@ -285,7 +285,7 @@ export class OptimizeApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.post('public/export/dashboard/definition/json', {
+			.post('public/export/report/definition/json', {
 				body: JSON.stringify(reportIds),
 				headers,
 			})
