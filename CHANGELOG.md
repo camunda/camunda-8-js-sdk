@@ -1,3 +1,10 @@
+## [8.6.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.4...v8.6.5) (2024-06-18)
+
+
+### Bug Fixes
+
+* **zeebe:** add headers to all REST method calls ([9b99177](https://github.com/camunda/camunda-8-js-sdk/commit/9b991775536ca838d1b278f81126404373389a17))
+
 ## [8.6.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.3...v8.6.4) (2024-06-13)
 
 
