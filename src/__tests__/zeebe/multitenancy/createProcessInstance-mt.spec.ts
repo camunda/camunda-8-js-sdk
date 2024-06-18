@@ -37,7 +37,7 @@ test('Will not throw an error if tenantId is provided when starting a process in
 		await client.cancelProcessInstance(p.processInstanceKey)
 	} catch (e) {
 		threwError = true
-		console.log(e)
+		// console.log(e)
 	}
 
 	expect(threwError).toBe(false)

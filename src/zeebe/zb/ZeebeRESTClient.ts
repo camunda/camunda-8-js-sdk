@@ -110,7 +110,8 @@ export class ZeebeRestClient {
 		) as Promise<TopologyResponse>
 	}
 
-	/* Completes a user task with the given key. */
+	/* Completes a user task with the given key. The method either completes the task or throws 400, 404, or 409.
+	Documentation: https://docs.camunda.io/docs/apis-tools/zeebe-api-rest/specifications/complete-a-user-task/ */
 	public async completeUserTask({
 		userTaskKey,
 		variables = {},
