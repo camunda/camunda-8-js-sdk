@@ -67,7 +67,7 @@ Calls to APIs can be authorized using basic auth or via OAuth - a token that is 
 
 ### Disable Auth
 
-To disable OAuth, set the environment variable `CAMUNDA_OAUTH_STRATEGY=NONE`. You can use this when running against a minimal Zeebe broker in a development environment, for example.
+To disable OAuth, set the environment variable `CAMUNDA_OAUTH_DISABLED=true`. You can use this when running against a minimal Zeebe broker in a development environment, for example.
 
 ### Basic Auth
 
