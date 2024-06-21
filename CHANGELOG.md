@@ -1,3 +1,10 @@
+## [8.6.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.6...v8.6.7) (2024-06-21)
+
+
+### Bug Fixes
+
+* **docs:** update config for disabling authentication ([df5879f](https://github.com/camunda/camunda-8-js-sdk/commit/df5879ffb8821e2c49e8e71c5a7cedc40e53c869))
+
 ## [8.6.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.5...v8.6.6) (2024-06-18)
 
 
