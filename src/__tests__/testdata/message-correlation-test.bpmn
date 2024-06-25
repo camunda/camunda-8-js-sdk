@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_04hax45" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.23.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.5.0">
+  <bpmn:process id="message-correlation-test" name="Message Correlation Test" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start Message Correlation Test">
+      <bpmn:extensionElements>
+        <zeebe:properties>
+          <zeebe:property name="camundaModeler:exampleOutputJson" value="{&#10;  &#34;orderId&#34;: 1&#10;}" />
+        </zeebe:properties>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_0jv0pvp</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0jv0pvp" sourceRef="StartEvent_1" targetRef="Event_11031ys" />
+    <bpmn:endEvent id="Event_1dj077m" name="Message Correlation Test Complete">
+      <bpmn:incoming>Flow_1vv5mu1</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1vv5mu1" sourceRef="Event_11031ys" targetRef="Event_1dj077m" />
+    <bpmn:intermediateCatchEvent id="Event_11031ys" name="Correlate Incoming Message">
+      <bpmn:incoming>Flow_0jv0pvp</bpmn:incoming>
+      <bpmn:outgoing>Flow_1vv5mu1</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_00g064i" messageRef="Message_0vft2qv" />
+    </bpmn:intermediateCatchEvent>
+  </bpmn:process>
+  <bpmn:message id="Message_0vft2qv" name="MESSAGE_CORRELATION_TEST_CATCH">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=orderId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="message-correlation-test">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="122" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1dj077m_di" bpmnElement="Event_1dj077m">
+        <dc:Bounds x="412" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="392" y="122" width="77" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0fin59b_di" bpmnElement="Event_11031ys">
+        <dc:Bounds x="292" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="288" y="122" width="46" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0jv0pvp_di" bpmnElement="Flow_0jv0pvp">
+        <di:waypoint x="215" y="97" />
+        <di:waypoint x="292" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vv5mu1_di" bpmnElement="Flow_1vv5mu1">
+        <di:waypoint x="328" y="97" />
+        <di:waypoint x="412" y="97" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
