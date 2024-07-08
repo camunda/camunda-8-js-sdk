@@ -36,7 +36,7 @@ export class AdminApiClient {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
-		const baseUrl = RequireConfiguration(
+		const prefixUrl = RequireConfiguration(
 			config.CAMUNDA_CONSOLE_BASE_URL,
 			'CAMUNDA_CONSOLE_BASE_URL'
 		)
@@ -45,7 +45,6 @@ export class AdminApiClient {
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 
 		this.userAgentString = createUserAgentString(config)
-		const prefixUrl = `${baseUrl}/clusters`
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
 				got.extend({
@@ -65,7 +64,7 @@ export class AdminApiClient {
 					},
 				})
 		)
-		debug('prefixUrl', `${baseUrl}/clusters`)
+		debug('prefixUrl', `${baseUrl}`)
 	}
 
 	private async getHeaders() {
@@ -89,7 +88,7 @@ export class AdminApiClient {
 	async getClients(clusterUuid: string): Promise<Dto.ClusterClient[]> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`${clusterUuid}/clients`, {
+		return rest(`clusters/${clusterUuid}/clients`, {
 			headers,
 		}).json()
 	}
@@ -106,7 +105,7 @@ export class AdminApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.post(`${req.clusterUuid}/clients`, {
+			.post(`clusters/${req.clusterUuid}/clients`, {
 				body: JSON.stringify({
 					clientName: req.clientName,
 					permissions: req.permissions,
@@ -129,7 +128,7 @@ export class AdminApiClient {
 	): Promise<Dto.ClusterClientConnectionDetails> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`${clusterUuid}/clients/${clientId}`, {
+		return rest(`clusters/${clusterUuid}/clients/${clientId}`, {
 			headers,
 		}).json()
 	}
@@ -144,7 +143,7 @@ export class AdminApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.delete(`${clusterUuid}/clients/${clientId}`, {
+			.delete(`clusters/${clusterUuid}/clients/${clientId}`, {
 				headers,
 			})
 			.json()
@@ -158,7 +157,7 @@ export class AdminApiClient {
 	async getClusters(): Promise<Dto.Cluster[]> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest('', {
+		return rest('clusters', {
 			headers,
 		}).json()
 	}
@@ -177,7 +176,7 @@ export class AdminApiClient {
 			headers,
 		}
 		const rest = await this.rest
-		return rest.post('', req).json()
+		return rest.post('clusters', req).json()
 	}
 
 	/**
@@ -189,7 +188,7 @@ export class AdminApiClient {
 	async getCluster(clusterUuid: string): Promise<Dto.Cluster> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`${clusterUuid}`, {
+		return rest(`clusters/${clusterUuid}`, {
 			headers,
 		}).json()
 	}
@@ -204,7 +203,7 @@ export class AdminApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.delete(`${clusterUuid}`, {
+			.delete(`clusters/${clusterUuid}`, {
 				headers,
 			})
 			.json()
@@ -218,7 +217,7 @@ export class AdminApiClient {
 	async getParameters(): Promise<Dto.Parameters> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest('parameters', {
+		return rest('clusters/parameters', {
 			headers,
 		}).json()
 	}
@@ -231,7 +230,7 @@ export class AdminApiClient {
 	async getSecrets(clusterUuid: string): Promise<{ [key: string]: string }> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`${clusterUuid}/secrets`, {
+		return rest(`clusters/${clusterUuid}/secrets`, {
 			headers,
 		}).json()
 	}
@@ -256,7 +255,7 @@ export class AdminApiClient {
 			headers,
 		}
 		const rest = await this.rest
-		return rest.post(`${clusterUuid}/secrets`, req).json()
+		return rest.post(`clusters/${clusterUuid}/secrets`, req).json()
 	}
 
 	/**
@@ -268,7 +267,7 @@ export class AdminApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.delete(`${clusterUuid}/secrets/${secretName}`, {
+			.delete(`clusters/${clusterUuid}/secrets/${secretName}`, {
 				headers,
 			})
 			.json()
@@ -293,7 +292,7 @@ export class AdminApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.put(`${clusterUuid}/ipwhitelist`, {
+			.put(`clusters/${clusterUuid}/ipwhitelist`, {
 				body: JSON.stringify({
 					ipwhitelist,
 				}),
