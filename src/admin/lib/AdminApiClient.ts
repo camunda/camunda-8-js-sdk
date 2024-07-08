@@ -64,7 +64,7 @@ export class AdminApiClient {
 					},
 				})
 		)
-		debug('prefixUrl', `${baseUrl}`)
+		debug('prefixUrl', `${prefixUrl}`)
 	}
 
 	private async getHeaders() {
