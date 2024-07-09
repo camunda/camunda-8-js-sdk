@@ -2,10 +2,11 @@ import { AdminApiClient } from '../admin'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
+	constructOAuthProvider,
 	DeepPartial,
 } from '../lib'
 import { ModelerApiClient } from '../modeler'
-import { OAuthProvider } from '../oauth'
+import { IOAuthProvider } from '../oauth'
 import { OperateApiClient } from '../operate'
 import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
@@ -39,15 +40,12 @@ export class Camunda8 {
 	private zeebeGrpcApiClient?: ZeebeGrpcClient
 	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
-	private oAuthProvider?: OAuthProvider
+	private oAuthProvider: IOAuthProvider
 
 	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
-		// Respect Oauth disabled flag
-		if (!this.configuration.CAMUNDA_OAUTH_DISABLED) {
-			this.oAuthProvider = new OAuthProvider({ config: this.configuration })
-		}
+		this.oAuthProvider = constructOAuthProvider(this.configuration)
 	}
 
 	public getOperateApiClient(): OperateApiClient {
