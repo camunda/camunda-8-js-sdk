@@ -53,9 +53,16 @@ export const cleanUp = async () => {
 						CAMUNDA_TENANT_ID: tenantId,
 					},
 				})
-				const res = await operate.searchProcessInstances({
-					filter: { bpmnProcessId: id, state: 'ACTIVE' },
-				})
+				const res = await operate
+					.searchProcessInstances({
+						filter: { bpmnProcessId: id, state: 'ACTIVE' },
+					})
+					.catch((e) => {
+						console.log(
+							`Failed to search for process instances for ${id} in tenant '${tenantId}'`
+						)
+						throw e
+					})
 				const instancesKeys = res.items.map((instance) => instance.key)
 				if (instancesKeys.length > 0) {
 					console.log(

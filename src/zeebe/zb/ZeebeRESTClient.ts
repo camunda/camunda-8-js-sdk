@@ -97,7 +97,9 @@ export class ZeebeRestClient {
 		return headers
 	}
 
-	public async activateJobs(req: ActivateJobsRequest): Promise<ActivatedJob[]> {
+	public async activateJobs(
+		req: ActivateJobsRequest
+	): Promise<{ jobs: ActivatedJob[] }> {
 		const headers = await this.getHeaders()
 		const tenantIds = req.tenantIds ?? this.tenantId ? [this.tenantId] : []
 		return this.rest.then((rest) =>
