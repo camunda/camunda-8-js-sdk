@@ -1,3 +1,11 @@
+## [8.6.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.7...v8.6.8) (2024-07-12)
+
+
+### Bug Fixes
+
+* **admin:** fix members endpoint - fixes [#206](https://github.com/camunda/camunda-8-js-sdk/issues/206) ([#208](https://github.com/camunda/camunda-8-js-sdk/issues/208)) ([19c4c5c](https://github.com/camunda/camunda-8-js-sdk/commit/19c4c5c712c53441eeff108f0517389f9eaf4486)), closes [#207](https://github.com/camunda/camunda-8-js-sdk/issues/207)
+* **camunda8:** respect CAMUNDA_OAUTH_STRATEGY ([#209](https://github.com/camunda/camunda-8-js-sdk/issues/209)) ([70c9954](https://github.com/camunda/camunda-8-js-sdk/commit/70c995414ac49f2ee06861c88968b93c2d6a7b95))
+
 ## [8.6.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.6...v8.6.7) (2024-06-21)
 
 
