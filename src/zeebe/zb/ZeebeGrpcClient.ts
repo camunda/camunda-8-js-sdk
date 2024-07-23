@@ -278,16 +278,21 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			try {
+				const jobs: ZB.Job<Variables, CustomHeaders>[] = []
+
 				const stream = await (await this.grpc).activateJobsStream(req)
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
-					const jobs = res.jobs.map((job) =>
+					const parsedJobs = res.jobs.map((job) =>
 						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
 							job,
 							inputVariableDtoToUse,
 							customHeadersDtoToUse
 						)
 					)
+					jobs.push(...parsedJobs)
+				})
 
+				stream.on('end', () => {
 					resolve(jobs)
 				})
 			} catch (e: unknown) {
