@@ -192,6 +192,11 @@ const getMainEnv = () =>
 
 const getZeebeEnv = () =>
 	createEnv({
+		ZEEBE_INSECURE_CONNECTION: {
+			type: 'boolean',
+			optional: true,
+			default: false,
+		},
 		/** Log level of Zeebe Client and Workers - 'DEBUG' | 'INFO' | 'NONE'. Defaults to 'INFO' */
 		ZEEBE_CLIENT_LOG_LEVEL: {
 			type: 'string',
