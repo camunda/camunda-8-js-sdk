@@ -8,7 +8,8 @@
 		"modeler",
 		"operate",
 		"camunda8",
-		"optimize"
+		"optimize",
+		"lossless-parser"
 	],
 	"editor.formatOnSave": true,
 
