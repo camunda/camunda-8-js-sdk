@@ -1,3 +1,10 @@
+## [8.6.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.9...v8.6.10) (2024-07-29)
+
+
+### Bug Fixes
+
+* **lossless-parser:** correctly handle null in objects ([b712651](https://github.com/camunda/camunda-8-js-sdk/commit/b7126518dd0ac92e592cad66e88e3d8f6611d22f)), closes [#212](https://github.com/camunda/camunda-8-js-sdk/issues/212)
+
 ## [8.6.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.8...v8.6.9) (2024-07-29)
 
 
