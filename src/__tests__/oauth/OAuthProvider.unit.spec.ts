@@ -216,13 +216,13 @@ describe('OAuthProvider', () => {
 		server = http
 			.createServer((req, res) => {
 				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
+					// let body = ''
+					req.on('data', (/*chunk*/) => {
+						// body += chunk
 					})
 
 					req.on('end', () => {
-						console.log(body)
+						// console.log(body)
 						res.writeHead(200, { 'Content-Type': 'application/json' })
 						const expiresIn = 2 // seconds
 						const token = requested
@@ -593,9 +593,7 @@ describe('OAuthProvider', () => {
 			}
 		})
 
-		server.listen(3033, () => {
-			console.log('Server running on port 3033')
-		})
+		server.listen(3033)
 
 		const oAuthProvider = constructOAuthProvider({
 			CAMUNDA_AUTH_STRATEGY: 'BASIC',
