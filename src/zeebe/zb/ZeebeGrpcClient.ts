@@ -155,7 +155,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.maxRetryTimeout = Duration.seconds.of(
 			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT_SECONDS
 		)
-		this.useTLS = config.CAMUNDA_SECURE_CONNECTION
+		this.useTLS =
+			config.CAMUNDA_SECURE_CONNECTION &&
+			!config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
 
@@ -278,16 +280,21 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			try {
+				const jobs: ZB.Job<Variables, CustomHeaders>[] = []
+
 				const stream = await (await this.grpc).activateJobsStream(req)
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
-					const jobs = res.jobs.map((job) =>
+					const parsedJobs = res.jobs.map((job) =>
 						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
 							job,
 							inputVariableDtoToUse,
 							customHeadersDtoToUse
 						)
 					)
+					jobs.push(...parsedJobs)
+				})
 
+				stream.on('end', () => {
 					resolve(jobs)
 				})
 			} catch (e: unknown) {
