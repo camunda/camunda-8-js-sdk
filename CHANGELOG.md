@@ -1,3 +1,11 @@
+## [8.6.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.8...v8.6.9) (2024-07-29)
+
+
+### Features
+
+* **zeebe:** add support for ZEEBE_INSECURE_CONNECTION env var ([ed14df8](https://github.com/camunda/camunda-8-js-sdk/commit/ed14df894557a248b4dc958f13fd353d3163edb2))
+* **zeebe:** fix activate jobs stream ([68bb5da](https://github.com/camunda/camunda-8-js-sdk/commit/68bb5daf7cad65a68e826f13277b3da366c35851))
+
 ## [8.6.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.7...v8.6.8) (2024-07-12)
 
 
