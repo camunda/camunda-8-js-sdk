@@ -155,7 +155,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.maxRetryTimeout = Duration.seconds.of(
 			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT_SECONDS
 		)
-		this.useTLS = config.CAMUNDA_SECURE_CONNECTION
+		this.useTLS =
+			config.CAMUNDA_SECURE_CONNECTION &&
+			!config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
 

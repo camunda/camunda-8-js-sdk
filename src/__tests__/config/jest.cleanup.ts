@@ -67,6 +67,7 @@ export const cleanUp = async () => {
 						await zeebe.cancelProcessInstance(key)
 						console.log(`Cancelled process instance ${key}`)
 					} catch (e) {
+						console.log(e)
 						if (!(e as Error).message.startsWith('5 NOT_FOUND')) {
 							console.log('Failed to cancel process instance', key)
 							console.log((e as Error).message)
