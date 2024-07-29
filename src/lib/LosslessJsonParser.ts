@@ -220,7 +220,10 @@ function parseArrayWithAnnotations<T>(
  * Convert all `LosslessNumber` instances to a number or throw if any are unsafe
  */
 function convertLosslessNumbersToNumberOrThrow<T>(obj: any): T {
-	debug(`Parsing LosslessNumbers to numbers for ${obj.constructor.name}`)
+	debug(`Parsing LosslessNumbers to numbers for ${obj?.constructor?.name}`)
+	if (!obj) {
+		return obj
+	}
 	let currentKey = ''
 	try {
 		Object.keys(obj).forEach((key) => {

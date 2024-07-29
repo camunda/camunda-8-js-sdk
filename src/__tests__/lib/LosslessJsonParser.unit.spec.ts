@@ -330,3 +330,17 @@ test('LosslessStringify correctly handles nested Dtos', () => {
 		`{"total":3,"decisionsOutputs":[{"someInt32Field":123,"someInt64Field":123}]}`
 	)
 })
+
+test('LosslessJsonParser correctly handles null objects', () => {
+	const json = `{"abc": [null, null, null] }`
+
+	const parsedDto = losslessParse(json)
+	expect(parsedDto.abc).toMatchObject([null, null, null]) // 3 (string)
+})
+
+test('LosslessStringify correctly handles null objects', () => {
+	const json = { abc: [null, null, null] }
+
+	const stringifiedDto = losslessStringify(json)
+	expect(stringifiedDto).toBe(`{"abc":[null,null,null]}`) // 3 (string)
+})
