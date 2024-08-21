@@ -281,7 +281,11 @@ export class OAuthProvider implements IOAuthProvider {
 	}) {
 		const body = `${this.addAudienceIfNeeded(
 			audienceType
-		)}client_id=${clientIdToUse}&client_secret=${clientSecretToUse}&grant_type=client_credentials`
+		)}client_id=${encodeURIComponent(
+			clientIdToUse
+		)}&client_secret=${encodeURIComponent(
+			clientSecretToUse
+		)}&grant_type=client_credentials`
 		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
 
