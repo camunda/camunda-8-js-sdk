@@ -1,3 +1,10 @@
+## [8.6.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.10...v8.6.11) (2024-08-21)
+
+
+### Bug Fixes
+
+* **oauth:** uri encode clientId and clientSecret ([dd8583a](https://github.com/camunda/camunda-8-js-sdk/commit/dd8583a87c3cabb74997649242ab574b00b76119)), closes [#230](https://github.com/camunda/camunda-8-js-sdk/issues/230)
+
 ## [8.6.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.9...v8.6.10) (2024-07-29)
 
 
