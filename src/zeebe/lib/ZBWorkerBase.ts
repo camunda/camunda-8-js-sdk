@@ -380,11 +380,13 @@ You should call only one job action method in the worker handler. This is a bug 
 		errorMessage,
 		retries,
 		retryBackOff,
+		variables,
 	}: {
 		job: ZB.Job<WorkerInputVariables, CustomHeaderShape>
 		errorMessage: string
 		retries?: number
 		retryBackOff?: number
+		variables?: ZB.JSONDoc
 	}) {
 		return this.zbClient
 			.failJob({
@@ -392,6 +394,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				jobKey: job.key,
 				retries: retries ?? job.retries - 1,
 				retryBackOff: retryBackOff ?? 0,
+				variables: variables ?? {},
 			})
 			.then(() => ZB.JOB_ACTION_ACKNOWLEDGEMENT)
 			.finally(() => {

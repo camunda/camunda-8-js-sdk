@@ -3,6 +3,7 @@ import * as path from 'path'
 
 import chalk from 'chalk'
 import d from 'debug'
+import { LosslessNumber } from 'lossless-json'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import { v4 as uuid } from 'uuid'
@@ -10,12 +11,12 @@ import { v4 as uuid } from 'uuid'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
+	constructOAuthProvider,
 	DeepPartial,
 	GetCustomCertificateBuffer,
 	LosslessDto,
-	RequireConfiguration,
-	constructOAuthProvider,
 	losslessStringify,
+	RequireConfiguration,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 import {
@@ -33,7 +34,7 @@ import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
 import { ZBJsonLogger } from '../lib/ZBJsonLogger'
 import { ZBStreamWorker } from '../lib/ZBStreamWorker'
-import { Resource, getResourceContentAndName } from '../lib/deployResource'
+import { getResourceContentAndName, Resource } from '../lib/deployResource'
 import * as ZB from '../lib/interfaces-1.0'
 import { ZBWorkerTaskHandler } from '../lib/interfaces-1.0'
 import * as Grpc from '../lib/interfaces-grpc-1.0'
@@ -350,12 +351,15 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 */
 	public async cancelProcessInstance(
-		processInstanceKey: string | number
+		processInstanceKey: string,
+		operationReference?: number | LosslessNumber
 	): Promise<void> {
 		Utils.validateNumber(processInstanceKey, 'processInstanceKey')
+		const parsedOperationReference = operationReference?.toString() ?? undefined
 		return this.executeOperation('cancelProcessInstance', async () =>
 			(await this.grpc).cancelProcessInstanceSync({
 				processInstanceKey,
+				operationReference: parsedOperationReference,
 			})
 		)
 	}
@@ -582,6 +586,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	>(
 		config: ZB.CreateProcessInstanceReq<Variables>
 	): Promise<Grpc.CreateProcessInstanceResponse> {
+		const operationReference =
+			config.operationReference?.toString() ?? undefined
 		const request: ZB.CreateProcessInstanceReq<Variables> = {
 			bpmnProcessId: config.bpmnProcessId,
 			variables: config.variables,
@@ -592,6 +598,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const createProcessInstanceRequest: Grpc.CreateProcessInstanceRequest =
 			stringifyVariables({
 				...request,
+				operationReference,
 				startInstructions: request.startInstructions!,
 				tenantId: config.tenantId ?? this.tenantId,
 			})
@@ -662,11 +669,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 */
 	deleteResource({
 		resourceKey,
+		operationReference,
 	}: {
 		resourceKey: string
+		operationReference?: number | LosslessNumber
 	}): Promise<Record<string, never>> {
 		return this.executeOperation('deleteResourceSync', async () =>
-			(await this.grpc).deleteResourceSync({ resourceKey })
+			(await this.grpc).deleteResourceSync({ resourceKey, operationReference })
 		)
 	}
 
@@ -827,8 +836,14 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 */
 	public failJob(failJobRequest: Grpc.FailJobRequest): Promise<void> {
+		const variables = failJobRequest.variables ? failJobRequest.variables : {}
+		const withStringifiedVariables = stringifyVariables({
+			...failJobRequest,
+			variables,
+		})
+
 		return this.executeOperation('failJob', async () =>
-			(await this.grpc).failJobSync(failJobRequest)
+			(await this.grpc).failJobSync(withStringifiedVariables)
 		)
 	}
 
@@ -869,8 +884,10 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 */
 	public modifyProcessInstance(
-		modifyProcessInstanceRequest: Grpc.ModifyProcessInstanceRequest
+		modifyProcessInstanceRequest: ZB.ModifyProcessInstanceReq
 	): Promise<Grpc.ModifyProcessInstanceResponse> {
+		const operationReference =
+			modifyProcessInstanceRequest.operationReference?.toString()
 		return this.executeOperation('modifyProcessInstance', async () => {
 			// We accept JSONDoc for the variableInstructions, but the actual gRPC call needs stringified JSON, so transform it with a mutation
 			const req = Utils.deepClone(modifyProcessInstanceRequest)
@@ -881,6 +898,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			)
 			return (await this.grpc).modifyProcessInstanceSync({
 				...req,
+				operationReference,
 			})
 		})
 	}
@@ -890,12 +908,15 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * @since 8.5.0
 	 */
 	public migrateProcessInstance(
-		migrateProcessInstanceRequest: Grpc.MigrateProcessInstanceRequest
+		migrateProcessInstanceRequest: ZB.MigrateProcessInstanceReq
 	): Promise<Grpc.MigrateProcessInstanceResponse> {
+		const operationReference =
+			migrateProcessInstanceRequest.operationReference?.toString()
 		return this.executeOperation('migrateProcessInstance', async () =>
-			(await this.grpc).migrateProcessInstanceSync(
-				migrateProcessInstanceRequest
-			)
+			(await this.grpc).migrateProcessInstanceSync({
+				...migrateProcessInstanceRequest,
+				operationReference,
+			})
 		)
 	}
 
@@ -1027,10 +1048,15 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 */
 	public resolveIncident(
-		resolveIncidentRequest: Grpc.ResolveIncidentRequest
+		resolveIncidentRequest: ZB.ResolveIncidentReq
 	): Promise<void> {
+		const operationReference =
+			resolveIncidentRequest.operationReference?.toString()
 		return this.executeOperation('resolveIncident', async () =>
-			(await this.grpc).resolveIncidentSync(resolveIncidentRequest)
+			(await this.grpc).resolveIncidentSync({
+				...resolveIncidentRequest,
+				operationReference,
+			})
 		)
 	}
 
@@ -1080,8 +1106,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				? losslessStringify(request.variables)
 				: request.variables
 
+		const operationReference = request.operationReference?.toString()
 		return this.executeOperation('setVariables', async () =>
-			(await this.grpc).setVariablesSync({ ...request, variables })
+			(await this.grpc).setVariablesSync({
+				...request,
+				variables,
+				operationReference,
+			})
 		)
 	}
 
@@ -1315,10 +1346,15 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * ```
 	 */
 	public updateJobRetries(
-		updateJobRetriesRequest: Grpc.UpdateJobRetriesRequest
+		updateJobRetriesRequest: ZB.UpdateJobRetriesReq
 	): Promise<void> {
+		const operationReference =
+			updateJobRetriesRequest.operationReference?.toString()
 		return this.executeOperation('updateJobRetries', async () =>
-			(await this.grpc).updateJobRetriesSync(updateJobRetriesRequest)
+			(await this.grpc).updateJobRetriesSync({
+				...updateJobRetriesRequest,
+				operationReference,
+			})
 		)
 	}
 
@@ -1334,10 +1370,15 @@ export class ZeebeGrpcClient extends TypedEmitter<
       - no deadline exists for the given job key
  	*/
 	public updateJobTimeout(
-		updateJobTimeoutRequest: Grpc.UpdateJobTimeoutRequest
+		updateJobTimeoutRequest: ZB.UpdateJobTimeoutReq
 	): Promise<void> {
+		const operationReference =
+			updateJobTimeoutRequest.operationReference?.toString()
 		return this.executeOperation('updateJobTimeout', async () =>
-			(await this.grpc).updateJobTimeoutSync(updateJobTimeoutRequest)
+			(await this.grpc).updateJobTimeoutSync({
+				...updateJobTimeoutRequest,
+				operationReference,
+			})
 		)
 	}
 

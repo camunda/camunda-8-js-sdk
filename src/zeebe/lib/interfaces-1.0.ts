@@ -1,9 +1,11 @@
 import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
+import { LosslessNumber } from 'lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
 import { GrpcClient } from './GrpcClient'
 import {
+	ActivateInstruction,
 	ActivateJobsRequest,
 	BroadcastSignalRequest,
 	BroadcastSignalResponse,
@@ -20,6 +22,7 @@ import {
 	FailJobRequest,
 	MigrateProcessInstanceRequest,
 	MigrateProcessInstanceResponse,
+	MigrationPlan,
 	ModifyProcessInstanceRequest,
 	ModifyProcessInstanceResponse,
 	ProcessInstanceCreationStartInstruction,
@@ -28,6 +31,7 @@ import {
 	ResolveIncidentRequest,
 	SetVariablesRequestOnTheWire,
 	StreamActivatedJobsRequest,
+	TerminateInstruction,
 	ThrowErrorRequest,
 	TopologyResponse,
 	UpdateJobRetriesRequest,
@@ -61,6 +65,8 @@ export interface CreateProcessBaseRequest<V extends JSONDoc> {
 	variables: V
 	/** The tenantId for a multi-tenant enabled cluster. */
 	tenantId?: string
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
 }
 
 export interface CreateProcessInstanceReq<V extends JSONDoc>
@@ -133,6 +139,10 @@ export interface JobFailureConfiguration {
 	 * Optional backoff for subsequent retries, in milliseconds. If not specified, it is zero.
 	 */
 	retryBackOff?: number
+	/**
+	 * Optional variable update for the job
+	 */
+	variables?: JSONDoc
 }
 
 declare function FailureHandler(
@@ -400,6 +410,50 @@ export interface BroadcastSignalRes {
 	key: string
 }
 
+export interface ResolveIncidentReq {
+	readonly incidentKey: string
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface UpdateJobRetriesReq {
+	readonly jobKey: string
+	retries: number
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface UpdateJobTimeoutReq {
+	readonly jobKey: string
+	/** the duration of the new timeout in ms, starting from the current moment */
+	timeout: number
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface ModifyProcessInstanceReq {
+	/** the key of the process instance that should be modified */
+	processInstanceKey: string
+	/**
+	 * instructions describing which elements should be activated in which scopes,
+	 * and which variables should be created
+	 */
+	activateInstructions?: ActivateInstruction[]
+	/** instructions describing which elements should be terminated */
+	terminateInstructions?: TerminateInstruction[]
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface MigrateProcessInstanceReq {
+	// key of the process instance to migrate
+	processInstanceKey: string
+	// the migration plan that defines target process and element mappings
+	migrationPlan: MigrationPlan
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
+}
+
 export interface ZBGrpc extends GrpcClient {
 	completeJobSync: (req: CompleteJobRequest) => Promise<void>
 	activateJobsStream: (
@@ -434,6 +488,7 @@ export interface ZBGrpc extends GrpcClient {
 	): Promise<CreateProcessInstanceWithResultResponseOnWire>
 	cancelProcessInstanceSync(processInstanceKey: {
 		processInstanceKey: string | number
+		operationReference?: string
 	}): Promise<void>
 	migrateProcessInstanceSync(
 		request: MigrateProcessInstanceRequest
