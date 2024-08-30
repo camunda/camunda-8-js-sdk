@@ -603,12 +603,28 @@ You should call only one job action method in the worker handler. This is a bug 
 		}
 		this.activeJobs += res.jobs.length
 
-		const jobs = res.jobs.map((job) =>
-			parseVariablesAndCustomHeadersToJSON<
-				WorkerInputVariables,
-				CustomHeaderShape
-			>(job, this.inputVariableDto, this.customHeadersDto)
-		)
-		this.handleJobs(jobs)
+		Promise.all(
+			res.jobs
+				.map((job) =>
+					parseVariablesAndCustomHeadersToJSON<
+						WorkerInputVariables,
+						CustomHeaderShape
+					>(job, this.inputVariableDto, this.customHeadersDto)
+						.then((job) => job)
+						.catch((e) => {
+							this.zbClient.failJob({
+								jobKey: job.key,
+								errorMessage: `Error parsing variable payload: ${e}`,
+								retries: job.retries - 1,
+								retryBackOff: 0,
+							})
+							return null
+						})
+				)
+				.filter(
+					(f): f is Promise<ZB.Job<WorkerInputVariables, CustomHeaderShape>> =>
+						!!f
+				)
+		).then((jobs) => this.handleJobs(jobs))
 	}
 }
