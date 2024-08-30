@@ -66,20 +66,28 @@ export class ZBStreamWorker implements IZBJobWorker {
 					console.error(e)
 				})
 				stream.on('data', (res: ActivatedJob) => {
-					// Make handlers
-					const job: Job<WorkerInputVariables, CustomHeaderShape> =
-						parseVariablesAndCustomHeadersToJSON<
-							WorkerInputVariables,
-							CustomHeaderShape
-						>(res, inputVariableDto, customHeadersDto)
-					taskHandler(
-						{
-							...job,
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							...this.makeCompleteHandlers(job as any, req.type),
-						},
-						this
-					)
+					parseVariablesAndCustomHeadersToJSON<
+						WorkerInputVariables,
+						CustomHeaderShape
+					>(res, inputVariableDto, customHeadersDto)
+						.then((job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+							taskHandler(
+								{
+									...job,
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
+									...this.makeCompleteHandlers(job as any, req.type),
+								},
+								this
+							)
+						})
+						.catch((e) =>
+							this.zbClient.failJob({
+								jobKey: res.key,
+								errorMessage: `Error parsing variable payload ${e}`,
+								retries: res.retries - 1,
+								retryBackOff: 0,
+							})
+						)
 				})
 				this.streams.push(stream)
 				return {
