@@ -1,3 +1,10 @@
+## [8.6.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.11...v8.6.12) (2024-08-30)
+
+
+### Bug Fixes
+
+* **zeebe:** fail job if variables cannot be parsed ([495c05e](https://github.com/camunda/camunda-8-js-sdk/commit/495c05ef22254f231349dc432982aa9419e8c91d)), closes [#236](https://github.com/camunda/camunda-8-js-sdk/issues/236)
+
 ## [8.6.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.10...v8.6.11) (2024-08-21)
 
 
