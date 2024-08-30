@@ -12,6 +12,8 @@ import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 
+import { C8RestClient } from './lib/C8RestClient'
+
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
  *
@@ -23,12 +25,12 @@ import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
  *
  * const c8 = new Camunda8()
  * const zeebe = c8.getZeebeGrpcApiClient()
- * const zeebeRest = c8.getZeebeRestClient()
  * const operate = c8.getOperateApiClient()
  * const optimize = c8.getOptimizeApiClient()
  * const tasklist = c8.getTasklistApiClient()
  * const modeler = c8.getModelerApiClient()
  * const admin = c8.getAdminApiClient()
+ * const c8Rest = c8.getC8RestClient()
  * ```
  */
 export class Camunda8 {
@@ -41,6 +43,7 @@ export class Camunda8 {
 	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IOAuthProvider
+	private c8RestClient?: C8RestClient
 
 	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
 		this.configuration =
@@ -108,6 +111,9 @@ export class Camunda8 {
 		return this.zeebeGrpcApiClient
 	}
 
+	/**
+	 * @deprecated from 8.6. Please use getC8RestClient() instead.
+	 */
 	public getZeebeRestClient(): ZeebeRestClient {
 		if (!this.zeebeRestClient) {
 			this.zeebeRestClient = new ZeebeRestClient({
@@ -116,5 +122,15 @@ export class Camunda8 {
 			})
 		}
 		return this.zeebeRestClient
+	}
+
+	public getC8RestClient(): C8RestClient {
+		if (!this.c8RestClient) {
+			this.c8RestClient = new C8RestClient({
+				config: this.configuration,
+				oAuthProvider: this.oAuthProvider,
+			})
+		}
+		return this.c8RestClient
 	}
 }
