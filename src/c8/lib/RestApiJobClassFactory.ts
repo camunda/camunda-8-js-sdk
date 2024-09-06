@@ -25,12 +25,12 @@ function createMemoizedSpecializedRestApiJobClassFactory() {
 		CustomHeaders extends LosslessDto,
 	>(
 		inputVariableDto: new (obj: any) => Variables,
-		customHeaders: new (obj: any) => CustomHeaders
+		customHeadersDto: new (obj: any) => CustomHeaders
 	): new (obj: any) => RestApiJob<Variables, CustomHeaders> {
 		// Create a unique cache key based on the class and inputs
 		const cacheKey = JSON.stringify({
 			inputVariableDto,
-			customHeaders,
+			customHeadersDto,
 		})
 
 		// Check for cached result
@@ -53,7 +53,7 @@ function createMemoizedSpecializedRestApiJobClassFactory() {
 		)
 		Reflect.defineMetadata(
 			'child:class',
-			customHeaders,
+			customHeadersDto,
 			NewRestApiJobClass.prototype,
 			'customHeaders'
 		)
