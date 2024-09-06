@@ -4,18 +4,18 @@ import got from 'got'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
-	DeepPartial,
-	GetCustomCertificateBuffer,
-	GotRetryConfig,
-	LosslessDto,
-	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
+	DeepPartial,
+	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
 	gotErrorHandler,
+	GotRetryConfig,
+	LosslessDto,
 	losslessParse,
 	losslessStringify,
 	makeBeforeRetryHandlerFor401TokenRetry,
+	RequireConfiguration,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
 import {
@@ -23,12 +23,17 @@ import {
 	CompleteJobRequest,
 	ErrorJobWithVariables,
 	FailJobRequest,
+	IProcessVariables,
+	Job,
+	JOB_ACTION_ACKNOWLEDGEMENT,
+	JobCompletionInterfaceRest,
 	PublishMessageRequest,
 	PublishMessageResponse,
 	TopologyResponse,
 } from '../../zeebe/types'
 
-import { Job, JobUpdateChangeset, NewUserInfo, TaskChangeSet } from './C8Dto'
+import { Ctor, JobUpdateChangeset, NewUserInfo, TaskChangeSet } from './C8Dto'
+import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 
 const trace = debug('camunda:zeebe')
 
@@ -240,42 +245,72 @@ export class C8RestClient {
 	/**
 	 * Iterate through all known partitions and activate jobs up to the requested maximum.
 	 *
-	 * The type parameter T specifies the type of the job payload. This can be set to a class that extends LosslessDto to provide
-	 * both type information in your code, and safe interoperability with other applications that natively support the int64 type.
+	 * The parameter Variables is a Dto to decode the job payload. The CustomHeaders parameter is a Dto to decode the custom headers.
+	 * Pass in a Dto class that extends LosslessDto to provide both type information in your code,
+	 * and safe interoperability with other applications that natively support the int64 type.
 	 */
-	public async activateJobs<T = LosslessDto>(
-		request: ActivateJobsRequest
-	): Promise<Job[]> {
+	public async activateJobs<
+		VariablesDto extends LosslessDto,
+		CustomHeadersDto extends LosslessDto,
+	>(
+		request: ActivateJobsRequest & {
+			inputVariableDto?: Ctor<VariablesDto>
+			customHeadersDto?: Ctor<CustomHeadersDto>
+		}
+	): Promise<
+		(Job<VariablesDto, CustomHeadersDto> &
+			JobCompletionInterfaceRest<IProcessVariables>)[]
+	> {
 		const headers = await this.getHeaders()
+
+		const {
+			inputVariableDto = LosslessDto,
+			customHeadersDto = LosslessDto,
+			...req
+		} = request
+
+		const body = losslessStringify(this.addDefaultTenantId(req))
+
+		const jobDto = createSpecializedRestApiJobClass(
+			inputVariableDto,
+			customHeadersDto
+		)
 
 		return this.rest.then((rest) =>
 			rest
 				.post(`jobs/activation`, {
-					body: losslessStringify(this.addDefaultTenantId(request)),
+					body,
 					headers,
-					parseJson: (text) => losslessParse(text, Job<T>),
+					parseJson: (text) => losslessParse(text, jobDto, 'jobs'),
 				})
-				.json()
+				.json<{ jobs: Job<VariablesDto, CustomHeadersDto>[] }>()
+				.then((activatedJobs) => activatedJobs.jobs.map(this.addJobMethods))
 		)
 	}
 
 	/**
 	 * Fails a job using the provided job key. This method sends a POST request to the endpoint '/jobs/{jobKey}/fail' with the failure reason and other details specified in the failJobRequest object.
+	 * @throws
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/fail-job/
 	 */
 	public async failJob(failJobRequest: FailJobRequest) {
 		const { jobKey } = failJobRequest
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`jobs/${jobKey}/fail`, {
-				body: losslessStringify(failJobRequest),
-				headers,
-			})
+			rest
+				.post(`jobs/${jobKey}/fail`, {
+					body: losslessStringify(failJobRequest),
+					headers,
+				})
+				.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 		)
 	}
 
 	/**
 	 * Reports a business error (i.e. non-technical) that occurs while processing a job.
+	 * @throws
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/report-error-for-job/
 	 */
 	public async errorJob(
 		errorJobRequest: ErrorJobWithVariables & { jobKey: string }
@@ -284,25 +319,31 @@ export class C8RestClient {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`jobs/${jobKey}/error`, {
-				body: losslessStringify(request),
-				headers,
-			})
+			rest
+				.post(`jobs/${jobKey}/error`, {
+					body: losslessStringify(request),
+					headers,
+				})
+				.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 		)
 	}
 
 	/**
 	 * Complete a job with the given payload, which allows completing the associated service task.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/complete-job/
+	 * @throws
 	 */
 	public async completeJob(completeJobRequest: CompleteJobRequest) {
 		const { jobKey } = completeJobRequest
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`jobs/${jobKey}/complete`, {
-				body: losslessStringify({ variables: completeJobRequest.variables }),
-				headers,
-			})
+			rest
+				.post(`jobs/${jobKey}/complete`, {
+					body: losslessStringify({ variables: completeJobRequest.variables }),
+					headers,
+				})
+				.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 		)
 	}
 
@@ -331,6 +372,31 @@ export class C8RestClient {
 				headers,
 			})
 		)
+	}
+
+	private addJobMethods = <Variables, CustomHeaders>(
+		job: Job<Variables, CustomHeaders>
+	): Job<Variables, CustomHeaders> &
+		JobCompletionInterfaceRest<IProcessVariables> => {
+		return {
+			...job,
+			cancelWorkflow: () => {
+				throw new Error('Not Implemented')
+			},
+			complete: (variables: IProcessVariables = {}) =>
+				this.completeJob({
+					jobKey: job.key,
+					variables,
+				}),
+			error: (error) =>
+				this.errorJob({
+					...error,
+					jobKey: job.key,
+				}),
+			fail: (failJobRequest) => this.failJob(failJobRequest),
+			/* At this point, no capacity handling in the SDK is implemented, so this has no effect */
+			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
+		}
 	}
 
 	/**

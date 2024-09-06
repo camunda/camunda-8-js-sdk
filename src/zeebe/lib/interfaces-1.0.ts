@@ -199,6 +199,44 @@ export interface JobCompletionInterface<WorkerOutputVariables> {
 	error: ErrorJobOutcome
 }
 
+export interface JobCompletionInterfaceRest<WorkerOutputVariables> {
+	/**
+	 * Cancel the workflow.
+	 */
+	cancelWorkflow: () => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
+	 * Complete the job with a success, optionally passing in a state update to merge
+	 * with the process variables on the broker.
+	 */
+	complete: (
+		updatedVariables?: WorkerOutputVariables
+	) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
+	 * Fail the job with an informative message as to the cause. Optionally, pass in a
+	 * value remaining retries. If no value is passed for retries then the current retry
+	 * count is decremented. Pass in `0`for retries to raise an incident in Operate. Optionally,
+	 * specify a retry backoff period in milliseconds. Default is 0ms (immediate retry) if not
+	 * specified.
+	 */
+	fail: typeof FailureHandler
+	/**
+	 * Mark this job as forwarded to another system for completion. No action is taken by the broker.
+	 * This method releases worker capacity to handle another job.
+	 */
+	forward: () => JOB_ACTION_ACKNOWLEDGEMENT
+	/**
+	 *
+	 * Report a business error (i.e. non-technical) that occurs while processing a job.
+	 * The error is handled in the process by an error catch event.
+	 * If there is no error catch event with the specified errorCode then an incident will be raised instead.
+	 */
+	error: (error: ErrorJobWithVariables) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
+	 * Extend the timeout for the job - to be implemented when ModifyJobTimeout becomes available
+	 */
+	// extendJobTimeout()
+}
+
 export interface ZeebeJob<
 	WorkerInputVariables = IInputVariables,
 	CustomHeaderShape = ICustomHeaders,
