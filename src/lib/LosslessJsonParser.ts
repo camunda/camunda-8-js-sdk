@@ -134,9 +134,15 @@ export function losslessParseArray<T = any>(
  */
 export function losslessParse<T = any>(
 	json: string,
-	dto?: { new (...args: any[]): T }
+	dto?: { new (...args: any[]): T },
+	keyToParse?: string
 ): T {
 	const parsedLossless = parse(json) as any
+
+	// If keyToParse is provided, check for it in the parsed object
+	if (keyToParse && parsedLossless[keyToParse]) {
+		return losslessParse(stringify(parsedLossless[keyToParse]) as string, dto)
+	}
 
 	if (Array.isArray(parsedLossless)) {
 		debug(`Array input detected. Parsing array.`)

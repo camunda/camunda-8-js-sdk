@@ -344,3 +344,11 @@ test('LosslessStringify correctly handles null objects', () => {
 	const stringifiedDto = losslessStringify(json)
 	expect(stringifiedDto).toBe(`{"abc":[null,null,null]}`) // 3 (string)
 })
+
+test('LosslessJsonParser handles subkeys', () => {
+	const jsonString = `{"jobs":[{"key":2251799813737371,"type":"console-log-complete","processInstanceKey":2251799813737366,"bpmnProcessId":"hello-world-complete","processDefinitionVersion":1,"processDefinitionKey":2251799813736299,"elementId":"ServiceTask_0g6tf5f","elementInstanceKey":2251799813737370,"customHeaders":{"message":"Hello World"},"worker":"test","retries":100,"deadline":1725501895792,"variables":{},"tenantId":"<default>"}]}`
+
+	const parsed = losslessParse(jsonString, undefined, 'jobs')
+	console.log(parsed)
+	expect(parsed[0].key).toBe(2251799813737371)
+})

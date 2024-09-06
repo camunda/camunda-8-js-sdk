@@ -1,9 +1,11 @@
 import { LosslessNumber } from 'lossless-json'
 
 import { Int64String, LosslessDto } from '../../lib'
-import { JSONDoc } from '../../zeebe/types'
 
-export class Job<T = LosslessDto> extends LosslessDto {
+export class RestApiJob<
+	Variables = LosslessDto,
+	CustomHeaders = LosslessDto,
+> extends LosslessDto {
 	@Int64String
 	key!: string
 	type!: string
@@ -16,12 +18,12 @@ export class Job<T = LosslessDto> extends LosslessDto {
 	elementId!: string
 	@Int64String
 	elementInstanceKey!: LosslessNumber
-	customHeaders!: T
+	customHeaders!: CustomHeaders
 	worker!: string
 	retries!: number
 	@Int64String
 	deadline!: LosslessNumber
-	variables!: JSONDoc
+	variables!: Variables
 	tenantId!: string
 }
 
@@ -55,3 +57,6 @@ export interface NewUserInfo {
 	email: string
 	enabled: boolean
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Ctor<T> = new (obj: any) => T
