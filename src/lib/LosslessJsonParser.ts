@@ -7,7 +7,11 @@
  *
  * It also handles nested Dtos by using the `@ChildDto` decorator.
  *
+ * Update: added an optional `key` parameter to support the Camunda 8 REST API's use of an array under a key, e.g. { jobs : Job[] }
+ *
  * More details on the design here: https://github.com/camunda/camunda-8-js-sdk/issues/81#issuecomment-2022213859
+ *
+ * See this article to understand why this is necessary: https://jsoneditoronline.org/indepth/parse/why-does-json-parse-corrupt-large-numbers/
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -127,6 +131,7 @@ export function losslessParseArray<T = any>(
 }
 
 /**
+ * losslessParse uses lossless-json parse to deserialize JSON.
  * With no Dto, the parser will throw if it encounters an int64 number that cannot be safely represented as a JS number.
  *
  * @param json the JSON string to parse

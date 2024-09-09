@@ -21,6 +21,7 @@ import { IOAuthProvider } from '../../oauth'
 import {
 	ActivateJobsRequest,
 	CompleteJobRequest,
+	CreateProcessInstanceRequest,
 	ErrorJobWithVariables,
 	FailJobRequest,
 	IProcessVariables,
@@ -58,6 +59,7 @@ export class C8RestClient {
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = createUserAgentString(config)
 		this.tenantId = config.CAMUNDA_TENANT_ID
+
 		const baseUrl = RequireConfiguration(
 			config.ZEEBE_REST_ADDRESS,
 			'ZEEBE_REST_ADDRESS'
@@ -269,7 +271,7 @@ export class C8RestClient {
 			...req
 		} = request
 
-		const body = losslessStringify(this.addDefaultTenantId(req))
+		const body = losslessStringify(this.addDefaultTenantIds(req))
 
 		const jobDto = createSpecializedRestApiJobClass(
 			inputVariableDto,
@@ -364,11 +366,48 @@ export class C8RestClient {
 		)
 	}
 
+	/**
+	 * Marks the incident as resolved; most likely a call to Update job will be necessary to reset the job’s retries, followed by this call.
+	 */
 	public async resolveIncident(incidentKey: string) {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
 			rest.post(`incidents/${incidentKey}/resolve`, {
+				headers,
+			})
+		)
+	}
+
+	/**
+	 * Create and start a process instance
+	 */
+	public async createProcessInstance(request: CreateProcessInstanceRequest) {
+		const headers = await this.getHeaders()
+
+		return this.rest.then((rest) =>
+			rest.post(`process-instances`, {
+				body: losslessStringify(this.addDefaultTenantId(request)),
+				headers,
+			})
+		)
+	}
+
+	/**
+	 * Cancel an active process instance
+	 */
+	public async cancelProcessInstance({
+		processInstanceKey,
+		operationReference,
+	}: {
+		processInstanceKey: string
+		operationReference?: string
+	}) {
+		const headers = await this.getHeaders()
+
+		return this.rest.then((rest) =>
+			rest.post(`process-instances/${processInstanceKey}/cancellation`, {
+				body: JSON.stringify({ operationReference }),
 				headers,
 			})
 		)
@@ -396,14 +435,24 @@ export class C8RestClient {
 			fail: (failJobRequest) => this.failJob(failJobRequest),
 			/* At this point, no capacity handling in the SDK is implemented, so this has no effect */
 			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
+			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
+				this.updateJob({ jobKey: job.key, timeout: newTimeoutMs }),
 		}
 	}
 
 	/**
 	 * Helper method to add the default tenantIds if we are not passed explicit tenantIds
 	 */
-	private addDefaultTenantId<T extends { tenantIds?: string[] }>(request: T) {
-		const tenantIds = request.tenantIds ?? this.tenantId ? [this.tenantId] : []
+	private addDefaultTenantId<T extends { tenantId?: string }>(request: T) {
+		const tenantId = request.tenantId ?? this.tenantId
+		return { ...request, tenantId }
+	}
+
+	/**
+	 * Helper method to add the default tenantIds if we are not passed explicit tenantIds
+	 */
+	private addDefaultTenantIds<T extends { tenantIds?: string[] }>(request: T) {
+		const tenantIds = request.tenantIds ?? [this.tenantId]
 		return { ...request, tenantIds }
 	}
 }
