@@ -1,5 +1,6 @@
 import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
+import { Response } from 'got'
 import { LosslessNumber } from 'lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
@@ -232,9 +233,13 @@ export interface JobCompletionInterfaceRest<WorkerOutputVariables> {
 	 */
 	error: (error: ErrorJobWithVariables) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
 	/**
-	 * Extend the timeout for the job - to be implemented when ModifyJobTimeout becomes available
+	 * Extend the timeout for the job by setting a new timeout
 	 */
-	// extendJobTimeout()
+	modifyJobTimeout: ({
+		newTimeoutMs,
+	}: {
+		newTimeoutMs: number
+	}) => Promise<Response<string>>
 }
 
 export interface ZeebeJob<
