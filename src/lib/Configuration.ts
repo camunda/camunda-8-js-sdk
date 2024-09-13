@@ -24,6 +24,7 @@ const getMainEnv = () =>
 		ZEEBE_GRPC_ADDRESS: {
 			type: 'string',
 			optional: true,
+			default: 'localhost:26500',
 		},
 		/** The address for the Zeebe REST API. Defaults to localhost:8080 */
 		ZEEBE_REST_ADDRESS: {
@@ -35,7 +36,6 @@ const getMainEnv = () =>
 		ZEEBE_ADDRESS: {
 			type: 'string',
 			optional: true,
-			default: 'localhost:26500',
 		},
 		/** This is the client ID for the client credentials */
 		ZEEBE_CLIENT_ID: {
