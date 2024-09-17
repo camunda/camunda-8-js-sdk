@@ -352,3 +352,35 @@ test('LosslessJsonParser handles subkeys', () => {
 	console.log(parsed)
 	expect(parsed[0].key).toBe(2251799813737371)
 })
+
+test('LosslessJsonParser will throw if given stringified JSON with an unsafe integer number', () => {
+	let threw = false
+	const json = `{"unsafeNumber": 9223372036854775808}` // Unsafe integer (greater than Int64 max)
+
+	try {
+		losslessParse(json) // Attempt to parse un-mapped JSON directly
+	} catch (e) {
+		threw = true
+		expect((e as Error).message.includes('unsafe number value')).toBe(true)
+	}
+
+	expect(threw).toBe(true)
+})
+
+test('LosslessJsonParser will throw if given stringified JSON with an unsafe integer number, even with a Dto', () => {
+	let threw = false
+	const json = `{"unsafeNumber": 9223372036854775808}` // Unsafe integer (greater than Int64 max)
+
+	class Dto extends LosslessDto {
+		unsafeNumber!: number
+	}
+
+	try {
+		losslessParse(json, Dto) // Attempt to parse mapped JSON without a mapping
+	} catch (e) {
+		threw = true
+		expect((e as Error).message.includes('unsafe number value')).toBe(true)
+	}
+
+	expect(threw).toBe(true)
+})
