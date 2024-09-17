@@ -50,6 +50,12 @@ test('stringifyVariables stringifies the variables key of a job object', () => {
 	expect(stringified.variables).toBe(expectedStringifiedVariables)
 })
 
+test('stringifyVariables throws an error when passed an array', () => {
+	const arrayInput = { variables: ['something'] }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	expect(() => stringifyVariables(arrayInput as any)).toThrow(Error)
+})
+
 test('parseVariables returns a new object', () => {
 	expect(parseVariables(jobDictionary)).not.toEqual(jobDictionary)
 })
