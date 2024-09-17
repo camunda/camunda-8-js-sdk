@@ -14,9 +14,13 @@ const grpcClient = new ZeebeGrpcClient({
 const restClient = new C8RestClient()
 
 beforeAll(async () => {
-	res = await grpcClient.deployResource({
-		processFilename: './src/__tests__/testdata/hello-world-complete.bpmn',
-	})
+	res = (await restClient.deployResourcesFromFiles([
+		'./src/__tests__/testdata/hello-world-complete.bpmn',
+	])) as unknown as DeployResourceResponse<ProcessDeployment>
+	// res = await grpcClient.deployResource({
+	// 	processFilename: './src/__tests__/testdata/hello-world-complete.bpmn',
+	// })
+	console.log(res)
 	bpmnProcessId = res.deployments[0].process.bpmnProcessId
 })
 
@@ -29,10 +33,11 @@ test('Can service a task', (done) => {
 	grpcClient
 		.createProcessInstance({
 			bpmnProcessId,
-			variables: {},
+			variables: {
+				someNumberField: 8,
+			},
 		})
-		.then((r) => {
-			console.log(r)
+		.then(() => {
 			restClient
 				.activateJobs({
 					maxJobsToActivate: 2,
@@ -43,10 +48,8 @@ test('Can service a task', (done) => {
 				})
 				.then((jobs) => {
 					expect(jobs.length).toBe(1)
-					console.log(jobs)
-					const res = jobs.map((job) => job.complete())
-					console.log(res)
-					Promise.all(res).then(() => done())
+
+					jobs[0].complete().then(() => done())
 				})
 		})
 })

@@ -312,8 +312,6 @@ export class GrpcClient extends EventEmitter {
 				this[`${methodName}Stream`] = async (data) => {
 					debug(`Calling ${methodName}Stream...`, host)
 					if (this.closing) {
-						// tslint:disable-next-line: no-console
-						console.log('Short-circuited on channel closed') // @DEBUG
 						return
 					}
 					let stream: ClientReadableStream<unknown>
@@ -660,8 +658,7 @@ export class GrpcClient extends EventEmitter {
 						if (isError) {
 							if (
 								callStatus.code === 1 &&
-								callStatus.details.includes('503') // ||
-								// callStatus.code === 13
+								callStatus.details.includes('503') // 'Service Unavailable'
 							) {
 								return this.emit(MiddlewareSignals.Event.GrpcInterceptError, {
 									callStatus,

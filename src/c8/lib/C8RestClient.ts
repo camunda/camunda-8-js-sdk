@@ -1,4 +1,7 @@
+import fs from 'node:fs'
+
 import { debug } from 'debug'
+import FormData from 'form-data'
 import got from 'got'
 
 import {
@@ -86,8 +89,6 @@ export class C8RestClient {
 					},
 				})
 		)
-
-		// this.tenantId = config.CAMUNDA_TENANT_ID
 	}
 
 	private async getHeaders() {
@@ -285,8 +286,8 @@ export class C8RestClient {
 					headers,
 					parseJson: (text) => losslessParse(text, jobDto, 'jobs'),
 				})
-				.json<{ jobs: Job<VariablesDto, CustomHeadersDto>[] }>()
-				.then((activatedJobs) => activatedJobs.jobs.map(this.addJobMethods))
+				.json<Job<VariablesDto, CustomHeadersDto>[]>()
+				.then((activatedJobs) => activatedJobs.map(this.addJobMethods))
 		)
 	}
 
@@ -301,7 +302,7 @@ export class C8RestClient {
 
 		return this.rest.then((rest) =>
 			rest
-				.post(`jobs/${jobKey}/fail`, {
+				.post(`jobs/${jobKey}/failure`, {
 					body: losslessStringify(failJobRequest),
 					headers,
 				})
@@ -325,6 +326,7 @@ export class C8RestClient {
 				.post(`jobs/${jobKey}/error`, {
 					body: losslessStringify(request),
 					headers,
+					parseJson: (text) => losslessParse(text),
 				})
 				.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 		)
@@ -341,7 +343,7 @@ export class C8RestClient {
 
 		return this.rest.then((rest) =>
 			rest
-				.post(`jobs/${jobKey}/complete`, {
+				.post(`jobs/${jobKey}/completion`, {
 					body: losslessStringify({ variables: completeJobRequest.variables }),
 					headers,
 				})
@@ -367,13 +369,13 @@ export class C8RestClient {
 	}
 
 	/**
-	 * Marks the incident as resolved; most likely a call to Update job will be necessary to reset the job’s retries, followed by this call.
+	 * Marks the incident as resolved; most likely a call to Update job will be necessary to reset the job's retries, followed by this call.
 	 */
 	public async resolveIncident(incidentKey: string) {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`incidents/${incidentKey}/resolve`, {
+			rest.post(`incidents/${incidentKey}/resolution`, {
 				headers,
 			})
 		)
@@ -411,6 +413,60 @@ export class C8RestClient {
 				headers,
 			})
 		)
+	}
+
+	/**
+	 * Deploy resources to the broker
+	 */
+	/**
+	 * Deploy resources to the broker.
+	 * @param resources - An array of binary data buffers representing the resources to deploy.
+	 * @param tenantId - Optional tenant ID to deploy the resources to. If not provided, the default tenant ID is used.
+	 */
+	public async deployResources(
+		resources: { content: string; name: string }[],
+		tenantId?: string
+	) {
+		const headers = await this.getHeaders()
+		const formData = new FormData()
+
+		resources.forEach((resource) => {
+			formData.append(`resources`, resource.content, {
+				filename: resource.name,
+			})
+		})
+
+		if (tenantId || this.tenantId) {
+			formData.append('tenantId', tenantId ?? this.tenantId)
+		}
+
+		return this.rest.then((rest) =>
+			rest
+				.post('deployments', {
+					body: formData,
+					headers: {
+						...headers,
+						...formData.getHeaders(),
+						Accept: 'application/json',
+					},
+					parseJson: (text) => losslessParse(text),
+				})
+				.json()
+		)
+	}
+
+	public async deployResourcesFromFiles(filenames: string[]) {
+		const resources: { content: string; name: string }[] = []
+
+		for (const filename of filenames) {
+			// const resource = await fs.promises.readFile(filename)
+			resources.push({
+				content: fs.readFileSync(filename, { encoding: 'binary' }),
+				name: filename,
+			})
+		}
+
+		return this.deployResources(resources)
 	}
 
 	private addJobMethods = <Variables, CustomHeaders>(

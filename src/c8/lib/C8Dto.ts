@@ -1,5 +1,3 @@
-import { LosslessNumber } from 'lossless-json'
-
 import { Int64String, LosslessDto } from '../../lib'
 
 export class RestApiJob<
@@ -10,19 +8,19 @@ export class RestApiJob<
 	key!: string
 	type!: string
 	@Int64String
-	processInstanceKey!: LosslessNumber
+	processInstanceKey!: string
 	bpmnProcessId!: string
 	processDefinitionVersion!: number
 	@Int64String
-	processDefinitionKey!: LosslessNumber
+	processDefinitionKey!: string
 	elementId!: string
 	@Int64String
-	elementInstanceKey!: LosslessNumber
+	elementInstanceKey!: string
 	customHeaders!: CustomHeaders
 	worker!: string
 	retries!: number
 	@Int64String
-	deadline!: LosslessNumber
+	deadline!: string
 	variables!: Variables
 	tenantId!: string
 }

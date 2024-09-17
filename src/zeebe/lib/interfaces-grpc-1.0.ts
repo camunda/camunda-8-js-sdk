@@ -61,7 +61,7 @@ export interface ActivateJobsRequest {
 	 * To immediately complete the request when no job is activated set the requestTimeout to a negative value
 	 *
 	 */
-	requestTimeout: MaybeTimeDuration
+	requestTimeout?: MaybeTimeDuration
 	/**
 	 * a list of IDs of tenants for which to activate jobs
 	 */

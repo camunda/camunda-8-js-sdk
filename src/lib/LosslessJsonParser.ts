@@ -1,6 +1,9 @@
 /**
  * This is a custom JSON Parser that handles lossless parsing of int64 numbers by using the lossless-json library.
  *
+ * This is motivated by the use of int64 for Camunda 8 Entity keys, which are not supported by JavaScript's Number type.
+ * Variables could also contain unsafe large integers if an external system sends them to the broker.
+ *
  * It converts all JSON numbers to lossless numbers, then converts them back to the correct type based on the metadata
  * of a Dto class - fields decorated with `@Int64` are converted to a `string`, fields decorated with `@BigIntValue` are
  * converted to `bigint`. All other numbers are converted to `number`. Throws if a number cannot be safely converted.
@@ -8,6 +11,9 @@
  * It also handles nested Dtos by using the `@ChildDto` decorator.
  *
  * Update: added an optional `key` parameter to support the Camunda 8 REST API's use of an array under a key, e.g. { jobs : Job[] }
+ *
+ * Note: the parser uses DTO classes that extend the LosslessDto class to perform mappings of numeric types. However, only the type of
+ * the annotated numerics is type-checked at runtime. Fields of other types are not checked.
  *
  * More details on the design here: https://github.com/camunda/camunda-8-js-sdk/issues/81#issuecomment-2022213859
  *
@@ -114,20 +120,13 @@ export function ChildDto(childClass: any) {
  * ```
  */
 export class LosslessDto {
-	constructor(obj: any) {
+	constructor(obj?: any) {
 		if (obj) {
 			for (const [key, value] of Object.entries(obj)) {
 				this[key] = value
 			}
 		}
 	}
-}
-
-export function losslessParseArray<T = any>(
-	json: string,
-	dto?: { new (...args: any[]): T }
-): T[] {
-	return losslessParse(json, dto) as T[]
 }
 
 /**
@@ -142,11 +141,37 @@ export function losslessParse<T = any>(
 	dto?: { new (...args: any[]): T },
 	keyToParse?: string
 ): T {
+	/**
+	 * lossless-json parse converts all numerics to LosslessNumber type instead of number type.
+	 * Here we safely parse the string into an JSON object with all numerics as type LosslessNumber.
+	 * This way we lose no fidelity at this stage, and can then use a supplied DTO to map large numbers
+	 * or throw if we find an unsafe number.
+	 */
 	const parsedLossless = parse(json) as any
 
-	// If keyToParse is provided, check for it in the parsed object
-	if (keyToParse && parsedLossless[keyToParse]) {
-		return losslessParse(stringify(parsedLossless[keyToParse]) as string, dto)
+	/**
+	 * Specifying a keyToParse value applies all the mapping functionality to a key of the object in the JSON.
+	 * gRPC API responses were naked objects or arrays of objects. REST response shapes typically have
+	 * an array under an object key - eg: { jobs: [ ... ] }
+	 *
+	 * Since we now have a safely parsed object, we can recursively call losslessParse with the key, if it exists.
+	 */
+	if (keyToParse) {
+		if (parsedLossless[keyToParse]) {
+			return losslessParse(stringify(parsedLossless[keyToParse]) as string, dto)
+		}
+		/**
+		 * A key was specified, but it was not found on the parsed object.
+		 * At this point we should throw, because we cannot perform the operation requested. Something has gone wrong with
+		 * the expected shape of the response.
+		 *
+		 * We throw an error with the actual shape of the object to help with debugging.
+		 */
+		throw new Error(
+			`Attempted to parse key ${keyToParse} on an object that does not have this key: ${stringify(
+				parsedLossless
+			)}`
+		)
 	}
 
 	if (Array.isArray(parsedLossless)) {
@@ -163,6 +188,10 @@ export function losslessParse<T = any>(
 	debug(`Got a Dto ${dto.name}. Parsing with annotations.`)
 	const parsed = parseWithAnnotations(parsedLossless, dto)
 	debug(`Converting remaining lossless numbers to numbers for ${dto.name}`)
+	/** All numbers are parsed to LosslessNumber by lossless-json. For any fields that should be numbers, we convert them
+	 * now to number. Because we expose large values as string or BigInt, the only Lossless numbers left on the object
+	 * are unmapped. So at this point we convert all remaining LosslessNumbers to number type if safe, and throw if not.
+	 */
 	return convertLosslessNumbersToNumberOrThrow(parsed)
 }
 
@@ -178,18 +207,18 @@ function parseWithAnnotations<T>(
 			if (Array.isArray(value)) {
 				// If the value is an array, parse each element with the specified child class
 				instance[key] = value.map((item) =>
-					losslessParse(stringify(item) as string, childClass)
+					losslessParse(stringify(item)!, childClass)
 				)
 			} else {
 				// If the value is an object, parse it with the specified child class
-				instance[key] = losslessParse(stringify(value) as string, childClass)
+				instance[key] = losslessParse(stringify(value)!, childClass)
 			}
 		} else {
 			if (Reflect.hasMetadata('type:int64', dto.prototype, key)) {
 				debug(`Parsing int64 field "${key}" to string`)
 				if (value) {
 					if (isLosslessNumber(value)) {
-						instance[key] = (value as LosslessNumber).toString()
+						instance[key] = value.toString()
 					} else {
 						throw new Error(
 							`Unexpected type: Received JSON ${typeof value} value for Int64String Dto field "${key}", expected number`
@@ -200,7 +229,7 @@ function parseWithAnnotations<T>(
 				debug(`Parsing bigint field ${key}`)
 				if (value) {
 					if (isLosslessNumber(value)) {
-						instance[key] = BigInt((value as LosslessNumber).toString())
+						instance[key] = BigInt(value.toString())
 					} else {
 						throw new Error(
 							`Unexpected type: Received JSON ${typeof value} value for BigIntValue Dto field "${key}", expected number`
@@ -228,7 +257,13 @@ function parseArrayWithAnnotations<T>(
 }
 
 /**
- * Convert all `LosslessNumber` instances to a number or throw if any are unsafe
+ * Convert all `LosslessNumber` instances to a number or throw if any are unsafe.
+ *
+ * All numerics are converted to LosslessNumbers by lossless-json parse. Then, if a DTO was provided,
+ * all mappings have been done to either BigInt or string type. So all remaining LosslessNumbers in the object
+ * are either unmapped or mapped to number.
+ *
+ * Here we convert all remaining LosslessNumbers to a safe number value, or throw if an unsafe value is detected.
  */
 function convertLosslessNumbersToNumberOrThrow<T>(obj: any): T {
 	debug(`Parsing LosslessNumbers to numbers for ${obj?.constructor?.name}`)
