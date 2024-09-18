@@ -31,8 +31,8 @@ test('Can start a process with a signal', async () => {
 
 	expect(res.key).toBeTruthy()
 
-	await new Promise((resolve) =>
-		c8.createJobWorker({
+	await new Promise((resolve) => {
+		const w = c8.createJobWorker({
 			type: 'signal-service-task',
 			worker: 'signal-worker',
 			timeout: 10000,
@@ -44,9 +44,9 @@ test('Can start a process with a signal', async () => {
 			jobHandler: (job) => {
 				const ack = job.complete()
 				expect(job.variables.success).toBe(true)
-				resolve(null)
+				w.stop().then(() => resolve(null))
 				return ack
 			},
 		})
-	)
+	})
 })
