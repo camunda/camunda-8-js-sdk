@@ -494,7 +494,7 @@ export interface MigrateProcessInstanceReq {
 	// the migration plan that defines target process and element mappings
 	migrationPlan: MigrationPlan
 	/** a reference key chosen by the user and will be part of all records resulted from this operation */
-	operationReference?: string
+	operationReference?: number | LosslessNumber
 }
 
 export interface ZBGrpc extends GrpcClient {

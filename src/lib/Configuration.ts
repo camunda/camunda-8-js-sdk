@@ -1,5 +1,6 @@
 import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
+import winston from 'winston'
 
 const getMainEnv = () =>
 	createEnv({
@@ -19,6 +20,13 @@ const getMainEnv = () =>
 			type: 'number',
 			optional: true,
 			default: 1000,
+		},
+		/** The log level for logging. Defaults to 'info'. Values (in order of priority): 'error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly' */
+		CAMUNDA_LOG_LEVEL: {
+			type: 'string',
+			optional: true,
+			choices: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+			default: 'info',
 		},
 		/** The address for the Zeebe GRPC. */
 		ZEEBE_GRPC_ADDRESS: {
@@ -378,6 +386,7 @@ export const CamundaEnvironmentVariableDictionary =
 		'CAMUNDA_CONSOLE_CLIENT_ID',
 		'CAMUNDA_CONSOLE_CLIENT_SECRET',
 		'CAMUNDA_CONSOLE_OAUTH_AUDIENCE',
+		'CAMUNDA_LOG_LEVEL',
 		'CAMUNDA_MODELER_BASE_URL',
 		'CAMUNDA_MODELER_OAUTH_AUDIENCE',
 		'CAMUNDA_OPERATE_BASE_URL',
@@ -429,3 +438,8 @@ export type CamundaPlatform8Configuration = ReturnType<
 export type DeepPartial<T> = {
 	[K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
 }
+
+export type Camunda8ClientConfiguration =
+	DeepPartial<CamundaPlatform8Configuration> & {
+		logger?: winston.Logger
+	}

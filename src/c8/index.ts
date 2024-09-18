@@ -1,9 +1,11 @@
+import winston from 'winston'
+
 import { AdminApiClient } from '../admin'
 import {
+	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	constructOAuthProvider,
-	DeepPartial,
 } from '../lib'
 import { ModelerApiClient } from '../modeler'
 import { IOAuthProvider } from '../oauth'
@@ -12,6 +14,7 @@ import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 
+import { getLogger } from './lib/C8Logger'
 import { C8RestClient } from './lib/C8RestClient'
 
 /**
@@ -44,11 +47,13 @@ export class Camunda8 {
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IOAuthProvider
 	private c8RestClient?: C8RestClient
+	public log: winston.Logger
 
-	constructor(config: DeepPartial<CamundaPlatform8Configuration> = {}) {
+	constructor(config: Camunda8ClientConfiguration = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
 		this.oAuthProvider = constructOAuthProvider(this.configuration)
+		this.log = getLogger(config)
 	}
 
 	public getOperateApiClient(): OperateApiClient {
