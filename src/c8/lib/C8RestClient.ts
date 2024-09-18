@@ -35,12 +35,12 @@ import {
 	JobCompletionInterfaceRest,
 	JSONDoc,
 	PublishMessageRequest,
-	PublishMessageResponse,
 	TopologyResponse,
 } from '../../zeebe/types'
 
 import {
 	BroadcastSignalResponse,
+	CorrelateMessageResponse,
 	CreateProcessInstanceResponse,
 	Ctor,
 	DecisionDeployment,
@@ -52,6 +52,7 @@ import {
 	MigrationRequest,
 	NewUserInfo,
 	ProcessDeployment,
+	PublishMessageResponse,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
 } from './C8Dto'
@@ -256,7 +257,7 @@ export class C8RestClient {
 			PublishMessageRequest,
 			'name' | 'correlationKey' | 'variables' | 'tenantId'
 		>
-	): Promise<PublishMessageResponse & { processInstanceKey: string }> {
+	) {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
@@ -264,8 +265,27 @@ export class C8RestClient {
 				.post(`messages/correlation`, {
 					body: losslessStringify(message),
 					headers,
+					parseJson: (text) => losslessParse(text, CorrelateMessageResponse),
 				})
-				.json()
+				.json<CorrelateMessageResponse>()
+		)
+	}
+
+	/**
+	 * Publishes a single message. Messages are published to specific partitions computed from their correlation keys.
+	 * The endpoint does not wait for a correlation result. Use `correlateMessage` for such use cases.
+	 */
+	public async publishMessage(publishMessageRequest: PublishMessageRequest) {
+		const headers = await this.getHeaders()
+		const request = this.addDefaultTenantId(publishMessageRequest)
+		return this.rest.then((rest) =>
+			rest
+				.post(`messages/publication`, {
+					headers,
+					body: stringify(request),
+					parseJson: (text) => losslessParse(text, PublishMessageResponse),
+				})
+				.json<PublishMessageResponse>()
 		)
 	}
 
