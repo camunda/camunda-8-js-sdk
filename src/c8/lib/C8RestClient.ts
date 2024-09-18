@@ -640,6 +640,23 @@ export class C8RestClient {
 	}
 
 	/**
+	 * Deletes a deployed resource. This can be a process definition, decision requirements definition, or form definition deployed using the deploy resources endpoint. Specify the resource you want to delete in the resourceKey parameter.
+	 */
+	public async deleteResource(req: {
+		resourceKey: string
+		operationReference?: number
+	}) {
+		const headers = await this.getHeaders()
+		const { resourceKey, operationReference } = req
+		return this.rest.then((rest) =>
+			rest.post(`resources/${resourceKey}/deletion`, {
+				headers,
+				body: stringify({ operationReference }),
+			})
+		)
+	}
+
+	/**
 	 * Set a precise, static time for the Zeebe engine's internal clock.
 	 * When the clock is pinned, it remains at the specified time and does not advance.
 	 * To change the time, the clock must be pinned again with a new timestamp, or reset.

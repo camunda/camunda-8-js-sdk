@@ -125,7 +125,8 @@ export class CreateProcessInstanceResponse extends LosslessDto {
 	 * The unique key identifying the process definition (e.g. returned from a process
 	 * in the DeployResourceResponse message)
 	 */
-	readonly processDefinitionKey!: string
+	@Int64String
+	readonly processKey!: string
 	/**
 	 * The BPMN process ID of the process definition
 	 */
