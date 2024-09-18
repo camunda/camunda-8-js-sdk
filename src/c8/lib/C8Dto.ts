@@ -159,3 +159,12 @@ export interface MigrationRequest {
 	/** A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided. */
 	operationReference?: number | LosslessNumber
 }
+
+/** The signal was broadcast. */
+export class BroadcastSignalResponse extends LosslessDto {
+	@Int64String
+	/** The unique ID of the signal that was broadcast. */
+	key!: string
+	/** The tenant ID of the signal that was broadcast. */
+	tenantId!: string
+}

@@ -24,6 +24,7 @@ import {
 import { IOAuthProvider } from '../../oauth'
 import {
 	ActivateJobsRequest,
+	BroadcastSignalReq,
 	CompleteJobRequest,
 	CreateProcessInstanceReq,
 	ErrorJobWithVariables,
@@ -39,6 +40,7 @@ import {
 } from '../../zeebe/types'
 
 import {
+	BroadcastSignalResponse,
 	CreateProcessInstanceResponse,
 	Ctor,
 	DecisionDeployment,
@@ -124,18 +126,29 @@ export class C8RestClient {
 		return headers
 	}
 
-	/* Get the topology of the Zeebe cluster. */
-	public async getTopology(): Promise<TopologyResponse> {
+	/**
+	 * Broadcasts a signal.
+	 */
+	public async broadcastSignal(req: BroadcastSignalReq) {
 		const headers = await this.getHeaders()
+		const request = this.addDefaultTenantId(req)
 		return this.rest.then((rest) =>
 			rest
-				.get('topology', { headers })
-				.json()
-				.catch((error) => {
-					trace('error', error)
-					throw error
+				.post(`signals/broadcast`, {
+					headers,
+					body: stringify(request),
+					parseJson: (text) => losslessParse(text, BroadcastSignalResponse),
 				})
-		) as Promise<TopologyResponse>
+				.json<BroadcastSignalResponse>()
+		)
+	}
+
+	/* Get the topology of the Zeebe cluster. */
+	public async getTopology() {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get('topology', { headers }).json<TopologyResponse>()
+		)
 	}
 
 	/* Completes a user task with the given key. The method either completes the task or throws 400, 404, or 409.
