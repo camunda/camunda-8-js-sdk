@@ -1,6 +1,7 @@
 import { LosslessNumber } from 'lossless-json'
 
 import { Int64String, LosslessDto } from '../../lib'
+import { JSONDoc } from '../../zeebe/types'
 
 export class RestApiJob<
 	Variables = LosslessDto,
@@ -167,4 +168,27 @@ export class BroadcastSignalResponse extends LosslessDto {
 	key!: string
 	/** The tenant ID of the signal that was broadcast. */
 	tenantId!: string
+}
+
+export interface UpdateElementVariableRequest {
+	/**
+	 * The key of the element instance to update the variables for.
+	 * This can be the process instance key (as obtained during instance creation), or a given element,
+	 * such as a service task (see the elementInstanceKey on the job message). */
+	elementInstanceKey: string
+	variables: JSONDoc | LosslessDto
+	/**
+	 * Defaults to false.
+	 * If set to true, the variables are merged strictly into the local scope (as specified by the elementInstanceKey). Otherwise, the variables are propagated to upper scopes and set at the outermost one.
+	 * Let’s consider the following example:
+	 * There are two scopes '1' and '2'. Scope '1' is the parent scope of '2'. The effective variables of the scopes are: 1 => { "foo" : 2 } 2 => { "bar" : 1 }
+	 * An update request with elementInstanceKey as '2', variables { "foo" : 5 }, and local set to true leaves scope '1' unchanged and adjusts scope '2' to { "bar" : 1, "foo" 5 }.
+	 * By default, with local set to false, scope '1' will be { "foo": 5 } and scope '2' will be { "bar" : 1 }.
+	 */
+	local?: boolean
+	/**
+	 * A reference key chosen by the user that will be part of all records resulting from this operation.
+	 * Must be > 0 if provided.
+	 */
+	operationReference?: number
 }
