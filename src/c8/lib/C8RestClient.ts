@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import { debug } from 'debug'
 import FormData from 'form-data'
 import got from 'got'
+import { parse, stringify } from 'lossless-json'
 
 import {
 	CamundaEnvironmentConfigurator,
@@ -24,19 +25,32 @@ import { IOAuthProvider } from '../../oauth'
 import {
 	ActivateJobsRequest,
 	CompleteJobRequest,
-	CreateProcessInstanceRequest,
+	CreateProcessInstanceReq,
 	ErrorJobWithVariables,
 	FailJobRequest,
 	IProcessVariables,
 	Job,
 	JOB_ACTION_ACKNOWLEDGEMENT,
 	JobCompletionInterfaceRest,
+	JSONDoc,
 	PublishMessageRequest,
 	PublishMessageResponse,
 	TopologyResponse,
 } from '../../zeebe/types'
 
-import { Ctor, JobUpdateChangeset, NewUserInfo, TaskChangeSet } from './C8Dto'
+import {
+	CreateProcessInstanceResponse,
+	Ctor,
+	DecisionDeployment,
+	DecisionRequirementsDeployment,
+	DeployResourceResponse,
+	DeployResourceResponseDto,
+	FormDeployment,
+	JobUpdateChangeset,
+	NewUserInfo,
+	ProcessDeployment,
+	TaskChangeSet,
+} from './C8Dto'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 
 const trace = debug('camunda:zeebe')
@@ -384,14 +398,20 @@ export class C8RestClient {
 	/**
 	 * Create and start a process instance
 	 */
-	public async createProcessInstance(request: CreateProcessInstanceRequest) {
+	public async createProcessInstance<T extends JSONDoc>(
+		request: CreateProcessInstanceReq<T>
+	) {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`process-instances`, {
-				body: losslessStringify(this.addDefaultTenantId(request)),
-				headers,
-			})
+			rest
+				.post(`process-instances`, {
+					body: losslessStringify(this.addDefaultTenantId(request)),
+					headers,
+					parseJson: (text) =>
+						losslessParse(text, CreateProcessInstanceResponse),
+				})
+				.json<CreateProcessInstanceResponse>()
 		)
 	}
 
@@ -420,7 +440,7 @@ export class C8RestClient {
 	 */
 	/**
 	 * Deploy resources to the broker.
-	 * @param resources - An array of binary data buffers representing the resources to deploy.
+	 * @param resources - An array of binary data strings representing the resources to deploy.
 	 * @param tenantId - Optional tenant ID to deploy the resources to. If not provided, the default tenant ID is used.
 	 */
 	public async deployResources(
@@ -440,7 +460,7 @@ export class C8RestClient {
 			formData.append('tenantId', tenantId ?? this.tenantId)
 		}
 
-		return this.rest.then((rest) =>
+		const res = await this.rest.then((rest) =>
 			rest
 				.post('deployments', {
 					body: formData,
@@ -449,20 +469,101 @@ export class C8RestClient {
 						...formData.getHeaders(),
 						Accept: 'application/json',
 					},
-					parseJson: (text) => losslessParse(text),
+					parseJson: (text) => parse(text), // we parse the response with LosslessNumbers, with no Dto
 				})
-				.json()
+				.json<DeployResourceResponseDto>()
 		)
+
+		/**
+		 * Now we need to examine the response and parse the deployments to lossless Dtos
+		 * We dynamically construct the response object for the caller, by examining the lossless response
+		 * and re-parsing each of the deployments with the correct Dto.
+		 */
+		const deploymentResponse = new DeployResourceResponse({
+			key: res.key.toString(),
+			tenantId: res.tenantId,
+			deployments: [],
+			processes: [],
+			decisions: [],
+			decisionRequirements: [],
+			forms: [],
+		})
+
+		/**
+		 * Type-guard assertions to correctly type the deployments. The API returns an array with mixed types.
+		 */
+		const isProcessDeployment = (
+			deployment
+		): deployment is { process: ProcessDeployment } => !!deployment.process
+		const isDecisionDeployment = (
+			deployment
+		): deployment is { decision: DecisionDeployment } => !!deployment.decision
+		const isDecisionRequirementsDeployment = (
+			deployment
+		): deployment is { decisionRequirements: DecisionRequirementsDeployment } =>
+			!!deployment.decisionRequirements
+		const isFormDeployment = (
+			deployment
+		): deployment is { form: FormDeployment } => !!deployment.form
+
+		/**
+		 * Here we examine each of the deployments returned from the API, and create a correctly typed
+		 * object for each one. We also populate subkeys per type. This allows SDK users to work with
+		 * types known ahead of time.
+		 */
+		res.deployments.forEach((deployment) => {
+			if (isProcessDeployment(deployment)) {
+				const processDeployment = losslessParse(
+					stringify(deployment.process)!,
+					ProcessDeployment
+				)
+				deploymentResponse.deployments.push({ process: processDeployment })
+				deploymentResponse.processes.push(processDeployment)
+			}
+			if (isDecisionDeployment(deployment)) {
+				const decisionDeployment = losslessParse(
+					stringify(deployment)!,
+					DecisionDeployment
+				)
+				deploymentResponse.deployments.push({ decision: decisionDeployment })
+				deploymentResponse.decisions.push(decisionDeployment)
+			}
+			if (isDecisionRequirementsDeployment(deployment)) {
+				const decisionRequirementsDeployment = losslessParse(
+					stringify(deployment)!,
+					DecisionRequirementsDeployment
+				)
+				deploymentResponse.deployments.push({
+					decisionRequirements: decisionRequirementsDeployment,
+				})
+				deploymentResponse.decisionRequirements.push(
+					decisionRequirementsDeployment
+				)
+			}
+			if (isFormDeployment(deployment)) {
+				const formDeployment = losslessParse(
+					stringify(deployment)!,
+					FormDeployment
+				)
+				deploymentResponse.deployments.push({ form: formDeployment })
+				deploymentResponse.forms.push(formDeployment)
+			}
+		})
+
+		return deploymentResponse
 	}
 
-	public async deployResourcesFromFiles(filenames: string[]) {
+	/**
+	 * Deploy resources to Camunda 8 from files
+	 * @param files an array of file paths
+	 */
+	public async deployResourcesFromFiles(files: string[]) {
 		const resources: { content: string; name: string }[] = []
 
-		for (const filename of filenames) {
-			// const resource = await fs.promises.readFile(filename)
+		for (const file of files) {
 			resources.push({
-				content: fs.readFileSync(filename, { encoding: 'binary' }),
-				name: filename,
+				content: fs.readFileSync(file, { encoding: 'binary' }),
+				name: file,
 			})
 		}
 
