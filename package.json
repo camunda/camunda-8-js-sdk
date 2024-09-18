@@ -158,6 +158,7 @@
 		"reflect-metadata": "^0.2.1",
 		"stack-trace": "0.0.10",
 		"typed-duration": "^1.0.12",
-		"uuid": "^7.0.3"
+		"uuid": "^7.0.3",
+		"winston": "^3.14.2"
 	}
 }

@@ -4,13 +4,13 @@ import { debug } from 'debug'
 import FormData from 'form-data'
 import got from 'got'
 import { parse, stringify } from 'lossless-json'
+import winston from 'winston'
 
 import {
+	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
 	constructOAuthProvider,
 	createUserAgentString,
-	DeepPartial,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
 	gotErrorHandler,
@@ -47,10 +47,13 @@ import {
 	DeployResourceResponseDto,
 	FormDeployment,
 	JobUpdateChangeset,
+	MigrationRequest,
 	NewUserInfo,
 	ProcessDeployment,
 	TaskChangeSet,
 } from './C8Dto'
+import { C8JobWorker, C8JobWorkerConfig } from './C8JobWorker'
+import { getLogger } from './C8Logger'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 
 const trace = debug('camunda:zeebe')
@@ -62,14 +65,17 @@ export class C8RestClient {
 	private oAuthProvider: IOAuthProvider
 	private rest: Promise<typeof got>
 	private tenantId?: string
+	private log: winston.Logger
 
 	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
+		config?: Camunda8ClientConfiguration
 		oAuthProvider?: IOAuthProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+		this.log = getLogger(config)
+		this.log.info(`Using REST API version ${CAMUNDA_REST_API_VERSION}`)
 		trace('options.config', options?.config)
 		trace('config', config)
 		this.oAuthProvider =
@@ -259,6 +265,14 @@ export class C8RestClient {
 		return this.rest.then((rest) => rest.get(`license`).json())
 	}
 
+	public createJobWorker<
+		Variables extends LosslessDto,
+		CustomHeaders extends LosslessDto,
+	>(config: C8JobWorkerConfig<Variables, CustomHeaders>) {
+		const worker = new C8JobWorker(config, this)
+		worker.start()
+		return worker
+	}
 	/**
 	 * Iterate through all known partitions and activate jobs up to the requested maximum.
 	 *
@@ -423,7 +437,7 @@ export class C8RestClient {
 		operationReference,
 	}: {
 		processInstanceKey: string
-		operationReference?: string
+		operationReference?: number
 	}) {
 		const headers = await this.getHeaders()
 
@@ -436,8 +450,21 @@ export class C8RestClient {
 	}
 
 	/**
-	 * Deploy resources to the broker
+	 * Migrates a process instance to a new process definition.
+	 * This request can contain multiple mapping instructions to define mapping between the active process instance's elements and target process definition elements.
+	 * Use this to upgrade a process instance to a new version of a process or to a different process definition, e.g. to keep your running instances up-to-date with the latest process improvements.
 	 */
+	public async migrateProcessInstance(req: MigrationRequest) {
+		const headers = await this.getHeaders()
+		const { processInstanceKey, ...request } = req
+		return this.rest.then((rest) =>
+			rest.post(`process-instances/${processInstanceKey}/migration`, {
+				headers,
+				body: losslessStringify(request),
+			})
+		)
+	}
+
 	/**
 	 * Deploy resources to the broker.
 	 * @param resources - An array of binary data strings representing the resources to deploy.
@@ -570,6 +597,31 @@ export class C8RestClient {
 		return this.deployResources(resources)
 	}
 
+	/**
+	 * Set a precise, static time for the Zeebe engine's internal clock.
+	 * When the clock is pinned, it remains at the specified time and does not advance.
+	 * To change the time, the clock must be pinned again with a new timestamp, or reset.
+	 */
+	public async pinInternalClock(epochMs: number) {
+		const headers = await this.getHeaders()
+
+		return this.rest.then((rest) =>
+			rest.put(`clock`, {
+				headers,
+				body: JSON.stringify({ timestamp: epochMs }),
+			})
+		)
+	}
+
+	/**
+	 * Resets the Zeebe engine's internal clock to the current system time, enabling it to tick in real-time.
+	 * This operation is useful for returning the clock to normal behavior after it has been pinned to a specific time.
+	 */
+	public async resetClock() {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) => rest.post(`clock/reset`, { headers }))
+	}
+
 	private addJobMethods = <Variables, CustomHeaders>(
 		job: Job<Variables, CustomHeaders>
 	): Job<Variables, CustomHeaders> &
@@ -590,7 +642,7 @@ export class C8RestClient {
 					jobKey: job.key,
 				}),
 			fail: (failJobRequest) => this.failJob(failJobRequest),
-			/* At this point, no capacity handling in the SDK is implemented, so this has no effect */
+			/* This has an effect in a Job Worker, decrementing the currently active job count */
 			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
 			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
 				this.updateJob({ jobKey: job.key, timeout: newTimeoutMs }),

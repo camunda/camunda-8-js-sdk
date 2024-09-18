@@ -1,23 +1,15 @@
 import path from 'node:path'
 
-import { DeployResourceResponse } from '../../../c8/lib/C8Dto'
 import { C8RestClient } from '../../../c8/lib/C8RestClient'
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 
-suppressZeebeLogging()
-let res: DeployResourceResponse
 let bpmnProcessId: string
 const restClient = new C8RestClient()
 
 beforeAll(async () => {
-	res = await restClient.deployResourcesFromFiles([
+	const res = await restClient.deployResourcesFromFiles([
 		path.join('.', 'src', '__tests__', 'testdata', 'hello-world-complete.bpmn'),
 	])
 	bpmnProcessId = res.processes[0].bpmnProcessId
-})
-
-afterAll(async () => {
-	restoreZeebeLogging()
 })
 
 test('Can service a task', (done) => {

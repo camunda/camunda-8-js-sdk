@@ -1,3 +1,5 @@
+import { LosslessNumber } from 'lossless-json'
+
 import { Int64String, LosslessDto } from '../../lib'
 
 export class RestApiJob<
@@ -137,4 +139,23 @@ export class CreateProcessInstanceResponse extends LosslessDto {
 	 * the tenant identifier of the created process instance
 	 */
 	readonly tenantId!: string
+}
+
+export interface MigrationMappingInstruction {
+	/** The element ID to migrate from. */
+	sourceElementId: string
+	/** The element ID to migrate into. */
+	targetElementId: string
+}
+
+/** Migrates a process instance to a new process definition.
+ * This request can contain multiple mapping instructions to define mapping between the active process instance's elements and target process definition elements.
+ */
+export interface MigrationRequest {
+	processInstanceKey: string
+	/** The key of process definition to migrate the process instance to. */
+	targetProcessDefinitionKey: string
+	mappingInstructions: MigrationMappingInstruction[]
+	/** A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided. */
+	operationReference?: number | LosslessNumber
 }
