@@ -192,3 +192,22 @@ export interface UpdateElementVariableRequest {
 	 */
 	operationReference?: number
 }
+
+export class CorrelateMessageResponse extends LosslessDto {
+	/** the unique ID of the message that was published */
+	@Int64String
+	key!: string
+	/** the tenantId of the message */
+	tenantId!: string
+	/** The key of the first process instance the message correlated with */
+	@Int64String
+	processInstanceKey!: string
+}
+
+export class PublishMessageResponse extends LosslessDto {
+	/** the unique ID of the message that was published */
+	@Int64String
+	key!: string
+	/** the tenantId of the message */
+	tenantId!: string
+}
