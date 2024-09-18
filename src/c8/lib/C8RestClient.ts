@@ -53,6 +53,7 @@ import {
 	NewUserInfo,
 	ProcessDeployment,
 	TaskChangeSet,
+	UpdateElementVariableRequest,
 } from './C8Dto'
 import { C8JobWorker, C8JobWorkerConfig } from './C8JobWorker'
 import { getLogger } from './C8Logger'
@@ -278,6 +279,10 @@ export class C8RestClient {
 		return this.rest.then((rest) => rest.get(`license`).json())
 	}
 
+	/**
+	 * Create a new polling Job Worker.
+	 * You can pass in an optional winston.Logger instance as `logger`. This enables you to have distinct logging levels for different workers.
+	 */
 	public createJobWorker<
 		Variables extends LosslessDto,
 		CustomHeaders extends LosslessDto,
@@ -470,6 +475,9 @@ export class C8RestClient {
 	public async migrateProcessInstance(req: MigrationRequest) {
 		const headers = await this.getHeaders()
 		const { processInstanceKey, ...request } = req
+		this.log.debug(`Migrating process instance ${processInstanceKey}`, {
+			component: 'C8RestClient',
+		})
 		return this.rest.then((rest) =>
 			rest.post(`process-instances/${processInstanceKey}/migration`, {
 				headers,
@@ -500,6 +508,7 @@ export class C8RestClient {
 			formData.append('tenantId', tenantId ?? this.tenantId)
 		}
 
+		this.log.debug(`Deploying ${resources.length} resources`)
 		const res = await this.rest.then((rest) =>
 			rest
 				.post('deployments', {
@@ -660,6 +669,23 @@ export class C8RestClient {
 			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
 				this.updateJob({ jobKey: job.key, timeout: newTimeoutMs }),
 		}
+	}
+
+	/**
+	 * Updates all the variables of a particular scope (for example, process instance, flow element instance) with the given variable data.
+	 * Specify the element instance in the elementInstanceKey parameter.
+	 */
+	public async updateElementInstanceVariables(
+		req: UpdateElementVariableRequest
+	) {
+		const headers = await this.getHeaders()
+		const { elementInstanceKey, ...request } = req
+		return this.rest.then((rest) =>
+			rest.post(`element-instances/${elementInstanceKey}/variables`, {
+				headers,
+				body: stringify(request),
+			})
+		)
 	}
 
 	/**
