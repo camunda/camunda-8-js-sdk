@@ -308,6 +308,22 @@ export function losslessStringify<T extends LosslessDto>(
 		debug(`Object is not a LosslessDto. Stringifying as normal JSON.`)
 	}
 
+	if (obj instanceof Date) {
+		throw new Error(
+			`Date type not supported in variables. Please serialize with .toISOString() before passing to Camunda`
+		)
+	}
+	if (obj instanceof Map) {
+		throw new Error(
+			`Map type not supported in variables. Please serialize with Object.fromEntries() before passing to Camunda`
+		)
+	}
+	if (obj instanceof Set) {
+		throw new Error(
+			`Set type not supported in variables. Please serialize with Array.from() before passing to Camunda`
+		)
+	}
+
 	const newObj: any = Array.isArray(obj) ? [] : {}
 
 	Object.keys(obj).forEach((key) => {
