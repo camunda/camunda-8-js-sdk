@@ -384,3 +384,17 @@ test('LosslessJsonParser will throw if given stringified JSON with an unsafe int
 
 	expect(threw).toBe(true)
 })
+
+test('It rejects Date, Map, and Set types', () => {
+	class Dto extends LosslessDto {
+		date!: Date
+		name!: string
+	}
+	const date = new Date()
+	const dto = new Dto({ date, name: 'me' })
+	expect(() => losslessStringify(dto)).toThrow('Date')
+	const mapDto = new Dto({ map: new Map() })
+	expect(() => losslessStringify(mapDto)).toThrow('Map')
+	const setDto = new Dto({ set: new Set() })
+	expect(() => losslessStringify(setDto)).toThrow('Set')
+})
