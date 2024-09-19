@@ -26,7 +26,6 @@ import {
 	ActivateJobsRequest,
 	BroadcastSignalReq,
 	CompleteJobRequest,
-	CreateProcessInstanceReq,
 	ErrorJobWithVariables,
 	FailJobRequest,
 	IProcessVariables,
@@ -41,6 +40,7 @@ import {
 import {
 	BroadcastSignalResponse,
 	CorrelateMessageResponse,
+	CreateProcessInstanceReq,
 	CreateProcessInstanceResponse,
 	Ctor,
 	DecisionDeployment,
@@ -59,10 +59,13 @@ import {
 import { C8JobWorker, C8JobWorkerConfig } from './C8JobWorker'
 import { getLogger } from './C8Logger'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
+import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 
 const trace = debug('camunda:zeebe')
 
 const CAMUNDA_REST_API_VERSION = 'v2'
+
+class DefaultLosslessDto extends LosslessDto {}
 
 export class C8RestClient {
 	private userAgentString: string
@@ -448,12 +451,27 @@ export class C8RestClient {
 	}
 
 	/**
-	 * Create and start a process instance
+	 * Create and start a process instance. This method does not await the outcome of the process. For that, use `createProcessInstanceWithResult`.
 	 */
-	public async createProcessInstance<T extends JSONDoc>(
+	public async createProcessInstance<T extends JSONDoc | LosslessDto>(
 		request: CreateProcessInstanceReq<T>
+	): Promise<CreateProcessInstanceResponse<Record<string, never>>>
+
+	async createProcessInstance<
+		T extends JSONDoc | LosslessDto,
+		V extends LosslessDto,
+	>(
+		request: CreateProcessInstanceReq<T> & {
+			outputVariablesDto?: Ctor<V>
+		}
 	) {
 		const headers = await this.getHeaders()
+
+		const outputVariablesDto: Ctor<V> | Ctor<LosslessDto> =
+			(request.outputVariablesDto as Ctor<V>) ?? DefaultLosslessDto
+
+		const CreateProcessInstanceResponseWithVariablesDto =
+			createSpecializedCreateProcessInstanceResponseClass(outputVariablesDto)
 
 		return this.rest.then((rest) =>
 			rest
@@ -461,10 +479,52 @@ export class C8RestClient {
 					body: losslessStringify(this.addDefaultTenantId(request)),
 					headers,
 					parseJson: (text) =>
-						losslessParse(text, CreateProcessInstanceResponse),
+						losslessParse(text, CreateProcessInstanceResponseWithVariablesDto),
 				})
-				.json<CreateProcessInstanceResponse>()
+				.json<
+					InstanceType<typeof CreateProcessInstanceResponseWithVariablesDto>
+				>()
 		)
+	}
+
+	/**
+	 * Create and start a process instance. This method awaits the outcome of the process.
+	 */
+	public async createProcessInstanceWithResult<T extends JSONDoc | LosslessDto>(
+		request: CreateProcessInstanceReq<T>
+	): Promise<CreateProcessInstanceResponse<unknown>>
+
+	public async createProcessInstanceWithResult<
+		T extends JSONDoc | LosslessDto,
+		V extends LosslessDto,
+	>(
+		request: CreateProcessInstanceReq<T> & {
+			outputVariablesDto: Ctor<V>
+		}
+	): Promise<CreateProcessInstanceResponse<V>>
+	public async createProcessInstanceWithResult<
+		T extends JSONDoc | LosslessDto,
+		V,
+	>(
+		request: CreateProcessInstanceReq<T> & {
+			outputVariablesDto?: Ctor<V>
+		}
+	) {
+		/**
+		 * We override the type system to make `awaitCompletion` hidden from end-users. This has been done because supporting the permutations of
+		 * creating a process with/without awaiting the result and with/without an outputVariableDto in a single method is complex. I could not get all
+		 * the cases to work with intellisense for the end-user using either generics or with signature overloads.
+		 *
+		 * To address this, createProcessInstance has all the functionality, but hides the `awaitCompletion` attribute from the signature. This method
+		 * is a wrapper around createProcessInstance that sets `awaitCompletion` to true, and explicitly informs the type system via signature overloads.
+		 *
+		 * This is not ideal, but it is the best solution I could come up with.
+		 */
+		return this.createProcessInstance({
+			...request,
+			awaitCompletion: true,
+			outputVariablesDto: request.outputVariablesDto,
+		} as unknown as CreateProcessInstanceReq<T>)
 	}
 
 	/**
