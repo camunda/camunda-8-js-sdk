@@ -120,7 +120,7 @@ export class DeployResourceResponse extends DeployResourceResponseDto {
 	forms!: FormDeployment[]
 }
 
-export class CreateProcessInstanceResponse extends LosslessDto {
+export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	/**
 	 * The unique key identifying the process definition (e.g. returned from a process
 	 * in the DeployResourceResponse message)
@@ -141,6 +141,10 @@ export class CreateProcessInstanceResponse extends LosslessDto {
 	 * the tenant identifier of the created process instance
 	 */
 	readonly tenantId!: string
+	/**
+	 * If `awaitCompletion` is true, this will be populated with the output variables. Otherwise, it will be an empty object.
+	 */
+	readonly variables!: T
 }
 
 export interface MigrationMappingInstruction {
@@ -212,3 +216,67 @@ export class PublishMessageResponse extends LosslessDto {
 	/** the tenantId of the message */
 	tenantId!: string
 }
+
+export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
+	/**
+	 * the version of the process; if not specified it will use the latest version
+	 */
+	version?: number
+	/**
+	 * JSON document that will instantiate the variables for the root variable scope of the
+	 * process instance.
+	 */
+	variables: V
+	/** The tenantId for a multi-tenant enabled cluster. */
+	tenantId?: string
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+	/**
+	 * List of start instructions. If empty (default) the process instance
+	 * will start at the start event. If non-empty the process instance will apply start
+	 * instructions after it has been created
+	 */
+	startInstructions?: ProcessInstanceCreationStartInstruction[]
+	/**
+	 * Wait for the process instance to complete. If the process instance completion does not occur within the requestTimeout, the request will be closed. Defaults to false.
+	 */
+	// This is commented out, because we used specialised methods for the two cases.
+	// awaitCompletion?: boolean
+	/**
+	 * Timeout (in ms) the request waits for the process to complete. By default or when set to 0, the generic request timeout configured in the cluster is applied.
+	 */
+	requestTimeout?: number
+}
+
+export interface ProcessInstanceCreationStartInstruction {
+	/**
+	 * future extensions might include
+	 * - different types of start instructions
+	 * - ability to set local variables for different flow scopes
+	 * for now, however, the start instruction is implicitly a
+	 * "startBeforeElement" instruction
+	 */
+	elementId: string
+}
+
+export interface CreateProcessInstanceFromBpmnProcessId<
+	V extends JSONDoc | LosslessDto,
+> extends CreateProcessBaseRequest<V> {
+	/**
+	 * the BPMN process ID of the process definition
+	 */
+	bpmnProcessId: string
+}
+
+export interface CreateProcessInstanceFromProcessDefinition<
+	V extends JSONDoc | LosslessDto,
+> extends CreateProcessBaseRequest<V> {
+	/**
+	 * the key of the process definition
+	 */
+	processDefinitionKey: string
+}
+
+export type CreateProcessInstanceReq<T extends JSONDoc | LosslessDto> =
+	| CreateProcessInstanceFromBpmnProcessId<T>
+	| CreateProcessInstanceFromProcessDefinition<T>
