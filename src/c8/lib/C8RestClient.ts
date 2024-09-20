@@ -51,6 +51,7 @@ import {
 	JobUpdateChangeset,
 	MigrationRequest,
 	NewUserInfo,
+	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
 	TaskChangeSet,
@@ -132,6 +133,22 @@ export class C8RestClient {
 	}
 
 	/**
+	 * Manage the permissions assigned to authorization.
+	 */
+	public async modifyAuthorization(req: PatchAuthorizationRequest) {
+		const headers = await this.getHeaders()
+		const { ownerKey, ...request } = req
+		return this.rest.then((rest) =>
+			rest
+				.patch(`authorizations/${ownerKey}`, {
+					headers,
+					body: stringify(request),
+				})
+				.json()
+		)
+	}
+
+	/**
 	 * Broadcasts a signal.
 	 */
 	public async broadcastSignal(req: BroadcastSignalReq) {
@@ -169,13 +186,15 @@ export class C8RestClient {
 	}) {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
-			rest.post(`user-tasks/${userTaskKey}/completion`, {
-				body: losslessStringify({
-					variables,
-					action,
-				}),
-				headers,
-			})
+			rest
+				.post(`user-tasks/${userTaskKey}/completion`, {
+					body: losslessStringify({
+						variables,
+						action,
+					}),
+					headers,
+				})
+				.json()
 		)
 	}
 
@@ -194,14 +213,16 @@ export class C8RestClient {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`user-tasks/${userTaskKey}/assignment`, {
-				body: losslessStringify({
-					allowOverride,
-					action,
-					assignee,
-				}),
-				headers,
-			})
+			rest
+				.post(`user-tasks/${userTaskKey}/assignment`, {
+					body: losslessStringify({
+						allowOverride,
+						action,
+						assignee,
+					}),
+					headers,
+				})
+				.json()
 		)
 	}
 
@@ -216,10 +237,12 @@ export class C8RestClient {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.patch(`user-tasks/${userTaskKey}/update`, {
-				body: losslessStringify(changeset),
-				headers,
-			})
+			rest
+				.patch(`user-tasks/${userTaskKey}/update`, {
+					body: losslessStringify(changeset),
+					headers,
+				})
+				.json()
 		)
 	}
 	/* Removes the assignee of a task with the given key. */
@@ -227,7 +250,7 @@ export class C8RestClient {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.delete(`user-tasks/${userTaskKey}/assignee`, { headers })
+			rest.delete(`user-tasks/${userTaskKey}/assignee`, { headers }).json()
 		)
 	}
 
@@ -238,10 +261,12 @@ export class C8RestClient {
 		const headers = await this.getHeaders()
 
 		return this.rest.then((rest) =>
-			rest.post(`users`, {
-				body: JSON.stringify(newUserInfo),
-				headers,
-			})
+			rest
+				.post(`users`, {
+					body: JSON.stringify(newUserInfo),
+					headers,
+				})
+				.json()
 		)
 	}
 
@@ -262,11 +287,12 @@ export class C8RestClient {
 		>
 	) {
 		const headers = await this.getHeaders()
+		const body = losslessStringify(this.addDefaultTenantId(message))
 
 		return this.rest.then((rest) =>
 			rest
 				.post(`messages/correlation`, {
-					body: losslessStringify(message),
+					body,
 					headers,
 					parseJson: (text) => losslessParse(text, CorrelateMessageResponse),
 				})
@@ -280,12 +306,14 @@ export class C8RestClient {
 	 */
 	public async publishMessage(publishMessageRequest: PublishMessageRequest) {
 		const headers = await this.getHeaders()
-		const request = this.addDefaultTenantId(publishMessageRequest)
+		const body = losslessStringify(
+			this.addDefaultTenantId(publishMessageRequest)
+		)
 		return this.rest.then((rest) =>
 			rest
 				.post(`messages/publication`, {
 					headers,
-					body: stringify(request),
+					body,
 					parseJson: (text) => losslessParse(text, PublishMessageResponse),
 				})
 				.json<PublishMessageResponse>()
@@ -491,7 +519,10 @@ export class C8RestClient {
 	 * Create and start a process instance. This method awaits the outcome of the process.
 	 */
 	public async createProcessInstanceWithResult<T extends JSONDoc | LosslessDto>(
-		request: CreateProcessInstanceReq<T>
+		request: CreateProcessInstanceReq<T> & {
+			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
+			fetchVariables?: string[]
+		}
 	): Promise<CreateProcessInstanceResponse<unknown>>
 
 	public async createProcessInstanceWithResult<
@@ -499,6 +530,9 @@ export class C8RestClient {
 		V extends LosslessDto,
 	>(
 		request: CreateProcessInstanceReq<T> & {
+			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
+			fetchVariables?: string[]
+			/** A Dto specifying the shape of the output variables. If not supplied, the output variables will be returned as a `LosslessDto` of type `unknown`. */
 			outputVariablesDto: Ctor<V>
 		}
 	): Promise<CreateProcessInstanceResponse<V>>

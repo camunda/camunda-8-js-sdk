@@ -280,3 +280,32 @@ export interface CreateProcessInstanceFromProcessDefinition<
 export type CreateProcessInstanceReq<T extends JSONDoc | LosslessDto> =
 	| CreateProcessInstanceFromBpmnProcessId<T>
 	| CreateProcessInstanceFromProcessDefinition<T>
+
+export interface PatchAuthorizationRequest {
+	/** The key of the owner of the authorization. */
+	ownerKey: string
+	/** Indicates if permissions should be added or removed. */
+	action: 'ADD' | 'REMOVE'
+	/** The type of resource to add/remove perissions to/from. */
+	resourceType:
+		| 'AUTHORIZATION'
+		| 'MESSAGE'
+		| 'JOB'
+		| 'APPLICATION'
+		| 'TENANT'
+		| 'DEPLOYMENT'
+		| 'PROCESS_DEFINITION'
+		| 'USER_TASK'
+		| 'DECISION_REQUIREMENTS_DEFINITION'
+		| 'DECISION_DEFINITION'
+		| 'USER_GROUP'
+		| 'USER'
+		| 'ROLE'
+	/** The permissions to add/remove. */
+	permissions: {
+		/** Specifies the type of permissions. */
+		permissionType: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE'
+		/** A list of resource IDs the permission relates to. */
+		resourceIds: []
+	}[]
+}
