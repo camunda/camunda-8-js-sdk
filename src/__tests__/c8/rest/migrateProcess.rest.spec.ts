@@ -3,8 +3,7 @@ import path from 'path'
 import { C8JobWorker } from 'c8/lib/C8JobWorker'
 
 import { C8RestClient } from '../../../c8/lib/C8RestClient'
-
-import { LosslessDto } from './../../../lib'
+import { LosslessDto } from '../../../lib'
 
 const c8 = new C8RestClient()
 

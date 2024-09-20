@@ -3,6 +3,8 @@ import path from 'node:path'
 import { C8RestClient } from '../../../c8/lib/C8RestClient'
 import { LosslessDto } from '../../../lib'
 
+jest.setTimeout(30000)
+
 let bpmnProcessId: string
 let processDefinitionKey: string
 const restClient = new C8RestClient()
@@ -67,7 +69,6 @@ test('Can create a process and get the result', (done) => {
 			outputVariablesDto: myVariableDto,
 		})
 		.then((res) => {
-			console.log(res)
 			expect(res.processKey).toEqual(processDefinitionKey)
 			expect(res.variables.someNumberField).toBe(8)
 			done()
@@ -87,4 +88,19 @@ test('Can create a process and get the result', (done) => {
 			expect((res.variables as any).someNumberField).toBe(9)
 			done()
 		})
+})
+
+test('What happens if we time out?', async () => {
+	const res = await restClient.deployResourcesFromFiles([
+		path.join('.', 'src', '__tests__', 'testdata', 'hello-world-complete.bpmn'),
+	])
+	const bpmnProcessId = res.processes[0].bpmnProcessId
+	// @TODO: we should get a 504 Gateway Timeout for this, not a 500
+	await expect(
+		restClient.createProcessInstanceWithResult({
+			bpmnProcessId,
+			variables: new myVariableDto({ someNumberField: 9 }),
+			requestTimeout: 20000,
+		})
+	).rejects.toThrow('500')
 })

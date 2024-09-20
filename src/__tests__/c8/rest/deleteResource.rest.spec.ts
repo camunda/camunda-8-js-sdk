@@ -14,7 +14,8 @@ test('It can delete a resource', async () => {
 	})
 	expect(wfi.processKey).toBe(key)
 	await c8.deleteResource({ resourceKey: key })
+	// After deleting the process definition, we should not be able to start a new process instance.
 	await expect(
 		c8.createProcessInstance({ bpmnProcessId: id, variables: {} })
-	).rejects.toThrow()
+	).rejects.toThrow('404')
 })

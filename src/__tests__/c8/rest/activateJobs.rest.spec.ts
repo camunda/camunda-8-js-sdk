@@ -7,7 +7,13 @@ const restClient = new C8RestClient()
 
 beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([
-		path.join('.', 'src', '__tests__', 'testdata', 'hello-world-complete.bpmn'),
+		path.join(
+			'.',
+			'src',
+			'__tests__',
+			'testdata',
+			'hello-world-complete-rest.bpmn'
+		),
 	])
 	bpmnProcessId = res.processes[0].bpmnProcessId
 })
@@ -26,7 +32,7 @@ test('Can service a task', (done) => {
 					maxJobsToActivate: 2,
 					requestTimeout: 5000,
 					timeout: 5000,
-					type: 'console-log-complete',
+					type: 'console-log-complete-rest',
 					worker: 'test',
 				})
 				.then((jobs) => {
