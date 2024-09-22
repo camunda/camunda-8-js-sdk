@@ -126,7 +126,7 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	 * in the DeployResourceResponse message)
 	 */
 	@Int64String
-	readonly processKey!: string
+	readonly processDefinitionKey!: string
 	/**
 	 * The BPMN process ID of the process definition
 	 */
