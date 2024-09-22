@@ -3,7 +3,7 @@ import path from 'node:path'
 import { C8RestClient } from '../../../c8/lib/C8RestClient'
 import { LosslessDto } from '../../../lib'
 
-jest.setTimeout(30000)
+jest.setTimeout(17000)
 
 let bpmnProcessId: string
 let processDefinitionKey: string
@@ -29,7 +29,7 @@ test('Can create a process from bpmn id', (done) => {
 			},
 		})
 		.then((res) => {
-			expect(res.processKey).toEqual(processDefinitionKey)
+			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
 			done()
 		})
 })
@@ -43,7 +43,7 @@ test('Can create a process from process definition key', (done) => {
 			},
 		})
 		.then((res) => {
-			expect(res.processKey).toEqual(processDefinitionKey)
+			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
 			done()
 		})
 })
@@ -55,7 +55,7 @@ test('Can create a process with a lossless Dto', (done) => {
 			variables: new myVariableDto({ someNumberField: 8 }),
 		})
 		.then((res) => {
-			expect(res.processKey).toEqual(processDefinitionKey)
+			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
 			done()
 		})
 })
@@ -69,7 +69,7 @@ test('Can create a process and get the result', (done) => {
 			outputVariablesDto: myVariableDto,
 		})
 		.then((res) => {
-			expect(res.processKey).toEqual(processDefinitionKey)
+			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
 			expect(res.variables.someNumberField).toBe(8)
 			done()
 		})
@@ -82,7 +82,7 @@ test('Can create a process and get the result', (done) => {
 			variables: new myVariableDto({ someNumberField: 9 }),
 		})
 		.then((res) => {
-			expect(res.processKey).toEqual(processDefinitionKey)
+			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
 			// Without an outputVariablesDto, the response variables will be of type unknown
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			expect((res.variables as any).someNumberField).toBe(9)
@@ -95,12 +95,11 @@ test('What happens if we time out?', async () => {
 		path.join('.', 'src', '__tests__', 'testdata', 'hello-world-complete.bpmn'),
 	])
 	const bpmnProcessId = res.processes[0].bpmnProcessId
-	// @TODO: we should get a 504 Gateway Timeout for this, not a 500
 	await expect(
 		restClient.createProcessInstanceWithResult({
 			bpmnProcessId,
 			variables: new myVariableDto({ someNumberField: 9 }),
 			requestTimeout: 20000,
 		})
-	).rejects.toThrow('500')
+	).rejects.toThrow('504')
 })
