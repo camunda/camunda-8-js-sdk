@@ -1,3 +1,6 @@
+import { EventEmitter } from 'events'
+
+import TypedEmitter from 'typed-emitter'
 import winston from 'winston'
 
 import { LosslessDto } from '../../lib'
@@ -11,9 +14,24 @@ import {
 
 import { Ctor } from './C8Dto'
 import { getLogger } from './C8Logger'
-import { C8RestClient } from './C8RestClient'
+import { CamundaRestClient } from './CamundaRestClient'
 
-export interface C8JobWorkerConfig<
+type CamundaJobWorkerEvents = {
+	pollError: (error: Error) => void
+	start: () => void
+	stop: () => void
+	poll: ({
+		currentlyActiveJobCount,
+		maxJobsToActivate,
+		worker,
+	}: {
+		currentlyActiveJobCount: number
+		maxJobsToActivate: number
+		worker: string
+	}) => void
+}
+
+export interface CamundaJobWorkerConfig<
 	VariablesDto extends LosslessDto,
 	CustomHeadersDto extends LosslessDto,
 > extends ActivateJobsRequest {
@@ -27,46 +45,56 @@ export interface C8JobWorkerConfig<
 		log: winston.Logger
 	) => MustReturnJobActionAcknowledgement
 	logger?: winston.Logger
+	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
+	autoStart?: boolean
 }
-
-export class C8JobWorker<
+// Make this class extend event emitter and have a typed event 'pollError'
+export class CamundaJobWorker<
 	VariablesDto extends LosslessDto,
 	CustomHeadersDto extends LosslessDto,
-> {
+> extends (EventEmitter as new () => TypedEmitter<CamundaJobWorkerEvents>) {
 	public currentlyActiveJobCount = 0
 	public capacity: number
 	private loopHandle?: NodeJS.Timeout
 	private pollInterval: number
-	private log: winston.Logger
+	public log: winston.Logger
 	logMeta: () => {
 		worker: string
 		type: string
-		pollInterval: number
+		pollIntervalMs: number
 		capacity: number
 		currentload: number
 	}
 
 	constructor(
-		private readonly config: C8JobWorkerConfig<VariablesDto, CustomHeadersDto>,
-		private readonly restClient: C8RestClient
+		private readonly config: CamundaJobWorkerConfig<
+			VariablesDto,
+			CustomHeadersDto
+		>,
+		private readonly restClient: CamundaRestClient
 	) {
+		super()
 		this.pollInterval = config.pollIntervalMs ?? 30000
 		this.capacity = this.config.maxJobsToActivate
 		this.log = getLogger({ logger: config.logger })
 		this.logMeta = () => ({
 			worker: this.config.worker,
 			type: this.config.type,
-			pollInterval: this.pollInterval,
+			pollIntervalMs: this.pollInterval,
 			capacity: this.config.maxJobsToActivate,
 			currentload: this.currentlyActiveJobCount,
 		})
 		this.log.debug(`Created REST Job Worker`, this.logMeta())
+		if (config.autoStart) {
+			this.start()
+		}
 	}
 
 	start() {
 		this.log.debug(`Starting poll loop`, this.logMeta())
+		this.emit('start')
 		this.poll()
-		this.loopHandle = setInterval(() => this.poll, this.pollInterval)
+		this.loopHandle = setInterval(() => this.poll(), this.pollInterval)
 	}
 
 	/** Stops the Job Worker polling for more jobs. If await this call, and it will return as soon as all currently active jobs are completed.
@@ -79,6 +107,7 @@ export class C8JobWorker<
 		return new Promise((resolve, reject) => {
 			if (this.currentlyActiveJobCount === 0) {
 				this.log.debug(`All jobs drained. Worker stopped.`, this.logMeta())
+				this.emit('stop')
 				return resolve(null)
 			}
 			/** This is an error timeout - if we don't complete all active jobs before the specified deadline, we reject the Promise */
@@ -96,6 +125,7 @@ export class C8JobWorker<
 					this.log.debug(`All jobs drained. Worker stopped.`, this.logMeta())
 					clearInterval(wait)
 					clearTimeout(timeout)
+					this.emit('stop')
 					return resolve(null)
 				}
 				this.log.debug(
@@ -107,6 +137,11 @@ export class C8JobWorker<
 	}
 
 	private poll() {
+		this.emit('poll', {
+			currentlyActiveJobCount: this.currentlyActiveJobCount,
+			maxJobsToActivate: this.config.maxJobsToActivate,
+			worker: this.config.worker,
+		})
 		if (this.currentlyActiveJobCount >= this.config.maxJobsToActivate) {
 			this.log.debug(`At capacity - not requesting more jobs`, this.logMeta())
 			return
@@ -128,6 +163,7 @@ export class C8JobWorker<
 				// The job handlers for the activated jobs will run in parallel
 				jobs.forEach((job) => this.handleJob(job))
 			})
+			.catch((e) => this.emit('pollError', e))
 	}
 
 	private async handleJob(

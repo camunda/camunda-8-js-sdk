@@ -1,6 +1,6 @@
-import { C8RestClient } from '../../../c8/lib/C8RestClient'
+import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 
-const c8 = new C8RestClient()
+const c8 = new CamundaRestClient()
 
 test('It can delete a resource', async () => {
 	const res = await c8.deployResourcesFromFiles([

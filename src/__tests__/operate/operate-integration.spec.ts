@@ -2,7 +2,7 @@ import { LosslessNumber } from 'lossless-json'
 
 import {
 	HTTPError,
-	RESTError,
+	RestError,
 	restoreZeebeLogging,
 	suppressZeebeLogging,
 } from '../../lib'
@@ -95,7 +95,7 @@ test('test error type', async () => {
 	 */
 	const res = await c
 		.getProcessInstance(`${p.processInstanceKey}1`)
-		.catch((e: RESTError) => {
+		.catch((e: RestError) => {
 			// console.log(e.code)
 			// `ERR_NON_2XX_3XX_RESPONSE`
 

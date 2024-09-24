@@ -1,13 +1,13 @@
 import path from 'node:path'
 
-import { C8RestClient } from '../../../c8/lib/C8RestClient'
+import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
 
 jest.setTimeout(17000)
 
 let bpmnProcessId: string
 let processDefinitionKey: string
-const restClient = new C8RestClient()
+const restClient = new CamundaRestClient()
 
 beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([

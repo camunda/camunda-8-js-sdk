@@ -269,14 +269,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const inputVariableDtoToUse =
 			inputVariableDto ??
 			(LosslessDto as {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (obj: any): Variables
+				new (): Variables
 			})
 		const customHeadersDtoToUse =
 			customHeadersDto ??
 			(LosslessDto as {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (obj: any): CustomHeaders
+				new (): CustomHeaders
 			})
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
@@ -1224,14 +1222,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const inputVariableDto = req.inputVariableDto
 			? req.inputVariableDto
 			: (LosslessDto as {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					new (obj: any): WorkerInputVariables
+					new (): WorkerInputVariables
 				})
 		const customHeadersDto = req.customHeadersDto
 			? req.customHeadersDto
 			: (LosslessDto as {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					new (obj: any): CustomHeaderShape
+					new (): CustomHeaderShape
 				})
 		const fetchVariable = req.fetchVariables
 		delete req.fetchVariables

@@ -140,14 +140,12 @@ export class ZBWorkerBase<
 		this.inputVariableDto =
 			inputVariableDto ??
 			(LosslessDto as {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (obj: any): WorkerInputVariables
+				new (): WorkerInputVariables
 			})
 		this.customHeadersDto =
 			customHeadersDto ??
 			(LosslessDto as {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (obj: any): CustomHeaderShape
+				new (): CustomHeaderShape
 			})
 		this.taskHandler = taskHandler
 		this.taskType = taskType

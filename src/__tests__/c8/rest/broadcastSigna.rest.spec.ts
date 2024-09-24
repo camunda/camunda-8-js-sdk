@@ -1,10 +1,10 @@
-import { C8RestClient } from '../../../c8/lib/C8RestClient'
+import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(60000)
 
-const c8 = new C8RestClient()
+const c8 = new CamundaRestClient()
 let pid: string
 
 beforeAll(async () => {

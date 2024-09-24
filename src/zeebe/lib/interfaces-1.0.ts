@@ -40,7 +40,7 @@ import {
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
-// The JSON-stringified version of this is sent to the ZBCustomLogger
+/** The JSON-stringified version of this is sent to the ZBCustomLogger */
 export interface ZBLogMessage {
 	timestamp: Date
 	context: string
@@ -52,11 +52,11 @@ export interface ZBLogMessage {
 
 export interface CreateProcessBaseRequest<V extends JSONDoc> {
 	/**
-	 * the BPMN process ID of the process definition
+	 * The BPMN process ID of the process definition
 	 */
 	bpmnProcessId: string
 	/**
-	 * the version of the process; if not specified it will use the latest version
+	 * The version of the process; if not specified it will use the latest version
 	 */
 	version?: number
 	/**
@@ -64,9 +64,9 @@ export interface CreateProcessBaseRequest<V extends JSONDoc> {
 	 * process instance.
 	 */
 	variables: V
-	/** The tenantId for a multi-tenant enabled cluster. */
+	/** The `tenantId` for a multi-tenant enabled cluster. */
 	tenantId?: string
-	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
 }
 
@@ -83,12 +83,12 @@ export interface CreateProcessInstanceReq<V extends JSONDoc>
 export interface CreateProcessInstanceWithResultReq<T extends JSONDoc>
 	extends CreateProcessBaseRequest<T> {
 	/**
-	 * timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
+	 * Timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
 	 * if requestTimeout = 0, uses the generic requestTimeout configured in the gateway.
 	 */
 	requestTimeout?: number
 	/**
-	 * list of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
+	 * List of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
 	 * If empty, all visible variables in the root scope will be returned.
 	 */
 	fetchVariables?: string[]
@@ -316,14 +316,14 @@ export interface Job<
 	readonly worker: string
 	/* The amount of retries left to this job (should always be positive) */
 	readonly retries: number
-	// epoch milliseconds
+	/** Epoch milliseconds */
 	readonly deadline: string
 	/**
 	 * All visible variables in the task scope, computed at activation time.
 	 */
 	readonly variables: Readonly<Variables>
 	/**
-	 * TenantId of the job in a multi-tenant cluster
+	 * The `tenantId` of the job in a multi-tenant cluster
 	 */
 	readonly tenantId: string
 }
@@ -431,69 +431,70 @@ export interface ZBWorkerConfig<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
 	/**
-	 * An optional array of tenantIds if you want this to be a multi-tenant worker.
+	 * An optional array of `tenantId`s if you want this to be a multi-tenant worker.
 	 */
 	tenantIds?: string[]
 }
 
 export interface BroadcastSignalReq {
-	// The name of the signal
+	/** The name of the signal */
 	signalName: string
 
-	// the signal variables as a JSON document; to be valid, the root of the document must be an
-	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
+	/**
+	 * The signal variables as a JSON document; to be valid, the root of the document must be an object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
+	 */
 	variables?: JSONDoc
 
-	// Optional tenantId for a multi-tenant enabled cluster. This could also be supplied via environment variable.
+	/** Optional `tenantId` for a multi-tenant enabled cluster. This could also be supplied via environment variable. */
 	tenantId?: string
 }
 
 export interface BroadcastSignalRes {
-	// the unique ID of the signal that was broadcasted.
+	/** The unique ID of the signal that was broadcasted. */
 	key: string
 }
 
 export interface ResolveIncidentReq {
 	readonly incidentKey: string
-	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
 }
 
 export interface UpdateJobRetriesReq {
 	readonly jobKey: string
 	retries: number
-	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
 }
 
 export interface UpdateJobTimeoutReq {
 	readonly jobKey: string
-	/** the duration of the new timeout in ms, starting from the current moment */
+	/** The duration of the new timeout in ms, starting from the current moment */
 	timeout: number
-	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
 }
 
 export interface ModifyProcessInstanceReq {
-	/** the key of the process instance that should be modified */
+	/** The key of the process instance that should be modified */
 	processInstanceKey: string
 	/**
-	 * instructions describing which elements should be activated in which scopes,
+	 * Instructions describing which elements should be activated in which scopes,
 	 * and which variables should be created
 	 */
 	activateInstructions?: ActivateInstruction[]
-	/** instructions describing which elements should be terminated */
+	/** Instructions describing which elements should be terminated */
 	terminateInstructions?: TerminateInstruction[]
-	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
 }
 
 export interface MigrateProcessInstanceReq {
-	// key of the process instance to migrate
+	/** Key of the process instance to migrate */
 	processInstanceKey: string
-	// the migration plan that defines target process and element mappings
+	/** The migration plan that defines target process and element mappings */
 	migrationPlan: MigrationPlan
-	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
 }
 

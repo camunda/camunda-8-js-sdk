@@ -15,7 +15,7 @@ import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 
 import { getLogger } from './lib/C8Logger'
-import { C8RestClient } from './lib/C8RestClient'
+import { CamundaRestClient } from './lib/CamundaRestClient'
 
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
@@ -33,7 +33,7 @@ import { C8RestClient } from './lib/C8RestClient'
  * const tasklist = c8.getTasklistApiClient()
  * const modeler = c8.getModelerApiClient()
  * const admin = c8.getAdminApiClient()
- * const c8Rest = c8.getC8RestClient()
+ * const c8Rest = c8.getCamundaRestClient()
  * ```
  */
 export class Camunda8 {
@@ -46,9 +46,12 @@ export class Camunda8 {
 	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IOAuthProvider
-	private c8RestClient?: C8RestClient
+	private camundaRestClient?: CamundaRestClient
 	public log: winston.Logger
 
+	/**
+	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+	 */
 	constructor(config: Camunda8ClientConfiguration = {}) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
@@ -117,7 +120,7 @@ export class Camunda8 {
 	}
 
 	/**
-	 * @deprecated from 8.6. Please use getC8RestClient() instead.
+	 * @deprecated from 8.6.0. Please use getCamundaRestClient() instead.
 	 */
 	public getZeebeRestClient(): ZeebeRestClient {
 		if (!this.zeebeRestClient) {
@@ -129,13 +132,13 @@ export class Camunda8 {
 		return this.zeebeRestClient
 	}
 
-	public getC8RestClient(): C8RestClient {
-		if (!this.c8RestClient) {
-			this.c8RestClient = new C8RestClient({
+	public getCamundaRestClient(): CamundaRestClient {
+		if (!this.camundaRestClient) {
+			this.camundaRestClient = new CamundaRestClient({
 				config: this.configuration,
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
-		return this.c8RestClient
+		return this.camundaRestClient
 	}
 }
