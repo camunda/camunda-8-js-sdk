@@ -1,8 +1,10 @@
 import {
 	BigIntValue,
+	BigIntValueArray,
 	ChildDto,
 	createDtoInstance,
 	Int64String,
+	Int64StringArray,
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
@@ -350,7 +352,6 @@ test('LosslessJsonParser handles subkeys', () => {
 	const jsonString = `{"jobs":[{"key":2251799813737371,"type":"console-log-complete","processInstanceKey":2251799813737366,"bpmnProcessId":"hello-world-complete","processDefinitionVersion":1,"processDefinitionKey":2251799813736299,"elementId":"ServiceTask_0g6tf5f","elementInstanceKey":2251799813737370,"customHeaders":{"message":"Hello World"},"worker":"test","retries":100,"deadline":1725501895792,"variables":{},"tenantId":"<default>"}]}`
 
 	const parsed = losslessParse(jsonString, undefined, 'jobs')
-	console.log(parsed)
 	expect(parsed[0].key).toBe(2251799813737371)
 })
 
@@ -406,4 +407,54 @@ test('It correctly handles a number array in a subkey', () => {
 	const json = `{"message":"Hello from automation","userId":null,"sendTo":[12022907,12022896,12022831]}`
 	const res = losslessParse(json)
 	expect(res.sendTo[0]).toBe(12022907)
+})
+
+test('It correctly handles a number array in a subkey with a DTO (Int64StringArray)', () => {
+	class Dto extends LosslessDto {
+		message!: string
+		userId!: number
+		@Int64StringArray
+		sendTo!: string[]
+	}
+
+	const json = `{"message":"Hello from automation","userId":null,"sendTo":[12022907,12022896,12022831]}`
+	const res = losslessParse(json, Dto)
+	expect(res.sendTo[0]).toBe('12022907')
+})
+
+test('It correctly handles a number array in a subkey with a DTO (BigIntValueArray)', () => {
+	class Dto extends LosslessDto {
+		message!: string
+		userId!: number
+		@BigIntValueArray
+		sendTo!: string[]
+	}
+
+	const json = `{"message":"Hello from automation","userId":null,"sendTo":[12022907,12022896,12022831]}`
+	const res = losslessParse(json, Dto)
+	expect(res.sendTo[0]).toBe(BigInt('12022907'))
+})
+
+test('It correctly throws when encountering a number rather than an array in a subkey with a DTO (Int64StringArray)', () => {
+	class Dto extends LosslessDto {
+		message!: string
+		userId!: number
+		@Int64StringArray
+		sendTo!: string[]
+	}
+
+	const json = `{"message":"Hello from automation","userId":null,"sendTo":12022907}`
+	expect(() => losslessParse(json, Dto)).toThrow('expected Array')
+})
+
+test('It correctly throws when encountering a number rather than an array in a subkey with a DTO (BigIntValueArray)', () => {
+	class Dto extends LosslessDto {
+		message!: string
+		userId!: number
+		@BigIntValueArray
+		sendTo!: string[]
+	}
+
+	const json = `{"message":"Hello from automation","userId":null,"sendTo":12022907}`
+	expect(() => losslessParse(json, Dto)).toThrow('expected Array')
 })
