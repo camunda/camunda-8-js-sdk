@@ -33,6 +33,13 @@ import 'reflect-metadata'
 
 const debug = d('lossless-json-parser')
 
+const MetadataKey = {
+	INT64_STRING: 'type:int64',
+	INT64_STRING_ARRAY: 'type:int64[]',
+	INT64_BIGINT: 'type:bigint',
+	INT64_BIGINT_ARRAY: 'type:bigint[]',
+	CHILD_DTO: 'child:class',
+}
 /**
  * Decorate Dto string fields as `@Int64String` to specify that the JSON number property should be parsed as a string.
  * @example
@@ -51,11 +58,34 @@ const debug = d('lossless-json-parser')
  * ```
  */
 export function Int64String(target: any, propertyKey: string | symbol): void {
-	Reflect.defineMetadata('type:int64', true, target, propertyKey)
+	Reflect.defineMetadata(MetadataKey.INT64_STRING, true, target, propertyKey)
 }
 
 /**
- * Decorate Dto bigint fields as `@BigInt` to specify that the JSON number property should be parsed as a bigint.
+ * Decorate Dto string fields as `@Int64StringArray` to specify that the array of JSON numbers should be parsed as an array of strings.
+ * @example
+ * ```typescript
+ * class Dto extends LosslessDto {
+ *   message!: string
+ *   userId!: number
+ *   @Int64StringArray
+ *   sendTo!: string[]
+ * }
+ */
+export function Int64StringArray(
+	target: any,
+	propertyKey: string | symbol
+): void {
+	Reflect.defineMetadata(
+		MetadataKey.INT64_STRING_ARRAY,
+		true,
+		target,
+		propertyKey
+	)
+}
+
+/**
+ * Decorate Dto bigint fields as `@BigIntValue` to specify that the JSON number property should be parsed as a bigint.
  * @example
  * ```typescript
  * class MyDto extends LosslessDto {
@@ -72,9 +102,37 @@ export function Int64String(target: any, propertyKey: string | symbol): void {
  * ```
  */
 export function BigIntValue(target: any, propertKey: string | symbol): void {
-	Reflect.defineMetadata('type:bigint', true, target, propertKey)
+	Reflect.defineMetadata(MetadataKey.INT64_BIGINT, true, target, propertKey)
 }
 
+/**
+ * Decorate Dto bigint fields as `@BigIntValueArray` to specify that the JSON number property should be parsed as a bigint.
+ * @example
+ * ```typescript
+ * class MyDto extends LosslessDto {
+ *   @Int64String
+ *   int64NumberField!: string
+ *   @BigIntValueArray
+ *   bigintField!: bigint[]
+ *   @ChildDto(MyChildDto)
+ *   childDtoField!: MyChildDto
+ *   normalField!: string
+ *   normalNumberField!: number
+ *   maybePresentField?: string
+ * }
+ * ```
+ */
+export function BigIntValueArray(
+	target: any,
+	propertKey: string | symbol
+): void {
+	Reflect.defineMetadata(
+		MetadataKey.INT64_BIGINT_ARRAY,
+		true,
+		target,
+		propertKey
+	)
+}
 /**
  * Decorate a Dto object field as `@ChildDto` to specify that the JSON object property should be parsed as a child Dto.
  * @example
@@ -98,7 +156,12 @@ export function BigIntValue(target: any, propertKey: string | symbol): void {
  */
 export function ChildDto(childClass: any) {
 	return function (target: any, propertyKey: string | symbol) {
-		Reflect.defineMetadata('child:class', childClass, target, propertyKey)
+		Reflect.defineMetadata(
+			MetadataKey.CHILD_DTO,
+			childClass,
+			target,
+			propertyKey
+		)
 	}
 }
 
@@ -194,7 +257,11 @@ function parseWithAnnotations<T>(
 	const instance = new dto()
 
 	for (const [key, value] of Object.entries(obj)) {
-		const childClass = Reflect.getMetadata('child:class', dto.prototype, key)
+		const childClass = Reflect.getMetadata(
+			MetadataKey.CHILD_DTO,
+			dto.prototype,
+			key
+		)
 		if (childClass) {
 			if (Array.isArray(value)) {
 				// If the value is an array, parse each element with the specified child class
@@ -206,23 +273,82 @@ function parseWithAnnotations<T>(
 				instance[key] = losslessParse(stringify(value)!, childClass)
 			}
 		} else {
-			if (Reflect.hasMetadata('type:int64', dto.prototype, key)) {
+			if (
+				Reflect.hasMetadata(MetadataKey.INT64_STRING_ARRAY, dto.prototype, key)
+			) {
+				debug(`Parsing int64 array field "${key}" to string`)
+				if (Array.isArray(value)) {
+					instance[key] = value.map((item) => {
+						if (isLosslessNumber(item)) {
+							return item.toString()
+						} else {
+							debug('Unexpected type for value', value)
+							throw new Error(
+								`Unexpected type: Received JSON ${typeof item} value for Int64String Dto field "${key}", expected number`
+							)
+						}
+					})
+				} else {
+					const type = value instanceof LosslessNumber ? 'number' : typeof value
+					throw new Error(
+						`Unexpected type: Received JSON ${type} value for Int64StringArray Dto field "${key}", expected Array`
+					)
+				}
+			} else if (
+				Reflect.hasMetadata(MetadataKey.INT64_STRING, dto.prototype, key)
+			) {
 				debug(`Parsing int64 field "${key}" to string`)
 				if (value) {
 					if (isLosslessNumber(value)) {
 						instance[key] = value.toString()
 					} else {
+						if (Array.isArray(value)) {
+							throw new Error(
+								`Unexpected type: Received JSON array value for Int64String Dto field "${key}", expected number. If you are expecting an array, use the @Int64StringArray decorator.`
+							)
+						}
+						const type =
+							value instanceof LosslessNumber ? 'number' : typeof value
+
 						throw new Error(
-							`Unexpected type: Received JSON ${typeof value} value for Int64String Dto field "${key}", expected number`
+							`Unexpected type: Received JSON ${type} value for Int64String Dto field "${key}", expected number`
 						)
 					}
 				}
-			} else if (Reflect.hasMetadata('type:bigint', dto.prototype, key)) {
+			} else if (
+				Reflect.hasMetadata(MetadataKey.INT64_BIGINT_ARRAY, dto.prototype, key)
+			) {
+				debug(`Parsing int64 array field "${key}" to BigInt`)
+				if (Array.isArray(value)) {
+					instance[key] = value.map((item) => {
+						if (isLosslessNumber(item)) {
+							return BigInt(item.toString())
+						} else {
+							debug('Unexpected type for value', value)
+							throw new Error(
+								`Unexpected type: Received JSON ${typeof item} value for BigIntValue in Dto field "${key}[]", expected number`
+							)
+						}
+					})
+				} else {
+					const type = value instanceof LosslessNumber ? 'number' : typeof value
+					throw new Error(
+						`Unexpected type: Received JSON ${type} value for BigIntValueArray Dto field "${key}", expected Array`
+					)
+				}
+			} else if (
+				Reflect.hasMetadata(MetadataKey.INT64_BIGINT, dto.prototype, key)
+			) {
 				debug(`Parsing bigint field ${key}`)
 				if (value) {
 					if (isLosslessNumber(value)) {
 						instance[key] = BigInt(value.toString())
 					} else {
+						if (Array.isArray(value)) {
+							throw new Error(
+								`Unexpected type: Received JSON array value for BigIntValue Dto field "${key}", expected number. If you are expecting an array, use the @BigIntValueArray decorator.`
+							)
+						}
 						throw new Error(
 							`Unexpected type: Received JSON ${typeof value} value for BigIntValue Dto field "${key}", expected number`
 						)
@@ -327,11 +453,11 @@ export function losslessStringify<T extends LosslessDto>(
 		if (typeof value === 'object' && value !== null) {
 			// If the value is an object or array, recurse into it
 			newObj[key] = losslessStringify(value, false)
-		} else if (Reflect.getMetadata('type:int64', obj, key)) {
+		} else if (Reflect.getMetadata(MetadataKey.INT64_STRING, obj, key)) {
 			// If the property is decorated with @Int64String, convert the string to a LosslessNumber
 			debug(`Stringifying int64 string field ${key}`)
 			newObj[key] = new LosslessNumber(value)
-		} else if (Reflect.getMetadata('type:bigint', obj, key)) {
+		} else if (Reflect.getMetadata(MetadataKey.INT64_BIGINT, obj, key)) {
 			// If the property is decorated with @BigIntValue, convert the bigint to a LosslessNumber
 			debug(`Stringifying bigint field ${key}`)
 			newObj[key] = new LosslessNumber(value.toString())
