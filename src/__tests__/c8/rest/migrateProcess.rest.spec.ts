@@ -1,11 +1,11 @@
 import path from 'path'
 
-import { C8JobWorker } from 'c8/lib/C8JobWorker'
+import { CamundaJobWorker } from 'c8/lib/C8JobWorker'
 
-import { C8RestClient } from '../../../c8/lib/C8RestClient'
+import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
 
-const c8 = new C8RestClient()
+const c8 = new CamundaRestClient()
 
 class CustomHeaders extends LosslessDto {
 	ProcessVersion!: number
@@ -32,7 +32,7 @@ test('RestClient can migrate a process instance', async () => {
 	let instanceKey = ''
 	let processVersion = 0
 
-	await new Promise<C8JobWorker<LosslessDto, CustomHeaders>>((res) => {
+	await new Promise<CamundaJobWorker<LosslessDto, CustomHeaders>>((res) => {
 		const w = c8.createJobWorker({
 			type: 'migrant-rest-worker-task-1',
 			maxJobsToActivate: 10,
@@ -74,7 +74,7 @@ test('RestClient can migrate a process instance', async () => {
 
 	// Complete the job in the process instance
 
-	await new Promise<C8JobWorker<LosslessDto, LosslessDto>>((res) => {
+	await new Promise<CamundaJobWorker<LosslessDto, LosslessDto>>((res) => {
 		const w = c8.createJobWorker({
 			type: 'migration-rest-checkpoint',
 			worker: 'Migrant Checkpoint worker',
@@ -90,7 +90,7 @@ test('RestClient can migrate a process instance', async () => {
 		})
 	}).then((w) => w.stop())
 
-	await new Promise<C8JobWorker<LosslessDto, CustomHeaders>>((res) => {
+	await new Promise<CamundaJobWorker<LosslessDto, CustomHeaders>>((res) => {
 		const w = c8.createJobWorker({
 			type: 'migrant-rest-worker-task-2',
 			worker: 'Migrant Worker 2',

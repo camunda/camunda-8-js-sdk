@@ -1,9 +1,9 @@
 import { v4 } from 'uuid'
 
-import { C8RestClient } from '../../../c8/lib/C8RestClient'
+import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
 
-const c8 = new C8RestClient()
+const c8 = new CamundaRestClient()
 
 beforeAll(async () => {
 	await c8.deployResourcesFromFiles([

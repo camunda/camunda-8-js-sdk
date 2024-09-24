@@ -131,6 +131,7 @@
 		"ts-protoc-gen": "^0.15.0",
 		"tsconfig-paths": "^4.2.0",
 		"tsd": "^0.31.0",
+		"typed-emitter": "^2.1.0",
 		"typedoc": "^0.25.9",
 		"typedoc-plugin-include-example": "^1.2.0",
 		"typedoc-plugin-missing-exports": "^2.2.0",

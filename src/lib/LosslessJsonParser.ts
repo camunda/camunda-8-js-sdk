@@ -119,15 +119,7 @@ export function ChildDto(childClass: any) {
  * }
  * ```
  */
-export class LosslessDto {
-	constructor(obj?: any) {
-		if (obj) {
-			for (const [key, value] of Object.entries(obj)) {
-				this[key] = value
-			}
-		}
-	}
-}
+export class LosslessDto {}
 
 /**
  * losslessParse uses lossless-json parse to deserialize JSON.

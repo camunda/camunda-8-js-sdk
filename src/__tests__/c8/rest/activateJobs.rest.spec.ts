@@ -1,9 +1,9 @@
 import path from 'node:path'
 
-import { C8RestClient } from '../../../c8/lib/C8RestClient'
+import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 
 let bpmnProcessId: string
-const restClient = new C8RestClient()
+const restClient = new CamundaRestClient()
 
 beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([

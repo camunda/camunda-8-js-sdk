@@ -1,6 +1,7 @@
 export * from './ClientConstructor'
 export * from './Configuration'
 export * from './ConstructOAuthProvider'
+export * from './CreateDtoInstance'
 export * from './CreateUserAgentString'
 export * from './Delay'
 export * from './EnvironmentSetup'
