@@ -262,6 +262,9 @@ function convertLosslessNumbersToNumberOrThrow<T>(obj: any): T {
 	if (!obj) {
 		return obj
 	}
+	if (obj instanceof LosslessNumber) {
+		return toSafeNumberOrThrow(obj.toString()) as T
+	}
 	let currentKey = ''
 	try {
 		Object.keys(obj).forEach((key) => {
