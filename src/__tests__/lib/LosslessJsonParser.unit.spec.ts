@@ -1,6 +1,7 @@
 import {
 	BigIntValue,
 	ChildDto,
+	createDtoInstance,
 	Int64String,
 	LosslessDto,
 	losslessParse,
@@ -387,14 +388,22 @@ test('LosslessJsonParser will throw if given stringified JSON with an unsafe int
 
 test('It rejects Date, Map, and Set types', () => {
 	class Dto extends LosslessDto {
-		date!: Date
-		name!: string
+		date?: Date
+		name?: string
+		map?: Map<string, string>
+		set?: Set<string>
 	}
 	const date = new Date()
-	const dto = new Dto({ date, name: 'me' })
+	const dto = createDtoInstance(Dto, { date, name: 'me' })
 	expect(() => losslessStringify(dto)).toThrow('Date')
-	const mapDto = new Dto({ map: new Map() })
+	const mapDto = createDtoInstance(Dto, { map: new Map() })
 	expect(() => losslessStringify(mapDto)).toThrow('Map')
-	const setDto = new Dto({ set: new Set() })
+	const setDto = createDtoInstance(Dto, { set: new Set<string>() })
 	expect(() => losslessStringify(setDto)).toThrow('Set')
+})
+
+test('It correctly handles a number array in a subkey', () => {
+	const json = `{"message":"Hello from automation","userId":null,"sendTo":[12022907,12022896,12022831]}`
+	const res = losslessParse(json)
+	expect(res.sendTo[0]).toBe(12022907)
 })
