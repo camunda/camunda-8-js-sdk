@@ -588,7 +588,7 @@ export class CamundaRestClient {
 	 */
 	public async createProcessInstance<T extends JSONDoc | LosslessDto>(
 		request: CreateProcessInstanceReq<T>
-	): Promise<CreateProcessInstanceResponse<Record<string, never>>>
+	): Promise<CreateProcessInstanceResponse<never>>
 
 	async createProcessInstance<
 		T extends JSONDoc | LosslessDto,
