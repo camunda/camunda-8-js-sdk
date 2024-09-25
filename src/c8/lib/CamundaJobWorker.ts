@@ -85,7 +85,7 @@ export class CamundaJobWorker<
 			currentload: this.currentlyActiveJobCount,
 		})
 		this.log.debug(`Created REST Job Worker`, this.logMeta())
-		if (config.autoStart) {
+		if (config.autoStart ?? true) {
 			this.start()
 		}
 	}
