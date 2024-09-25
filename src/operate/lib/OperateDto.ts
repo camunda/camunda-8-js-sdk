@@ -40,6 +40,7 @@ export class DecisionInstance extends LosslessDto {
 	evaluationFailure!: string
 	@Int64String
 	processDefinitionKey!: string
+	processInstanceKey!: number
 	decisionId!: string
 	decisionDefinitionId!: string
 	decisionName!: string
