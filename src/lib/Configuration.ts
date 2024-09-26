@@ -1,3 +1,4 @@
+import { BeforeRequestHook } from 'got'
 import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 import winston from 'winston'
@@ -433,7 +434,9 @@ export class CamundaEnvironmentConfigurator {
 
 export type CamundaPlatform8Configuration = ReturnType<
 	typeof CamundaEnvironmentConfigurator.ENV
->
+> & {
+	middleware?: BeforeRequestHook[]
+}
 
 export type DeepPartial<T> = {
 	[K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]

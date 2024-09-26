@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
-import { LosslessDto } from '../../../lib'
+import { createDtoInstance, LosslessDto } from '../../../lib'
 
 jest.setTimeout(17000)
 
@@ -52,7 +52,7 @@ test('Can create a process with a lossless Dto', (done) => {
 	restClient
 		.createProcessInstance({
 			processDefinitionKey,
-			variables: new myVariableDto({ someNumberField: 8 }),
+			variables: createDtoInstance(myVariableDto, { someNumberField: 8 }),
 		})
 		.then((res) => {
 			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
@@ -61,7 +61,7 @@ test('Can create a process with a lossless Dto', (done) => {
 })
 
 test('Can create a process and get the result', (done) => {
-	const variables = new myVariableDto({ someNumberField: 8 })
+	const variables = createDtoInstance(myVariableDto, { someNumberField: 8 })
 	restClient
 		.createProcessInstanceWithResult({
 			processDefinitionKey,
@@ -79,7 +79,7 @@ test('Can create a process and get the result', (done) => {
 	restClient
 		.createProcessInstanceWithResult({
 			processDefinitionKey,
-			variables: new myVariableDto({ someNumberField: 9 }),
+			variables: createDtoInstance(myVariableDto, { someNumberField: 9 }),
 		})
 		.then((res) => {
 			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
@@ -98,7 +98,7 @@ test('What happens if we time out?', async () => {
 	await expect(
 		restClient.createProcessInstanceWithResult({
 			bpmnProcessId,
-			variables: new myVariableDto({ someNumberField: 9 }),
+			variables: createDtoInstance(myVariableDto, { someNumberField: 9 }),
 			requestTimeout: 20000,
 		})
 	).rejects.toThrow('504')
