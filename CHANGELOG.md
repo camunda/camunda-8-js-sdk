@@ -1,3 +1,10 @@
+## [8.6.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.12...v8.6.13) (2024-09-26)
+
+
+### Bug Fixes
+
+* **operate:** use post request for decision definitions and decision instances endpoints ([419ae56](https://github.com/camunda/camunda-8-js-sdk/commit/419ae568327bc1451e6ea59ec3f0c340b80758f9))
+
 ## [8.6.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.11...v8.6.12) (2024-08-30)
 
 
