@@ -1,4 +1,4 @@
-import { CamundaEnvironmentVariable } from '../lib'
+import { CamundaEnvironmentVariable } from '.'
 
 export function RequireConfiguration<T>(
 	config: T | undefined,

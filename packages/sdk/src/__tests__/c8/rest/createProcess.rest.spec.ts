@@ -1,4 +1,4 @@
-import path from 'node:path'
+import path from 'path'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { createDtoInstance, LosslessDto } from '../../../lib'
