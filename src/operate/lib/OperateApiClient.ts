@@ -231,11 +231,13 @@ export class OperateApiClient {
 		const json = this.addTenantIdToFilter(query)
 		const rest = await this.rest
 
-		return rest('decision-definitions/search', {
-			headers,
-			parseJson: (text) => parseSearchResults(text, DecisionDefinition),
-			json,
-		}).json()
+		return rest
+			.post('decision-definitions/search', {
+				headers,
+				parseJson: (text) => parseSearchResults(text, DecisionDefinition),
+				json,
+			})
+			.json()
 	}
 
 	/**
@@ -263,11 +265,13 @@ export class OperateApiClient {
 		const json = this.addTenantIdToFilter(query)
 		const rest = await this.rest
 
-		return rest('decision-instances/search', {
-			headers,
-			parseJson: (text) => parseSearchResults(text, DecisionInstance),
-			json,
-		}).json()
+		return rest
+			.post('decision-instances/search', {
+				headers,
+				parseJson: (text) => parseSearchResults(text, DecisionInstance),
+				json,
+			})
+			.json()
 	}
 
 	/**
