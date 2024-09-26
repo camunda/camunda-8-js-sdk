@@ -56,6 +56,7 @@ export class ModelerApiClient {
 							),
 						],
 						beforeError: [gotBeforeErrorHook],
+						beforeRequest: config.middleware ?? [],
 					},
 				})
 		)

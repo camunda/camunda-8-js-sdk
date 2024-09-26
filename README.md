@@ -222,9 +222,31 @@ Here is an example of turning on debugging for the OAuth and Operate components:
 DEBUG=camunda:oauth,camunda:operate node app.js
 ```
 
+## Process Variable Typing
+
+Process variables - the `variables` of Zeebe messages, jobs, and process instance creation requests and responses - are stored in the broker as key:value pairs. They are transported as a JSON string. The SDK parses the JSON string into a JavaScript object.
+
+Various Zeebe methods accept DTO classes for variable input and output. These DTO classes are used to provide design-time type information on the `variables` object. They are also used to safely decode 64-bit integer values that cannot be accurately represented by the JavaScript `number` type.
+
+To create a DTO to represent the expected shape and type of the `variables` object, extend the `LosslessDto` class:
+
+```typescript
+class myVariableDTO extends LosslessDto {
+	firstName!: string
+	lastName!: string
+	age!: number
+	optionalValue?: number
+	@Int64String
+	veryBigInteger?: string
+	constructor(data: Partial<myVariableDTO>) {
+		super(data)
+	}
+}
+```
+
 ## Typing of Zeebe worker variables
 
-The variable payload in a Zeebe worker task handler is available as an object `job.variables`. By default, this is of type `any`.
+The variable payload in a Zeebe worker task handler is available as an object `job.variables`. By default, this is of type `any` for the gRPC API, and `unknown` for the REST API.
 
 The `ZBClient.createWorker()` method accepts an `inputVariableDto` to control the parsing of number values and provide design-time type information. Passing an `inputVariableDto` class to a Zeebe worker is optional. If a DTO class is passed to the Zeebe worker, it is used for two purposes:
 

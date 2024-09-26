@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { CamundaJobWorker } from 'c8/lib/C8JobWorker'
+import { CamundaJobWorker } from 'c8/lib/CamundaJobWorker'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'

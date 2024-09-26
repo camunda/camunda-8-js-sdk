@@ -111,6 +111,7 @@ export class OperateApiClient {
 							),
 						],
 						beforeError: [gotBeforeErrorHook],
+						beforeRequest: config.middleware ?? [],
 					},
 				})
 		)

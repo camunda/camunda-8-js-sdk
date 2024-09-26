@@ -59,60 +59,72 @@ export class Camunda8 {
 		this.log = getLogger(config)
 	}
 
-	public getOperateApiClient(): OperateApiClient {
+	public getOperateApiClient(
+		config: Camunda8ClientConfiguration = {}
+	): OperateApiClient {
 		if (!this.operateApiClient) {
 			this.operateApiClient = new OperateApiClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
 		return this.operateApiClient
 	}
 
-	public getAdminApiClient(): AdminApiClient {
+	public getAdminApiClient(
+		config: Camunda8ClientConfiguration = {}
+	): AdminApiClient {
 		if (!this.adminApiClient) {
 			this.adminApiClient = new AdminApiClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
 		return this.adminApiClient
 	}
 
-	public getModelerApiClient(): ModelerApiClient {
+	public getModelerApiClient(
+		config: Camunda8ClientConfiguration = {}
+	): ModelerApiClient {
 		if (!this.modelerApiClient) {
 			this.modelerApiClient = new ModelerApiClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
 		return this.modelerApiClient
 	}
 
-	public getOptimizeApiClient(): OptimizeApiClient {
+	public getOptimizeApiClient(
+		config: Camunda8ClientConfiguration = {}
+	): OptimizeApiClient {
 		if (!this.optimizeApiClient) {
 			this.optimizeApiClient = new OptimizeApiClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
 		return this.optimizeApiClient
 	}
 
-	public getTasklistApiClient(): TasklistApiClient {
+	public getTasklistApiClient(
+		config: Camunda8ClientConfiguration = {}
+	): TasklistApiClient {
 		if (!this.tasklistApiClient) {
 			this.tasklistApiClient = new TasklistApiClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
 		return this.tasklistApiClient
 	}
 
-	public getZeebeGrpcApiClient(): ZeebeGrpcClient {
+	public getZeebeGrpcApiClient(
+		config: Camunda8ClientConfiguration = {}
+	): ZeebeGrpcClient {
 		if (!this.zeebeGrpcApiClient) {
 			this.zeebeGrpcApiClient = new ZeebeGrpcClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
@@ -122,20 +134,24 @@ export class Camunda8 {
 	/**
 	 * @deprecated from 8.6.0. Please use getCamundaRestClient() instead.
 	 */
-	public getZeebeRestClient(): ZeebeRestClient {
+	public getZeebeRestClient(
+		config: Camunda8ClientConfiguration = {}
+	): ZeebeRestClient {
 		if (!this.zeebeRestClient) {
 			this.zeebeRestClient = new ZeebeRestClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}
 		return this.zeebeRestClient
 	}
 
-	public getCamundaRestClient(): CamundaRestClient {
+	public getCamundaRestClient(
+		config: Camunda8ClientConfiguration = {}
+	): CamundaRestClient {
 		if (!this.camundaRestClient) {
 			this.camundaRestClient = new CamundaRestClient({
-				config: this.configuration,
+				config: { ...this.configuration, ...config },
 				oAuthProvider: this.oAuthProvider,
 			})
 		}

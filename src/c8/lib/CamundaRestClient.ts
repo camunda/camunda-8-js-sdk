@@ -138,6 +138,7 @@ export class CamundaRestClient {
 								this.log.debug(`${method} ${path}`)
 								this.log.silly(body)
 							},
+							...(config.middleware ?? []),
 						],
 					},
 				})
