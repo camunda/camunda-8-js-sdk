@@ -1,13 +1,14 @@
-import * as Admin from './admin'
-import { Camunda8 } from './c8'
-import { CamundaRestClient } from './c8/lib/CamundaRestClient'
 import {
 	BigIntValue,
 	ChildDto,
 	Int64String,
 	LosslessDto,
 	createDtoInstance,
-} from './lib'
+} from '@camunda8/lossless-json'
+
+import * as Admin from './admin'
+import { Camunda8 } from './c8'
+import { CamundaRestClient } from './c8/lib/CamundaRestClient'
 import * as Modeler from './modeler'
 import * as Auth from './oauth'
 import * as Operate from './operate'

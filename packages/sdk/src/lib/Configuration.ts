@@ -366,9 +366,8 @@ const getEnv = () => ({
 
 // Helper type for enforcing array contents to match an object's keys
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type EnforceArrayContent<T, K extends keyof any> = T extends Array<K>
-	? T
-	: never
+type EnforceArrayContent<T, K extends keyof any> =
+	T extends Array<K> ? T : never
 
 // Function to create a complete keys array, enforcing completeness at compile time
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

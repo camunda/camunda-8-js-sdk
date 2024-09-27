@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs'
 import * as path from 'path'
 
+import { GetCustomCertificateBuffer } from '@camunda8/certificates'
+import { LosslessDto, losslessStringify } from '@camunda8/lossless-json'
 import chalk from 'chalk'
 import d from 'debug'
 import { LosslessNumber } from 'lossless-json'
@@ -13,9 +15,6 @@ import {
 	CamundaPlatform8Configuration,
 	constructOAuthProvider,
 	DeepPartial,
-	GetCustomCertificateBuffer,
-	LosslessDto,
-	losslessStringify,
 	RequireConfiguration,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'

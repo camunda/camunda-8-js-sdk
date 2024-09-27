@@ -1,0 +1,57 @@
+{
+	"name": "@camunda8/lossless-json",
+	"version": "1.0.0",
+	"description": "Lossless JSON parsing with optional Dto mapping",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "jest",
+		"build": "npm run clean && tsc --project tsconfig.json",
+		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+		"lint": "eslint 'src/**/*.{ts,tsx}'",
+		"format": "prettier --write 'src/**/*.ts'"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/camunda/camunda-8-js-sdk.git"
+	},
+	"keywords": [
+		"JSON",
+		"lossless",
+		"parser"
+	],
+	"author": "Josh Wulf <josh.wulf@camunda.com>",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/camunda/camunda-8-js-sdk/issues"
+	},
+	"homepage": "https://github.com/camunda/camunda-8-js-sdk#readme",
+	"ts-jest": {
+		"diagnostics": {
+			"pretty": true,
+			"debug": [
+				"moduleResolution"
+			]
+		}
+	},
+	"jest": {
+		"transform": {
+			"^.+\\.(ts|tsx)$": [
+				"ts-jest",
+				{
+					"tsconfig": "src/__tests__/tsconfig.json"
+				}
+			]
+		},
+		"preset": "ts-jest",
+		"testEnvironment": "node",
+		"testPathIgnorePatterns": [
+			"/node_modules/",
+			"__tests__/config/*.ts"
+		]
+	},
+	"dependencies": {
+		"debug": "^4.3.7",
+		"lossless-json": "^4.0.2",
+		"reflect-metadata": "^0.2.2"
+	}
+}

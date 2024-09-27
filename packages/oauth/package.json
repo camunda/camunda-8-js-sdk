@@ -1,0 +1,78 @@
+{
+	"name": "@camunda8/oauth",
+	"version": "8.6.2",
+	"description": "",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "jest",
+		"build": "npm run clean && tsc --project tsconfig.json",
+		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+		"lint": "eslint 'src/**/*.{ts,tsx}'",
+		"format": "prettier --write 'src/**/*.ts'"
+	},
+	"keywords": [
+		"zeebe",
+		"zeebe-node",
+		"camunda",
+		"automation",
+		"bpmn",
+		"camunda 8",
+		"operate",
+		"optimize",
+		"tasklist",
+		"web modeler",
+		"oauth"
+	],
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"author": "josh.wulf@camunda.com",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/camunda/camunda-8-js-sdk.git"
+	},
+	"husky": {
+		"hooks": {
+			"pre-commit": "lint-staged"
+		}
+	},
+	"ts-jest": {
+		"diagnostics": {
+			"pretty": true,
+			"debug": [
+				"moduleResolution"
+			]
+		}
+	},
+	"jest": {
+		"transform": {
+			"^.+\\.(ts|tsx)$": [
+				"ts-jest",
+				{
+					"tsconfig": "src/__tests__/tsconfig.json"
+				}
+			]
+		},
+		"preset": "ts-jest",
+		"testEnvironment": "node",
+		"testPathIgnorePatterns": [
+			"/node_modules/",
+			"__tests__/config/*.ts"
+		]
+	},
+	"config": {
+		"commitizen": {
+			"path": "./node_modules/cz-conventional-changelog"
+		}
+	},
+	"lint-staged": {
+		"packages/**/*.ts": [
+			"prettier --write"
+		]
+	},
+	"dependencies": {
+		"@camunda8/certificates": "^1.0.0"
+	}
+}

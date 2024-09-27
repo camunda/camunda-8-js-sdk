@@ -1,4 +1,4 @@
-import { losslessStringify } from '../../lib'
+import { losslessStringify } from '@camunda8/lossless-json'
 
 type JSON = string | number | boolean | JSON[] | JSONDoc[]
 export interface JSONDoc {

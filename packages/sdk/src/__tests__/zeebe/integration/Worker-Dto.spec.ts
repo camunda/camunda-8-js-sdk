@@ -1,4 +1,5 @@
-import { BigIntValue, Int64String, LosslessDto } from '../../../lib'
+import { BigIntValue, Int64String, LosslessDto } from '@camunda8/lossless-json'
+
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 test("Let's test worker handler signatures", () => {

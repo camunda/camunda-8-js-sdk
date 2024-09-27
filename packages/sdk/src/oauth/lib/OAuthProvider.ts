@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as os from 'os'
 import path from 'path'
 
+import { GetCustomCertificateBuffer } from '@camunda8/certificates'
 import { debug } from 'debug'
 import got from 'got'
 import { jwtDecode } from 'jwt-decode'
@@ -10,7 +11,6 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	createUserAgentString,
@@ -41,7 +41,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private inflightTokenRequest?: Promise<string>
 	public userAgentString: string
 	private scope: string | undefined
-	private audienceMap: { [K in TokenGrantAudienceType]: string }
+	private audienceMap: Record<TokenGrantAudienceType, string>
 	private consoleClientId: string | undefined
 	private consoleClientSecret: string | undefined
 	private isCamundaSaaS: boolean

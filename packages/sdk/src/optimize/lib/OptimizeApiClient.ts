@@ -1,10 +1,10 @@
+import { GetCustomCertificateBuffer } from '@camunda8/certificates'
 import got from 'got'
 
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,

@@ -1,6 +1,5 @@
+import { ChildDto, Int64String, LosslessDto } from '@camunda8/lossless-json'
 import { LosslessNumber } from 'lossless-json'
-
-import { ChildDto, Int64String, LosslessDto } from '../../lib'
 
 export class DecisionDefinition extends LosslessDto {
 	id!: string

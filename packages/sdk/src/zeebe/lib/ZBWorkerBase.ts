@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
 
+import { LosslessDto } from '@camunda8/lossless-json'
 import {
 	ClientReadableStream,
 	ClientReadableStreamImpl,
@@ -9,7 +10,6 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
 import * as uuid from 'uuid'
 
-import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
 import { ConnectionStatusEvent } from './ConnectionStatusEvent'

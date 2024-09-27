@@ -1,3 +1,5 @@
+import { GetCustomCertificateBuffer } from '@camunda8/certificates'
+import { losslessParse, losslessStringify } from '@camunda8/lossless-json'
 import { debug } from 'debug'
 import got from 'got'
 
@@ -5,15 +7,12 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
-	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
 	gotErrorHandler,
-	losslessParse,
-	losslessStringify,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'

@@ -1,20 +1,17 @@
-import { parse, stringify } from 'lossless-json'
-
-import { losslessParse } from '../../lib'
+import { losslessParse, losslessStringify } from '@camunda8/lossless-json'
 
 import { SearchResults } from './OperateDto'
 
 export function parseSearchResults<T>(
 	json: string,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dto: { new (...args: any[]): T }
+	dto: { new (): T }
 ): SearchResults<T> {
-	const parsedResult = parse(json) as SearchResults<T>
+	const parsedResult = losslessParse(json) as SearchResults<T>
 
 	// Assuming `parsedResult` matches the structure of `SearchResults<T>`
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const items = parsedResult.items.map((item: any) =>
-		losslessParse(stringify(item) as string, dto)
+		losslessParse(losslessStringify(item) as string, dto)
 	)
 
 	// Apply additional parsing or annotations if necessary

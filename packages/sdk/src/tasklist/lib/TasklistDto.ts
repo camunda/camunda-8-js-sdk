@@ -1,4 +1,4 @@
-import { Int64String, LosslessDto } from '../../lib'
+import { Int64String, LosslessDto } from '@camunda8/lossless-json'
 
 export type TaskState = 'COMPLETED' | 'CREATED' | 'CANCELED' | 'FAILED'
 

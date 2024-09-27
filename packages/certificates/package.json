@@ -1,0 +1,16 @@
+{
+	"name": "@camunda8/certificates",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "jest",
+		"build": "npm run clean && tsc --project tsconfig.json",
+		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+		"lint": "eslint 'src/**/*.{ts,tsx}'",
+		"format": "prettier --write 'src/**/*.ts'"
+	},
+	"keywords": [],
+	"author": "Josh Wulf <josh.wulf@camunda.com>",
+	"license": "ISC",
+	"description": ""
+}
