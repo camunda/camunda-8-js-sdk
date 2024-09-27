@@ -4,12 +4,10 @@ import http from 'http'
 import os from 'os'
 import path from 'path'
 
-import auth from 'basic-auth'
-import got from 'got'
 import jwt from 'jsonwebtoken'
 
-import { EnvironmentSetup, constructOAuthProvider } from '../../lib'
-import { OAuthProvider } from '../../oauth'
+import { OAuthProvider } from '../'
+import { EnvironmentSetup } from '../lib/EnvironmentSetup'
 
 jest.setTimeout(10000)
 let server: http.Server
@@ -95,7 +93,8 @@ describe('OAuthProvider', () => {
 		).toBe(true)
 	})
 
-	it('Gets the token cache dir from the environment', () => {
+	// @Move to sdk (FileCache test)
+	xit('Gets the token cache dir from the environment', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		removeCacheDir(tokenCacheDir)
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
@@ -117,7 +116,8 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
 
-	it('Creates the token cache dir if it does not exist', () => {
+	// @Move to sdk (FileCache test)
+	xit('Creates the token cache dir if it does not exist', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
 		removeCacheDir(tokenCacheDir)
@@ -140,7 +140,8 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
 
-	it('Throws in the constructor if the token cache is not writable', () => {
+	// @Move to sdk
+	xit('Throws in the constructor if the token cache is not writable', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
 		removeCacheDir(tokenCacheDir)
@@ -399,7 +400,8 @@ describe('OAuthProvider', () => {
 		return o.getToken('ZEEBE')
 	})
 
-	it('Creates the token cache dir if it does not exist', () => {
+	//@Move to sdk - Filecache test
+	xit('Creates the token cache dir if it does not exist', () => {
 		const tokenCache = path.join(__dirname, '.token-cache')
 		if (fs.existsSync(tokenCache)) {
 			fs.rmdirSync(tokenCache)
@@ -424,7 +426,8 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCache)).toBe(false)
 	})
 
-	it('Gets the token cache dir from the environment', () => {
+	// @Move to sdk - File cache test
+	xit('Gets the token cache dir from the environment', () => {
 		const tokenCache = path.join(__dirname, '.token-cache')
 		if (fs.existsSync(tokenCache)) {
 			fs.rmdirSync(tokenCache)
@@ -448,7 +451,8 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCache)).toBe(false)
 	})
 
-	it('Uses an explicit token cache over the environment', () => {
+	// @Move to sdk - File cache test
+	xit('Uses an explicit token cache over the environment', () => {
 		const tokenCache1 = path.join(__dirname, '.token-cache1')
 		const tokenCache2 = path.join(__dirname, '.token-cache2')
 		;[tokenCache1, tokenCache2].forEach((tokenCache) => {
@@ -576,41 +580,42 @@ describe('OAuthProvider', () => {
 			})
 	})
 
-	it('Can use Basic Auth as a strategy', async () => {
-		const server = http.createServer((req, res) => {
-			const credentials = auth(req)
+	// @Move to isomorphic-sdk
+	// 	xit('Can use Basic Auth as a strategy', async () => {
+	// 		const server = http.createServer((req, res) => {
+	// 			const credentials = auth(req)
 
-			if (
-				!credentials ||
-				credentials.name !== 'admin' ||
-				credentials.pass !== 'supersecret'
-			) {
-				res.statusCode = 401
-				res.setHeader('WWW-Authenticate', 'Basic realm="example"')
-				res.end('Access denied')
-			} else {
-				res.end('Access granted')
-			}
-		})
+	// 			if (
+	// 				!credentials ||
+	// 				credentials.name !== 'admin' ||
+	// 				credentials.pass !== 'supersecret'
+	// 			) {
+	// 				res.statusCode = 401
+	// 				res.setHeader('WWW-Authenticate', 'Basic realm="example"')
+	// 				res.end('Access denied')
+	// 			} else {
+	// 				res.end('Access granted')
+	// 			}
+	// 		})
 
-		server.listen(3033)
+	// 		server.listen(3033)
 
-		const oAuthProvider = constructOAuthProvider({
-			CAMUNDA_AUTH_STRATEGY: 'BASIC',
-			CAMUNDA_BASIC_AUTH_PASSWORD: 'supersecret',
-			CAMUNDA_BASIC_AUTH_USERNAME: 'admin',
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} as any)
-		const token = await oAuthProvider.getToken('ZEEBE')
-		await got
-			.get('http://localhost:3033', {
-				headers: {
-					Authorization: 'Basic ' + token,
-				},
-			})
-			.then((res) => {
-				server.close()
-				expect(res).toBeTruthy()
-			})
-	})
+	// 		const oAuthProvider = constructOAuthProvider({
+	// 			CAMUNDA_AUTH_STRATEGY: 'BASIC',
+	// 			CAMUNDA_BASIC_AUTH_PASSWORD: 'supersecret',
+	// 			CAMUNDA_BASIC_AUTH_USERNAME: 'admin',
+	// 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// 		} as any)
+	// 		const token = await oAuthProvider.getToken('ZEEBE')
+	// 		await got
+	// 			.get('http://localhost:3033', {
+	// 				headers: {
+	// 					Authorization: 'Basic ' + token,
+	// 				},
+	// 			})
+	// 			.then((res) => {
+	// 				server.close()
+	// 				expect(res).toBeTruthy()
+	// 			})
+	// 	})
 })

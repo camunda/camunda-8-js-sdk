@@ -14,6 +14,7 @@ import {
 	TokenError,
 	TokenGrantAudienceType,
 } from './OAuth'
+import { createUserAgentString } from './createUserAgentString'
 
 const trace = debug('camunda:oauth')
 

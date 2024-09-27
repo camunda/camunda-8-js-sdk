@@ -1,4 +1,4 @@
-import { OAuthProvider } from '../../oauth/lib/OAuthProvider'
+import { OAuthProvider } from '..'
 
 let o: OAuthProvider
 
