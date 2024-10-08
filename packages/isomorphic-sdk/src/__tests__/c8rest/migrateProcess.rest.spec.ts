@@ -2,7 +2,7 @@ import path from 'path'
 
 import { LosslessDto } from '@camunda8/lossless-json'
 
-import { CamundaJobWorker, CamundaRestClient } from '..'
+import { CamundaJobWorker, CamundaRestClient } from '../..'
 
 const c8 = new CamundaRestClient()
 
@@ -12,19 +12,21 @@ class CustomHeaders extends LosslessDto {
 
 test('RestClient can migrate a process instance', async () => {
 	// Deploy a process model
-	await c8.deployResourcesFromFiles([
-		path.join(
-			'.',
-			'src',
-			'__tests__',
-			'testdata',
-			'MigrateProcess-Rest-Version-1.bpmn'
-		),
-	])
+	await c8.deployResourcesFromFiles({
+		files: [
+			path.join(
+				'.',
+				'src',
+				'__tests__',
+				'testdata',
+				'MigrateProcess-Rest-Version-1.bpmn'
+			),
+		],
+	})
 
 	// Create an instance of the process model
 	const processInstance = await c8.createProcessInstance({
-		bpmnProcessId: 'migrant-work-rest',
+		processDefinitionId: 'migrant-work-rest',
 		variables: {},
 	})
 
@@ -54,9 +56,9 @@ test('RestClient can migrate a process instance', async () => {
 	expect(processVersion).toBe('1')
 
 	// Deploy the updated process model
-	const res1 = await c8.deployResourcesFromFiles([
-		'./src/__tests__/testdata/MigrateProcess-Rest-Version-2.bpmn',
-	])
+	const res1 = await c8.deployResourcesFromFiles({
+		files: ['./src/__tests__/testdata/MigrateProcess-Rest-Version-2.bpmn'],
+	})
 
 	// Migrate the process instance to the updated process model
 
@@ -68,7 +70,7 @@ test('RestClient can migrate a process instance', async () => {
 				targetElementId: 'Activity_050vmrm',
 			},
 		],
-		targetProcessDefinitionKey: res1.processes[0].processDefinitionKey,
+		targetProcessDefinitionKey: res1.processDefinitions[0].processDefinitionKey,
 	})
 
 	// Complete the job in the process instance

@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "jest",
+		"test": "CAMUNDA_LOG_LEVEL=error jest --runInBand --forceExit --detectOpenHandles --verbose",
 		"build": "npm run clean && tsc --project tsconfig.json",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
 		"lint": "eslint 'src/**/*.{ts,tsx}'",
@@ -59,7 +59,7 @@
 		"testEnvironment": "node",
 		"testPathIgnorePatterns": [
 			"/node_modules/",
-			"__tests__/config/*.ts"
+			"<rootDir>/src/__tests__/config/"
 		],
 		"globalSetup": "<rootDir>/src/__tests__/config/jest.globalSetup.ts",
 		"globalTeardown": "<rootDir>/src/__tests__/config/jest.globalTeardown.ts"
@@ -74,7 +74,23 @@
 			"prettier --write"
 		]
 	},
-	"devDependencies": {},
-	"optionalDependencies": {},
-	"dependencies": {}
+	"dependencies": {
+		"@camunda8/lossless-json": "^1.0.0",
+		"@camunda8/oauth": "^8.6.2",
+		"debug": "^4.3.7",
+		"form-data": "^4.0.0",
+		"got": "^14.4.2",
+		"loglevel": "^1.9.2",
+		"neon-env": "^0.2.2",
+		"typed-emitter": "^2.1.0"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.5.13",
+		"cz-conventional-changelog": "^3.3.0",
+		"fast-xml-parser": "^4.5.0",
+		"husky": "^9.1.6",
+		"lint-staged": "^15.2.10",
+		"tsconfig-paths": "^4.2.0",
+		"uuid": "^10.0.0"
+	}
 }

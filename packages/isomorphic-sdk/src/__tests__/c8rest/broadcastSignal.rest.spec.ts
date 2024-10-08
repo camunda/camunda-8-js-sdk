@@ -1,6 +1,6 @@
 import { LosslessDto } from '@camunda8/lossless-json'
 
-import { CamundaRestClient } from '..'
+import { CamundaRestClient } from '../..'
 // import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(60000)
@@ -9,7 +9,9 @@ const c8 = new CamundaRestClient()
 // let pid: string
 
 beforeAll(async () => {
-	await c8.deployResourcesFromFiles(['./src/__tests__/testdata/Signal.bpmn'])
+	await c8.deployResourcesFromFiles({
+		files: ['./src/__tests__/testdata/Signal.bpmn'],
+	})
 	// const res = await c8.deployResourcesFromFiles([
 	// 	'./src/__tests__/testdata/Signal.bpmn',
 	// ])
@@ -22,7 +24,9 @@ afterAll(async () => {
 })
 
 test('Can start a process with a signal', async () => {
-	await c8.deployResourcesFromFiles(['./src/__tests__/testdata/Signal.bpmn'])
+	await c8.deployResourcesFromFiles({
+		files: ['./src/__tests__/testdata/Signal.bpmn'],
+	})
 
 	const res = await c8.broadcastSignal({
 		signalName: 'test-signal',
@@ -31,7 +35,7 @@ test('Can start a process with a signal', async () => {
 		},
 	})
 
-	expect(res.key).toBeTruthy()
+	expect(res.signalKey).toBeTruthy()
 
 	await new Promise((resolve) => {
 		const w = c8.createJobWorker({

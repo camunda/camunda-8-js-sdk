@@ -1,5 +1,4 @@
 import { BeforeRequestHook } from 'got'
-import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 import winston from 'winston'
 
@@ -26,7 +25,7 @@ const getEnv = () =>
 		CAMUNDA_LOG_LEVEL: {
 			type: 'string',
 			optional: true,
-			choices: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+			choices: ['error', 'warn', 'info', 'debug', 'trace'],
 			default: 'info',
 		},
 		/** The client ID for the client credentials. Alias for `CAMUNDA_CLIENT_ID`. */
@@ -252,8 +251,8 @@ export class EnvironmentConfigurator {
 	public static ENV = () => getEnv()
 
 	public static mergeConfigWithEnvironment = (
-		config: DeepPartial<OAuthConfiguration>
-	): OAuthConfiguration => mergeWith({}, EnvironmentConfigurator.ENV(), config)
+		config: Partial<OAuthConfiguration>
+	): OAuthConfiguration => ({ ...EnvironmentConfigurator.ENV(), ...config })
 }
 
 export type OAuthConfiguration = ReturnType<

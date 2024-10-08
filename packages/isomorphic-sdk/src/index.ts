@@ -1,3 +1,3 @@
-export { CamundaRestClient } from './lib/CamundaRestClient'
+export { CamundaRestClient } from './c8rest/CamundaRestClient'
 
-export { CamundaJobWorker } from './lib/CamundaJobWorker'
+export { CamundaJobWorker } from './c8rest/CamundaJobWorker'

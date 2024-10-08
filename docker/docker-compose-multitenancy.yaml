@@ -11,6 +11,8 @@
 
 services:
   zeebe: # https://docs.camunda.io/docs/self-managed/platform-deployment/docker/#zeebe
+    profiles:
+      - full
     image: camunda/zeebe:${CAMUNDA_ZEEBE_VERSION}
     container_name: zeebe
     ports:
@@ -244,6 +246,7 @@ services:
       KEYCLOAK_USERS_0_ROLES_2: "Operate"
       KEYCLOAK_USERS_0_ROLES_3: "Tasklist"
       KEYCLOAK_USERS_0_ROLES_4: "Web Modeler"
+      KEYCLOAK_USERS_0_ROLES_5: "Web Modeler Admin"
       KEYCLOAK_CLIENTS_0_NAME: zeebe
       KEYCLOAK_CLIENTS_0_ID: ${ZEEBE_CLIENT_ID}
       KEYCLOAK_CLIENTS_0_SECRET: ${ZEEBE_CLIENT_SECRET}

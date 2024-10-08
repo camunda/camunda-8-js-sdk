@@ -3,10 +3,10 @@ import {
 	losslessParse,
 	losslessStringify,
 } from '@camunda8/lossless-json'
+import { OAuthTypes } from '@camunda8/oauth'
 import { debug } from 'debug'
 import FormData from 'form-data'
 import got from 'got'
-import winston from 'winston'
 
 import {
 	ActivateJobsRequest,
@@ -40,21 +40,19 @@ import {
 	TopologyResponse,
 	UpdateElementVariableRequest,
 } from '../dto/C8Dto'
-
-import { getLogger } from './C8Logger'
-import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
+import { gotBeforeErrorHook, gotErrorHandler } from '../lib'
+import { getLogger, ILogger } from '../lib/C8Logger'
 import {
 	IsoSdkClientConfiguration,
 	IsoSdkEnvironmentConfigurator,
 	RequireConfiguration,
-} from './Configuration'
-import {
-	constructOAuthProvider,
-	createUserAgentString,
-} from './constructOAuthProvider'
-import { IOAuthProvider } from './OAuth'
-import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
-import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
+} from '../lib/Configuration'
+import { constructOAuthProvider } from '../lib/constructOAuthProvider'
+import { createUserAgentString } from '../lib/createUserAgentString'
+
+import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
+import { createSpecializedRestApiJobClass } from './lib/RestApiJobClassFactory'
+import { createSpecializedCreateProcessInstanceResponseClass } from './lib/RestApiProcessInstanceClassFactory'
 
 const trace = debug('camunda:zeebe-rest')
 
@@ -75,20 +73,22 @@ class DefaultLosslessDto extends LosslessDto {}
  */
 export class CamundaRestClient {
 	private userAgentString: string
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: OAuthTypes.IOAuthProvider
 	private rest: typeof got
 	private tenantId?: string
-	public log: winston.Logger
+	public log: ILogger
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private fs?: any
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
 	 */
-	constructor(options?: {
-		config?: IsoSdkClientConfiguration
-		oAuthProvider?: IOAuthProvider
-	}) {
+	constructor(
+		options: {
+			config?: IsoSdkClientConfiguration
+			oAuthProvider?: OAuthTypes.IOAuthProvider
+		} = {}
+	) {
 		const config = IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
@@ -96,8 +96,7 @@ export class CamundaRestClient {
 		this.log.info(`Using REST API version ${CAMUNDA_REST_API_VERSION}`)
 		trace('options.config', options?.config)
 		trace('config', config)
-		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+		this.oAuthProvider = options.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = createUserAgentString(config)
 		this.tenantId = config.CAMUNDA_TENANT_ID
 
@@ -108,30 +107,33 @@ export class CamundaRestClient {
 
 		const prefixUrl = `${baseUrl}/${CAMUNDA_REST_API_VERSION}`
 
+		/** The non-iso SDK wrapper needs to use @camunda8/certificates GetCustomCertificateBuffer and put it in CUSTOM_CERT_STRING */
 		this.rest = got.extend({
 			prefixUrl,
 			// retry: GotRetryConfig,
 			https: {
 				certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
 			},
-			// handlers: [gotErrorHandler],
+			handlers: [gotErrorHandler],
 			hooks: {
-				// beforeError: [gotBeforeErrorHook],
+				beforeError: [gotBeforeErrorHook],
 				beforeRequest: [
 					/** add authorization header */
 					async (options) => {
 						options.headers = {
-							...options.headers,
 							...(await this.getHeaders()),
+							...options.headers,
 						}
 					},
+					/** log for debugging */
 					(options) => {
 						const { body, method } = options
 						const path = options.url.href
 						trace(`${method} ${path}`)
 						trace(body)
 						this.log.debug(`${method} ${path}`)
-						this.log.silly(body)
+						this.log.trace(JSON.stringify(options))
+						this.log.trace(JSON.stringify(body, null, 2))
 					},
 					/** Add user-supplied middleware at the end, where they can override auth headers */
 					...(config.middleware ?? []),
@@ -161,6 +163,7 @@ export class CamundaRestClient {
 					: '',
 		}
 		trace('headers', safeHeaders)
+		this.log.trace(JSON.stringify(headers))
 		return headers
 	}
 
@@ -479,12 +482,10 @@ export class CamundaRestClient {
 	 */
 	public async completeJob(completeJobRequest: CompleteJobRequest) {
 		const { jobKey } = completeJobRequest
-		const headers = await this.getHeaders()
 		const req = { variables: completeJobRequest.variables }
 		return this.rest
 			.post(`jobs/${jobKey}/completion`, {
 				body: losslessStringify(req),
-				headers,
 			})
 			.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 	}
@@ -500,10 +501,8 @@ export class CamundaRestClient {
 		jobChangeset: JobUpdateChangeset & { jobKey: string }
 	) {
 		const { jobKey, ...changeset } = jobChangeset
-		const headers = await this.getHeaders()
 		return this.rest.patch(`jobs/${jobKey}`, {
 			body: JSON.stringify(changeset),
-			headers,
 		})
 	}
 
@@ -515,10 +514,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async resolveIncident(incidentKey: string) {
-		const headers = await this.getHeaders()
-		return this.rest.post(`incidents/${incidentKey}/resolution`, {
-			headers,
-		})
+		return this.rest.post(`incidents/${incidentKey}/resolution`)
 	}
 
 	/**
@@ -540,8 +536,6 @@ export class CamundaRestClient {
 			outputVariablesDto?: Ctor<V>
 		}
 	) {
-		const headers = await this.getHeaders()
-
 		const outputVariablesDto: Ctor<V> | Ctor<LosslessDto> =
 			(request.outputVariablesDto as Ctor<V>) ?? DefaultLosslessDto
 
@@ -551,7 +545,6 @@ export class CamundaRestClient {
 		return this.rest
 			.post(`process-instances`, {
 				body: losslessStringify(this.addDefaultTenantId(request)),
-				headers,
 				parseJson: (text) =>
 					losslessParse(text, CreateProcessInstanceResponseWithVariablesDto),
 			})
@@ -620,12 +613,16 @@ export class CamundaRestClient {
 		processInstanceKey: string
 		operationReference?: number
 	}) {
-		const headers = await this.getHeaders()
+		const body = operationReference
+			? JSON.stringify({ operationReference })
+			: undefined
+		// tslint:disable-next-line: no-console
+		console.log('processInstanceKey', processInstanceKey) // @DEBUG
+
 		return this.rest.post(
 			`process-instances/${processInstanceKey}/cancellation`,
 			{
-				body: JSON.stringify({ operationReference }),
-				headers,
+				body,
 			}
 		)
 	}
@@ -640,13 +637,11 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async migrateProcessInstance(req: MigrationRequest) {
-		const headers = await this.getHeaders()
 		const { processInstanceKey, ...request } = req
 		this.log.debug(`Migrating process instance ${processInstanceKey}`, {
 			component: 'C8RestClient',
 		})
 		return this.rest.post(`process-instances/${processInstanceKey}/migration`, {
-			headers,
 			body: losslessStringify(request),
 		})
 	}
@@ -660,11 +655,13 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async deployResources(
-		resources: { content: string; name: string }[],
+	public async deployResources({
+		resources,
+		tenantId,
+	}: {
+		resources: { content: string; name: string }[]
 		tenantId?: string
-	) {
-		const headers = await this.getHeaders()
+	}) {
 		const formData = new FormData()
 
 		resources.forEach((resource) => {
@@ -678,11 +675,11 @@ export class CamundaRestClient {
 		}
 
 		this.log.debug(`Deploying ${resources.length} resources`)
+		this.log.trace(formData.toString())
 		const res = await this.rest
 			.post('deployments', {
 				body: formData,
 				headers: {
-					...headers,
 					...formData.getHeaders(),
 					Accept: 'application/json',
 				},
@@ -695,11 +692,15 @@ export class CamundaRestClient {
 		 * We dynamically construct the response object for the caller, by examining the lossless response
 		 * and re-parsing each of the deployments with the correct Dto.
 		 */
+		this.log.debug(`Deployment response: ${JSON.stringify(res)}`)
+		// tslint:disable-next-line: no-console
+		// console.log('res', JSON.stringify(res, null, 2)) // @DEBUG
+
 		const deploymentResponse = new DeployResourceResponse()
-		deploymentResponse.key = res.key.toString()
+		deploymentResponse.deploymentKey = res.deploymentKey.toString()
 		deploymentResponse.tenantId = res.tenantId
 		deploymentResponse.deployments = []
-		deploymentResponse.processes = []
+		deploymentResponse.processDefinitions = []
 		deploymentResponse.decisions = []
 		deploymentResponse.decisionRequirements = []
 		deploymentResponse.forms = []
@@ -709,7 +710,8 @@ export class CamundaRestClient {
 		 */
 		const isProcessDeployment = (
 			deployment
-		): deployment is { process: ProcessDeployment } => !!deployment.process
+		): deployment is { processDefinition: ProcessDeployment } =>
+			!!deployment.processDefinition
 		const isDecisionDeployment = (
 			deployment
 		): deployment is { decision: DecisionDeployment } => !!deployment.decision
@@ -729,11 +731,13 @@ export class CamundaRestClient {
 		res.deployments.forEach((deployment) => {
 			if (isProcessDeployment(deployment)) {
 				const processDeployment = losslessParse(
-					losslessStringify(deployment.process)!,
+					losslessStringify(deployment.processDefinition)!,
 					ProcessDeployment
 				)
-				deploymentResponse.deployments.push({ process: processDeployment })
-				deploymentResponse.processes.push(processDeployment)
+				deploymentResponse.deployments.push({
+					processDefinition: processDeployment,
+				})
+				deploymentResponse.processDefinitions.push(processDeployment)
 			}
 			if (isDecisionDeployment(deployment)) {
 				const decisionDeployment = losslessParse(
@@ -774,25 +778,31 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async deployResourcesFromFiles(files: string[]) {
+	public async deployResourcesFromFiles({
+		files,
+		tenantId,
+	}: {
+		files: string[]
+		tenantId?: string
+	}) {
 		try {
 			this.fs = this.fs ?? require('fs')
-			const resources: { content: string; name: string }[] = []
-
-			for (const file of files) {
-				resources.push({
-					content: this.fs.readFileSync(file, { encoding: 'binary' }),
-					name: file,
-				})
-			}
-
-			return this.deployResources(resources)
 		} catch (e) {
 			console.error(
 				'Note: deployResourcesFromFiles is not available in the browser'
 			)
 			throw e
 		}
+		const resources: { content: string; name: string }[] = []
+
+		for (const file of files) {
+			resources.push({
+				content: this.fs.readFileSync(file, { encoding: 'binary' }),
+				name: file,
+			})
+		}
+
+		return this.deployResources({ resources, tenantId })
 	}
 
 	/**
@@ -806,10 +816,8 @@ export class CamundaRestClient {
 		resourceKey: string
 		operationReference?: number
 	}) {
-		const headers = await this.getHeaders()
 		const { resourceKey, operationReference } = req
 		return this.rest.post(`resources/${resourceKey}/deletion`, {
-			headers,
 			body: losslessStringify({ operationReference }),
 		})
 	}
@@ -824,10 +832,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async pinInternalClock(epochMs: number) {
-		const headers = await this.getHeaders()
-
 		return this.rest.put(`clock`, {
-			headers,
 			body: JSON.stringify({ timestamp: epochMs }),
 		})
 	}
@@ -841,8 +846,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async resetClock() {
-		const headers = await this.getHeaders()
-		return this.rest.post(`clock/reset`, { headers })
+		return this.rest.post(`clock/reset`)
 	}
 
 	/**
@@ -856,10 +860,8 @@ export class CamundaRestClient {
 	public async updateElementInstanceVariables(
 		req: UpdateElementVariableRequest
 	) {
-		const headers = await this.getHeaders()
 		const { elementInstanceKey, ...request } = req
 		return this.rest.post(`element-instances/${elementInstanceKey}/variables`, {
-			headers,
 			body: losslessStringify(request),
 		})
 	}

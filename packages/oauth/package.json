@@ -73,6 +73,9 @@
 		]
 	},
 	"dependencies": {
-		"@camunda8/certificates": "^1.0.0"
+		"@camunda8/certificates": "^1.0.0",
+		"debug": "^4.3.7",
+		"got": "^14.4.2",
+		"jwt-decode": "^4.0.0"
 	}
 }

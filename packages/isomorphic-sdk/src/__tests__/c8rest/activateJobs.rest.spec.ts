@@ -1,27 +1,29 @@
 import path from 'node:path'
 
-import { CamundaRestClient } from '..'
+import { CamundaRestClient } from '../..'
 
-let bpmnProcessId: string
+let processDefinitionId: string
 const restClient = new CamundaRestClient()
 
 beforeAll(async () => {
-	const res = await restClient.deployResourcesFromFiles([
-		path.join(
-			'.',
-			'src',
-			'__tests__',
-			'testdata',
-			'hello-world-complete-rest.bpmn'
-		),
-	])
-	bpmnProcessId = res.processes[0].bpmnProcessId
+	const res = await restClient.deployResourcesFromFiles({
+		files: [
+			path.join(
+				'.',
+				'src',
+				'__tests__',
+				'testdata',
+				'hello-world-complete-rest.bpmn'
+			),
+		],
+	})
+	processDefinitionId = res.processDefinitions[0].processDefinitionId
 })
 
 test('Can service a task', (done) => {
 	restClient
 		.createProcessInstance({
-			bpmnProcessId,
+			processDefinitionId,
 			variables: {
 				someNumberField: 8,
 			},
@@ -29,7 +31,7 @@ test('Can service a task', (done) => {
 		.then(() => {
 			restClient
 				.activateJobs({
-					maxJobsToActivate: 2,
+					maxJobsToActivate: 1,
 					requestTimeout: 5000,
 					timeout: 5000,
 					type: 'console-log-complete-rest',

@@ -23,3 +23,10 @@ export interface TokenError {
 	error: string
 	error_description: string
 }
+
+export interface IPersistentCacheProvider {
+	get(key: string): Token | null
+	set(key: string, token: Token, decoded: { exp?: number }): void
+	delete(key: string): void
+	flush(): void
+}

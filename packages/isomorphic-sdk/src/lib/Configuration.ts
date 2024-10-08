@@ -1,7 +1,7 @@
 import { BeforeRequestHook } from 'got'
-import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
-import winston from 'winston'
+
+import { ILogger } from './C8Logger'
 
 const getEnv = () =>
 	createEnv({
@@ -22,11 +22,11 @@ const getEnv = () =>
 			optional: true,
 			default: 1000,
 		},
-		/** The log level for logging. Defaults to 'info'. Values (in order of priority): 'error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly' */
+		/** The log level for logging. Defaults to 'info'. Values (in order of priority): 'error', 'warn', 'info', 'debug', 'trace' */
 		CAMUNDA_LOG_LEVEL: {
 			type: 'string',
 			optional: true,
-			choices: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+			choices: ['error', 'warn', 'info', 'debug', 'trace'],
 			default: 'info',
 		},
 		/** The address for the Zeebe GRPC. */
@@ -267,8 +267,10 @@ export class IsoSdkEnvironmentConfigurator {
 
 	public static mergeConfigWithEnvironment = (
 		config: Partial<IsoSdkConfiguration>
-	): IsoSdkConfiguration =>
-		mergeWith({}, IsoSdkEnvironmentConfigurator.ENV(), config)
+	): IsoSdkConfiguration => ({
+		...IsoSdkEnvironmentConfigurator.ENV(),
+		...config,
+	})
 }
 
 export type IsoSdkConfiguration = ReturnType<
@@ -278,7 +280,7 @@ export type IsoSdkConfiguration = ReturnType<
 }
 
 export type IsoSdkClientConfiguration = Partial<IsoSdkConfiguration> & {
-	logger?: winston.Logger
+	logger?: ILogger
 }
 
 export function RequireConfiguration<T>(

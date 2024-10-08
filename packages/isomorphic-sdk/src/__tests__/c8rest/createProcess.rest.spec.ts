@@ -2,19 +2,27 @@ import path from 'path'
 
 import { createDtoInstance, LosslessDto } from '@camunda8/lossless-json'
 
-import { CamundaRestClient } from '..'
+import { CamundaRestClient } from '../..'
 
 jest.setTimeout(17000)
 
-let bpmnProcessId: string
+let processDefinitionId: string
 let processDefinitionKey: string
 const restClient = new CamundaRestClient()
 
 beforeAll(async () => {
-	const res = await restClient.deployResourcesFromFiles([
-		path.join('.', 'src', '__tests__', 'testdata', 'create-process-rest.bpmn'),
-	])
-	;({ bpmnProcessId, processDefinitionKey } = res.processes[0])
+	const res = await restClient.deployResourcesFromFiles({
+		files: [
+			path.join(
+				'.',
+				'src',
+				'__tests__',
+				'testdata',
+				'create-process-rest.bpmn'
+			),
+		],
+	})
+	;({ processDefinitionId, processDefinitionKey } = res.processDefinitions[0])
 })
 
 class myVariableDto extends LosslessDto {
@@ -24,7 +32,7 @@ class myVariableDto extends LosslessDto {
 test('Can create a process from bpmn id', (done) => {
 	restClient
 		.createProcessInstance({
-			bpmnProcessId,
+			processDefinitionId,
 			variables: {
 				someNumberField: 8,
 			},
@@ -92,15 +100,17 @@ test('Can create a process and get the result', (done) => {
 })
 
 test('What happens if we time out?', async () => {
-	const res = await restClient.deployResourcesFromFiles([
-		path.join('.', 'src', '__tests__', 'testdata', 'hello-world-complete.bpmn'),
-	])
-	const bpmnProcessId = res.processes[0].bpmnProcessId
+	const res = await restClient.deployResourcesFromFiles({
+		files: [
+			path.join('.', 'src', '__tests__', 'testdata', 'time-out-rest.bpmn'),
+		],
+	})
+	const { processDefinitionId } = res.processDefinitions[0]
 	await expect(
 		restClient.createProcessInstanceWithResult({
-			bpmnProcessId,
+			processDefinitionId,
 			variables: createDtoInstance(myVariableDto, { someNumberField: 9 }),
-			requestTimeout: 20000,
+			requestTimeout: 5000,
 		})
 	).rejects.toThrow('504')
 })

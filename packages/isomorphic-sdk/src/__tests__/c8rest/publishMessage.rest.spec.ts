@@ -1,14 +1,14 @@
 import { LosslessDto } from '@camunda8/lossless-json'
 import { v4 } from 'uuid'
 
-import { CamundaRestClient } from '..'
+import { CamundaRestClient } from '../..'
 
 const c8 = new CamundaRestClient()
 
 beforeAll(async () => {
-	await c8.deployResourcesFromFiles([
-		'./src/__tests__/testdata/rest-message-test.bpmn',
-	])
+	await c8.deployResourcesFromFiles({
+		files: ['./src/__tests__/testdata/rest-message-test.bpmn'],
+	})
 })
 
 test('Can publish a message', (done) => {
@@ -17,7 +17,7 @@ test('Can publish a message', (done) => {
 		messageReceived!: boolean
 	}
 	c8.createProcessInstanceWithResult({
-		bpmnProcessId: 'rest-message-test',
+		processDefinitionId: 'rest-message-test',
 		variables: {
 			correlationId: uuid,
 		},
@@ -43,7 +43,7 @@ test('Can correlate a message', (done) => {
 		messageReceived!: boolean
 	}
 	c8.createProcessInstanceWithResult({
-		bpmnProcessId: 'rest-message-test',
+		processDefinitionId: 'rest-message-test',
 		variables: {
 			correlationId: uuid,
 		},
@@ -69,7 +69,7 @@ test('Correlate message returns expected data', (done) => {
 	const uuid = v4()
 	let processInstanceKey: string
 	c8.createProcessInstance({
-		bpmnProcessId: 'rest-message-test',
+		processDefinitionId: 'rest-message-test',
 		variables: {
 			correlationId: uuid,
 		},

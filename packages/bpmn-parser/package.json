@@ -1,0 +1,43 @@
+{
+	"name": "@camunda8/bpmn-parser",
+	"version": "1.0.0",
+	"description": "BPMN model parsing utilities",
+	"main": "index.js",
+	"scripts": {
+		"test": "jest",
+		"build": "tsc"
+	},
+	"keywords": [],
+	"author": "Josh Wulf <josh.wulf@camunda.com>",
+	"license": "ISC",
+	"ts-jest": {
+		"diagnostics": {
+			"pretty": true,
+			"debug": [
+				"moduleResolution"
+			]
+		}
+	},
+	"jest": {
+		"transform": {
+			"^.+\\.(ts|tsx)$": [
+				"ts-jest",
+				{
+					"tsconfig": "src/__tests__/tsconfig.json"
+				}
+			]
+		},
+		"preset": "ts-jest",
+		"testEnvironment": "node",
+		"testPathIgnorePatterns": [
+			"/node_modules/",
+			"__tests__/config/*.ts"
+		]
+	},
+	"devDependencies": {
+		"@types/node": "^22.7.4"
+	},
+	"dependencies": {
+		"fast-xml-parser": "^4.5.0"
+	}
+}

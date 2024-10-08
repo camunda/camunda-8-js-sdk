@@ -1,40 +1,30 @@
-import winston from 'winston' // Import Winston
+import * as log from 'loglevel'
 
-import {
-	Camunda8ClientConfiguration,
-	CamundaEnvironmentConfigurator,
-} from '../../lib'
+import { IsoSdkClientConfiguration, IsoSdkEnvironmentConfigurator } from '.'
 
-let defaultLogger: winston.Logger
-let cachedLogger: winston.Logger | undefined
+let cachedLogger: ILogger | undefined
 
-export function getLogger(config?: Camunda8ClientConfiguration) {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface ILogger {
+	info: (message: string, ...meta: any[]) => void
+	warn: (message: string, ...meta: any[]) => void
+	error: (message: string, ...meta: any[]) => void
+	debug: (message: string, ...meta: any[]) => void
+	trace: (message: string, ...meta: any[]) => void
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export function getLogger(config: IsoSdkClientConfiguration = {}) {
 	const configuration =
-		CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config ?? {})
-	// We assume that the SDK user uses a single winston instance for 100% of logging, or no logger at all (in which case we create our own)
-	if (config?.logger && cachedLogger !== config.logger) {
-		cachedLogger = config.logger
-		config.logger.info(
-			`Using supplied winston logger at level '${config.logger.level}'`
-		)
+		IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(config)
+	if (config.logger) {
+		return config.logger
 	}
-	if (!defaultLogger) {
-		// Define the default logger
-		defaultLogger = winston.createLogger({
-			level: configuration.CAMUNDA_LOG_LEVEL,
-			format: winston.format.combine(
-				winston.format.timestamp(),
-				winston.format.colorize(),
-				winston.format.simple()
-			),
-			transports: [new winston.transports.Console()],
-		})
+	if (cachedLogger) {
+		return cachedLogger
 	}
-	if (!cachedLogger) {
-		defaultLogger.info(
-			`Using default winston logger at level '${defaultLogger.level}'`
-		)
-		cachedLogger = defaultLogger
-	}
-	return config?.logger ?? defaultLogger
+	cachedLogger = log
+	log.setLevel(configuration.CAMUNDA_LOG_LEVEL)
+
+	return cachedLogger
 }

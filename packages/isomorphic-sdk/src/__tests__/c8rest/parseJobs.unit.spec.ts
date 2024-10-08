@@ -4,7 +4,7 @@ import {
 	losslessParse,
 } from '@camunda8/lossless-json'
 
-import { createSpecializedRestApiJobClass } from '../../../c8/lib/RestApiJobClassFactory'
+import { createSpecializedRestApiJobClass } from '../../c8rest/lib/RestApiJobClassFactory'
 
 class Variables extends LosslessDto {
 	@Int64String

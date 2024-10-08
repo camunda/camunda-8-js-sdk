@@ -11,6 +11,11 @@ export interface JSONDoc {
 	[key: string]: JSON | undefined
 }
 
+/**
+ * This is the decoder class for the Activated Job.
+ * It is extended at runtime to add user-typed custom headers and variables in the RestApiJobClassFactory.
+ * The interface `Job` describes that shape for consumers.
+ */
 export class RestApiJob<
 	Variables = LosslessDto,
 	CustomHeaders = LosslessDto,
@@ -20,7 +25,7 @@ export class RestApiJob<
 	type!: string
 	@Int64String
 	processInstanceKey!: string
-	bpmnProcessId!: string
+	processDefinitionId!: string
 	processDefinitionVersion!: number
 	@Int64String
 	processDefinitionKey!: string
@@ -71,7 +76,7 @@ export interface NewUserInfo {
 export type Ctor<T> = new (obj?: any) => T
 
 export class ProcessDeployment extends LosslessDto {
-	bpmnProcessId!: string
+	processDefinitionId!: string
 	version!: number
 	@Int64String
 	processDefinitionKey!: string
@@ -111,9 +116,9 @@ export class FormDeployment {
 
 export class DeployResourceResponseDto extends LosslessDto {
 	@Int64String
-	key!: string
+	deploymentKey!: string
 	deployments!: (
-		| { process: ProcessDeployment }
+		| { processDefinition: ProcessDeployment }
 		| { decision: DecisionDeployment }
 		| { decisionRequirements: DecisionRequirementsDeployment }
 		| { form: FormDeployment }
@@ -122,7 +127,7 @@ export class DeployResourceResponseDto extends LosslessDto {
 }
 
 export class DeployResourceResponse extends DeployResourceResponseDto {
-	processes!: ProcessDeployment[]
+	processDefinitions!: ProcessDeployment[]
 	decisions!: DecisionDeployment[]
 	decisionRequirements!: DecisionRequirementsDeployment[]
 	forms!: FormDeployment[]
@@ -178,7 +183,7 @@ export interface MigrationRequest {
 export class BroadcastSignalResponse extends LosslessDto {
 	@Int64String
 	/** The unique ID of the signal that was broadcast. */
-	key!: string
+	signalKey!: string
 	/** The tenant ID of the signal that was broadcast. */
 	tenantId!: string
 }
@@ -193,7 +198,7 @@ export interface UpdateElementVariableRequest {
 	/**
 	 * Defaults to false.
 	 * If set to true, the variables are merged strictly into the local scope (as specified by the elementInstanceKey). Otherwise, the variables are propagated to upper scopes and set at the outermost one.
-	 * Let’s consider the following example:
+	 * Let's consider the following example:
 	 * There are two scopes '1' and '2'. Scope '1' is the parent scope of '2'. The effective variables of the scopes are: 1 => { "foo" : 2 } 2 => { "bar" : 1 }
 	 * An update request with elementInstanceKey as '2', variables { "foo" : 5 }, and local set to true leaves scope '1' unchanged and adjusts scope '2' to { "bar" : 1, "foo" 5 }.
 	 * By default, with local set to false, scope '1' will be { "foo": 5 } and scope '2' will be { "bar" : 1 }.
@@ -267,13 +272,13 @@ export interface ProcessInstanceCreationStartInstruction {
 	elementId: string
 }
 
-export interface CreateProcessInstanceFromBpmnProcessId<
+export interface CreateProcessInstanceFromProcessDefinitionId<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
 	 * the BPMN process ID of the process definition
 	 */
-	bpmnProcessId: string
+	processDefinitionId: string
 }
 
 export interface CreateProcessInstanceFromProcessDefinition<
@@ -286,7 +291,7 @@ export interface CreateProcessInstanceFromProcessDefinition<
 }
 
 export type CreateProcessInstanceReq<T extends JSONDoc | LosslessDto> =
-	| CreateProcessInstanceFromBpmnProcessId<T>
+	| CreateProcessInstanceFromProcessDefinitionId<T>
 	| CreateProcessInstanceFromProcessDefinition<T>
 
 export interface PatchAuthorizationRequest {
@@ -439,7 +444,7 @@ export interface ICustomHeaders {
 }
 
 export interface IInputVariables {
-	[key: string]: string | number
+	[key: string]: string | number | boolean | JSONDoc
 }
 
 export interface Job<
@@ -456,7 +461,7 @@ export interface Job<
 	/** The job's process instance key */
 	readonly processInstanceKey: string
 	/** The bpmn process ID of the job process definition */
-	readonly bpmnProcessId: string
+	readonly processDefinitionId: string
 	/** The version of the job process definition */
 	readonly processDefinitionVersion: number
 	/** The associated task element ID */

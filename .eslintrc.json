@@ -11,6 +11,10 @@
 	"rules": {
 		// Define your rules, for example:
 		"semi": "off",
+		"@typescript-eslint/no-unused-vars": [
+			"warn",
+			{ "argsIgnorePattern": "^_", "varsIgnorePattern": "^key$" }
+		],
 		"import/order": [
 			"error",
 			{

@@ -2,7 +2,6 @@ import { EventEmitter } from 'events'
 
 import { LosslessDto } from '@camunda8/lossless-json'
 import TypedEmitter from 'typed-emitter'
-import winston from 'winston'
 
 import {
 	ActivateJobsRequest,
@@ -12,7 +11,8 @@ import {
 	JobCompletionInterfaceRest,
 	MustReturnJobActionAcknowledgement,
 } from '../dto/C8Dto'
-import { getLogger } from './C8Logger'
+import { getLogger, ILogger } from '../lib/C8Logger'
+
 import { CamundaRestClient } from './CamundaRestClient'
 
 type CamundaJobWorkerEvents = {
@@ -41,9 +41,9 @@ export interface CamundaJobWorkerConfig<
 	jobHandler: (
 		job: Job<VariablesDto, CustomHeadersDto> &
 			JobCompletionInterfaceRest<IProcessVariables>,
-		log: winston.Logger
+		log: ILogger
 	) => MustReturnJobActionAcknowledgement
-	logger?: winston.Logger
+	logger?: ILogger
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
 	autoStart?: boolean
 }
@@ -56,7 +56,7 @@ export class CamundaJobWorker<
 	public capacity: number
 	private loopHandle?: NodeJS.Timeout
 	private pollInterval: number
-	public log: winston.Logger
+	public log: ILogger
 	logMeta: () => {
 		worker: string
 		type: string
@@ -146,7 +146,7 @@ export class CamundaJobWorker<
 			return
 		}
 
-		this.log.silly(`Polling for jobs`, this.logMeta())
+		this.log.trace(`Polling for jobs`, this.logMeta())
 
 		const remainingJobCapacity =
 			this.config.maxJobsToActivate - this.currentlyActiveJobCount

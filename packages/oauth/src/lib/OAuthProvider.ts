@@ -2,19 +2,19 @@ import { debug } from 'debug'
 import got from 'got'
 import { jwtDecode } from 'jwt-decode'
 
+import { createUserAgentString } from './createUserAgentString'
 import {
 	EnvironmentConfigurator,
 	OAuthConfiguration,
 	RequireConfiguration,
 } from './Environment'
 import {
-	IFileCacheProvider,
 	IOAuthProvider,
 	Token,
 	TokenError,
 	TokenGrantAudienceType,
 } from './OAuth'
-import { createUserAgentString } from './createUserAgentString'
+import { IPersistentCacheProvider } from './OAuthTypes'
 
 const trace = debug('camunda:oauth')
 
@@ -26,7 +26,6 @@ export class OAuthProvider implements IOAuthProvider {
 	private mTLSCertChain: string | undefined
 	private clientId: string | undefined
 	private clientSecret: string | undefined
-	private useFileCache: boolean
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
 	private failureCount = 0
@@ -40,12 +39,12 @@ export class OAuthProvider implements IOAuthProvider {
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
 	private rest: typeof got
-	private fileCache: IFileCacheProvider | undefined
+	private persistentCache: IPersistentCacheProvider | undefined
 
 	constructor(
 		options: {
 			config?: Partial<OAuthConfiguration>
-			fileCache?: IFileCacheProvider
+			persistentCache?: IPersistentCacheProvider
 		} = {}
 	) {
 		const config = EnvironmentConfigurator.mergeConfigWithEnvironment(
@@ -98,8 +97,12 @@ export class OAuthProvider implements IOAuthProvider {
 		})
 
 		this.scope = config.CAMUNDA_TOKEN_SCOPE
-		this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
-		this.fileCache = options.fileCache
+
+		// We will make this the responsibility of the Node SDK.
+		// Basically, if it is disabled, we will not pass in a persistent
+		// cache provider.
+		// this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
+		this.persistentCache = options.persistentCache
 
 		this.userAgentString = createUserAgentString(config)
 
@@ -157,14 +160,14 @@ export class OAuthProvider implements IOAuthProvider {
 				return this.tokenCache[key].access_token
 			}
 		}
-		if (this.useFileCache && this.fileCache) {
+		if (this.persistentCache) {
 			const key = `${clientIdToUse}-${audienceType}`
-			const cachedToken = this.fileCache.get(key)
+			const cachedToken = this.persistentCache.get(key)
 
 			if (cachedToken) {
 				// check expiry and evict in-memory and file cache if expired
 				if (OAuthProvider.isTokenExpired(cachedToken, this.refreshWindow)) {
-					this.fileCache.delete(key)
+					this.persistentCache.delete(key)
 					trace(`File cached token ${cachedToken.audience} is expired`)
 				} else {
 					trace(`Using file cached token ${cachedToken.audience}`)
@@ -207,8 +210,8 @@ export class OAuthProvider implements IOAuthProvider {
 	}
 
 	public flushFileCache() {
-		if (this.fileCache) {
-			this.fileCache.flush()
+		if (this.persistentCache) {
+			this.persistentCache.flush()
 		}
 	}
 
@@ -294,8 +297,8 @@ export class OAuthProvider implements IOAuthProvider {
 					throw new Error('Failed to get token: no access_token in response')
 				}
 				const token = { ...(t as Token), audience: audienceType }
-				if (this.useFileCache && this.fileCache) {
-					this.fileCache.set(
+				if (this.persistentCache) {
+					this.persistentCache.set(
 						`${clientIdToUse}-${audienceType}`,
 						token,
 						jwtDecode(token.access_token)
