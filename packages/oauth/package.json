@@ -75,7 +75,15 @@
 	"dependencies": {
 		"@camunda8/certificates": "^1.0.0",
 		"debug": "^4.3.7",
-		"got": "^14.4.2",
-		"jwt-decode": "^4.0.0"
+		"jwt-decode": "^4.0.0",
+		"ky": "^1.7.2",
+		"neon-env": "^0.2.2"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.5.13",
+		"cz-conventional-changelog": "^3.3.0",
+		"husky": "^9.1.6",
+		"jsonwebtoken": "^9.0.2",
+		"lint-staged": "^15.2.10"
 	}
 }

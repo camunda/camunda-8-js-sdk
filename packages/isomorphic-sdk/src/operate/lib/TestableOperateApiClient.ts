@@ -1,4 +1,5 @@
 import { OAuthTypes } from '@camunda8/oauth'
+import ky from 'ky'
 
 import { Query } from '../../dto/OperateDto'
 import { IsoSdkConfiguration } from '../../lib'
@@ -6,10 +7,13 @@ import { IsoSdkConfiguration } from '../../lib'
 import { OperateApiClient } from './OperateApiClient'
 
 export class TestableOperateApiClient extends OperateApiClient {
-	constructor(options?: {
-		config?: Partial<IsoSdkConfiguration>
-		oAuthProvider?: OAuthTypes.IOAuthProvider
-	}) {
+	constructor(
+		options: {
+			config?: Partial<IsoSdkConfiguration>
+			oAuthProvider?: OAuthTypes.IOAuthProvider
+			fetch: typeof ky
+		} = { fetch: ky }
+	) {
 		super(options)
 	}
 

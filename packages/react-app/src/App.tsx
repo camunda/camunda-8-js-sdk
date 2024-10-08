@@ -4,7 +4,7 @@ import logo from './logo.svg'
 
 function App() {
 	const camunda = new CamundaRestClient({
-		config: {
+		configuration: {
 			CAMUNDA_AUTH_STRATEGY: 'OAUTH',
 			ZEEBE_CLIENT_ID: 'zeebe',
 			ZEEBE_CLIENT_SECRET: 'zecret',
@@ -13,6 +13,7 @@ function App() {
 				'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
 		},
 	})
+
 	return (
 		<div className='App'>
 			<header className='App-header'>

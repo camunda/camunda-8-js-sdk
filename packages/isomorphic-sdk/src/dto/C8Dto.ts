@@ -3,7 +3,7 @@ import {
 	LosslessDto,
 	LosslessNumber,
 } from '@camunda8/lossless-json'
-import { Response } from 'got'
+import { KyResponse } from 'ky'
 
 export type JSON = string | number | boolean | JSON[] | JSONDoc[] | JSONDoc
 
@@ -404,7 +404,7 @@ export interface JobCompletionInterfaceRest<WorkerOutputVariables> {
 		newTimeoutMs,
 	}: {
 		newTimeoutMs: number
-	}) => Promise<Response<string>>
+	}) => Promise<KyResponse<unknown>>
 }
 
 export const JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT' as const

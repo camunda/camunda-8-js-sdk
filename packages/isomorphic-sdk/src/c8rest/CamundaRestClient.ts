@@ -6,41 +6,10 @@ import {
 import { OAuthTypes } from '@camunda8/oauth'
 import { debug } from 'debug'
 import FormData from 'form-data'
-import got from 'got'
+import ky from 'ky'
 
-import {
-	ActivateJobsRequest,
-	BroadcastSignalReq,
-	BroadcastSignalResponse,
-	CompleteJobRequest,
-	CorrelateMessageResponse,
-	CreateProcessInstanceReq,
-	CreateProcessInstanceResponse,
-	Ctor,
-	DecisionDeployment,
-	DecisionRequirementsDeployment,
-	DeployResourceResponse,
-	DeployResourceResponseDto,
-	ErrorJobWithVariables,
-	FailJobRequest,
-	FormDeployment,
-	IProcessVariables,
-	Job,
-	JOB_ACTION_ACKNOWLEDGEMENT,
-	JobCompletionInterfaceRest,
-	JobUpdateChangeset,
-	JSONDoc,
-	MigrationRequest,
-	NewUserInfo,
-	PatchAuthorizationRequest,
-	ProcessDeployment,
-	PublishMessageRequest,
-	PublishMessageResponse,
-	TaskChangeSet,
-	TopologyResponse,
-	UpdateElementVariableRequest,
-} from '../dto/C8Dto'
-import { gotBeforeErrorHook, gotErrorHandler } from '../lib'
+import * as Dto from '../dto/C8Dto'
+import { restBeforeErrorHook } from '../lib'
 import { getLogger, ILogger } from '../lib/C8Logger'
 import {
 	IsoSdkClientConfiguration,
@@ -58,6 +27,11 @@ const trace = debug('camunda:zeebe-rest')
 
 const CAMUNDA_REST_API_VERSION = 'v2'
 
+interface CamundaRestClientOptions {
+	configuration?: IsoSdkClientConfiguration
+	oAuthProvider?: OAuthTypes.IOAuthProvider
+	rest?: typeof ky
+}
 class DefaultLosslessDto extends LosslessDto {}
 /**
  * The client for the unified Camunda 8 REST API.
@@ -74,7 +48,7 @@ class DefaultLosslessDto extends LosslessDto {}
 export class CamundaRestClient {
 	private userAgentString: string
 	private oAuthProvider: OAuthTypes.IOAuthProvider
-	private rest: typeof got
+	private rest: typeof ky
 	private tenantId?: string
 	public log: ILogger
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,20 +57,20 @@ export class CamundaRestClient {
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
 	 */
-	constructor(
-		options: {
-			config?: IsoSdkClientConfiguration
-			oAuthProvider?: OAuthTypes.IOAuthProvider
-		} = {}
-	) {
+	constructor({
+		configuration,
+		oAuthProvider,
+		rest = ky,
+	}: CamundaRestClientOptions = {}) {
 		const config = IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(
-			options?.config ?? {}
+			configuration ?? {}
 		)
 		this.log = getLogger(config)
 		this.log.info(`Using REST API version ${CAMUNDA_REST_API_VERSION}`)
-		trace('options.config', options?.config)
+		trace('options.config', configuration)
 		trace('config', config)
-		this.oAuthProvider = options.oAuthProvider ?? constructOAuthProvider(config)
+		this.oAuthProvider =
+			oAuthProvider ?? constructOAuthProvider({ config, fetch: rest })
 		this.userAgentString = createUserAgentString(config)
 		this.tenantId = config.CAMUNDA_TENANT_ID
 
@@ -108,31 +82,30 @@ export class CamundaRestClient {
 		const prefixUrl = `${baseUrl}/${CAMUNDA_REST_API_VERSION}`
 
 		/** The non-iso SDK wrapper needs to use @camunda8/certificates GetCustomCertificateBuffer and put it in CUSTOM_CERT_STRING */
-		this.rest = got.extend({
+		this.rest = rest.create({
 			prefixUrl,
-			// retry: GotRetryConfig,
-			https: {
-				certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
-			},
-			handlers: [gotErrorHandler],
+			/* this needs to be lifted to the sdk */
+			// https: {
+			// 	certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
+			// },
 			hooks: {
-				beforeError: [gotBeforeErrorHook],
+				beforeError: [restBeforeErrorHook],
 				beforeRequest: [
 					/** add authorization header */
-					async (options) => {
-						options.headers = {
-							...(await this.getHeaders()),
-							...options.headers,
+					async (request) => {
+						const newHeaders = await this.getHeaders()
+						for (const [key, value] of Object.entries(newHeaders)) {
+							request.headers.set(key, value)
 						}
 					},
 					/** log for debugging */
-					(options) => {
-						const { body, method } = options
-						const path = options.url.href
+					(request) => {
+						const { body, method } = request
+						const path = request.url
 						trace(`${method} ${path}`)
 						trace(body)
 						this.log.debug(`${method} ${path}`)
-						this.log.trace(JSON.stringify(options))
+						this.log.trace(JSON.stringify(request))
 						this.log.trace(JSON.stringify(body, null, 2))
 					},
 					/** Add user-supplied middleware at the end, where they can override auth headers */
@@ -174,7 +147,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async modifyAuthorization(req: PatchAuthorizationRequest) {
+	public async modifyAuthorization(req: Dto.PatchAuthorizationRequest) {
 		const { ownerKey, ...request } = req
 		return this.rest
 			.patch(`authorizations/${ownerKey}`, {
@@ -190,19 +163,19 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async broadcastSignal(req: BroadcastSignalReq) {
+	public async broadcastSignal(req: Dto.BroadcastSignalReq) {
 		const request = this.addDefaultTenantId(req)
 		return this.rest
 			.post(`signals/broadcast`, {
 				body: losslessStringify(request),
-				parseJson: (text) => losslessParse(text, BroadcastSignalResponse),
+				parseJson: (text) => losslessParse(text, Dto.BroadcastSignalResponse),
 			})
-			.json<BroadcastSignalResponse>()
+			.json<Dto.BroadcastSignalResponse>()
 	}
 
 	/* Get the topology of the Zeebe cluster. */
 	public async getTopology() {
-		return this.rest.get('topology').json<TopologyResponse>()
+		return this.rest.get('topology').json<Dto.TopologyResponse>()
 	}
 
 	/**
@@ -277,7 +250,7 @@ export class CamundaRestClient {
 		changeset,
 	}: {
 		userTaskKey: string
-		changeset: TaskChangeSet
+		changeset: Dto.TaskChangeSet
 	}) {
 		return this.rest
 			.patch(`user-tasks/${userTaskKey}/update`, {
@@ -303,7 +276,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async createUser(newUserInfo: NewUserInfo) {
+	public async createUser(newUserInfo: Dto.NewUserInfo) {
 		return this.rest
 			.post(`users`, {
 				body: JSON.stringify(newUserInfo),
@@ -328,7 +301,7 @@ export class CamundaRestClient {
 	 */
 	public async correlateMessage(
 		message: Pick<
-			PublishMessageRequest,
+			Dto.PublishMessageRequest,
 			'name' | 'correlationKey' | 'variables' | 'tenantId'
 		>
 	) {
@@ -337,9 +310,9 @@ export class CamundaRestClient {
 		return this.rest
 			.post(`messages/correlation`, {
 				body,
-				parseJson: (text) => losslessParse(text, CorrelateMessageResponse),
+				parseJson: (text) => losslessParse(text, Dto.CorrelateMessageResponse),
 			})
-			.json<CorrelateMessageResponse>()
+			.json<Dto.CorrelateMessageResponse>()
 	}
 
 	/**
@@ -349,15 +322,17 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async publishMessage(publishMessageRequest: PublishMessageRequest) {
+	public async publishMessage(
+		publishMessageRequest: Dto.PublishMessageRequest
+	) {
 		const req = this.addDefaultTenantId(publishMessageRequest)
 		const body = losslessStringify(req)
 		return this.rest
 			.post(`messages/publication`, {
 				body,
-				parseJson: (text) => losslessParse(text, PublishMessageResponse),
+				parseJson: (text) => losslessParse(text, Dto.PublishMessageResponse),
 			})
-			.json<PublishMessageResponse>()
+			.json<Dto.PublishMessageResponse>()
 	}
 
 	/**
@@ -401,13 +376,13 @@ export class CamundaRestClient {
 		VariablesDto extends LosslessDto,
 		CustomHeadersDto extends LosslessDto,
 	>(
-		request: ActivateJobsRequest & {
-			inputVariableDto?: Ctor<VariablesDto>
-			customHeadersDto?: Ctor<CustomHeadersDto>
+		request: Dto.ActivateJobsRequest & {
+			inputVariableDto?: Dto.Ctor<VariablesDto>
+			customHeadersDto?: Dto.Ctor<CustomHeadersDto>
 		}
 	): Promise<
-		(Job<VariablesDto, CustomHeadersDto> &
-			JobCompletionInterfaceRest<IProcessVariables>)[]
+		(Dto.Job<VariablesDto, CustomHeadersDto> &
+			Dto.JobCompletionInterfaceRest<Dto.IProcessVariables>)[]
 	> {
 		const {
 			inputVariableDto = LosslessDto,
@@ -434,7 +409,7 @@ export class CamundaRestClient {
 				body,
 				parseJson: (text) => losslessParse(text, jobDto, 'jobs'),
 			})
-			.json<Job<VariablesDto, CustomHeadersDto>[]>()
+			.json<Dto.Job<VariablesDto, CustomHeadersDto>[]>()
 			.then((activatedJobs) => activatedJobs.map(this.addJobMethods))
 	}
 
@@ -445,13 +420,13 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async failJob(failJobRequest: FailJobRequest) {
+	public async failJob(failJobRequest: Dto.FailJobRequest) {
 		const { jobKey } = failJobRequest
 		return this.rest
 			.post(`jobs/${jobKey}/failure`, {
 				body: losslessStringify(failJobRequest),
 			})
-			.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
+			.then(() => Dto.JOB_ACTION_ACKNOWLEDGEMENT)
 	}
 
 	/**
@@ -462,7 +437,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async errorJob(
-		errorJobRequest: ErrorJobWithVariables & { jobKey: string }
+		errorJobRequest: Dto.ErrorJobWithVariables & { jobKey: string }
 	) {
 		const { jobKey, ...request } = errorJobRequest
 		return this.rest
@@ -470,7 +445,7 @@ export class CamundaRestClient {
 				body: losslessStringify(request),
 				parseJson: (text) => losslessParse(text),
 			})
-			.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
+			.then(() => Dto.JOB_ACTION_ACKNOWLEDGEMENT)
 	}
 
 	/**
@@ -480,14 +455,14 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async completeJob(completeJobRequest: CompleteJobRequest) {
+	public async completeJob(completeJobRequest: Dto.CompleteJobRequest) {
 		const { jobKey } = completeJobRequest
 		const req = { variables: completeJobRequest.variables }
 		return this.rest
 			.post(`jobs/${jobKey}/completion`, {
 				body: losslessStringify(req),
 			})
-			.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
+			.then(() => Dto.JOB_ACTION_ACKNOWLEDGEMENT)
 	}
 
 	/**
@@ -498,7 +473,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async updateJob(
-		jobChangeset: JobUpdateChangeset & { jobKey: string }
+		jobChangeset: Dto.JobUpdateChangeset & { jobKey: string }
 	) {
 		const { jobKey, ...changeset } = jobChangeset
 		return this.rest.patch(`jobs/${jobKey}`, {
@@ -524,20 +499,20 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async createProcessInstance<T extends JSONDoc | LosslessDto>(
-		request: CreateProcessInstanceReq<T>
-	): Promise<CreateProcessInstanceResponse<never>>
+	public async createProcessInstance<T extends Dto.JSONDoc | LosslessDto>(
+		request: Dto.CreateProcessInstanceReq<T>
+	): Promise<Dto.CreateProcessInstanceResponse<never>>
 
 	async createProcessInstance<
-		T extends JSONDoc | LosslessDto,
+		T extends Dto.JSONDoc | LosslessDto,
 		V extends LosslessDto,
 	>(
-		request: CreateProcessInstanceReq<T> & {
-			outputVariablesDto?: Ctor<V>
+		request: Dto.CreateProcessInstanceReq<T> & {
+			outputVariablesDto?: Dto.Ctor<V>
 		}
 	) {
-		const outputVariablesDto: Ctor<V> | Ctor<LosslessDto> =
-			(request.outputVariablesDto as Ctor<V>) ?? DefaultLosslessDto
+		const outputVariablesDto: Dto.Ctor<V> | Dto.Ctor<LosslessDto> =
+			(request.outputVariablesDto as Dto.Ctor<V>) ?? DefaultLosslessDto
 
 		const CreateProcessInstanceResponseWithVariablesDto =
 			createSpecializedCreateProcessInstanceResponseClass(outputVariablesDto)
@@ -560,30 +535,32 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async createProcessInstanceWithResult<T extends JSONDoc | LosslessDto>(
-		request: CreateProcessInstanceReq<T> & {
+	public async createProcessInstanceWithResult<
+		T extends Dto.JSONDoc | LosslessDto,
+	>(
+		request: Dto.CreateProcessInstanceReq<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[]
 		}
-	): Promise<CreateProcessInstanceResponse<unknown>>
+	): Promise<Dto.CreateProcessInstanceResponse<unknown>>
 
 	public async createProcessInstanceWithResult<
-		T extends JSONDoc | LosslessDto,
+		T extends Dto.JSONDoc | LosslessDto,
 		V extends LosslessDto,
 	>(
-		request: CreateProcessInstanceReq<T> & {
+		request: Dto.CreateProcessInstanceReq<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[]
 			/** A Dto specifying the shape of the output variables. If not supplied, the output variables will be returned as a `LosslessDto` of type `unknown`. */
-			outputVariablesDto: Ctor<V>
+			outputVariablesDto: Dto.Ctor<V>
 		}
-	): Promise<CreateProcessInstanceResponse<V>>
+	): Promise<Dto.CreateProcessInstanceResponse<V>>
 	public async createProcessInstanceWithResult<
-		T extends JSONDoc | LosslessDto,
+		T extends Dto.JSONDoc | LosslessDto,
 		V,
 	>(
-		request: CreateProcessInstanceReq<T> & {
-			outputVariablesDto?: Ctor<V>
+		request: Dto.CreateProcessInstanceReq<T> & {
+			outputVariablesDto?: Dto.Ctor<V>
 		}
 	) {
 		/**
@@ -600,7 +577,7 @@ export class CamundaRestClient {
 			...request,
 			awaitCompletion: true,
 			outputVariablesDto: request.outputVariablesDto,
-		} as unknown as CreateProcessInstanceReq<T>)
+		} as unknown as Dto.CreateProcessInstanceReq<T>)
 	}
 
 	/**
@@ -636,7 +613,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async migrateProcessInstance(req: MigrationRequest) {
+	public async migrateProcessInstance(req: Dto.MigrationRequest) {
 		const { processInstanceKey, ...request } = req
 		this.log.debug(`Migrating process instance ${processInstanceKey}`, {
 			component: 'C8RestClient',
@@ -685,7 +662,7 @@ export class CamundaRestClient {
 				},
 				parseJson: (text) => losslessParse(text), // we parse the response with LosslessNumbers, with no Dto
 			})
-			.json<DeployResourceResponseDto>()
+			.json<Dto.DeployResourceResponseDto>()
 
 		/**
 		 * Now we need to examine the response and parse the deployments to lossless Dtos
@@ -696,7 +673,7 @@ export class CamundaRestClient {
 		// tslint:disable-next-line: no-console
 		// console.log('res', JSON.stringify(res, null, 2)) // @DEBUG
 
-		const deploymentResponse = new DeployResourceResponse()
+		const deploymentResponse = new Dto.DeployResourceResponse()
 		deploymentResponse.deploymentKey = res.deploymentKey.toString()
 		deploymentResponse.tenantId = res.tenantId
 		deploymentResponse.deployments = []
@@ -710,18 +687,20 @@ export class CamundaRestClient {
 		 */
 		const isProcessDeployment = (
 			deployment
-		): deployment is { processDefinition: ProcessDeployment } =>
+		): deployment is { processDefinition: Dto.ProcessDeployment } =>
 			!!deployment.processDefinition
 		const isDecisionDeployment = (
 			deployment
-		): deployment is { decision: DecisionDeployment } => !!deployment.decision
+		): deployment is { decision: Dto.DecisionDeployment } =>
+			!!deployment.decision
 		const isDecisionRequirementsDeployment = (
 			deployment
-		): deployment is { decisionRequirements: DecisionRequirementsDeployment } =>
-			!!deployment.decisionRequirements
+		): deployment is {
+			decisionRequirements: Dto.DecisionRequirementsDeployment
+		} => !!deployment.decisionRequirements
 		const isFormDeployment = (
 			deployment
-		): deployment is { form: FormDeployment } => !!deployment.form
+		): deployment is { form: Dto.FormDeployment } => !!deployment.form
 
 		/**
 		 * Here we examine each of the deployments returned from the API, and create a correctly typed
@@ -732,7 +711,7 @@ export class CamundaRestClient {
 			if (isProcessDeployment(deployment)) {
 				const processDeployment = losslessParse(
 					losslessStringify(deployment.processDefinition)!,
-					ProcessDeployment
+					Dto.ProcessDeployment
 				)
 				deploymentResponse.deployments.push({
 					processDefinition: processDeployment,
@@ -742,7 +721,7 @@ export class CamundaRestClient {
 			if (isDecisionDeployment(deployment)) {
 				const decisionDeployment = losslessParse(
 					losslessStringify(deployment)!,
-					DecisionDeployment
+					Dto.DecisionDeployment
 				)
 				deploymentResponse.deployments.push({ decision: decisionDeployment })
 				deploymentResponse.decisions.push(decisionDeployment)
@@ -750,7 +729,7 @@ export class CamundaRestClient {
 			if (isDecisionRequirementsDeployment(deployment)) {
 				const decisionRequirementsDeployment = losslessParse(
 					losslessStringify(deployment)!,
-					DecisionRequirementsDeployment
+					Dto.DecisionRequirementsDeployment
 				)
 				deploymentResponse.deployments.push({
 					decisionRequirements: decisionRequirementsDeployment,
@@ -762,7 +741,7 @@ export class CamundaRestClient {
 			if (isFormDeployment(deployment)) {
 				const formDeployment = losslessParse(
 					losslessStringify(deployment)!,
-					FormDeployment
+					Dto.FormDeployment
 				)
 				deploymentResponse.deployments.push({ form: formDeployment })
 				deploymentResponse.forms.push(formDeployment)
@@ -858,7 +837,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async updateElementInstanceVariables(
-		req: UpdateElementVariableRequest
+		req: Dto.UpdateElementVariableRequest
 	) {
 		const { elementInstanceKey, ...request } = req
 		return this.rest.post(`element-instances/${elementInstanceKey}/variables`, {
@@ -867,15 +846,15 @@ export class CamundaRestClient {
 	}
 
 	private addJobMethods = <Variables, CustomHeaders>(
-		job: Job<Variables, CustomHeaders>
-	): Job<Variables, CustomHeaders> &
-		JobCompletionInterfaceRest<IProcessVariables> => {
+		job: Dto.Job<Variables, CustomHeaders>
+	): Dto.Job<Variables, CustomHeaders> &
+		Dto.JobCompletionInterfaceRest<Dto.IProcessVariables> => {
 		return {
 			...job,
 			cancelWorkflow: () => {
 				throw new Error('Not Implemented')
 			},
-			complete: (variables: IProcessVariables = {}) =>
+			complete: (variables: Dto.IProcessVariables = {}) =>
 				this.completeJob({
 					jobKey: job.key,
 					variables,
@@ -893,7 +872,7 @@ export class CamundaRestClient {
 					jobKey: job.key,
 				}),
 			/* This has an effect in a Job Worker, decrementing the currently active job count */
-			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
+			forward: () => Dto.JOB_ACTION_ACKNOWLEDGEMENT,
 			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
 				this.updateJob({ jobKey: job.key, timeout: newTimeoutMs }),
 		}

@@ -1,6 +1,6 @@
 import { debug } from 'debug'
-import got from 'got'
 import { jwtDecode } from 'jwt-decode'
+import ky from 'ky'
 
 import { createUserAgentString } from './createUserAgentString'
 import {
@@ -38,14 +38,15 @@ export class OAuthProvider implements IOAuthProvider {
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
-	private rest: typeof got
+	private rest: typeof ky
 	private persistentCache: IPersistentCacheProvider | undefined
 
 	constructor(
 		options: {
 			config?: Partial<OAuthConfiguration>
 			persistentCache?: IPersistentCacheProvider
-		} = {}
+			fetch: typeof ky
+		} = { fetch: ky }
 	) {
 		const config = EnvironmentConfigurator.mergeConfigWithEnvironment(
 			options.config ?? {}
@@ -85,11 +86,12 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
-		this.rest = got.extend({
+		this.rest = options.fetch.create({
 			// retry: GotRetryConfig,
-			https: {
-				certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
-			},
+			/* handled in sdk via ky-universal injection */
+			// https: {
+			// 	certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
+			// },
 			// handlers: [gotErrorHandler],
 			hooks: {
 				// beforeError: [gotBeforeErrorHook],
@@ -271,12 +273,7 @@ export class OAuthProvider implements IOAuthProvider {
 		trace(options)
 		return this.rest
 			.post(this.authServerUrl, options)
-			.catch((e) => {
-				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
-				console.log(e)
-				throw e
-			})
-			.then((res) => JSON.parse(res.body))
+			.json<{ access_token: string }>()
 			.then((t) => {
 				trace(
 					`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
@@ -306,6 +303,11 @@ export class OAuthProvider implements IOAuthProvider {
 				}
 				this.sendToMemoryCache({ audience: audienceType, token })
 				return token.access_token
+			})
+			.catch((e) => {
+				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
+				console.log(e)
+				throw e
 			})
 	}
 

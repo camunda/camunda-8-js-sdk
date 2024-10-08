@@ -1,4 +1,4 @@
-import { BeforeRequestHook } from 'got'
+import { BeforeRequestHook } from 'ky'
 import { createEnv } from 'neon-env'
 
 import { ILogger } from './C8Logger'

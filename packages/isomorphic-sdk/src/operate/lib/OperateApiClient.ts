@@ -1,7 +1,7 @@
 import { losslessParse, losslessStringify } from '@camunda8/lossless-json'
 import { OAuthTypes } from '@camunda8/oauth'
 import { debug } from 'debug'
-import got from 'got'
+import ky from 'ky'
 
 import {
 	ChangeStatus,
@@ -20,11 +20,10 @@ import {
 import {
 	constructOAuthProvider,
 	createUserAgentString,
-	gotBeforeErrorHook,
-	gotErrorHandler,
-	IsoSdkConfiguration,
+	IsoSdkClientConfiguration,
 	IsoSdkEnvironmentConfigurator,
 	RequireConfiguration,
+	restBeforeErrorHook,
 } from '../../lib'
 import { getLogger, ILogger } from '../../lib/C8Logger'
 
@@ -42,6 +41,12 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 	: T extends { filter: infer F }
 		? { filter: F & { tenantId: string | undefined } } & Omit<T, 'filter'> // If T has a filter without tenantId, add tenantId to it
 		: { filter: { tenantId: string | undefined } } & T // If T has no filter property, add filter with tenantId
+
+interface OperateClientOptions {
+	configuration?: Partial<IsoSdkClientConfiguration>
+	oAuthProvider?: OAuthTypes.IOAuthProvider
+	rest?: typeof ky
+}
 
 /**
  * @description The high-level client for Operate.
@@ -62,7 +67,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 export class OperateApiClient {
 	private userAgentString: string
 	private oAuthProvider: OAuthTypes.IOAuthProvider
-	private rest: typeof got
+	private rest: typeof ky
 	private tenantId: string | undefined
 	public log: ILogger
 
@@ -73,18 +78,19 @@ export class OperateApiClient {
 	 * ```
 	 * @throws {RESTError} An error that may occur during API operations.
 	 */
-	constructor(options?: {
-		config?: Partial<IsoSdkConfiguration>
-		oAuthProvider?: OAuthTypes.IOAuthProvider
-	}) {
+	constructor({
+		configuration,
+		oAuthProvider,
+		rest = ky,
+	}: OperateClientOptions = {}) {
 		const config = IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(
-			options?.config ?? {}
+			configuration ?? {}
 		)
 		this.log = getLogger(config)
-		trace('options.config', options?.config)
+		trace('options.config', configuration)
 		trace('config', config)
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			oAuthProvider ?? constructOAuthProvider({ config, fetch: rest })
 		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_OPERATE_BASE_URL,
@@ -93,26 +99,27 @@ export class OperateApiClient {
 
 		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
 
-		this.rest = got.extend({
+		this.rest = rest.extend({
 			prefixUrl,
-			https: {
-				certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
-			},
-			handlers: [gotErrorHandler],
+			/* Must now be handled via the sdk and injecting ky-universal */
+			// https: {
+			// 	certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
+			// },
+			// handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [gotBeforeErrorHook],
+				beforeError: [restBeforeErrorHook],
 				beforeRequest: [
 					/** add authorization header */
-					async (options) => {
-						options.headers = {
-							...(await this.getHeaders()),
-							...options.headers,
+					async (request) => {
+						const newHeaders = await this.getHeaders()
+						for (const [key, value] of Object.entries(newHeaders)) {
+							request.headers.set(key, value)
 						}
 					},
 					/** log for debugging */
 					(options) => {
 						const { body, method } = options
-						const path = options.url.href
+						const path = options.url
 						trace(`${method} ${path}`)
 						trace(body)
 						this.log.debug(`${method} ${path}`)

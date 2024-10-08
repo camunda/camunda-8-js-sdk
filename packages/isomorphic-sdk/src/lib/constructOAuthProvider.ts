@@ -4,27 +4,31 @@ import {
 	OAuthProvider,
 } from '@camunda8/oauth'
 import debug from 'debug'
+import ky from 'ky'
 
 import { IsoSdkClientConfiguration } from './Configuration'
 
 const trace = debug('camunda:oauth')
 
-export function constructOAuthProvider(config: IsoSdkClientConfiguration) {
-	trace(`Auth strategy is ${config.CAMUNDA_AUTH_STRATEGY}`)
-	trace(`OAuth disabled is ${config.CAMUNDA_OAUTH_DISABLED}`)
+export function constructOAuthProvider(options: {
+	config: IsoSdkClientConfiguration
+	fetch: typeof ky
+}) {
+	trace(`Auth strategy is ${options.config.CAMUNDA_AUTH_STRATEGY}`)
+	trace(`OAuth disabled is ${options.config.CAMUNDA_OAUTH_DISABLED}`)
 	if (
-		config.CAMUNDA_OAUTH_DISABLED ||
-		config.CAMUNDA_AUTH_STRATEGY === 'NONE'
+		options.config.CAMUNDA_OAUTH_DISABLED ||
+		options.config.CAMUNDA_AUTH_STRATEGY === 'NONE'
 	) {
 		trace(`Disabling Auth`)
 		return new NullAuthProvider()
 	} else {
-		if (config.CAMUNDA_AUTH_STRATEGY === 'BASIC') {
+		if (options.config.CAMUNDA_AUTH_STRATEGY === 'BASIC') {
 			trace(`Using Basic Auth`)
-			return new BasicAuthProvider({ config })
+			return new BasicAuthProvider(options)
 		} else {
 			trace(`Using OAuth`)
-			return new OAuthProvider({ config })
+			return new OAuthProvider(options)
 		}
 	}
 }

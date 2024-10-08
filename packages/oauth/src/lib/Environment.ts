@@ -1,6 +1,15 @@
-import { BeforeRequestHook } from 'got'
+import { BeforeRequestHook } from 'ky'
 import { createEnv } from 'neon-env'
-import winston from 'winston'
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface ILogger {
+	info: (message: string, ...meta: any[]) => void
+	warn: (message: string, ...meta: any[]) => void
+	error: (message: string, ...meta: any[]) => void
+	debug: (message: string, ...meta: any[]) => void
+	trace: (message: string, ...meta: any[]) => void
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const getEnv = () =>
 	createEnv({
@@ -266,7 +275,7 @@ export type DeepPartial<T> = {
 }
 
 export type OAuthClientConfiguration = DeepPartial<OAuthConfiguration> & {
-	logger?: winston.Logger
+	logger?: ILogger
 }
 
 export function RequireConfiguration<T>(
