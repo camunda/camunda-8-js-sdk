@@ -1,9 +1,9 @@
 import { LosslessNumber } from '@camunda8/lossless-json'
 
 import { CamundaRestClient } from '../../c8rest/CamundaRestClient'
-import { ProcessDefinition, Query } from '../../dto/OperateDto'
-import { HTTPError, RestError } from '../../lib'
-import { OperateApiClient } from '../../operate'
+import { ProcessDefinition, Query } from '../../src/dto/OperateDto'
+import { HTTPError, RestError } from '../../src/lib'
+import { OperateApiClient } from '../../src/operate'
 
 jest.setTimeout(20000)
 describe('Operate Integration', () => {

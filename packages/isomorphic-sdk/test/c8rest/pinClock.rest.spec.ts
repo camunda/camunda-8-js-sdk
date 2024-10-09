@@ -1,4 +1,4 @@
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 
 test('We can pin the clock, and reset it', async () => {
 	const now = Date.now()

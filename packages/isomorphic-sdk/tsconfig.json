@@ -21,12 +21,13 @@
 		"strictNullChecks": true,
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
-		"resolveJsonModule": true,
+		"resolveJsonModule": false,
 		"plugins": [
 			{
 				"name": "typescript-tslint-plugin"
 			}
 		]
 	},
-	"exclude": ["node_modules", "src/__tests__/*", "dist"]
+	"include": ["source"],
+	"exclude": ["node_modules", "test"]
 }

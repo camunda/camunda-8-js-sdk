@@ -2,7 +2,7 @@ import path from 'path'
 
 import { LosslessDto } from '@camunda8/lossless-json'
 
-import { CamundaJobWorker, CamundaRestClient } from '../..'
+import { CamundaJobWorker, CamundaRestClient } from '../../src'
 
 const c8 = new CamundaRestClient()
 

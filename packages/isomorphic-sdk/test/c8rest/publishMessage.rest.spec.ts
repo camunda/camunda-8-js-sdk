@@ -1,7 +1,7 @@
 import { LosslessDto } from '@camunda8/lossless-json'
 import { v4 } from 'uuid'
 
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 
 const c8 = new CamundaRestClient()
 

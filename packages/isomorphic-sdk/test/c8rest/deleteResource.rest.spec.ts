@@ -1,4 +1,4 @@
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 
 const c8 = new CamundaRestClient()
 

@@ -1,6 +1,6 @@
 import path from 'node:path'
 
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 
 let processDefinitionId: string
 const restClient = new CamundaRestClient()

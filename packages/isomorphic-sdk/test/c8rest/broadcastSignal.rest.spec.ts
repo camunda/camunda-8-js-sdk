@@ -1,6 +1,6 @@
 import { LosslessDto } from '@camunda8/lossless-json'
 
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 // import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(60000)

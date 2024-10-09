@@ -1,52 +1,50 @@
-import { EventEmitter } from 'events'
-
-import { LosslessDto } from '@camunda8/lossless-json'
-import TypedEmitter from 'typed-emitter'
-
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import {EventEmitter} from 'node:events'
+import {type LosslessDto} from '@camunda8/lossless-json'
+import type TypedEmitter from 'typed-emitter'
 import {
-	ActivateJobsRequest,
-	Ctor,
-	IProcessVariables,
-	Job,
-	JobCompletionInterfaceRest,
-	MustReturnJobActionAcknowledgement,
-} from '../dto/C8Dto'
-import { getLogger, ILogger } from '../lib/C8Logger'
-
-import { CamundaRestClient } from './CamundaRestClient'
+	type ActivateJobsRequest,
+	type Ctor,
+	type IProcessVariables,
+	type Job,
+	type JobCompletionInterfaceRest,
+	type MustReturnJobActionAcknowledgement,
+} from '../dto/C8Dto.js'
+import {getLogger, type ILogger} from '../lib/c8-logger.js'
+import {type CamundaRestClient} from './camunda-rest-client.js'
 
 type CamundaJobWorkerEvents = {
-	pollError: (error: Error) => void
-	start: () => void
-	stop: () => void
+	pollError: (error: Error) => void;
+	start: () => void;
+	stop: () => void;
 	poll: ({
 		currentlyActiveJobCount,
 		maxJobsToActivate,
 		worker,
 	}: {
-		currentlyActiveJobCount: number
-		maxJobsToActivate: number
-		worker: string
-	}) => void
+		currentlyActiveJobCount: number;
+		maxJobsToActivate: number;
+		worker: string;
+	}) => void;
 }
 
-export interface CamundaJobWorkerConfig<
+export type CamundaJobWorkerConfig<
 	VariablesDto extends LosslessDto,
 	CustomHeadersDto extends LosslessDto,
-> extends ActivateJobsRequest {
-	inputVariableDto?: Ctor<VariablesDto>
-	customHeadersDto?: Ctor<CustomHeadersDto>
+> = {
+	inputVariableDto?: Ctor<VariablesDto>;
+	customHeadersDto?: Ctor<CustomHeadersDto>;
 	/** How often the worker will poll for new jobs. Defaults to 30s */
-	pollIntervalMs?: number
+	pollIntervalMs?: number;
 	jobHandler: (
 		job: Job<VariablesDto, CustomHeadersDto> &
-			JobCompletionInterfaceRest<IProcessVariables>,
+		JobCompletionInterfaceRest<IProcessVariables>,
 		log: ILogger
-	) => MustReturnJobActionAcknowledgement
-	logger?: ILogger
+	) => MustReturnJobActionAcknowledgement;
+	logger?: ILogger;
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
-	autoStart?: boolean
-}
+	autoStart?: boolean;
+} & ActivateJobsRequest
 // Make this class extend event emitter and have a typed event 'pollError'
 export class CamundaJobWorker<
 	VariablesDto extends LosslessDto,
@@ -54,28 +52,29 @@ export class CamundaJobWorker<
 > extends (EventEmitter as new () => TypedEmitter<CamundaJobWorkerEvents>) {
 	public currentlyActiveJobCount = 0
 	public capacity: number
-	private loopHandle?: NodeJS.Timeout
-	private pollInterval: number
-	public log: ILogger
 	logMeta: () => {
-		worker: string
-		type: string
-		pollIntervalMs: number
-		capacity: number
-		currentload: number
+		worker: string;
+		type: string;
+		pollIntervalMs: number;
+		capacity: number;
+		currentload: number;
 	}
+
+	public log: ILogger
+	private loopHandle?: NodeJS.Timeout
+	private readonly pollInterval: number
 
 	constructor(
 		private readonly config: CamundaJobWorkerConfig<
-			VariablesDto,
-			CustomHeadersDto
+		VariablesDto,
+		CustomHeadersDto
 		>,
-		private readonly restClient: CamundaRestClient
+		private readonly restClient: CamundaRestClient,
 	) {
-		super()
-		this.pollInterval = config.pollIntervalMs ?? 30000
+		super() // eslint-disable-line constructor-super
+		this.pollInterval = config.pollIntervalMs ?? 30_000
 		this.capacity = this.config.maxJobsToActivate
-		this.log = getLogger({ logger: config.logger })
+		this.log = getLogger({logger: config.logger})
 		this.logMeta = () => ({
 			worker: this.config.worker,
 			type: this.config.type,
@@ -83,53 +82,59 @@ export class CamundaJobWorker<
 			capacity: this.config.maxJobsToActivate,
 			currentload: this.currentlyActiveJobCount,
 		})
-		this.log.debug(`Created REST Job Worker`, this.logMeta())
+		this.log.debug('Created REST Job Worker', this.logMeta())
 		if (config.autoStart ?? true) {
 			this.start()
 		}
 	}
 
 	start() {
-		this.log.debug(`Starting poll loop`, this.logMeta())
+		this.log.debug('Starting poll loop', this.logMeta())
 		this.emit('start')
 		this.poll()
-		this.loopHandle = setInterval(() => this.poll(), this.pollInterval)
+		this.loopHandle = setInterval(() => {
+			this.poll();
+		}, this.pollInterval)
 	}
 
 	/** Stops the Job Worker polling for more jobs. If await this call, and it will return as soon as all currently active jobs are completed.
 	 * The deadline for all currently active jobs to complete is 30s by default. If the active jobs do not complete by the deadline, this method will throw.
 	 */
-	async stop(deadlineMs = 30000) {
-		this.log.debug(`Stop requested`, this.logMeta())
+	async stop(deadlineMs = 30_000) {
+		this.log.debug('Stop requested', this.logMeta())
 		/** Stopping polling for new jobs */
 		clearInterval(this.loopHandle)
 		return new Promise((resolve, reject) => {
 			if (this.currentlyActiveJobCount === 0) {
-				this.log.debug(`All jobs drained. Worker stopped.`, this.logMeta())
+				this.log.debug('All jobs drained. Worker stopped.', this.logMeta())
 				this.emit('stop')
-				return resolve(null)
+				resolve(null);
+				return;
 			}
+
 			/** This is an error timeout - if we don't complete all active jobs before the specified deadline, we reject the Promise */
 			const timeout = setTimeout(() => {
 				clearInterval(wait)
 				this.log.debug(
 					`Failed to drain all jobs in ${deadlineMs}ms`,
-					this.logMeta()
+					this.logMeta(),
 				)
-				return reject(`Failed to drain all jobs in ${deadlineMs}ms`)
+				reject(new Error(`Failed to drain all jobs in ${deadlineMs}ms`));
 			}, deadlineMs)
 			/** Check every 500ms to see if our active job count has hit zero, i.e: all active work is stopped */
 			const wait = setInterval(() => {
 				if (this.currentlyActiveJobCount === 0) {
-					this.log.debug(`All jobs drained. Worker stopped.`, this.logMeta())
+					this.log.debug('All jobs drained. Worker stopped.', this.logMeta())
 					clearInterval(wait)
 					clearTimeout(timeout)
 					this.emit('stop')
-					return resolve(null)
+					resolve(null);
+					return;
 				}
+
 				this.log.debug(
-					`Stopping - waiting for active jobs to complete.`,
-					this.logMeta()
+					'Stopping - waiting for active jobs to complete.',
+					this.logMeta(),
 				)
 			}, 500)
 		})
@@ -142,62 +147,67 @@ export class CamundaJobWorker<
 			worker: this.config.worker,
 		})
 		if (this.currentlyActiveJobCount >= this.config.maxJobsToActivate) {
-			this.log.debug(`At capacity - not requesting more jobs`, this.logMeta())
+			this.log.debug('At capacity - not requesting more jobs', this.logMeta())
 			return
 		}
 
-		this.log.trace(`Polling for jobs`, this.logMeta())
+		this.log.trace('Polling for jobs', this.logMeta())
 
-		const remainingJobCapacity =
-			this.config.maxJobsToActivate - this.currentlyActiveJobCount
+		const remainingJobCapacity
+			= this.config.maxJobsToActivate - this.currentlyActiveJobCount
 		this.restClient
 			.activateJobs({
 				...this.config,
 				maxJobsToActivate: remainingJobCapacity,
 			})
-			.then((jobs) => {
+			.then(jobs => {
 				const count = jobs.length
 				this.currentlyActiveJobCount += count
 				this.log.debug(`Activated ${count} jobs`, this.logMeta())
 				// The job handlers for the activated jobs will run in parallel
-				jobs.forEach((job) => this.handleJob(job))
+				for (const job of jobs) {
+					void this.handleJob(job)
+				}
 			})
-			.catch((e) => this.emit('pollError', e))
+			.catch((error: unknown) => {
+				this.emit('pollError', error as Error)
+			})
 	}
 
 	private async handleJob(
 		job: Job<VariablesDto, CustomHeadersDto> &
-			JobCompletionInterfaceRest<IProcessVariables>
+		JobCompletionInterfaceRest<IProcessVariables>,
 	) {
 		try {
 			this.log.debug(`Invoking job handler for job ${job.key}`, this.logMeta())
 			await this.config.jobHandler(job, this.log)
 			this.log.debug(
 				`Completed job handler for job ${job.key}.`,
-				this.logMeta()
+				this.logMeta(),
 			)
-		} catch (e) {
+		} catch (error) {
 			/** Unhandled exception in the job handler */
-			if (e instanceof Error) {
+			if (error instanceof Error) {
 				// If err is an instance of Error, we can safely access its properties
 				this.log.error(
 					`Unhandled exception in job handler for job ${job.key}`,
-					this.logMeta()
+					this.logMeta(),
 				)
-				this.log.error(`Error: ${e.message}`, {
-					stack: e.stack,
+				this.log.error(`Error: ${error.message}`, {
+					stack: error.stack,
 					...this.logMeta(),
 				})
 			} else {
 				// If err is not an Error, log it as is
 				this.log.error(
 					'An unknown error occurred while executing a job handler',
-					{ error: e, ...this.logMeta() }
+					{error, ...this.logMeta()},
 				)
 			}
-			this.log.error(`Failing the job`, this.logMeta())
+
+			this.log.error('Failing the job', this.logMeta())
 			await job.fail({
-				errorMessage: (e as Error).toString(),
+				errorMessage: (error as Error).toString(),
 				retries: job.retries - 1,
 			})
 		} finally {

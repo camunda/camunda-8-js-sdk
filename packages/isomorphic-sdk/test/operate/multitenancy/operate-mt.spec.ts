@@ -1,5 +1,5 @@
 import { CamundaRestClient } from '../../../c8rest/CamundaRestClient'
-import { OperateApiClient } from '../../../operate'
+import { OperateApiClient } from '../../../src/operate'
 
 jest.setTimeout(15000)
 

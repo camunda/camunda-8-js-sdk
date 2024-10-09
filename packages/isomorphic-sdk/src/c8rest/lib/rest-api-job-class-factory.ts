@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { LosslessDto } from '@camunda8/lossless-json'
 
-import { RestApiJob } from '../../dto/C8Dto'
+import {type LosslessDto} from '@camunda8/lossless-json'
+import {RestApiJob} from '../../dto/C8Dto.js'
 
 const factory = createMemoizedSpecializedRestApiJobClassFactory()
 
@@ -10,12 +9,11 @@ export const createSpecializedRestApiJobClass = <
 	Variables extends LosslessDto,
 	CustomHeaders extends LosslessDto,
 >(
-	inputVariableDto: new (obj: any) => Variables,
-	customHeaders: new (obj: any) => CustomHeaders
-) => {
+	inputVariableDto: new (object: any) => Variables,
+	customHeaders: new (object: any) => CustomHeaders,
+) =>
 	// Assuming `createMemoizedSpecializedRestApiJobClassFactory` is available
-	return factory(inputVariableDto, customHeaders)
-}
+	factory(inputVariableDto, customHeaders)
 
 function createMemoizedSpecializedRestApiJobClassFactory() {
 	const cache = new Map<string, any>()
@@ -24,9 +22,9 @@ function createMemoizedSpecializedRestApiJobClassFactory() {
 		Variables extends LosslessDto,
 		CustomHeaders extends LosslessDto,
 	>(
-		inputVariableDto: new (obj: any) => Variables,
-		customHeadersDto: new (obj: any) => CustomHeaders
-	): new (obj: any) => RestApiJob<Variables, CustomHeaders> {
+		inputVariableDto: new (object: any) => Variables,
+		customHeadersDto: new (object: any) => CustomHeaders,
+	): new (object: any) => RestApiJob<Variables, CustomHeaders> {
 		// Create a unique cache key based on the class and inputs
 		const cacheKey = JSON.stringify({
 			inputVariableDto,
@@ -34,8 +32,10 @@ function createMemoizedSpecializedRestApiJobClassFactory() {
 		})
 
 		// Check for cached result
-		if (cache.has(cacheKey)) {
-			return cache.get(cacheKey)
+		/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */
+		const cachedValue = cache.get(cacheKey)
+		if (cachedValue) {
+			return cachedValue // eslint-disable-line @typescript-eslint/no-unsafe-return
 		}
 
 		// Create a new class that extends the original class
@@ -49,13 +49,13 @@ function createMemoizedSpecializedRestApiJobClassFactory() {
 			'child:class',
 			inputVariableDto,
 			NewRestApiJobClass.prototype,
-			'variables'
+			'variables',
 		)
 		Reflect.defineMetadata(
 			'child:class',
 			customHeadersDto,
 			NewRestApiJobClass.prototype,
-			'customHeaders'
+			'customHeaders',
 		)
 
 		// Store the new class in cache

@@ -1,4 +1,4 @@
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 
 test('A worker can be multi-tenant', async () => {
 	const client = new CamundaRestClient()

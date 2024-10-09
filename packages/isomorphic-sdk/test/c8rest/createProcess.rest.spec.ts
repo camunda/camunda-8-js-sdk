@@ -2,7 +2,7 @@ import path from 'path'
 
 import { createDtoInstance, LosslessDto } from '@camunda8/lossless-json'
 
-import { CamundaRestClient } from '../..'
+import { CamundaRestClient } from '../../src'
 
 jest.setTimeout(17000)
 
