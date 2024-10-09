@@ -1,11 +1,14 @@
+/* eslint-disable ava/no-skip-test */
+/* eslint-disable @typescript-eslint/naming-convention */
+import {execSync} from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import process from 'node:process'
 import test from 'ava'
-import { execSync } from 'child_process'
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
-import { OAuthProvider } from '../source/index.js'
+import {OAuthProvider} from '../source/index.js'
 
-function removeCacheDir(dirpath: string) {
+function removeCacheDirectory(dirpath: string) {
 	if (fs.existsSync(dirpath)) {
 		fs.rmSync(dirpath, {
 			recursive: true,
@@ -15,11 +18,11 @@ function removeCacheDir(dirpath: string) {
 }
 
 // @Move to sdk (FileCache test)
-test.skip('Gets the token cache dir from the environment', (t) => {
-	const tokenCacheDir = path.join(__dirname, '.token-cache')
-	removeCacheDir(tokenCacheDir)
-	t.is(fs.existsSync(tokenCacheDir), false)
-	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
+test.skip('Gets the token cache dir from the environment', t => {
+	const tokenCacheDirectory = path.join(import.meta.dirname, '.token-cache')
+	removeCacheDirectory(tokenCacheDirectory)
+	t.is(fs.existsSync(tokenCacheDirectory), false)
+	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDirectory
 
 	const o = new OAuthProvider({
 		configuration: {
@@ -29,21 +32,21 @@ test.skip('Gets the token cache dir from the environment', (t) => {
 			CAMUNDA_OAUTH_URL: 'url',
 		},
 	})
-	t.is(!!o, true)
-	const exists = fs.existsSync(tokenCacheDir)
+	t.is(Boolean(o), true)
+	const exists = fs.existsSync(tokenCacheDirectory)
 	t.is(exists, true)
-	removeCacheDir(tokenCacheDir)
+	removeCacheDirectory(tokenCacheDirectory)
 
-	t.is(fs.existsSync(tokenCacheDir), false)
+	t.is(fs.existsSync(tokenCacheDirectory), false)
 })
 
 // @Move to sdk (FileCache test)
-test.skip('Creates the token cache dir if it does not exist', (t) => {
-	const tokenCacheDir = path.join(__dirname, '.token-cache')
-	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
-	removeCacheDir(tokenCacheDir)
+test.skip('Creates the token cache dir if it does not exist', t => {
+	const tokenCacheDirectory = path.join(import.meta.dirname, '.token-cache')
+	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDirectory
+	removeCacheDirectory(tokenCacheDirectory)
 
-	t.is(fs.existsSync(tokenCacheDir), false)
+	t.is(fs.existsSync(tokenCacheDirectory), false)
 
 	const o = new OAuthProvider({
 		configuration: {
@@ -54,30 +57,30 @@ test.skip('Creates the token cache dir if it does not exist', (t) => {
 		},
 	})
 
-	t.is(!!o, true)
-	t.is(fs.existsSync(tokenCacheDir), true)
-	removeCacheDir(tokenCacheDir)
+	t.is(Boolean(o), true)
+	t.is(fs.existsSync(tokenCacheDirectory), true)
+	removeCacheDirectory(tokenCacheDirectory)
 
-	t.is(fs.existsSync(tokenCacheDir), false)
+	t.is(fs.existsSync(tokenCacheDirectory), false)
 })
 
 // @Move to sdk
-test.skip('Throws in the constructor if the token cache is not writable', (t) => {
-	const tokenCacheDir = path.join(__dirname, '.token-cache')
-	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
-	removeCacheDir(tokenCacheDir)
+test.skip('Throws in the constructor if the token cache is not writable', t => {
+	const tokenCacheDirectory = path.join(import.meta.dirname, '.token-cache')
+	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDirectory
+	removeCacheDirectory(tokenCacheDirectory)
 
-	t.is(fs.existsSync(tokenCacheDir), false)
+	t.is(fs.existsSync(tokenCacheDirectory), false)
 	if (os.platform() === 'win32') {
-		fs.mkdirSync(tokenCacheDir)
-		t.is(fs.existsSync(tokenCacheDir), true)
+		fs.mkdirSync(tokenCacheDirectory)
+		t.is(fs.existsSync(tokenCacheDirectory), true)
 		// Make the directory read-only on Windows
 		// Note that this requires administrative privileges
-		execSync(`icacls ${tokenCacheDir} /deny Everyone:(OI)(CI)W /inheritance:r`)
+		execSync(`icacls ${tokenCacheDirectory} /deny Everyone:(OI)(CI)W /inheritance:r`)
 	} else {
 		// Make the directory read-only on Unix
-		fs.mkdirSync(tokenCacheDir, 0o400)
-		t.is(fs.existsSync(tokenCacheDir), true)
+		fs.mkdirSync(tokenCacheDirectory, 0o400)
+		t.is(fs.existsSync(tokenCacheDirectory), true)
 	}
 
 	let thrown = false
@@ -90,7 +93,7 @@ test.skip('Throws in the constructor if the token cache is not writable', (t) =>
 				CAMUNDA_OAUTH_URL: 'url',
 			},
 		})
-		t.is(!!o, true)
+		t.is(Boolean(o), true)
 	} catch {
 		thrown = true
 	}
@@ -98,19 +101,21 @@ test.skip('Throws in the constructor if the token cache is not writable', (t) =>
 	// Make the directory writeable on Windows, so it can be deleted
 	// Note that this requires administrative privileges
 	if (os.platform() === 'win32') {
-		execSync(`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`)
+		execSync(`icacls ${tokenCacheDirectory} /grant Everyone:(OI)(CI)(F)`)
 	}
-	removeCacheDir(tokenCacheDir)
+
+	removeCacheDirectory(tokenCacheDirectory)
 	t.is(thrown, true)
-	t.is(fs.existsSync(tokenCacheDir), false)
+	t.is(fs.existsSync(tokenCacheDirectory), false)
 })
 
-//@Move to sdk - Filecache test
-test.skip('Creates the token cache dir if it does not exist 1', (t) => {
-	const tokenCache = path.join(__dirname, '.token-cache')
+// @Move to sdk - Filecache test
+test.skip('Creates the token cache dir if it does not exist 1', t => {
+	const tokenCache = path.join(import.meta.dirname, '.token-cache')
 	if (fs.existsSync(tokenCache)) {
 		fs.rmdirSync(tokenCache)
 	}
+
 	t.is(fs.existsSync(tokenCache), false)
 
 	const o = new OAuthProvider({
@@ -123,20 +128,22 @@ test.skip('Creates the token cache dir if it does not exist 1', (t) => {
 		},
 	})
 
-	t.is(!!o, true)
+	t.is(Boolean(o), true)
 	t.is(fs.existsSync(tokenCache), true)
 	if (fs.existsSync(tokenCache)) {
 		fs.rmdirSync(tokenCache)
 	}
+
 	t.is(fs.existsSync(tokenCache), false)
 })
 
 // @Move to sdk - File cache test
-test.skip('Gets the token cache dir from the environment 1', (t) => {
-	const tokenCache = path.join(__dirname, '.token-cache')
+test.skip('Gets the token cache dir from the environment 1', t => {
+	const tokenCache = path.join(import.meta.dirname, '.token-cache')
 	if (fs.existsSync(tokenCache)) {
 		fs.rmdirSync(tokenCache)
 	}
+
 	t.is(fs.existsSync(tokenCache), false)
 	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache
 	const o = new OAuthProvider({
@@ -148,24 +155,27 @@ test.skip('Gets the token cache dir from the environment 1', (t) => {
 		},
 	})
 
-	t.is(!!o, true)
+	t.is(Boolean(o), true)
 	t.is(fs.existsSync(tokenCache), true)
 	if (fs.existsSync(tokenCache)) {
 		fs.rmdirSync(tokenCache)
 	}
+
 	t.is(fs.existsSync(tokenCache), false)
 })
 
 // @Move to sdk - File cache test
-test.skip('Uses an explicit token cache over the environment', (t) => {
-	const tokenCache1 = path.join(__dirname, '.token-cache1')
-	const tokenCache2 = path.join(__dirname, '.token-cache2')
-	;[tokenCache1, tokenCache2].forEach((tokenCache) => {
+test.skip('Uses an explicit token cache over the environment', t => {
+	const tokenCache1 = path.join(import.meta.dirname, '.token-cache1')
+	const tokenCache2 = path.join(import.meta.dirname, '.token-cache2');
+	for (const tokenCache of [tokenCache1, tokenCache2]) {
 		if (fs.existsSync(tokenCache)) {
 			fs.rmdirSync(tokenCache)
 		}
+
 		t.is(fs.existsSync(tokenCache), false)
-	})
+	}
+
 	process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache1
 	const o = new OAuthProvider({
 		configuration: {
@@ -177,13 +187,14 @@ test.skip('Uses an explicit token cache over the environment', (t) => {
 		},
 	})
 
-	t.is(!!o, true)
+	t.is(Boolean(o), true)
 	t.is(fs.existsSync(tokenCache2), true)
-	t.is(fs.existsSync(tokenCache1), false)
-	;[tokenCache1, tokenCache2].forEach((tokenCache) => {
+	t.is(fs.existsSync(tokenCache1), false);
+	for (const tokenCache of [tokenCache1, tokenCache2]) {
 		if (fs.existsSync(tokenCache)) {
 			fs.rmdirSync(tokenCache)
 		}
+
 		t.is(fs.existsSync(tokenCache), false)
-	})
+	}
 })

@@ -29,6 +29,6 @@
 			}
 		]
 	},
-	"include": ["source", "test/helpers/EnvironmentSetup.ts"],
+	"include": ["source", "test/helpers/environment-setup.ts"],
 	"exclude": ["node_modules", "test"]
 }

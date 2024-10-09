@@ -1,51 +1,70 @@
 import debug from 'debug'
-import { jwtDecode } from 'jwt-decode'
+import {jwtDecode} from 'jwt-decode'
 import ky from 'ky'
-
-import { createUserAgentString } from './createUserAgentString.js'
+import {createUserAgentString} from './create-user-agent-string.js'
 import {
 	EnvironmentConfigurator,
-	OAuthConfiguration,
-	RequireConfiguration,
-} from './Environment.js'
+	type OAuthConfiguration,
+	requireConfiguration,
+} from './get-environment.js'
 import {
-	IOAuthProvider,
-	IPersistentCacheProvider,
-	Token,
-	TokenError,
-	TokenGrantAudienceType,
-} from './OAuthTypes.js'
+	type Token,
+	type TokenError,
+	type TokenGrantAudienceType,
+} from './oauth-types.js'
+import {type IPersistentCacheProvider, type IOAuthProvider} from './interfaces.js'
 
 const trace = debug('camunda:oauth')
 
-const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
+const backoffTokenEndpointFailure = 1000
 
-interface OAuthClientOptions {
-	configuration?: Partial<OAuthConfiguration>
-	persistentCache?: IPersistentCacheProvider
-	rest?: typeof ky
+// eslint-disable-next-line @typescript-eslint/naming-convention
+type OAuthClientOptions = {
+	configuration?: Partial<OAuthConfiguration>;
+	persistentCache?: IPersistentCacheProvider;
+	rest?: typeof ky;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export class OAuthProvider implements IOAuthProvider {
-	private authServerUrl: string
-	private mTLSPrivateKey: string | undefined
-	private mTLSCertChain: string | undefined
-	private clientId: string | undefined
-	private clientSecret: string | undefined
-	public tokenCache: { [key: string]: Token } = {}
+	public static isTokenExpired(token: Token, refreshWindow: number) {
+		const d = new Date()
+		const currentTime = d.setSeconds(d.getSeconds())
+
+		// Token.expiry is seconds since Unix Epoch
+		// The Date constructor expects milliseconds since Unix Epoch
+		const tokenExpiryMs = token.expiry * 1000
+
+		trace(`Checking token expiry for ${token.audience}`)
+		trace(`  Current time: ${currentTime}`)
+		trace(`  Token expiry: ${tokenExpiryMs}`)
+
+		// If the token has 10 seconds (by default) or less left, renew it.
+		// The Identity server token cache is cleared 30 seconds before the token expires, allowing us to renew it
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/125
+		const tokenIsExpired = currentTime >= tokenExpiryMs - refreshWindow
+		return tokenIsExpired
+	}
+
+	public tokenCache: Map<string, Token> = new Map<string, Token>()
+	public userAgentString: string
+	private readonly authServerUrl: string
+	private readonly mTlsPrivateKey: string | undefined
+	private readonly mTlsCertChain: string | undefined
+	private readonly clientId: string | undefined
+	private readonly clientSecret: string | undefined
 	private failed = false
 	private failureCount = 0
 	private inflightTokenRequest?: Promise<string>
-	public userAgentString: string
-	private scope: string | undefined
-	private audienceMap: Record<TokenGrantAudienceType, string>
-	private consoleClientId: string | undefined
-	private consoleClientSecret: string | undefined
-	private isCamundaSaaS: boolean
-	private camundaModelerOAuthAudience: string | undefined
-	private refreshWindow: number
-	private rest: typeof ky
-	private persistentCache: IPersistentCacheProvider | undefined
+	private readonly scope: string | undefined
+	private readonly audienceMap: Record<TokenGrantAudienceType, string>
+	private readonly consoleClientId: string | undefined
+	private readonly consoleClientSecret: string | undefined
+	private readonly isCamundaSaaS: boolean
+	private readonly camundaModelerOauthAudience: string | undefined
+	private readonly refreshWindow: number
+	private readonly rest: typeof ky
+	private readonly persistentCache: IPersistentCacheProvider | undefined
 
 	constructor({
 		configuration = {},
@@ -53,18 +72,18 @@ export class OAuthProvider implements IOAuthProvider {
 		rest = ky,
 	}: OAuthClientOptions = {}) {
 		const config = EnvironmentConfigurator.mergeConfigWithEnvironment(
-			configuration ?? {}
+			configuration ?? {},
 		)
 
-		this.authServerUrl = RequireConfiguration(
+		this.authServerUrl = requireConfiguration(
 			config.CAMUNDA_OAUTH_URL,
-			'CAMUNDA_OAUTH_URL'
+			'CAMUNDA_OAUTH_URL',
 		)
 
 		this.clientId = config.ZEEBE_CLIENT_ID
 		this.clientSecret = config.ZEEBE_CLIENT_SECRET
-		this.mTLSPrivateKey = config.CAMUNDA_CUSTOM_PRIVATE_KEY_STRING
-		this.mTLSCertChain = config.CAMUNDA_CUSTOM_CERT_CHAIN_STRING
+		this.mTlsPrivateKey = config.CAMUNDA_CUSTOM_PRIVATE_KEY_STRING
+		this.mTlsCertChain = config.CAMUNDA_CUSTOM_CERT_CHAIN_STRING
 
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
@@ -73,32 +92,34 @@ export class OAuthProvider implements IOAuthProvider {
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
-				`You need to supply a value for at at least one of ZEEBE_CLIENT_ID or CAMUNDA_CONSOLE_CLIENT_ID`
+				'You need to supply a value for at at least one of ZEEBE_CLIENT_ID or CAMUNDA_CONSOLE_CLIENT_ID',
 			)
 		}
+
 		if (!this.clientSecret && !this.consoleClientSecret) {
 			throw new Error(
-				`You need to supply a value for at least one of ZEEBE_CLIENT_SECRET or CAMUNDA_CONSOLE_CLIENT_SECRET`
+				'You need to supply a value for at least one of ZEEBE_CLIENT_SECRET or CAMUNDA_CONSOLE_CLIENT_SECRET',
 			)
 		}
 
 		if (
 			!(
-				(!!this.clientId && !!this.clientSecret) ||
-				(!!this.consoleClientId && !!this.consoleClientSecret)
+				(Boolean(this.clientId) && Boolean(this.clientSecret))
+				|| (Boolean(this.consoleClientId) && Boolean(this.consoleClientSecret))
 			)
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
+
 		this.rest = rest.create({
-			// retry: GotRetryConfig,
+			// Retry: GotRetryConfig,
 			/* handled in sdk via ky-universal injection */
 			// https: {
 			// 	certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
 			// },
 			// handlers: [gotErrorHandler],
 			hooks: {
-				// beforeError: [gotBeforeErrorHook],
+				// BeforeError: [gotBeforeErrorHook],
 			},
 		})
 
@@ -117,18 +138,20 @@ export class OAuthProvider implements IOAuthProvider {
 		 * and needs an audience. If it is not set, we will not include an audience in the token request.
 		 */
 		this.audienceMap = {
+			/* eslint-disable @typescript-eslint/naming-convention */
 			OPERATE: config.CAMUNDA_OPERATE_OAUTH_AUDIENCE,
 			ZEEBE: config.CAMUNDA_ZEEBE_OAUTH_AUDIENCE,
 			OPTIMIZE: config.CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE,
 			TASKLIST: config.CAMUNDA_TASKLIST_OAUTH_AUDIENCE,
 			CONSOLE: config.CAMUNDA_CONSOLE_OAUTH_AUDIENCE,
 			MODELER: config.CAMUNDA_MODELER_OAUTH_AUDIENCE!,
+			/* eslint-enable @typescript-eslint/naming-convention */
 		}
 
-		this.camundaModelerOAuthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE
+		this.camundaModelerOauthAudience = config.CAMUNDA_MODELER_OAUTH_AUDIENCE
 
 		this.isCamundaSaaS = this.authServerUrl.includes(
-			'https://login.cloud.camunda.io/oauth/token'
+			'https://login.cloud.camunda.io/oauth/token',
 		)
 	}
 
@@ -138,40 +161,38 @@ export class OAuthProvider implements IOAuthProvider {
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
 		// Otherwise we use the application credential set, unless a Console credential set exists.
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
-		const requestingFromSaaSConsole =
-			this.isCamundaSaaS &&
-			(audienceType === 'CONSOLE' || audienceType === 'MODELER')
+		const requestingFromSaasConsole
+			= this.isCamundaSaaS
+			&& (audienceType === 'CONSOLE' || audienceType === 'MODELER')
 
-		const clientIdToUse = requestingFromSaaSConsole
-			? RequireConfiguration(this.consoleClientId, 'CAMUNDA_CONSOLE_CLIENT_ID')
-			: RequireConfiguration(this.clientId, 'ZEEBE_CLIENT_ID')
+		const clientIdToUse = requestingFromSaasConsole
+			? requireConfiguration(this.consoleClientId, 'CAMUNDA_CONSOLE_CLIENT_ID')
+			: requireConfiguration(this.clientId, 'ZEEBE_CLIENT_ID')
 
-		const clientSecretToUse = requestingFromSaaSConsole
-			? RequireConfiguration(
-					this.consoleClientSecret,
-					'CAMUNDA_CONSOLE_CLIENT_SECRET'
-				)
-			: RequireConfiguration(this.clientSecret, 'ZEEBE_CLIENT_SECRET')
+		const clientSecretToUse = requestingFromSaasConsole
+			? requireConfiguration(
+				this.consoleClientSecret,
+				'CAMUNDA_CONSOLE_CLIENT_SECRET',
+			)
+			: requireConfiguration(this.clientSecret, 'ZEEBE_CLIENT_SECRET')
 
 		const key = this.getCacheKey(audienceType)
-
-		if (this.tokenCache[key]) {
-			const token = this.tokenCache[key]
-			// check expiry and evict in-memory and file cache if expired
-			if (OAuthProvider.isTokenExpired(token, this.refreshWindow)) {
-				this.evictFromMemoryCache(audienceType)
-				trace(`In-memory token ${token.audience} is expired`)
-			} else {
-				trace(`Using in-memory cached token ${token.audience}`)
-				return this.tokenCache[key].access_token
-			}
+		const token = this.tokenCache.get(key)
+		// Check expiry and evict in-memory and file cache if expired
+		if (token && OAuthProvider.isTokenExpired(token, this.refreshWindow)) {
+			this.tokenCache.delete(key)
+			trace(`In-memory token ${token.audience} is expired`)
+		} else if (token) {
+			trace(`Using in-memory cached token ${token.audience}`)
+			return token.access_token
 		}
+
 		if (this.persistentCache) {
 			const key = `${clientIdToUse}-${audienceType}`
 			const cachedToken = this.persistentCache.get(key)
 
 			if (cachedToken) {
-				// check expiry and evict in-memory and file cache if expired
+				// Check expiry and evict in-memory and file cache if expired
 				if (OAuthProvider.isTokenExpired(cachedToken, this.refreshWindow)) {
 					this.persistentCache.delete(key)
 					trace(`File cached token ${cachedToken.audience} is expired`)
@@ -182,37 +203,36 @@ export class OAuthProvider implements IOAuthProvider {
 			}
 		}
 
-		if (!this.inflightTokenRequest) {
-			this.inflightTokenRequest = new Promise((resolve, reject) => {
-				setTimeout(
-					() => {
-						this.makeDebouncedTokenRequest({
-							audienceType,
-							clientIdToUse,
-							clientSecretToUse,
+		this.inflightTokenRequest ||= new Promise((resolve, reject) => {
+			setTimeout(
+				() => {
+					this.makeDebouncedTokenRequest({
+						audienceType,
+						clientIdToUse,
+						clientSecretToUse,
+					})
+						.then(response => {
+							this.failed = false
+							this.failureCount = 0
+							this.inflightTokenRequest = undefined
+							resolve(response)
 						})
-							.then((res) => {
-								this.failed = false
-								this.failureCount = 0
-								this.inflightTokenRequest = undefined
-								resolve(res)
-							})
-							.catch((e) => {
-								this.failureCount++
-								this.failed = true
-								this.inflightTokenRequest = undefined
-								reject(e)
-							})
-					},
-					this.failed ? BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount : 0
-				)
-			})
-		}
+						.catch((error: unknown) => {
+							this.failureCount++
+							this.failed = true
+							this.inflightTokenRequest = undefined
+							reject(error as Error)
+						})
+				},
+				this.failed ? backoffTokenEndpointFailure * this.failureCount : 0,
+			)
+		});
+
 		return this.inflightTokenRequest
 	}
 
 	public flushMemoryCache() {
-		this.tokenCache = {}
+		this.tokenCache.clear()
 	}
 
 	public flushFileCache() {
@@ -228,33 +248,35 @@ export class OAuthProvider implements IOAuthProvider {
 		 * See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 		 */
 		if (
-			audienceType === 'MODELER' &&
-			!this.isCamundaSaaS && // Self-Managed
-			!this.camundaModelerOAuthAudience // User didn't set an audience
+			audienceType === 'MODELER'
+			&& !this.isCamundaSaaS // Self-Managed
+			&& !this.camundaModelerOauthAudience // User didn't set an audience
 		) {
 			return '' // No audience in token request
 		}
+
 		if (audienceType === 'MODELER' && this.isCamundaSaaS) {
 			return 'audience=api.cloud.camunda.io&'
 		}
+
 		return `audience=${this.getAudience(audienceType)}&`
 	}
 
-	private makeDebouncedTokenRequest({
+	private async makeDebouncedTokenRequest({
 		audienceType,
 		clientIdToUse,
 		clientSecretToUse,
 	}: {
-		audienceType: TokenGrantAudienceType
-		clientIdToUse: string
-		clientSecretToUse: string
+		audienceType: TokenGrantAudienceType;
+		clientIdToUse: string;
+		clientSecretToUse: string;
 	}) {
 		const body = `${this.addAudienceIfNeeded(
-			audienceType
+			audienceType,
 		)}client_id=${encodeURIComponent(
-			clientIdToUse
+			clientIdToUse,
 		)}&client_secret=${encodeURIComponent(
-			clientSecretToUse
+			clientSecretToUse,
 		)}&grant_type=client_credentials`
 		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
@@ -267,51 +289,54 @@ export class OAuthProvider implements IOAuthProvider {
 				accept: '*/*',
 			},
 			https: {
-				key: this.mTLSPrivateKey,
-				cert: this.mTLSCertChain,
+				key: this.mTlsPrivateKey,
+				cert: this.mTlsCertChain,
 			},
 		}
 
-		trace(`Making token request to the token endpoint: `)
+		trace('Making token request to the token endpoint: ')
 		trace(`  ${this.authServerUrl}`)
 		trace(options)
 		return this.rest
 			.post(this.authServerUrl, options)
-			.json<{ access_token: string }>()
-			.then((t) => {
+			.json<{access_token: string}>()
+			.then(t => {
 				trace(
 					`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
 						t,
 						null,
-						2
-					)}`
+						2,
+					)}`,
 				)
 				const isTokenError = (t: unknown): t is TokenError =>
-					!!(t as TokenError).error
+					Boolean((t as TokenError).error)
 				if (isTokenError(t)) {
 					throw new Error(
-						`Failed to get token: ${t.error} - ${t.error_description}`
+						`Failed to get token: ${t.error} - ${t.error_description}`,
 					)
 				}
+
 				if (t.access_token === undefined) {
 					console.error(audienceType, t)
 					throw new Error('Failed to get token: no access_token in response')
 				}
-				const token = { ...(t as Token), audience: audienceType }
+
+				const token = {...(t as Token), audience: audienceType}
 				if (this.persistentCache) {
 					this.persistentCache.set(
 						`${clientIdToUse}-${audienceType}`,
 						token,
-						jwtDecode(token.access_token)
+						jwtDecode(token.access_token),
 					)
 				}
-				this.sendToMemoryCache({ audience: audienceType, token })
+
+				this.sendToMemoryCache({audience: audienceType, token})
 				return token.access_token
 			})
-			.catch((e) => {
+			.catch((error: unknown) => {
 				console.log(`Erroring requesting token for Client Id ${clientIdToUse}`)
-				console.log(e)
-				throw e
+				console.log(error)
+				throw error
 			})
 	}
 
@@ -319,8 +344,8 @@ export class OAuthProvider implements IOAuthProvider {
 		audience,
 		token,
 	}: {
-		audience: TokenGrantAudienceType
-		token: Token
+		audience: TokenGrantAudienceType;
+		token: Token;
 	}) {
 		const key = this.getCacheKey(audience)
 		try {
@@ -329,38 +354,14 @@ export class OAuthProvider implements IOAuthProvider {
 			trace(`Caching token for ${audience} in memory. Expiry: ${decoded.exp}`)
 			token.expiry = decoded.exp ?? 0
 			this.tokenCache[key] = token
-		} catch (e) {
+		} catch (error) {
 			console.error('audience', audience)
 			console.error('token', token.access_token)
-			throw e
+			throw error
 		}
 	}
 
-	public static isTokenExpired(token: Token, refreshWindow: number) {
-		const d = new Date()
-		const currentTime = d.setSeconds(d.getSeconds())
-
-		// token.expiry is seconds since Unix Epoch
-		// The Date constructor expects milliseconds since Unix Epoch
-		const tokenExpiryMs = token.expiry * 1000
-
-		trace(`Checking token expiry for ${token.audience}`)
-		trace(`  Current time: ${currentTime}`)
-		trace(`  Token expiry: ${tokenExpiryMs}`)
-
-		// If the token has 10 seconds (by default) or less left, renew it.
-		// The Identity server token cache is cleared 30 seconds before the token expires, allowing us to renew it
-		// See: https://github.com/camunda/camunda-8-js-sdk/issues/125
-		const tokenIsExpired = currentTime >= tokenExpiryMs - refreshWindow
-		return tokenIsExpired
-	}
-
-	private evictFromMemoryCache(audience: TokenGrantAudienceType) {
-		const key = this.getCacheKey(audience)
-		delete this.tokenCache[key]
-	}
-
-	private getCacheKey = (audience: TokenGrantAudienceType) =>
+	private readonly getCacheKey = (audience: TokenGrantAudienceType) =>
 		`${this.clientId}-${audience}`
 
 	private getAudience(audience: TokenGrantAudienceType) {

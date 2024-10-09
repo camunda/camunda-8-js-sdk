@@ -1,22 +1,27 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+import process from 'node:process'
 import test from 'ava'
 import delay from 'delay'
-
-import { OAuthProvider } from '../source/index.js'
-import { EnvironmentSetup } from './helpers/EnvironmentSetup.js'
+import {OAuthProvider} from '../source/index.js'
+import {environmentSetup} from './helpers/environment-setup.js'
 import {
 	createHttpTestServer,
-	HttpTestServer,
+	type HttpTestServer,
 } from './helpers/create-http-test-server.js'
 
 let server: HttpTestServer
 
-test.before(async () => {
-	EnvironmentSetup.storeEnv()
-	EnvironmentSetup.wipeEnv()
+test.before(() => {
+	environmentSetup.storeEnv()
+	environmentSetup.wipeEnv()
+})
+
+test.after(() => {
+	environmentSetup.restoreEnv()
 })
 
 test.beforeEach(async () => {
-	EnvironmentSetup.wipeEnv()
+	environmentSetup.wipeEnv()
 	server = await createHttpTestServer()
 })
 
@@ -24,63 +29,64 @@ test.afterEach(async () => {
 	await server.stop()
 })
 
-test.after(() => {
-	EnvironmentSetup.restoreEnv()
-})
-
 test.serial(
 	'Throws in the constructor if there in no clientId credentials',
-	(t) => {
+	t => {
 		let thrown = false
 		let message = ''
 		try {
+			// eslint-disable-next-line no-new
 			new OAuthProvider({
-				configuration: { CAMUNDA_OAUTH_URL: 'url' },
+				configuration: {CAMUNDA_OAUTH_URL: 'url'},
 			})
-		} catch (e) {
+		} catch (error) {
 			thrown = true
-			message = (e as Error).message
+			message = (error as Error).message
 		}
+
 		t.is(thrown, true)
 		t.is(
-			message.includes('ZEEBE_CLIENT_ID') &&
-				message.includes('CAMUNDA_CONSOLE_CLIENT_ID'),
-			true
+			message.includes('ZEEBE_CLIENT_ID')
+				&& message.includes('CAMUNDA_CONSOLE_CLIENT_ID'),
+			true,
 		)
-	}
+	},
 )
 
 test.serial(
 	'Throws in the constructor if there in no clientSecret credentials',
-	(t) => {
+	t => {
 		let thrown = false
 		let message = ''
 		try {
+			// eslint-disable-next-line no-new
 			new OAuthProvider({
 				configuration: {
 					CAMUNDA_CONSOLE_CLIENT_ID: 'clientId1',
 					CAMUNDA_OAUTH_URL: 'url',
 				},
 			})
-		} catch (e) {
+		} catch (error) {
 			thrown = true
-			message = (e as Error).message
+			message = (error as Error).message
 		}
+
 		t.is(thrown, true)
 		t.is(
-			message.includes('ZEEBE_CLIENT_SECRET') &&
-				message.includes('CAMUNDA_CONSOLE_CLIENT_SECRET'),
-			true
+			message.includes('ZEEBE_CLIENT_SECRET')
+				&& message.includes('CAMUNDA_CONSOLE_CLIENT_SECRET'),
+			true,
 		)
-	}
+	},
 )
 
 test.serial(
 	'Throws in the constructor if there are insufficient credentials',
-	(t) => {
+	t => {
 		let thrown = false
 		let message = ''
 		try {
+			// eslint-disable-next-line no-new
 			new OAuthProvider({
 				configuration: {
 					CAMUNDA_CONSOLE_CLIENT_ID: 'clientId2',
@@ -88,16 +94,17 @@ test.serial(
 					CAMUNDA_OAUTH_URL: 'url',
 				},
 			})
-		} catch (e) {
+		} catch (error) {
 			thrown = true
-			message = (e as Error).message
+			message = (error as Error).message
 		}
+
 		t.is(thrown, true)
 		t.is(
 			message.includes('client ID') && message.includes('client secret'),
-			true
+			true,
 		)
-	}
+	},
 )
 
 // Added test for https://github.com/camunda/camunda-saas-oauth-nodejs/issues/8
@@ -106,7 +113,7 @@ test.serial(
 // "Remove expiry timer from oAuth token implementation"
 test.serial(
 	'In-memory cache is populated and evicted after expiry',
-	async (t) => {
+	async t => {
 		const o = new OAuthProvider({
 			configuration: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -127,10 +134,10 @@ test.serial(
 		await delay(1600)
 		const token3 = await o.getToken('ZEEBE')
 		t.not(token3, token1)
-	}
+	},
 )
 
-test.serial('Uses form encoding for request', async (t) => {
+test.serial('Uses form encoding for request', async t => {
 	const o = new OAuthProvider({
 		configuration: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -140,16 +147,16 @@ test.serial('Uses form encoding for request', async (t) => {
 		},
 	})
 
-	const res = await o.getToken('OPERATE')
+	await o.getToken('OPERATE')
 	t.is(
 		server.request_body,
-		'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials'
+		'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials',
 	)
 })
 
 test.serial(
 	'Uses a custom audience for an Operate token, if one is configured',
-	async (t) => {
+	async t => {
 		const o = new OAuthProvider({
 			configuration: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -160,15 +167,15 @@ test.serial(
 			},
 		})
 
-		const res = await o.getToken('OPERATE')
+		await o.getToken('OPERATE')
 		t.is(
 			server.request_body,
-			'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials'
+			'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials',
 		)
-	}
+	},
 )
 
-test.serial('Passes scope, if provided', async (t) => {
+test.serial('Passes scope, if provided', async t => {
 	const o = new OAuthProvider({
 		configuration: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -179,14 +186,14 @@ test.serial('Passes scope, if provided', async (t) => {
 		},
 	})
 
-	const res = await o.getToken('ZEEBE')
+	await o.getToken('ZEEBE')
 	t.is(
 		server.request_body,
-		'audience=token&client_id=clientId10&client_secret=clientSecret&grant_type=client_credentials&scope=scope'
+		'audience=token&client_id=clientId10&client_secret=clientSecret&grant_type=client_credentials&scope=scope',
 	)
 })
 
-test.serial('Can get scope from environment', async (t) => {
+test.serial('Can get scope from environment', async t => {
 	process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
 	const o = new OAuthProvider({
 		configuration: {
@@ -197,14 +204,14 @@ test.serial('Can get scope from environment', async (t) => {
 		},
 	})
 
-	const res = await o.getToken('ZEEBE')
+	await o.getToken('ZEEBE')
 	t.is(
 		server.request_body,
-		'audience=token&client_id=clientId11&client_secret=clientSecret&grant_type=client_credentials&scope=scope2'
+		'audience=token&client_id=clientId11&client_secret=clientSecret&grant_type=client_credentials&scope=scope2',
 	)
 })
 
-test.serial('Can set a custom user agent', (t) => {
+test.serial('Can set a custom user agent', t => {
 	const o = new OAuthProvider({
 		configuration: {
 			CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -221,7 +228,7 @@ test.serial('Can set a custom user agent', (t) => {
 // See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 test.serial(
 	'Passes no audience for Modeler API when self-hosted',
-	async (t) => {
+	async t => {
 		const o = new OAuthProvider({
 			configuration: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -232,18 +239,18 @@ test.serial(
 			},
 		})
 
-		const res = await o.getToken('MODELER')
+		await o.getToken('MODELER')
 		t.is(
 			server.request_body,
-			'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
+			'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials',
 		)
-	}
+	},
 )
 
 // See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 test.serial(
 	'Throws if you try to get a Modeler token from SaaS without console creds',
-	async (t) => {
+	async t => {
 		let thrown = false
 		const o = new OAuthProvider({
 			configuration: {
@@ -259,13 +266,13 @@ test.serial(
 			thrown = true
 		})
 		t.is(thrown, true)
-	}
+	},
 )
 
 // See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 test.serial(
 	'Throws if you try to get a Modeler token from Self-hosted without application creds',
-	async (t) => {
+	async t => {
 		let thrown = false
 		const o = new OAuthProvider({
 			configuration: {
@@ -281,7 +288,7 @@ test.serial(
 		})
 
 		t.is(thrown, true)
-	}
+	},
 )
 
 // @Move to isomorphic-sdk

@@ -1,15 +1,7 @@
-import { BeforeRequestHook } from 'ky'
-import { createEnv } from 'neon-env'
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export interface ILogger {
-	info: (message: string, ...meta: any[]) => void
-	warn: (message: string, ...meta: any[]) => void
-	error: (message: string, ...meta: any[]) => void
-	debug: (message: string, ...meta: any[]) => void
-	trace: (message: string, ...meta: any[]) => void
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/naming-convention */
+import {type BeforeRequestHook} from 'ky'
+import {createEnv} from 'neon-env'
+import {type ILogger} from './interfaces.js'
 
 const getEnv = () =>
 	createEnv({
@@ -208,22 +200,22 @@ const getEnv = () =>
 	})
 
 // Helper type for enforcing array contents to match an object's keys
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type EnforceArrayContent<T, K extends keyof any> =
-	T extends Array<K> ? T : never
+	T extends K[] ? T : never
 
 // Function to create a complete keys array, enforcing completeness at compile time
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function createCompleteKeysArray<K extends keyof any>(
-	keys: EnforceArrayContent<K[], K>
+	keys: EnforceArrayContent<K[], K>,
 ): K[] {
 	return keys
 }
 
 type OAuthEnvironmentVariables = ReturnType<typeof getEnv>
 export type OAuthEnvironmentVariable = keyof OAuthEnvironmentVariables
-export const CamundaEnvironmentVariableDictionary =
-	createCompleteKeysArray<OAuthEnvironmentVariable>([
+export const CamundaEnvironmentVariableDictionary
+	= createCompleteKeysArray<OAuthEnvironmentVariable>([
 		'CAMUNDA_CONSOLE_BASE_URL',
 		'CAMUNDA_CONSOLE_CLIENT_ID',
 		'CAMUNDA_CONSOLE_CLIENT_SECRET',
@@ -256,36 +248,32 @@ export const CamundaEnvironmentVariableDictionary =
 		'CAMUNDA_CUSTOM_CERT_STRING',
 	])
 
-export class EnvironmentConfigurator {
-	public static ENV = () => getEnv()
-
-	public static mergeConfigWithEnvironment = (
-		config: Partial<OAuthConfiguration>
-	): OAuthConfiguration => ({ ...EnvironmentConfigurator.ENV(), ...config })
+export const EnvironmentConfigurator = {
+	getEnv,
+	mergeConfigWithEnvironment: (
+		config: Partial<OAuthConfiguration>,
+	): OAuthConfiguration => ({...getEnv(), ...config}),
 }
 
 export type OAuthConfiguration = ReturnType<
-	typeof EnvironmentConfigurator.ENV
+	typeof getEnv
 > & {
-	middleware?: BeforeRequestHook[]
+	middleware?: BeforeRequestHook[];
 }
 
-export type DeepPartial<T> = {
-	[K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
+export type OAuthClientConfiguration = Partial<OAuthConfiguration> & {
+	logger?: ILogger;
 }
 
-export type OAuthClientConfiguration = DeepPartial<OAuthConfiguration> & {
-	logger?: ILogger
-}
-
-export function RequireConfiguration<T>(
+export function requireConfiguration<T>(
 	config: T | undefined,
-	key: OAuthEnvironmentVariable
+	key: OAuthEnvironmentVariable,
 ): T {
 	if (!config) {
 		throw new Error(
-			`Missing required configuration ${key}. Please supply this value as an environment variable or configuration object field.`
+			`Missing required configuration ${key}. Please supply this value as an environment variable or configuration object field.`,
 		)
 	}
+
 	return config
 }

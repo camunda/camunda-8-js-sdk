@@ -6,12 +6,12 @@
 	"type": "module",
 	"sideEffects": false,
 	"scripts": {
-		"test": "ava --no-worker-threads",
-		"build": "npm run clean && npm run writePackageVersion && tsc --project tsconfig.json",
+		"test": "xo && ava",
+		"build": "npm run clean && npm run write-package-version && tsc --project tsconfig.json",
 		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-		"lint": "eslint 'src/**/*.{ts,tsx}'",
-		"format": "prettier --write 'src/**/*.ts'",
-		"writePackageVersion": "node ../../writePackageVersion.js"
+		"lint": "xo",
+		"format": "xo --fix",
+		"write-package-version": "node ../../write-package-version.js"
 	},
 	"keywords": [
 		"zeebe",
@@ -50,6 +50,11 @@
 			"path": "./node_modules/cz-conventional-changelog"
 		}
 	},
+	"xo": {
+		"rules": {
+			"@typescript-eslint/semi": "off"
+		}
+	},
 	"dependencies": {
 		"@camunda8/certificates": "^1.0.0",
 		"debug": "^4.3.7",
@@ -63,8 +68,10 @@
 		"ava": "^6.1.3",
 		"cz-conventional-changelog": "^3.3.0",
 		"delay": "^6.0.0",
+		"eslint-config-xo-typescript": "^7.0.0",
 		"get-port": "^7.1.0",
 		"jsonwebtoken": "^9.0.2",
-		"tsx": "^4.19.1"
+		"tsx": "^4.19.1",
+		"xo": "^0.59.3"
 	}
 }

@@ -3,7 +3,7 @@ import {
 	losslessParse,
 	losslessStringify,
 } from '@camunda8/lossless-json'
-import { OAuthTypes } from '@camunda8/oauth'
+import { OAuthInterfaces } from '@camunda8/oauth'
 import { debug } from 'debug'
 import FormData from 'form-data'
 import ky from 'ky'
@@ -29,7 +29,7 @@ const CAMUNDA_REST_API_VERSION = 'v2'
 
 interface CamundaRestClientOptions {
 	configuration?: Partial<IsoSdkClientConfiguration>
-	oAuthProvider?: OAuthTypes.IOAuthProvider
+	oAuthProvider?: OAuthInterfaces.IOAuthProvider
 	rest?: typeof ky
 }
 class DefaultLosslessDto extends LosslessDto {}
@@ -47,7 +47,7 @@ class DefaultLosslessDto extends LosslessDto {}
  */
 export class CamundaRestClient {
 	private userAgentString: string
-	private oAuthProvider: OAuthTypes.IOAuthProvider
+	private oAuthProvider: OAuthInterfaces.IOAuthProvider
 	private rest: typeof ky
 	private tenantId?: string
 	public log: ILogger

@@ -9,6 +9,7 @@
 		"preinstall": "node ./check-yarn.js"
 	},
 	"private": true,
+	"type": "module",
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
@@ -21,6 +22,11 @@
 			"**",
 			"**/**"
 		]
+	},
+	"xo": {
+		"rules": {
+			"semicolon": false
+		}
 	},
 	"lint-staged": {
 		"**/*.ts": [

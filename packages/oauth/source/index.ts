@@ -1,5 +1,7 @@
-export { BasicAuthProvider } from './lib/BasicAuthProvider.js'
-export { NullAuthProvider } from './lib/NullAuthProvider.js'
-export { OAuthProvider } from './lib/OAuthProvider.js'
+export {BasicAuthProvider} from './lib/basic-auth-provider.js'
+export {NullAuthProvider} from './lib/null-auth-provider.js'
+export {OAuthProvider} from './lib/oauth-provider.js'
 
-export * as OAuthTypes from './lib/OAuthTypes.js'
+export * as OAuthInterfaces from './lib/interfaces.js'
+export * as OAuthTypes from './lib/oauth-types.js'
+
