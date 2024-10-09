@@ -1,4 +1,4 @@
-import { CamundaEnvironmentVariableDictionary } from './Environment'
+import { CamundaEnvironmentVariableDictionary } from '../../source/lib/Environment.js'
 
 const storage: Record<string, string | undefined> = {}
 let envStored = false

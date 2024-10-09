@@ -12,5 +12,13 @@
 	"keywords": [],
 	"author": "Josh Wulf <josh.wulf@camunda.com>",
 	"license": "ISC",
-	"description": ""
+	"description": "",
+	"dependencies": {
+		"debug": "^4.3.7",
+		"win-ca": "^3.5.1"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.5.13",
+		"@types/node": "^22.7.5"
+	}
 }

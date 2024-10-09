@@ -43,7 +43,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 		: { filter: { tenantId: string | undefined } } & T // If T has no filter property, add filter with tenantId
 
 interface OperateClientOptions {
-	configuration?: Partial<IsoSdkClientConfiguration>
+	config?: Partial<IsoSdkClientConfiguration>
 	oAuthProvider?: OAuthTypes.IOAuthProvider
 	rest?: typeof ky
 }
@@ -78,22 +78,18 @@ export class OperateApiClient {
 	 * ```
 	 * @throws {RESTError} An error that may occur during API operations.
 	 */
-	constructor({
-		configuration,
-		oAuthProvider,
-		rest = ky,
-	}: OperateClientOptions = {}) {
-		const config = IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(
-			configuration ?? {}
-		)
-		this.log = getLogger(config)
-		trace('options.config', configuration)
-		trace('config', config)
+	constructor({ config, oAuthProvider, rest = ky }: OperateClientOptions = {}) {
+		const configuration =
+			IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(config ?? {})
+		this.log = getLogger(configuration)
+		trace('options.config', config)
+		trace('config', configuration)
 		this.oAuthProvider =
-			oAuthProvider ?? constructOAuthProvider({ config, fetch: rest })
-		this.userAgentString = createUserAgentString(config)
+			oAuthProvider ??
+			constructOAuthProvider({ config: configuration, fetch: rest })
+		this.userAgentString = createUserAgentString(configuration)
 		const baseUrl = RequireConfiguration(
-			config.CAMUNDA_OPERATE_BASE_URL,
+			configuration.CAMUNDA_OPERATE_BASE_URL,
 			'CAMUNDA_OPERATE_BASE_URL'
 		)
 
@@ -127,12 +123,12 @@ export class OperateApiClient {
 						this.log.trace(JSON.stringify(body, null, 2))
 					},
 					/** Add user-supplied middleware at the end, where they can override auth headers */
-					...(config.middleware ?? []),
+					...(configuration.middleware ?? []),
 				],
 			},
 		})
 
-		this.tenantId = config.CAMUNDA_TENANT_ID
+		this.tenantId = configuration.CAMUNDA_TENANT_ID
 	}
 
 	private async getHeaders() {

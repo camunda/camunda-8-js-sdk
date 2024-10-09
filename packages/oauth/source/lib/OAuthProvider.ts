@@ -1,24 +1,30 @@
-import { debug } from 'debug'
+import debug from 'debug'
 import { jwtDecode } from 'jwt-decode'
 import ky from 'ky'
 
-import { createUserAgentString } from './createUserAgentString'
+import { createUserAgentString } from './createUserAgentString.js'
 import {
 	EnvironmentConfigurator,
 	OAuthConfiguration,
 	RequireConfiguration,
-} from './Environment'
+} from './Environment.js'
 import {
 	IOAuthProvider,
+	IPersistentCacheProvider,
 	Token,
 	TokenError,
 	TokenGrantAudienceType,
-} from './OAuth'
-import { IPersistentCacheProvider } from './OAuthTypes'
+} from './OAuthTypes.js'
 
 const trace = debug('camunda:oauth')
 
 const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
+
+interface OAuthClientOptions {
+	configuration?: Partial<OAuthConfiguration>
+	persistentCache?: IPersistentCacheProvider
+	rest?: typeof ky
+}
 
 export class OAuthProvider implements IOAuthProvider {
 	private authServerUrl: string
@@ -41,15 +47,13 @@ export class OAuthProvider implements IOAuthProvider {
 	private rest: typeof ky
 	private persistentCache: IPersistentCacheProvider | undefined
 
-	constructor(
-		options: {
-			config?: Partial<OAuthConfiguration>
-			persistentCache?: IPersistentCacheProvider
-			fetch: typeof ky
-		} = { fetch: ky }
-	) {
+	constructor({
+		configuration = {},
+		persistentCache,
+		rest = ky,
+	}: OAuthClientOptions = {}) {
 		const config = EnvironmentConfigurator.mergeConfigWithEnvironment(
-			options.config ?? {}
+			configuration ?? {}
 		)
 
 		this.authServerUrl = RequireConfiguration(
@@ -86,7 +90,7 @@ export class OAuthProvider implements IOAuthProvider {
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
 		}
-		this.rest = options.fetch.create({
+		this.rest = rest.create({
 			// retry: GotRetryConfig,
 			/* handled in sdk via ky-universal injection */
 			// https: {
@@ -104,7 +108,7 @@ export class OAuthProvider implements IOAuthProvider {
 		// Basically, if it is disabled, we will not pass in a persistent
 		// cache provider.
 		// this.useFileCache = !config.CAMUNDA_TOKEN_DISK_CACHE_DISABLE
-		this.persistentCache = options.persistentCache
+		this.persistentCache = persistentCache
 
 		this.userAgentString = createUserAgentString(config)
 

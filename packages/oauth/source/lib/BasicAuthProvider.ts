@@ -4,8 +4,8 @@ import {
 	EnvironmentConfigurator,
 	OAuthConfiguration,
 	RequireConfiguration,
-} from './Environment'
-import { IOAuthProvider, TokenGrantAudienceType } from './OAuth'
+} from './Environment.js'
+import { IOAuthProvider, TokenGrantAudienceType } from './OAuthTypes.js'
 
 const trace = debug('camunda:oauth')
 
@@ -30,6 +30,7 @@ export class BasicAuthProvider implements IOAuthProvider {
 		const token = Buffer.from(`${this.username}:${this.password}`).toString(
 			'base64'
 		)
+
 		return Promise.resolve(token)
 	}
 }

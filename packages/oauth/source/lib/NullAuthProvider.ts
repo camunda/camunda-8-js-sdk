@@ -1,6 +1,6 @@
 import debug from 'debug'
 
-import { IOAuthProvider, TokenGrantAudienceType } from './OAuth'
+import { IOAuthProvider, TokenGrantAudienceType } from './OAuthTypes.js'
 
 const d = debug('camunda:oauth')
 

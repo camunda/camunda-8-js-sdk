@@ -28,7 +28,7 @@ const trace = debug('camunda:zeebe-rest')
 const CAMUNDA_REST_API_VERSION = 'v2'
 
 interface CamundaRestClientOptions {
-	configuration?: IsoSdkClientConfiguration
+	configuration?: Partial<IsoSdkClientConfiguration>
 	oAuthProvider?: OAuthTypes.IOAuthProvider
 	rest?: typeof ky
 }
