@@ -59,7 +59,7 @@ Entity keys in Camunda 8 are stored and represented as `int64` numbers. The rang
 
 Some number values - for example: "_total returned results_ " - may be specified as `int64` in the API specifications. Although these numbers will usually not contain unsafe values, they are always serialised to `string`.
 
-For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and if a number value is detected at a runtime that cannot be accurately stored as `number`, to throw an exception.
+For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and to throw an exception if a number value is detected at a runtime that cannot be accurately represented as the JavaScript `number` type (that is, a value greater than 2^53-1).
 
 ## Authorization
 
@@ -222,9 +222,31 @@ Here is an example of turning on debugging for the OAuth and Operate components:
 DEBUG=camunda:oauth,camunda:operate node app.js
 ```
 
+## Process Variable Typing
+
+Process variables - the `variables` of Zeebe messages, jobs, and process instance creation requests and responses - are stored in the broker as key:value pairs. They are transported as a JSON string. The SDK parses the JSON string into a JavaScript object.
+
+Various Zeebe methods accept DTO classes for variable input and output. These DTO classes are used to provide design-time type information on the `variables` object. They are also used to safely decode 64-bit integer values that cannot be accurately represented by the JavaScript `number` type.
+
+To create a DTO to represent the expected shape and type of the `variables` object, extend the `LosslessDto` class:
+
+```typescript
+class myVariableDTO extends LosslessDto {
+	firstName!: string
+	lastName!: string
+	age!: number
+	optionalValue?: number
+	@Int64String
+	veryBigInteger?: string
+	constructor(data: Partial<myVariableDTO>) {
+		super(data)
+	}
+}
+```
+
 ## Typing of Zeebe worker variables
 
-The variable payload in a Zeebe worker task handler is available as an object `job.variables`. By default, this is of type `any`.
+The variable payload in a Zeebe worker task handler is available as an object `job.variables`. By default, this is of type `any` for the gRPC API, and `unknown` for the REST API.
 
 The `ZBClient.createWorker()` method accepts an `inputVariableDto` to control the parsing of number values and provide design-time type information. Passing an `inputVariableDto` class to a Zeebe worker is optional. If a DTO class is passed to the Zeebe worker, it is used for two purposes:
 

@@ -58,7 +58,6 @@ afterEach(async () => {
 			await zbc.cancelProcessInstance(wf.processInstanceKey)
 		}
 	} catch (e: unknown) {
-		// console.log('Caught NOT FOUND') // @DEBUG
 	}
 })
 

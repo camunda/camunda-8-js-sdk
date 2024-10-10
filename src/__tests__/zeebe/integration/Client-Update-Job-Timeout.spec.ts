@@ -22,7 +22,6 @@ afterEach(async () => {
 			await zbc.cancelProcessInstance(wf.processInstanceKey)
 		}
 	} catch (e: unknown) {
-		// console.log('Caught NOT FOUND') // @DEBUG
 	} finally {
 		await zbc.close() // Makes sure we don't forget to close connection
 	}

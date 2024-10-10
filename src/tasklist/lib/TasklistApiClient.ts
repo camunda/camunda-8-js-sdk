@@ -90,6 +90,7 @@ export class TasklistApiClient {
 							),
 						],
 						beforeError: [gotBeforeErrorHook],
+						beforeRequest: config.middleware ?? [],
 					},
 				})
 		)

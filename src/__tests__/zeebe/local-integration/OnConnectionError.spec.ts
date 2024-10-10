@@ -132,11 +132,6 @@ xtest('Does not call the onConnectionError handler if there is a business error'
 		let wf = 'arstsrasrateiuhrastulyharsntharsie'
 		const zbc2 = new ZeebeGrpcClient()
 		zbc2.on('connectionError', () => {
-			// tslint:disable-next-line: no-console
-			// console.log('OnConnectionError!!!! Incrementing calledF') // @DEBUG
-			// const e = new Error()
-			// tslint:disable-next-line: no-console
-			// console.log(e.stack) // @DEBUG
 			calledF++
 		})
 

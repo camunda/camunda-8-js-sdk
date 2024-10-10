@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1bckn6m" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.5.0">
+  <bpmn:process id="rest-message-test" name="Rest Message Publish Test" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start Message Publish Test">
+      <bpmn:outgoing>Flow_083hybf</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_083hybf" sourceRef="StartEvent_1" targetRef="Event_02hfae1" />
+    <bpmn:intermediateCatchEvent id="Event_02hfae1" name="Catch Test Message">
+      <bpmn:incoming>Flow_083hybf</bpmn:incoming>
+      <bpmn:outgoing>Flow_0c1qlsc</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1lxklzi" messageRef="Message_2gh0q6u" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="Event_08rq2o7" name="Message Publish Test complete">
+      <bpmn:incoming>Flow_0c1qlsc</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0c1qlsc" sourceRef="Event_02hfae1" targetRef="Event_08rq2o7" />
+  </bpmn:process>
+  <bpmn:message id="Message_2gh0q6u" name="rest-message">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=correlationId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="rest-message-test">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="162" y="122" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_18fcc3c_di" bpmnElement="Event_02hfae1">
+        <dc:Bounds x="272" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="267" y="122" width="52" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_08rq2o7_di" bpmnElement="Event_08rq2o7">
+        <dc:Bounds x="372" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="348" y="122" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_083hybf_di" bpmnElement="Flow_083hybf">
+        <di:waypoint x="215" y="97" />
+        <di:waypoint x="272" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0c1qlsc_di" bpmnElement="Flow_0c1qlsc">
+        <di:waypoint x="308" y="97" />
+        <di:waypoint x="372" y="97" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

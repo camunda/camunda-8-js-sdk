@@ -1,9 +1,12 @@
 import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
+import { Response } from 'got'
+import { LosslessNumber } from 'lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
 import { GrpcClient } from './GrpcClient'
 import {
+	ActivateInstruction,
 	ActivateJobsRequest,
 	BroadcastSignalRequest,
 	BroadcastSignalResponse,
@@ -20,6 +23,7 @@ import {
 	FailJobRequest,
 	MigrateProcessInstanceRequest,
 	MigrateProcessInstanceResponse,
+	MigrationPlan,
 	ModifyProcessInstanceRequest,
 	ModifyProcessInstanceResponse,
 	ProcessInstanceCreationStartInstruction,
@@ -28,6 +32,7 @@ import {
 	ResolveIncidentRequest,
 	SetVariablesRequestOnTheWire,
 	StreamActivatedJobsRequest,
+	TerminateInstruction,
 	ThrowErrorRequest,
 	TopologyResponse,
 	UpdateJobRetriesRequest,
@@ -35,7 +40,7 @@ import {
 } from './interfaces-grpc-1.0'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
-// The JSON-stringified version of this is sent to the ZBCustomLogger
+/** The JSON-stringified version of this is sent to the ZBCustomLogger */
 export interface ZBLogMessage {
 	timestamp: Date
 	context: string
@@ -47,11 +52,11 @@ export interface ZBLogMessage {
 
 export interface CreateProcessBaseRequest<V extends JSONDoc> {
 	/**
-	 * the BPMN process ID of the process definition
+	 * The BPMN process ID of the process definition
 	 */
 	bpmnProcessId: string
 	/**
-	 * the version of the process; if not specified it will use the latest version
+	 * The version of the process; if not specified it will use the latest version
 	 */
 	version?: number
 	/**
@@ -59,8 +64,10 @@ export interface CreateProcessBaseRequest<V extends JSONDoc> {
 	 * process instance.
 	 */
 	variables: V
-	/** The tenantId for a multi-tenant enabled cluster. */
+	/** The `tenantId` for a multi-tenant enabled cluster. */
 	tenantId?: string
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
 }
 
 export interface CreateProcessInstanceReq<V extends JSONDoc>
@@ -76,12 +83,12 @@ export interface CreateProcessInstanceReq<V extends JSONDoc>
 export interface CreateProcessInstanceWithResultReq<T extends JSONDoc>
 	extends CreateProcessBaseRequest<T> {
 	/**
-	 * timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
+	 * Timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
 	 * if requestTimeout = 0, uses the generic requestTimeout configured in the gateway.
 	 */
 	requestTimeout?: number
 	/**
-	 * list of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
+	 * List of names of variables to be included in `CreateProcessInstanceWithResultResponse.variables`.
 	 * If empty, all visible variables in the root scope will be returned.
 	 */
 	fetchVariables?: string[]
@@ -133,6 +140,10 @@ export interface JobFailureConfiguration {
 	 * Optional backoff for subsequent retries, in milliseconds. If not specified, it is zero.
 	 */
 	retryBackOff?: number
+	/**
+	 * Optional variable update for the job
+	 */
+	variables?: JSONDoc
 }
 
 declare function FailureHandler(
@@ -187,6 +198,48 @@ export interface JobCompletionInterface<WorkerOutputVariables> {
 	 * If there is no error catch event with the specified errorCode then an incident will be raised instead.
 	 */
 	error: ErrorJobOutcome
+}
+
+export interface JobCompletionInterfaceRest<WorkerOutputVariables> {
+	/**
+	 * Cancel the workflow.
+	 */
+	cancelWorkflow: () => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
+	 * Complete the job with a success, optionally passing in a state update to merge
+	 * with the process variables on the broker.
+	 */
+	complete: (
+		updatedVariables?: WorkerOutputVariables
+	) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
+	 * Fail the job with an informative message as to the cause. Optionally, pass in a
+	 * value remaining retries. If no value is passed for retries then the current retry
+	 * count is decremented. Pass in `0`for retries to raise an incident in Operate. Optionally,
+	 * specify a retry backoff period in milliseconds. Default is 0ms (immediate retry) if not
+	 * specified.
+	 */
+	fail: typeof FailureHandler
+	/**
+	 * Mark this job as forwarded to another system for completion. No action is taken by the broker.
+	 * This method releases worker capacity to handle another job.
+	 */
+	forward: () => JOB_ACTION_ACKNOWLEDGEMENT
+	/**
+	 *
+	 * Report a business error (i.e. non-technical) that occurs while processing a job.
+	 * The error is handled in the process by an error catch event.
+	 * If there is no error catch event with the specified errorCode then an incident will be raised instead.
+	 */
+	error: (error: ErrorJobWithVariables) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
+	 * Extend the timeout for the job by setting a new timeout
+	 */
+	modifyJobTimeout: ({
+		newTimeoutMs,
+	}: {
+		newTimeoutMs: number
+	}) => Promise<Response<string>>
 }
 
 export interface ZeebeJob<
@@ -263,14 +316,14 @@ export interface Job<
 	readonly worker: string
 	/* The amount of retries left to this job (should always be positive) */
 	readonly retries: number
-	// epoch milliseconds
+	/** Epoch milliseconds */
 	readonly deadline: string
 	/**
 	 * All visible variables in the task scope, computed at activation time.
 	 */
 	readonly variables: Readonly<Variables>
 	/**
-	 * TenantId of the job in a multi-tenant cluster
+	 * The `tenantId` of the job in a multi-tenant cluster
 	 */
 	readonly tenantId: string
 }
@@ -378,26 +431,71 @@ export interface ZBWorkerConfig<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
 	/**
-	 * An optional array of tenantIds if you want this to be a multi-tenant worker.
+	 * An optional array of `tenantId`s if you want this to be a multi-tenant worker.
 	 */
 	tenantIds?: string[]
 }
 
 export interface BroadcastSignalReq {
-	// The name of the signal
+	/** The name of the signal */
 	signalName: string
 
-	// the signal variables as a JSON document; to be valid, the root of the document must be an
-	// object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
+	/**
+	 * The signal variables as a JSON document; to be valid, the root of the document must be an object, e.g. { "a": "foo" }. [ "foo" ] would not be valid.
+	 */
 	variables?: JSONDoc
 
-	// Optional tenantId for a multi-tenant enabled cluster. This could also be supplied via environment variable.
+	/** Optional `tenantId` for a multi-tenant enabled cluster. This could also be supplied via environment variable. */
 	tenantId?: string
 }
 
 export interface BroadcastSignalRes {
-	// the unique ID of the signal that was broadcasted.
+	/** The unique ID of the signal that was broadcasted. */
 	key: string
+}
+
+export interface ResolveIncidentReq {
+	readonly incidentKey: string
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface UpdateJobRetriesReq {
+	readonly jobKey: string
+	retries: number
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface UpdateJobTimeoutReq {
+	readonly jobKey: string
+	/** The duration of the new timeout in ms, starting from the current moment */
+	timeout: number
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface ModifyProcessInstanceReq {
+	/** The key of the process instance that should be modified */
+	processInstanceKey: string
+	/**
+	 * Instructions describing which elements should be activated in which scopes,
+	 * and which variables should be created
+	 */
+	activateInstructions?: ActivateInstruction[]
+	/** Instructions describing which elements should be terminated */
+	terminateInstructions?: TerminateInstruction[]
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
+}
+
+export interface MigrateProcessInstanceReq {
+	/** Key of the process instance to migrate */
+	processInstanceKey: string
+	/** The migration plan that defines target process and element mappings */
+	migrationPlan: MigrationPlan
+	/** A reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
 }
 
 export interface ZBGrpc extends GrpcClient {
@@ -434,6 +532,7 @@ export interface ZBGrpc extends GrpcClient {
 	): Promise<CreateProcessInstanceWithResultResponseOnWire>
 	cancelProcessInstanceSync(processInstanceKey: {
 		processInstanceKey: string | number
+		operationReference?: string
 	}): Promise<void>
 	migrateProcessInstanceSync(
 		request: MigrateProcessInstanceRequest

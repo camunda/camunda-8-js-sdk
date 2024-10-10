@@ -140,14 +140,12 @@ export class ZBWorkerBase<
 		this.inputVariableDto =
 			inputVariableDto ??
 			(LosslessDto as {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (obj: any): WorkerInputVariables
+				new (): WorkerInputVariables
 			})
 		this.customHeadersDto =
 			customHeadersDto ??
 			(LosslessDto as {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (obj: any): CustomHeaderShape
+				new (): CustomHeaderShape
 			})
 		this.taskHandler = taskHandler
 		this.taskType = taskType
@@ -303,9 +301,6 @@ export class ZBWorkerBase<
 						chalk.red(`WARNING: Call to ${thisMethod}() after ${methodCalled}() was called.
 You should call only one job action method in the worker handler. This is a bug in the ${this.taskType} worker handler.`)
 					)
-					// tslint:disable-next-line: no-console
-					console.log('handler', this.taskHandler.toString()) // @DEBUG
-
 					return wrappedFunction(...args)
 				}
 				methodCalled = thisMethod
@@ -380,11 +375,13 @@ You should call only one job action method in the worker handler. This is a bug 
 		errorMessage,
 		retries,
 		retryBackOff,
+		variables,
 	}: {
 		job: ZB.Job<WorkerInputVariables, CustomHeaderShape>
 		errorMessage: string
 		retries?: number
 		retryBackOff?: number
+		variables?: ZB.JSONDoc
 	}) {
 		return this.zbClient
 			.failJob({
@@ -392,6 +389,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				jobKey: job.key,
 				retries: retries ?? job.retries - 1,
 				retryBackOff: retryBackOff ?? 0,
+				variables: variables ?? {},
 			})
 			.then(() => ZB.JOB_ACTION_ACKNOWLEDGEMENT)
 			.finally(() => {

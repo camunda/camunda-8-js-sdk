@@ -61,6 +61,7 @@ export class AdminApiClient {
 							),
 						],
 						beforeError: [gotBeforeErrorHook],
+						beforeRequest: config.middleware ?? [],
 					},
 				})
 		)

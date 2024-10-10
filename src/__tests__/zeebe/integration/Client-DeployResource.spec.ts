@@ -61,7 +61,7 @@ test('deploys a Form', async () => {
 	})
 	expect(result.deployments[0].form).not.toBeNull()
 })
-test.only('deploys multiple resources', async () => {
+test('deploys multiple resources', async () => {
 	const result = await zbc.deployResources([
 		{
 			processFilename: './src/__tests__/testdata/Client-DeployWorkflow.bpmn',
