@@ -301,9 +301,6 @@ export class ZBWorkerBase<
 						chalk.red(`WARNING: Call to ${thisMethod}() after ${methodCalled}() was called.
 You should call only one job action method in the worker handler. This is a bug in the ${this.taskType} worker handler.`)
 					)
-					// tslint:disable-next-line: no-console
-					console.log('handler', this.taskHandler.toString()) // @DEBUG
-
 					return wrappedFunction(...args)
 				}
 				methodCalled = thisMethod

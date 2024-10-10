@@ -17,7 +17,7 @@ test('Can publish a message', (done) => {
 		messageReceived!: boolean
 	}
 	c8.createProcessInstanceWithResult({
-		bpmnProcessId: 'rest-message-test',
+		processDefinitionId: 'rest-message-test',
 		variables: {
 			correlationId: uuid,
 		},
@@ -43,7 +43,7 @@ test('Can correlate a message', (done) => {
 		messageReceived!: boolean
 	}
 	c8.createProcessInstanceWithResult({
-		bpmnProcessId: 'rest-message-test',
+		processDefinitionId: 'rest-message-test',
 		variables: {
 			correlationId: uuid,
 		},
@@ -69,7 +69,7 @@ test('Correlate message returns expected data', (done) => {
 	const uuid = v4()
 	let processInstanceKey: string
 	c8.createProcessInstance({
-		bpmnProcessId: 'rest-message-test',
+		processDefinitionId: 'rest-message-test',
 		variables: {
 			correlationId: uuid,
 		},

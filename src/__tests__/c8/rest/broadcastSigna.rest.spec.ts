@@ -29,7 +29,7 @@ test('Can start a process with a signal', async () => {
 		},
 	})
 
-	expect(res.key).toBeTruthy()
+	expect(res.signalKey).toBeTruthy()
 
 	await new Promise((resolve) => {
 		const w = c8.createJobWorker({

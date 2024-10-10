@@ -2,7 +2,7 @@ import path from 'node:path'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 
-let bpmnProcessId: string
+let processDefinitionId: string
 const restClient = new CamundaRestClient()
 
 beforeAll(async () => {
@@ -15,13 +15,13 @@ beforeAll(async () => {
 			'hello-world-complete-rest.bpmn'
 		),
 	])
-	bpmnProcessId = res.processes[0].bpmnProcessId
+	processDefinitionId = res.processes[0].processDefinitionId
 })
 
 test('Can service a task', (done) => {
 	restClient
 		.createProcessInstance({
-			bpmnProcessId,
+			processDefinitionId,
 			variables: {
 				someNumberField: 8,
 			},

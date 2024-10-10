@@ -25,7 +25,7 @@ test('RestClient can migrate a process instance', async () => {
 
 	// Create an instance of the process model
 	const processInstance = await c8.createProcessInstance({
-		bpmnProcessId: 'migrant-work-rest',
+		processDefinitionId: 'migrant-work-rest',
 		variables: {},
 	})
 

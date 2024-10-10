@@ -760,7 +760,7 @@ export class CamundaRestClient {
 		 * and re-parsing each of the deployments with the correct Dto.
 		 */
 		const deploymentResponse = new DeployResourceResponse()
-		deploymentResponse.key = res.key.toString()
+		deploymentResponse.deploymentKey = res.deploymentKey.toString()
 		deploymentResponse.tenantId = res.tenantId
 		deploymentResponse.deployments = []
 		deploymentResponse.processes = []
@@ -773,10 +773,10 @@ export class CamundaRestClient {
 		 */
 		const isProcessDeployment = (
 			deployment
-		): deployment is { process: ProcessDeployment } => !!deployment.process
+		): deployment is { processDefinition: ProcessDeployment } => !!deployment.processDefinition
 		const isDecisionDeployment = (
 			deployment
-		): deployment is { decision: DecisionDeployment } => !!deployment.decision
+		): deployment is { decisionDefinition: DecisionDeployment } => !!deployment.decisionDefinition
 		const isDecisionRequirementsDeployment = (
 			deployment
 		): deployment is { decisionRequirements: DecisionRequirementsDeployment } =>
@@ -793,10 +793,10 @@ export class CamundaRestClient {
 		res.deployments.forEach((deployment) => {
 			if (isProcessDeployment(deployment)) {
 				const processDeployment = losslessParse(
-					stringify(deployment.process)!,
+					stringify(deployment.processDefinition)!,
 					ProcessDeployment
 				)
-				deploymentResponse.deployments.push({ process: processDeployment })
+				deploymentResponse.deployments.push({ processDefinition: processDeployment })
 				deploymentResponse.processes.push(processDeployment)
 			}
 			if (isDecisionDeployment(deployment)) {
@@ -804,7 +804,7 @@ export class CamundaRestClient {
 					stringify(deployment)!,
 					DecisionDeployment
 				)
-				deploymentResponse.deployments.push({ decision: decisionDeployment })
+				deploymentResponse.deployments.push({ decisionDefinition: decisionDeployment })
 				deploymentResponse.decisions.push(decisionDeployment)
 			}
 			if (isDecisionRequirementsDeployment(deployment)) {

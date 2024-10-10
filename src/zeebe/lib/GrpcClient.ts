@@ -504,9 +504,6 @@ export class GrpcClient extends EventEmitter {
 				})
 
 			return setTimeout(() => {
-				// tslint:disable-next-line: no-console
-				console.log(`Channel timeout after ${timeout}`) // @DEBUG
-
 				return isClosed(this.channelState)
 					? null
 					: reject(new Error(`Didn't close in time: ${this.channelState}`))

@@ -12,7 +12,7 @@ export class RestApiJob<
 	type!: string
 	@Int64String
 	processInstanceKey!: string
-	bpmnProcessId!: string
+	processDefinitionId!: string
 	processDefinitionVersion!: number
 	@Int64String
 	processDefinitionKey!: string
@@ -63,8 +63,8 @@ export interface NewUserInfo {
 export type Ctor<T> = new (obj: any) => T
 
 export class ProcessDeployment extends LosslessDto {
-	bpmnProcessId!: string
-	version!: number
+	processDefinitionId!: string
+	processDefinitionVersion!: number
 	@Int64String
 	processDefinitionKey!: string
 	resourceName!: string
@@ -103,10 +103,10 @@ export class FormDeployment {
 
 export class DeployResourceResponseDto extends LosslessDto {
 	@Int64String
-	key!: string
+	deploymentKey!: string
 	deployments!: (
-		| { process: ProcessDeployment }
-		| { decision: DecisionDeployment }
+		| { processDefinition: ProcessDeployment }
+		| { decisionDefinition: DecisionDeployment }
 		| { decisionRequirements: DecisionRequirementsDeployment }
 		| { form: FormDeployment }
 	)[]
@@ -130,7 +130,7 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	/**
 	 * The BPMN process ID of the process definition
 	 */
-	readonly bpmnProcessId!: string
+	readonly processDefinitionId!: string
 	/**
 	 * The version of the process; set to -1 to use the latest version
 	 */
@@ -170,7 +170,7 @@ export interface MigrationRequest {
 export class BroadcastSignalResponse extends LosslessDto {
 	@Int64String
 	/** The unique ID of the signal that was broadcast. */
-	key!: string
+	signalKey!: string
 	/** The tenant ID of the signal that was broadcast. */
 	tenantId!: string
 }
@@ -259,13 +259,13 @@ export interface ProcessInstanceCreationStartInstruction {
 	elementId: string
 }
 
-export interface CreateProcessInstanceFromBpmnProcessId<
+export interface CreateProcessInstanceFromProcessDefinitionId<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
 	 * the BPMN process ID of the process definition
 	 */
-	bpmnProcessId: string
+	processDefinitionId: string
 }
 
 export interface CreateProcessInstanceFromProcessDefinition<
@@ -278,7 +278,7 @@ export interface CreateProcessInstanceFromProcessDefinition<
 }
 
 export type CreateProcessInstanceReq<T extends JSONDoc | LosslessDto> =
-	| CreateProcessInstanceFromBpmnProcessId<T>
+	| CreateProcessInstanceFromProcessDefinitionId<T>
 	| CreateProcessInstanceFromProcessDefinition<T>
 
 export interface PatchAuthorizationRequest {

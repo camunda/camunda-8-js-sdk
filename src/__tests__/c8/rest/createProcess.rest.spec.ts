@@ -5,7 +5,7 @@ import { createDtoInstance, LosslessDto } from '../../../lib'
 
 jest.setTimeout(17000)
 
-let bpmnProcessId: string
+let processDefinitionId: string
 let processDefinitionKey: string
 const restClient = new CamundaRestClient()
 
@@ -13,7 +13,7 @@ beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([
 		path.join('.', 'src', '__tests__', 'testdata', 'create-process-rest.bpmn'),
 	])
-	;({ bpmnProcessId, processDefinitionKey } = res.processes[0])
+	;({ processDefinitionId, processDefinitionKey } = res.processes[0])
 })
 
 class myVariableDto extends LosslessDto {
@@ -23,7 +23,7 @@ class myVariableDto extends LosslessDto {
 test('Can create a process from bpmn id', (done) => {
 	restClient
 		.createProcessInstance({
-			bpmnProcessId,
+			processDefinitionId,
 			variables: {
 				someNumberField: 8,
 			},
@@ -94,10 +94,10 @@ test('What happens if we time out?', async () => {
 	const res = await restClient.deployResourcesFromFiles([
 		path.join('.', 'src', '__tests__', 'testdata', 'hello-world-complete.bpmn'),
 	])
-	const bpmnProcessId = res.processes[0].bpmnProcessId
+	const processDefinitionId = res.processes[0].processDefinitionId
 	await expect(
 		restClient.createProcessInstanceWithResult({
-			bpmnProcessId,
+			processDefinitionId,
 			variables: createDtoInstance(myVariableDto, { someNumberField: 9 }),
 			requestTimeout: 20000,
 		})
