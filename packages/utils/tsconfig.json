@@ -3,10 +3,10 @@
 		"composite": true /* Required because referenced by src/tsconfig.json */,
 		/* Basic Options */
 		"target": "es2022" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
-		"module": "node16" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
-		"moduleResolution": "node16",
+		"module": "Node16" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
 		"types": ["node"],
-		"lib": ["es2022", "DOM"],
+		"moduleResolution": "Node16",
+		"lib": ["es2022"],
 		"declaration": true /* Generates corresponding '.d.ts' file. */,
 		"sourceMap": true /* Generates corresponding '.map' file. */,
 		"outDir": "./dist" /* Redirect output structure to the directory. */,
@@ -20,14 +20,18 @@
 		"noUnusedParameters": true,
 		"strictNullChecks": true,
 		"esModuleInterop": true,
-		"skipLibCheck": true,
 		"experimentalDecorators": true,
 		"resolveJsonModule": false,
 		"plugins": [
 			{
 				"name": "typescript-tslint-plugin"
 			}
-		]
+		],
+		// "paths": {
+    //   "browserfs": [
+    //     "./source/types/browserfs.d.ts"
+    //   ]
+    // },
 	},
 	"include": ["source"],
 	"exclude": ["node_modules", "test"]

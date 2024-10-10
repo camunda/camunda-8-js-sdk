@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import {type BeforeRequestHook} from 'ky'
 import {createEnv} from 'neon-env'
 import {type ILogger} from './c8-logger.js'
@@ -264,7 +265,7 @@ export const isoSdkEnvironmentVariableDictionary
 export const isoSdkEnvironmentConfigurator = {
 	getEnv,
 	mergeConfigWithEnvironment: (
-		config: Partial<IsoSdkConfiguration>,
+		config: Partial<IsoSdkConfiguration> = {},
 	): IsoSdkConfiguration => ({
 		...getEnv(),
 		...config,

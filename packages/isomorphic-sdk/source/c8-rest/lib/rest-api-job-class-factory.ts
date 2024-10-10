@@ -1,6 +1,6 @@
 
 import {type LosslessDto} from '@camunda8/lossless-json'
-import {RestApiJob} from '../../dto/C8Dto.js'
+import {RestApiJob} from '../../dto/c8-dto.js'
 
 const factory = createMemoizedSpecializedRestApiJobClassFactory()
 

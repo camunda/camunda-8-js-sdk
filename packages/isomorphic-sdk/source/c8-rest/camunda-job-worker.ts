@@ -1,15 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import {EventEmitter} from 'node:events'
+
+import {EventEmitter} from 'eventemitter3'
 import {type LosslessDto} from '@camunda8/lossless-json'
-import type TypedEmitter from 'typed-emitter'
 import {
 	type ActivateJobsRequest,
 	type Ctor,
-	type IProcessVariables,
+	type ProcessVariables,
 	type Job,
 	type JobCompletionInterfaceRest,
 	type MustReturnJobActionAcknowledgement,
-} from '../dto/C8Dto.js'
+} from '../dto/c8-dto.js'
 import {getLogger, type ILogger} from '../lib/c8-logger.js'
 import {type CamundaRestClient} from './camunda-rest-client.js'
 
@@ -38,18 +37,18 @@ export type CamundaJobWorkerConfig<
 	pollIntervalMs?: number;
 	jobHandler: (
 		job: Job<VariablesDto, CustomHeadersDto> &
-		JobCompletionInterfaceRest<IProcessVariables>,
+		JobCompletionInterfaceRest<ProcessVariables>,
 		log: ILogger
 	) => MustReturnJobActionAcknowledgement;
 	logger?: ILogger;
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
 	autoStart?: boolean;
 } & ActivateJobsRequest
-// Make this class extend event emitter and have a typed event 'pollError'
+
 export class CamundaJobWorker<
 	VariablesDto extends LosslessDto,
 	CustomHeadersDto extends LosslessDto,
-> extends (EventEmitter as new () => TypedEmitter<CamundaJobWorkerEvents>) {
+> extends EventEmitter<CamundaJobWorkerEvents> {
 	public currentlyActiveJobCount = 0
 	public capacity: number
 	logMeta: () => {
@@ -71,7 +70,7 @@ export class CamundaJobWorker<
 		>,
 		private readonly restClient: CamundaRestClient,
 	) {
-		super() // eslint-disable-line constructor-super
+		super()
 		this.pollInterval = config.pollIntervalMs ?? 30_000
 		this.capacity = this.config.maxJobsToActivate
 		this.log = getLogger({logger: config.logger})
@@ -176,7 +175,7 @@ export class CamundaJobWorker<
 
 	private async handleJob(
 		job: Job<VariablesDto, CustomHeadersDto> &
-		JobCompletionInterfaceRest<IProcessVariables>,
+		JobCompletionInterfaceRest<ProcessVariables>,
 	) {
 		try {
 			this.log.debug(`Invoking job handler for job ${job.key}`, this.logMeta())

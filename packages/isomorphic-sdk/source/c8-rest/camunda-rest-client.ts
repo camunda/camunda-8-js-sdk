@@ -7,8 +7,7 @@ import {type OAuthInterfaces} from '@camunda8/oauth'
 import {debug} from 'debug'
 import FormData from 'form-data'
 import ky from 'ky'
-import * as Dto from '../dto/C8Dto.js'
-import {restBeforeErrorHook} from '../lib/index.js'
+import * as Dto from '../dto/c8-dto.js'
 import {getLogger, type ILogger} from '../lib/c8-logger.js'
 import {
 	type IsoSdkClientConfiguration,
@@ -17,6 +16,7 @@ import {
 } from '../lib/get-configuration.js'
 import {constructOauthProvider} from '../lib/construct-oauth-provider.js'
 import {createUserAgentString} from '../lib/create-user-agent-string.js'
+import {beforeErrorHook} from '../lib/index.js'
 import {CamundaJobWorker, type CamundaJobWorkerConfig} from './camunda-job-worker.js'
 import {createSpecializedRestApiJobClass} from './lib/rest-api-job-class-factory.js'
 import {createSpecializedCreateProcessInstanceResponseClass} from './lib/rest-api-process-instance-class-factory.js'
@@ -67,7 +67,7 @@ export class CamundaRestClient {
 		trace('options.config', configuration)
 		trace('config', config)
 		this.oAuthProvider
-			= oAuthProvider ?? constructOauthProvider({config, fetch: rest})
+			= oAuthProvider ?? constructOauthProvider({config, rest})
 		this.userAgentString = createUserAgentString(config)
 		this.tenantId = config.CAMUNDA_TENANT_ID
 
@@ -86,7 +86,7 @@ export class CamundaRestClient {
 			// 	certificateAuthority: config.CAMUNDA_CUSTOM_CERT_STRING,
 			// },
 			hooks: {
-				beforeError: [restBeforeErrorHook],
+				beforeError: [beforeErrorHook],
 				beforeRequest: [
 					/** Add authorization header */
 					async request => {
@@ -135,7 +135,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async broadcastSignal(request_: Dto.BroadcastSignalReq) {
+	public async broadcastSignal(request_: Dto.BroadcastSignalRequest) {
 		const request = this.addDefaultTenantId(request_)
 		return this.rest
 			.post('signals/broadcast', {
@@ -356,7 +356,7 @@ export class CamundaRestClient {
 		},
 	): Promise<
 		Array<Dto.Job<VariablesDto, CustomHeadersDto> &
-		Dto.JobCompletionInterfaceRest<Dto.IProcessVariables>>
+		Dto.JobCompletionInterfaceRest<Dto.ProcessVariables>>
 		> {
 		const {
 			inputVariableDto = LosslessDto,
@@ -400,7 +400,7 @@ export class CamundaRestClient {
 			.post(`jobs/${jobKey}/failure`, {
 				body: losslessStringify(failJobRequest),
 			})
-			.then(() => Dto.JOB_ACTION_ACKNOWLEDGEMENT)
+			.then(() => Dto.jobActionAcknowledgement as Dto.JobActionAcknowledgementType)
 	}
 
 	/**
@@ -419,7 +419,7 @@ export class CamundaRestClient {
 				body: losslessStringify(request),
 				parseJson: text => losslessParse(text),
 			})
-			.then(() => Dto.JOB_ACTION_ACKNOWLEDGEMENT)
+			.then(() => Dto.jobActionAcknowledgement as Dto.JobActionAcknowledgementType)
 	}
 
 	/**
@@ -436,7 +436,7 @@ export class CamundaRestClient {
 			.post(`jobs/${jobKey}/completion`, {
 				body: losslessStringify(request),
 			})
-			.then(() => Dto.JOB_ACTION_ACKNOWLEDGEMENT)
+			.then(() => Dto.jobActionAcknowledgement as Dto.JobActionAcknowledgementType)
 	}
 
 	/**
@@ -473,15 +473,15 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async createProcessInstance<T extends Dto.JSONDoc | LosslessDto>(
-		request: Dto.CreateProcessInstanceReq<T>
+	public async createProcessInstance<T extends Dto.JsonDocument | LosslessDto>(
+		request: Dto.CreateProcessInstanceRequest<T>
 	): Promise<Dto.CreateProcessInstanceResponse<never>>
 
 	async createProcessInstance<
-		T extends Dto.JSONDoc | LosslessDto,
+		T extends Dto.JsonDocument | LosslessDto,
 		V extends LosslessDto,
 	>(
-		request: Dto.CreateProcessInstanceReq<T> & {
+		request: Dto.CreateProcessInstanceRequest<T> & {
 			outputVariablesDto?: Dto.Ctor<V>;
 		},
 	) {
@@ -510,19 +510,19 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async createProcessInstanceWithResult<
-		T extends Dto.JSONDoc | LosslessDto,
+		T extends Dto.JsonDocument | LosslessDto,
 	>(
-		request: Dto.CreateProcessInstanceReq<T> & {
+		request: Dto.CreateProcessInstanceRequest<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[];
 		}
 	): Promise<Dto.CreateProcessInstanceResponse<unknown>>
 
 	public async createProcessInstanceWithResult<
-		T extends Dto.JSONDoc | LosslessDto,
+		T extends Dto.JsonDocument | LosslessDto,
 		V extends LosslessDto,
 	>(
-		request: Dto.CreateProcessInstanceReq<T> & {
+		request: Dto.CreateProcessInstanceRequest<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[];
 			/** A Dto specifying the shape of the output variables. If not supplied, the output variables will be returned as a `LosslessDto` of type `unknown`. */
@@ -530,10 +530,10 @@ export class CamundaRestClient {
 		}
 	): Promise<Dto.CreateProcessInstanceResponse<V>>
 	public async createProcessInstanceWithResult<
-		T extends Dto.JSONDoc | LosslessDto,
+		T extends Dto.JsonDocument | LosslessDto,
 		V,
 	>(
-		request: Dto.CreateProcessInstanceReq<T> & {
+		request: Dto.CreateProcessInstanceRequest<T> & {
 			outputVariablesDto?: Dto.Ctor<V>;
 		},
 	) {
@@ -551,7 +551,7 @@ export class CamundaRestClient {
 			...request,
 			awaitCompletion: true,
 			outputVariablesDto: request.outputVariablesDto,
-		} as unknown as Dto.CreateProcessInstanceReq<T>)
+		} as unknown as Dto.CreateProcessInstanceRequest<T>)
 	}
 
 	/**
@@ -620,18 +620,19 @@ export class CamundaRestClient {
 			})
 		}
 
-		if (tenantId || this.tenantId) {
+		if (tenantId ?? this.tenantId) {
 			formData.append('tenantId', tenantId ?? this.tenantId)
 		}
 
 		this.log.debug(`Deploying ${resources.length} resources`)
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		this.log.trace(formData.toString())
 		const response = await this.rest
 			.post('deployments', {
 				body: formData,
 				headers: {
 					...formData.getHeaders(),
-					Accept: 'application/json',
+					accept: 'application/json',
 				},
 				parseJson: text => losslessParse(text), // We parse the response with LosslessNumbers, with no Dto
 			})
@@ -752,7 +753,8 @@ export class CamundaRestClient {
 
 		for (const file of files) {
 			resources.push({
-				content: this.fs.readFileSync(file, {encoding: 'binary'}),
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				content: this.fs.readFileSync(file, {encoding: 'binary'}), // eslint-disable-line @typescript-eslint/no-unsafe-call
 				name: file,
 			})
 		}
@@ -824,12 +826,12 @@ export class CamundaRestClient {
 	private readonly addJobMethods = <Variables, CustomHeaders>(
 		job: Dto.Job<Variables, CustomHeaders>,
 	): Dto.Job<Variables, CustomHeaders> &
-	Dto.JobCompletionInterfaceRest<Dto.IProcessVariables> => ({
+	Dto.JobCompletionInterfaceRest<Dto.ProcessVariables> => ({
 		...job,
 		cancelWorkflow() {
 			throw new Error('Not Implemented')
 		},
-		complete: async (variables: Dto.IProcessVariables = {}) =>
+		complete: async (variables: Dto.ProcessVariables = {}) =>
 			this.completeJob({
 				jobKey: job.key,
 				variables,
@@ -847,7 +849,7 @@ export class CamundaRestClient {
 				jobKey: job.key,
 			}),
 		/* This has an effect in a Job Worker, decrementing the currently active job count */
-		forward: () => Dto.JOB_ACTION_ACKNOWLEDGEMENT,
+		forward: () => Dto.jobActionAcknowledgement,
 		modifyJobTimeout: async ({newTimeoutMs}: {newTimeoutMs: number}) =>
 			this.updateJob({jobKey: job.key, timeout: newTimeoutMs}),
 	})

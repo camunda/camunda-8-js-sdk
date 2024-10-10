@@ -1,5 +1,5 @@
-import {isoSdkEnvironmentVariableDictionary} from '../../src/lib/index.js'
 import process from 'node:process'
+import {isoSdkEnvironmentVariableDictionary} from '../../source/lib/index.js'
 
 const storage: Map<string, string | undefined> = new Map<string, string | undefined>()
 let envStored = false

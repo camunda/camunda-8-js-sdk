@@ -1,24 +1,21 @@
-import { LosslessDto } from '@camunda8/lossless-json'
+import {type LosslessDto} from '@camunda8/lossless-json'
+import {CreateProcessInstanceResponse} from '../../dto/c8-dto.js'
 
-import { CreateProcessInstanceResponse } from '../dto/C8Dto'
-
-const factory =
-	createMemoizedSpecializedCreateProcessInstanceResponseClassFactory()
+const factory
+	= createMemoizedSpecializedCreateProcessInstanceResponseClassFactory()
 
 // Creates a specialized RestApiJob class that is cached based on output variables
 export const createSpecializedCreateProcessInstanceResponseClass = <
 	Variables extends LosslessDto,
 >(
-	outputVariableDto: new () => Variables
-) => {
-	return factory(outputVariableDto)
-}
+	outputVariableDto: new () => Variables,
+) => factory(outputVariableDto)
 
 function createMemoizedSpecializedCreateProcessInstanceResponseClassFactory() {
 	const cache = new Map<string, new () => LosslessDto>()
 
 	return function <Variables extends LosslessDto>(
-		outputVariableDto: new () => Variables
+		outputVariableDto: new () => Variables,
 	): new () => CreateProcessInstanceResponse<Variables> {
 		// Create a unique cache key based on the class and inputs
 		const cacheKey = JSON.stringify({
@@ -28,7 +25,7 @@ function createMemoizedSpecializedCreateProcessInstanceResponseClassFactory() {
 		// Check for cached result
 		if (cache.has(cacheKey)) {
 			return cache.get(
-				cacheKey
+				cacheKey,
 			) as new () => CreateProcessInstanceResponse<Variables>
 		}
 
@@ -36,7 +33,9 @@ function createMemoizedSpecializedCreateProcessInstanceResponseClassFactory() {
 		class CustomCreateProcessInstanceResponseClass<
 			Variables extends LosslessDto,
 		> extends CreateProcessInstanceResponse<Variables> {
-			variables!: Variables
+			declare variables: Variables // @todo: this was a change made by the linting system.
+			// was:
+			// variables!: Variables
 		}
 
 		// Use Reflect to define the metadata on the new class's prototype
@@ -44,7 +43,7 @@ function createMemoizedSpecializedCreateProcessInstanceResponseClassFactory() {
 			'child:class',
 			outputVariableDto,
 			CustomCreateProcessInstanceResponseClass.prototype,
-			'variables'
+			'variables',
 		)
 
 		// Store the new class in cache

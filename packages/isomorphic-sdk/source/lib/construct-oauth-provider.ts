@@ -11,7 +11,7 @@ const trace = debug('camunda:oauth')
 
 export function constructOauthProvider(options: {
 	config: IsoSdkClientConfiguration;
-	fetch: typeof ky;
+	rest: typeof ky;
 }) {
 	trace(`Auth strategy is ${options.config.CAMUNDA_AUTH_STRATEGY}`)
 	trace(`OAuth disabled is ${options.config.CAMUNDA_OAUTH_DISABLED}`)

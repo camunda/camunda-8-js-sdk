@@ -1,8 +1,7 @@
-import { losslessParse, losslessStringify } from '@camunda8/lossless-json'
-import { OAuthTypes } from '@camunda8/oauth'
-import { debug } from 'debug'
+import {losslessParse, losslessStringify} from '@camunda8/lossless-json'
+import {type OAuthInterfaces} from '@camunda8/oauth'
+import {debug} from 'debug'
 import ky from 'ky'
-
 import {
 	ChangeStatus,
 	DecisionDefinition,
@@ -13,40 +12,33 @@ import {
 	ProcessDefinition,
 	ProcessInstance,
 	ProcessInstanceStatistics,
-	Query,
-	SearchResults,
+	type Query,
+	type SearchResults,
 	Variable,
-} from '../../dto/OperateDto'
+} from '../../dto/operate-dto.js'
 import {
-	constructOAuthProvider,
+	constructOauthProvider,
 	createUserAgentString,
-	IsoSdkClientConfiguration,
-	IsoSdkEnvironmentConfigurator,
-	RequireConfiguration,
-	restBeforeErrorHook,
-} from '../../lib'
-import { getLogger, ILogger } from '../../lib/C8Logger'
-
-import { parseSearchResults } from './parseSearchResults'
+	isoSdkEnvironmentConfigurator,
+	requireConfiguration,
+	beforeErrorHook,
+} from '../../lib/index.js'
+import {getLogger, type ILogger} from '../../lib/c8-logger.js'
+import {parseSearchResults} from './parseSearchResults.js'
+import {type OperateClientOptions} from './testable-operate-api-client.js'
 
 const trace = debug('camunda:operate')
 
-const OPERATE_API_VERSION = 'v1'
+const operateApiVersion = 'v1'
 
-type JSONDoc = { [key: string]: string | boolean | number | JSONDoc }
+type JsonDocument = {[key: string]: string | boolean | number | JsonDocument}
 type EnhanceWithTenantIdIfMissing<T> = T extends {
-	filter: { tenantId: string | undefined }
+	filter: {tenantId: string | undefined};
 }
 	? T // If T's filter already has tenantId, V is T unchanged
-	: T extends { filter: infer F }
-		? { filter: F & { tenantId: string | undefined } } & Omit<T, 'filter'> // If T has a filter without tenantId, add tenantId to it
-		: { filter: { tenantId: string | undefined } } & T // If T has no filter property, add filter with tenantId
-
-interface OperateClientOptions {
-	config?: Partial<IsoSdkClientConfiguration>
-	oAuthProvider?: OAuthTypes.IOAuthProvider
-	rest?: typeof ky
-}
+	: T extends {filter: infer F}
+		? {filter: F & {tenantId: string | undefined}} & Omit<T, 'filter'> // If T has a filter without tenantId, add tenantId to it
+		: {filter: {tenantId: string | undefined}} & T // If T has no filter property, add filter with tenantId
 
 /**
  * @description The high-level client for Operate.
@@ -65,11 +57,11 @@ interface OperateClientOptions {
  * ```
  */
 export class OperateApiClient {
-	private userAgentString: string
-	private oAuthProvider: OAuthTypes.IOAuthProvider
-	private rest: typeof ky
-	private tenantId: string | undefined
 	public log: ILogger
+	private readonly userAgentString: string
+	private readonly oAuthProvider: OAuthInterfaces.IOAuthProvider
+	private readonly rest: typeof ky
+	private readonly tenantId: string | undefined
 
 	/**
 	 * @example
@@ -78,22 +70,22 @@ export class OperateApiClient {
 	 * ```
 	 * @throws {RESTError} An error that may occur during API operations.
 	 */
-	constructor({ config, oAuthProvider, rest = ky }: OperateClientOptions = {}) {
-		const configuration =
-			IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(config ?? {})
+	constructor({config, oAuthProvider, rest = ky}: OperateClientOptions = {}) {
+		const configuration
+			= isoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(config)
 		this.log = getLogger(configuration)
 		trace('options.config', config)
 		trace('config', configuration)
-		this.oAuthProvider =
-			oAuthProvider ??
-			constructOAuthProvider({ config: configuration, fetch: rest })
+		this.oAuthProvider
+			= oAuthProvider
+			?? constructOauthProvider({config: configuration, rest})
 		this.userAgentString = createUserAgentString(configuration)
-		const baseUrl = RequireConfiguration(
+		const baseUrl = requireConfiguration(
 			configuration.CAMUNDA_OPERATE_BASE_URL,
-			'CAMUNDA_OPERATE_BASE_URL'
+			'CAMUNDA_OPERATE_BASE_URL',
 		)
 
-		const prefixUrl = `${baseUrl}/${OPERATE_API_VERSION}`
+		const prefixUrl = `${baseUrl}/${operateApiVersion}`
 
 		this.rest = rest.extend({
 			prefixUrl,
@@ -103,18 +95,18 @@ export class OperateApiClient {
 			// },
 			// handlers: [gotErrorHandler],
 			hooks: {
-				beforeError: [restBeforeErrorHook],
+				beforeError: [beforeErrorHook],
 				beforeRequest: [
-					/** add authorization header */
-					async (request) => {
+					/** Add authorization header */
+					async request => {
 						const newHeaders = await this.getHeaders()
 						for (const [key, value] of Object.entries(newHeaders)) {
 							request.headers.set(key, value)
 						}
 					},
-					/** log for debugging */
-					(options) => {
-						const { body, method } = options
+					/** Log for debugging */
+					options => {
+						const {body, method} = options
 						const path = options.url
 						trace(`${method} ${path}`)
 						trace(body)
@@ -129,39 +121,6 @@ export class OperateApiClient {
 		})
 
 		this.tenantId = configuration.CAMUNDA_TENANT_ID
-	}
-
-	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('OPERATE')
-
-		return {
-			'content-type': 'application/json',
-			authorization: `Bearer ${token}`,
-			'user-agent': this.userAgentString,
-			accept: '*/*',
-		}
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	protected addTenantIdToFilter<T>(
-		query: Query<T>,
-		tenantId: string | undefined = this.tenantId // Example default value
-	): Query<EnhanceWithTenantIdIfMissing<T>> {
-		const hasTenantIdInFilter = query.filter && 'tenantId' in query.filter
-
-		// If `filter` already has `tenantId`, return the original query as is.
-		if (hasTenantIdInFilter) {
-			return query as Query<EnhanceWithTenantIdIfMissing<T>>
-		}
-
-		// Otherwise, add or ensure `tenantId` in `filter`.
-		return {
-			...query,
-			filter: {
-				...query.filter,
-				tenantId,
-			},
-		} as unknown as Query<EnhanceWithTenantIdIfMissing<T>>
 	}
 
 	/**
@@ -186,13 +145,13 @@ export class OperateApiClient {
 	 * ```
 	 */
 	public async searchProcessDefinitions(
-		query: Query<ProcessDefinition> = {}
+		query: Query<ProcessDefinition> = {},
 	): Promise<SearchResults<ProcessDefinition>> {
 		const json = this.addTenantIdToFilter(query)
 		return this.rest
 			.post('process-definitions/search', {
 				json,
-				parseJson: (text) => parseSearchResults(text, ProcessDefinition),
+				parseJson: text => parseSearchResults(text, ProcessDefinition),
 			})
 			.json()
 	}
@@ -209,15 +168,15 @@ export class OperateApiClient {
 	 *  ```
 	 */
 	public async getProcessDefinition(
-		processDefinitionKey: number | string
+		processDefinitionKey: number | string,
 	): Promise<ProcessDefinition> {
 		return this.rest(`process-definitions/${processDefinitionKey}`, {
-			parseJson: (text) => losslessParse(text, ProcessDefinition),
+			parseJson: text => losslessParse(text, ProcessDefinition),
 		}).json()
 	}
 
-	public async getProcessDefinitionXML(
-		processDefinitionKey: number | string
+	public async getProcessDefinitionXml(
+		processDefinitionKey: number | string,
 	): Promise<string> {
 		return this.rest(`process-definitions/${processDefinitionKey}/xml`).text()
 	}
@@ -227,13 +186,13 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async searchDecisionDefinitions(
-		query: Query<DecisionDefinition>
+		query: Query<DecisionDefinition>,
 	): Promise<SearchResults<DecisionDefinition>> {
 		const json = this.addTenantIdToFilter(query)
 
 		return this.rest
 			.post('decision-definitions/search', {
-				parseJson: (text) => parseSearchResults(text, DecisionDefinition),
+				parseJson: text => parseSearchResults(text, DecisionDefinition),
 				json,
 			})
 			.json()
@@ -243,10 +202,10 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async getDecisionDefinition(
-		decisionDefinitionKey: number | string
+		decisionDefinitionKey: number | string,
 	): Promise<DecisionDefinition> {
 		return this.rest(`decision-definitions/${decisionDefinitionKey}`, {
-			parseJson: (text) => losslessParse(text, DecisionDefinition),
+			parseJson: text => losslessParse(text, DecisionDefinition),
 		}).json()
 	}
 
@@ -254,13 +213,13 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async searchDecisionInstances(
-		query: Query<DecisionInstance>
+		query: Query<DecisionInstance>,
 	): Promise<SearchResults<DecisionInstance>> {
 		const json = this.addTenantIdToFilter(query)
 
 		return this.rest
 			.post('decision-instances/search', {
-				parseJson: (text) => parseSearchResults(text, DecisionInstance),
+				parseJson: text => parseSearchResults(text, DecisionInstance),
 				json,
 			})
 			.json()
@@ -270,12 +229,13 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async getDecisionInstance(
-		decisionInstanceKey: number | string
+		decisionInstanceKey: number | string,
 	): Promise<DecisionInstance> {
 		return this.rest(`decision-instances/${decisionInstanceKey}`, {
-			parseJson: (text) => losslessParse(text, DecisionInstance),
+			parseJson: text => losslessParse(text, DecisionInstance),
 		}).json()
 	}
+
 	/**
 	 * @description Search and retrieve process instances.
 	 * @throws {RESTError}
@@ -298,18 +258,18 @@ export class OperateApiClient {
 	 * console.log(`Found ${instances.total} instances`)
 	 */
 	public async searchProcessInstances(
-		query: Query<ProcessInstance> = {}
+		query: Query<ProcessInstance> = {},
 	): Promise<SearchResults<ProcessInstance>> {
 		const json = this.addTenantIdToFilter(query)
 		try {
-			return this.rest
+			return await this.rest
 				.post('process-instances/search', {
 					json,
-					parseJson: (text) => parseSearchResults(text, ProcessInstance),
+					parseJson: text => parseSearchResults(text, ProcessInstance),
 				})
 				.json()
-		} catch (e) {
-			throw new Error((e as Error).message)
+		} catch (error) {
+			throw new Error((error as Error).message)
 		}
 	}
 
@@ -324,10 +284,10 @@ export class OperateApiClient {
 	 * ```
 	 */
 	public async getProcessInstance(
-		processInstanceKey: number | string
+		processInstanceKey: number | string,
 	): Promise<ProcessInstance> {
 		return this.rest(`process-instances/${processInstanceKey}`, {
-			parseJson: (text) => losslessParse(text, ProcessInstance),
+			parseJson: text => losslessParse(text, ProcessInstance),
 		}).json()
 	}
 
@@ -341,18 +301,12 @@ export class OperateApiClient {
 	 * ```
 	 */
 	public async deleteProcessInstance(
-		processInstanceKey: number | string
+		processInstanceKey: number | string,
 	): Promise<ChangeStatus> {
-		try {
-			const res = this.rest.delete(`process-instances/${processInstanceKey}`, {
-				throwHttpErrors: false,
-				parseJson: (text) => losslessParse(text, ChangeStatus),
-			})
-			res.catch((e) => console.log(e))
-			return res.json()
-		} catch (e) {
-			throw new Error((e as Error).message)
-		}
+		return this.rest.delete(`process-instances/${processInstanceKey}`, {
+			throwHttpErrors: false,
+			parseJson: text => losslessParse(text, ChangeStatus),
+		}).json()
 	}
 
 	/**
@@ -360,10 +314,10 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceStatistics(
-		processInstanceKey: number | string
+		processInstanceKey: number | string,
 	): Promise<ProcessInstanceStatistics[]> {
 		return this.rest(`process-instances/${processInstanceKey}/statistics`, {
-			parseJson: (text) => losslessParse(text, ProcessInstanceStatistics),
+			parseJson: text => losslessParse(text, ProcessInstanceStatistics),
 		}).json()
 	}
 
@@ -372,10 +326,10 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceSequenceFlows(
-		processInstanceKey: number | string
+		processInstanceKey: number | string,
 	): Promise<string[]> {
 		return this.rest(
-			`process-instances/${processInstanceKey}/sequence-flows`
+			`process-instances/${processInstanceKey}/sequence-flows`,
 		).json()
 	}
 
@@ -402,14 +356,14 @@ export class OperateApiClient {
 	 * ```
 	 */
 	public async searchIncidents(
-		query: Query<Incident> = {}
+		query: Query<Incident> = {},
 	): Promise<SearchResults<Incident>> {
 		const json = this.addTenantIdToFilter(query)
 
 		return this.rest
 			.post('incidents/search', {
 				json,
-				parseJson: (text) => parseSearchResults(text, Incident),
+				parseJson: text => parseSearchResults(text, Incident),
 			})
 			.json()
 	}
@@ -427,7 +381,7 @@ export class OperateApiClient {
 	 */
 	public async getIncident(key: number | string): Promise<Incident> {
 		return this.rest(`incidents/${key}`, {
-			parseJson: (text) => losslessParse(text, Incident),
+			parseJson: text => losslessParse(text, Incident),
 		}).json()
 	}
 
@@ -435,14 +389,13 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async searchFlownodeInstances(
-		query: Query<FlownodeInstance>
+		query: Query<FlownodeInstance>,
 	): Promise<SearchResults<FlownodeInstance>> {
 		const json = this.addTenantIdToFilter(query)
-		this.log.info
 		return this.rest
 			.post('flownode-instances/search', {
 				json,
-				parseJson: (text) => parseSearchResults(text, FlownodeInstance),
+				parseJson: text => parseSearchResults(text, FlownodeInstance),
 			})
 			.json()
 	}
@@ -451,10 +404,10 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async getFlownodeInstance(
-		key: number | string
+		key: number | string,
 	): Promise<FlownodeInstance> {
 		return this.rest(`flownode-instances/${key}`, {
-			parseJson: (text) => losslessParse(text, FlownodeInstance),
+			parseJson: text => losslessParse(text, FlownodeInstance),
 		}).json()
 	}
 
@@ -462,17 +415,14 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async searchVariables(
-		query: Query<Variable>
+		query: Query<Variable>,
 	): Promise<SearchResults<Variable>> {
-		const headers = await this.getHeaders()
 		const json = this.addTenantIdToFilter(query)
-		const rest = await this.rest
 
-		return rest
+		return this.rest
 			.post('variables/search', {
-				headers,
 				json,
-				parseJson: (text) => parseSearchResults(text, Variable),
+				parseJson: text => parseSearchResults(text, Variable),
 			})
 			.json()
 	}
@@ -484,8 +434,8 @@ export class OperateApiClient {
 	 * @returns
 	 */
 	public async getVariablesforProcess(
-		processInstanceKey: number | string
-	): Promise<{ items: Variable[] }> {
+		processInstanceKey: number | string,
+	): Promise<{items: Variable[]}> {
 		const body = {
 			filter: {
 				processInstanceKey,
@@ -504,8 +454,8 @@ export class OperateApiClient {
 	 * @param processInstanceKey
 	 * @throws {RESTError}
 	 */
-	public async getJSONVariablesforProcess<T extends { [key: string]: JSONDoc }>(
-		processInstanceKey: number | string
+	public async getJsonVariablesforProcess<T extends Record<string, JsonDocument>>(
+		processInstanceKey: number | string,
 	): Promise<T> {
 		const body = {
 			filter: {
@@ -514,29 +464,17 @@ export class OperateApiClient {
 			size: 1000,
 		}
 
-		const vars: { items: Variable[] } = await this.rest
+		const variables: {items: Variable[]} = await this.rest
 			.post('variables/search', {
 				body: losslessStringify(body),
 			})
 			.json()
 
-		return vars.items.reduce(
-			(prev, curr) => ({
-				...prev,
-				[curr.name]: this.safeJSONparse(curr.value),
-			}),
-			{} as T
+		const entries = variables.items.map<[string, JsonDocument]>(
+			current => [current.name, this.safeJsonParse<JsonDocument>(current.value)],
 		)
-	}
 
-	private safeJSONparse(thing: string) {
-		try {
-			return JSON.parse(thing)
-		} catch (e) {
-			console.log(e)
-			console.log(thing)
-			return thing
-		}
+		return (Object.fromEntries(entries) as unknown) as T
 	}
 
 	/**
@@ -547,7 +485,7 @@ export class OperateApiClient {
 	 */
 	public async getVariables(variableKey: number | string): Promise<Variable> {
 		return this.rest(`variables/${variableKey}`, {
-			parseJson: (text) => losslessParse(text, Variable),
+			parseJson: text => losslessParse(text, Variable),
 		}).json()
 	}
 
@@ -560,23 +498,65 @@ export class OperateApiClient {
 		return this.rest
 			.post('drd/search', {
 				json,
-				parseJson: (text) => parseSearchResults(text, DecisionRequirements),
+				parseJson: text => parseSearchResults(text, DecisionRequirements),
 			})
 			.json()
 	}
 
 	public async getDecisionRequirements(
-		key: string | number
+		key: string | number,
 	): Promise<DecisionRequirements> {
 		return this.rest(`drd/${key}`, {
-			parseJson: (text) => losslessParse(text, DecisionRequirements),
+			parseJson: text => losslessParse(text, DecisionRequirements),
 		}).json()
 	}
 
 	/**
 	 * @throws {RESTError}
 	 */
-	public async getDecisionRequirementsXML(key: string | number) {
+	public async getDecisionRequirementsXml(key: string | number) {
 		return this.rest(`drd/${key}/xml`).text()
+	}
+
+	protected addTenantIdToFilter<T>(
+		query: Query<T>,
+		tenantId: string | undefined = this.tenantId, // Example default value
+	): Query<EnhanceWithTenantIdIfMissing<T>> {
+		const hasTenantIdInFilter = query.filter && 'tenantId' in query.filter
+
+		// If `filter` already has `tenantId`, return the original query as is.
+		if (hasTenantIdInFilter) {
+			return query as Query<EnhanceWithTenantIdIfMissing<T>>
+		}
+
+		// Otherwise, add or ensure `tenantId` in `filter`.
+		return {
+			...query,
+			filter: {
+				...query.filter,
+				tenantId,
+			},
+		} as unknown as Query<EnhanceWithTenantIdIfMissing<T>>
+	}
+
+	private async getHeaders() {
+		const token = await this.oAuthProvider.getToken('OPERATE')
+
+		return {
+			'content-type': 'application/json',
+			authorization: `Bearer ${token}`,
+			'user-agent': this.userAgentString,
+			accept: '*/*',
+		}
+	}
+
+	private safeJsonParse<T>(thing: string): T {
+		try {
+			return JSON.parse(thing) as T
+		} catch (error) {
+			console.log(error)
+			console.log(thing)
+			return thing as T
+		}
 	}
 }
