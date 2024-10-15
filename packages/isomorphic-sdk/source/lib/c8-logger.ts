@@ -1,9 +1,9 @@
 import log from 'loglevel'
 import {type IsoSdkClientConfiguration, isoSdkEnvironmentConfigurator} from './index.js'
 
-let cachedLogger: ILogger | undefined
+let cachedLogger: Logger | undefined
 
-export type ILogger = {
+export type Logger = {
 	info: (message: string, ...meta: any[]) => void;
 	warn: (message: string, ...meta: any[]) => void;
 	error: (message: string, ...meta: any[]) => void;

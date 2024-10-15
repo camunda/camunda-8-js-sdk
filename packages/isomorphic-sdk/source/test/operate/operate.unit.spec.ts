@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import test from 'ava'
-import {environmentSetup} from '../helpers/environment-setup.js'
-import {OperateApiClient} from '../../source/operate/index.js'
-import {TestableOperateApiClient} from '../../source/operate/lib/testable-operate-api-client.js'
+import {environmentSetup} from '../helpers/_environment-setup.js'
+import {OperateApiClient} from '../../operate/index.js'
+import {TestableOperateApiClient} from '../../operate/lib/testable-operate-api-client.js'
 
 test.before(() => {
 	environmentSetup.storeEnv()
@@ -13,13 +14,16 @@ test.after(() => {
 
 test('Constructor throws without base url', t => {
 	try {
+		// eslint-disable-next-line no-new
 		new OperateApiClient({
 			config: {
 				CAMUNDA_OAUTH_DISABLED: true,
 			},
 		})
+		t.fail('Constructor should throw without base url')
 	} catch (error) {
 		t.is((error as Error).message.includes('Missing'), true)
+		t.pass('Constructor throws without base url')
 	}
 })
 
@@ -55,7 +59,7 @@ test('Adds tenant id if no filter', t => {
 	t.is(query.filter?.tenantId, 'tenantId2')
 })
 
-test('Does not add a tenantId if none given', async t => {
+test('Does not add a tenantId if none given', t => {
 	const client = new TestableOperateApiClient({
 		config: {
 			CAMUNDA_OAUTH_DISABLED: true,

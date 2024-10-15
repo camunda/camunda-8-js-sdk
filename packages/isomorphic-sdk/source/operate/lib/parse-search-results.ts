@@ -5,7 +5,7 @@ export function parseSearchResults<T>(
 	json: string,
 	dto: new () => T,
 ): SearchResults<T> {
-	const parsedResult = losslessParse(json)
+	const parsedResult = losslessParse<SearchResults<T>>(json)
 
 	// Assuming `parsedResult` matches the structure of `SearchResults<T>`
 
@@ -17,7 +17,7 @@ export function parseSearchResults<T>(
 	// For each item in the array, you could potentially apply the same or similar logic
 	// as in `losslessParse` if your items have properties that need special handling.
 
-	const total = parsedResult.total.toString() // Or convert based on your needs
+	const total = parsedResult.total // Or convert based on your needs
 
 	// Construct the final object, assuming `SearchResults` is a simple interface without methods
 	const result: SearchResults<T> = {

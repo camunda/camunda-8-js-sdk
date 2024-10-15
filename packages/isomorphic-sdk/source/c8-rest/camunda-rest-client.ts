@@ -4,11 +4,10 @@ import {
 	losslessStringify,
 } from '@camunda8/lossless-json'
 import {type OAuthInterfaces} from '@camunda8/oauth'
-import {debug} from 'debug'
-import FormData from 'form-data'
+import debug from 'debug'
 import ky from 'ky'
 import * as Dto from '../dto/c8-dto.js'
-import {getLogger, type ILogger} from '../lib/c8-logger.js'
+import {getLogger, type Logger} from '../lib/c8-logger.js'
 import {
 	type IsoSdkClientConfiguration,
 	isoSdkEnvironmentConfigurator,
@@ -44,7 +43,7 @@ class DefaultLosslessDto extends LosslessDto {}
  *
  */
 export class CamundaRestClient {
-	public log: ILogger
+	public log: Logger
 	private readonly userAgentString: string
 	private readonly oAuthProvider: OAuthInterfaces.IOAuthProvider
 	private readonly rest: typeof ky
@@ -63,7 +62,7 @@ export class CamundaRestClient {
 			configuration ?? {},
 		)
 		this.log = getLogger(config)
-		this.log.info(`Using REST API version ${camundaRestApiVersion}`)
+		this.log.debug(`Using REST API version ${camundaRestApiVersion}`)
 		trace('options.config', configuration)
 		trace('config', config)
 		this.oAuthProvider
@@ -88,22 +87,37 @@ export class CamundaRestClient {
 			hooks: {
 				beforeError: [beforeErrorHook],
 				beforeRequest: [
-					/** Add authorization header */
+					/** Add authorization header and set the content-type */
 					async request => {
 						const newHeaders = await this.getHeaders()
 						for (const [key, value] of Object.entries(newHeaders)) {
-							request.headers.set(key, value)
+							if (!request.headers.has(key)) {
+								request.headers.set(key, value)
+							}
+						}
+
+						// If the request is not a multipart form, set the content type to JSON
+						if (!request.headers.get('content-type')?.startsWith('multipart/form-data')) {
+							request.headers.set('content-type', 'application/json')
 						}
 					},
 					/** Log for debugging */
-					request => {
+					async request => {
 						const {body, method} = request
 						const path = request.url
+						const authHeader = request.headers.get('authorization')
+						const safeAuthHeader = authHeader ? {
+							authorization: authHeader.slice(0, 15) + (authHeader.length > 8 ? '...' : ''),
+						} : {}
+						const safeHeaders = {
+							...request.headers,
+							...safeAuthHeader,
+						}
 						trace(`${method} ${path}`)
 						trace(body)
 						this.log.debug(`${method} ${path}`)
-						this.log.trace(JSON.stringify(request))
-						this.log.trace(JSON.stringify(body, null, 2))
+						this.log.trace('body', body)
+						this.log.trace('headers', safeHeaders)
 					},
 					/** Add user-supplied middleware at the end, where they can override auth headers */
 					...(config.middleware ?? []),
@@ -140,6 +154,9 @@ export class CamundaRestClient {
 		return this.rest
 			.post('signals/broadcast', {
 				body: losslessStringify(request),
+				headers: {
+					'content-type': 'application/json',
+				},
 				parseJson: text => losslessParse(text, Dto.BroadcastSignalResponse),
 			})
 			.json<Dto.BroadcastSignalResponse>()
@@ -567,7 +584,6 @@ export class CamundaRestClient {
 		const body = operationReference
 			? JSON.stringify({operationReference})
 			: undefined
-		console.log('processInstanceKey', processInstanceKey) // @DEBUG
 
 		return this.rest.post(
 			`process-instances/${processInstanceKey}/cancellation`,
@@ -615,9 +631,7 @@ export class CamundaRestClient {
 		const formData = new FormData()
 
 		for (const resource of resources) {
-			formData.append('resources', resource.content, {
-				filename: resource.name,
-			})
+			formData.append('resources', new Blob([resource.content], {type: 'text/plain'}), resource.name)
 		}
 
 		if (tenantId ?? this.tenantId) {
@@ -625,13 +639,10 @@ export class CamundaRestClient {
 		}
 
 		this.log.debug(`Deploying ${resources.length} resources`)
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		this.log.trace(formData.toString())
 		const response = await this.rest
 			.post('deployments', {
 				body: formData,
 				headers: {
-					...formData.getHeaders(),
 					accept: 'application/json',
 				},
 				parseJson: text => losslessParse(text), // We parse the response with LosslessNumbers, with no Dto
@@ -644,7 +655,6 @@ export class CamundaRestClient {
 		 * and re-parsing each of the deployments with the correct Dto.
 		 */
 		this.log.debug(`Deployment response: ${JSON.stringify(response)}`)
-		// Console.log('res', JSON.stringify(res, null, 2)) // @DEBUG
 
 		const deploymentResponse = new Dto.DeployResourceResponse()
 		deploymentResponse.deploymentKey = response.deploymentKey.toString()
@@ -741,7 +751,7 @@ export class CamundaRestClient {
 		tenantId?: string;
 	}) {
 		try {
-			this.fs = this.fs ?? require('node:fs') // @todo: this won't work.
+			this.fs ??= await (async () => import ('node:fs'))(); // @todo: this won't work in the browser
 		} catch (error) {
 			console.error(
 				'Note: deployResourcesFromFiles is not available in the browser',
@@ -869,21 +879,9 @@ export class CamundaRestClient {
 		const token = await this.oAuthProvider.getToken('ZEEBE')
 
 		const headers = {
-			'content-type': 'application/json',
 			authorization: `Bearer ${token}`,
 			'user-agent': this.userAgentString,
-			accept: '*/*',
 		}
-		const safeHeaders = {
-			...headers,
-			authorization:
-					headers.authorization.slice(0, 15)
-					+ (headers.authorization.length > 8)
-						? '...'
-						: '',
-		}
-		trace('headers', safeHeaders)
-		this.log.trace(JSON.stringify(headers))
 		return headers
 	}
 }

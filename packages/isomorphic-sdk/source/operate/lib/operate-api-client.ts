@@ -1,6 +1,6 @@
 import {losslessParse, losslessStringify} from '@camunda8/lossless-json'
 import {type OAuthInterfaces} from '@camunda8/oauth'
-import {debug} from 'debug'
+import debug from 'debug'
 import ky from 'ky'
 import {
 	ChangeStatus,
@@ -23,8 +23,8 @@ import {
 	requireConfiguration,
 	beforeErrorHook,
 } from '../../lib/index.js'
-import {getLogger, type ILogger} from '../../lib/c8-logger.js'
-import {parseSearchResults} from './parseSearchResults.js'
+import {getLogger, type Logger} from '../../lib/c8-logger.js'
+import {parseSearchResults} from './parse-search-results.js'
 import {type OperateClientOptions} from './testable-operate-api-client.js'
 
 const trace = debug('camunda:operate')
@@ -57,7 +57,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
  * ```
  */
 export class OperateApiClient {
-	public log: ILogger
+	public log: Logger
 	private readonly userAgentString: string
 	private readonly oAuthProvider: OAuthInterfaces.IOAuthProvider
 	private readonly rest: typeof ky

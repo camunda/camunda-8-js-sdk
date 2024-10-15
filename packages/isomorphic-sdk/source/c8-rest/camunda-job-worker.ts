@@ -9,7 +9,7 @@ import {
 	type JobCompletionInterfaceRest,
 	type MustReturnJobActionAcknowledgement,
 } from '../dto/c8-dto.js'
-import {getLogger, type ILogger} from '../lib/c8-logger.js'
+import {getLogger, type Logger} from '../lib/c8-logger.js'
 import {type CamundaRestClient} from './camunda-rest-client.js'
 
 type CamundaJobWorkerEvents = {
@@ -38,9 +38,9 @@ export type CamundaJobWorkerConfig<
 	jobHandler: (
 		job: Job<VariablesDto, CustomHeadersDto> &
 		JobCompletionInterfaceRest<ProcessVariables>,
-		log: ILogger
+		log: Logger
 	) => MustReturnJobActionAcknowledgement;
-	logger?: ILogger;
+	logger?: Logger;
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
 	autoStart?: boolean;
 } & ActivateJobsRequest
@@ -59,7 +59,7 @@ export class CamundaJobWorker<
 		currentload: number;
 	}
 
-	public log: ILogger
+	public log: Logger
 	private loopHandle?: NodeJS.Timeout
 	private readonly pollInterval: number
 

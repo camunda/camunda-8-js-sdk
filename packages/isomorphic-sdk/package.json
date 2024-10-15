@@ -2,12 +2,15 @@
 	"name": "@camunda8/isomorphic-sdk",
 	"version": "8.6.2",
 	"description": "",
-	"main": "dist/index.js",
+	"main": "distribution/index.js",
 	"type": "module",
 	"scripts": {
-		"test": "xo && CAMUNDA_LOG_LEVEL=error ava",
+		"test": "xo && npm run build && npm run setup-test-env && ava distribution/test/**/*.js --serial",
+		"setup-test-env": "npm run copy-test-resources && npm run clean-test-env",
+		"clean-test-env": "node distribution/test/helpers/_clean-test-env.js",
+		"copy-test-resources": "cp -r source/test/resources distribution/test",
 		"build": "npm run clean && npm run write-package-version && tsc --project tsconfig.json",
-		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
+		"clean": "rm -rf ./distribution && rm -f ./tsconfig.tsbuildinfo",
 		"lint": "xo",
 		"format": "xo --fix",
 		"write-package-version": "node ../../write-package-version.js"
@@ -37,13 +40,12 @@
 		"url": "git+https://github.com/camunda/camunda-8-js-sdk.git"
 	},
 	"ava": {
-		"extensions": {
-			"ts": "module"
-		},
-		"nodeArguments": [
-			"--import=tsx/esm"
-		],
-		"workerThreads": false
+		"typescript": {
+			"rewritePaths": {
+				"source/": "distribution/"
+			},
+			"compile": "tsc"
+		}
 	},
 	"xo": {
 		"rules": {
@@ -58,33 +60,25 @@
 	"dependencies": {
 		"@camunda8/lossless-json": "^1.0.0",
 		"@camunda8/oauth": "^8.6.2",
-		"@zenfs/core": "^1.0.4",
+		"@types/multiparty": "^4.2.1",
 		"debug": "^4.3.7",
 		"eventemitter3": "^5.0.1",
-		"form-data": "^4.0.0",
 		"ky": "^1.7.2",
 		"loglevel": "^1.9.2",
-		"neon-env": "^0.2.2",
-		"ts-node": "^10.9.2"
+		"neon-env": "^0.2.2"
 	},
 	"devDependencies": {
+		"@ava/typescript": "^5.0.0",
 		"@types/jest": "^29.5.13",
 		"@types/node": "^22.7.5",
+		"@types/uuid": "^10.0.0",
 		"@typescript-eslint/parser": "^8.8.1",
 		"ava": "^6.1.3",
-		"cross-env": "^7.0.3",
 		"cz-conventional-changelog": "^3.3.0",
 		"delay": "^6.0.0",
-		"eslint": "^9.12.0",
-		"eslint-config-prettier": "^9.1.0",
-		"eslint-plugin-import": "^2.31.0",
-		"eslint-plugin-prettier": "^5.2.1",
 		"fast-xml-parser": "^4.5.0",
-		"jest": "^29.7.0",
-		"ts-jest": "^29.2.5",
-		"tsconfig-paths": "^4.2.0",
+		"multiparty": "^4.2.3",
 		"tsx": "^4.19.1",
-		"typed-emitter": "^2.1.0",
 		"typedoc": "^0.26.8",
 		"typedoc-plugin-missing-exports": "^3.0.0",
 		"typescript": "^5.6.2",

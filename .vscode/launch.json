@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+				{
+					"type": "node",
+					"request": "launch",
+					"name": "Debug AVA test file",
+					"program": "${workspaceFolder}/packages/isomorphic-sdk/node_modules/ava/entrypoints/cli.mjs",
+					"args": [
+						"${file}",
+						"--serial",
+						"--node-arguments --import=tsx/esm"
+					],
+					"outputCapture": "std",
+					"console": "integratedTerminal", // optional
+					"skipFiles": [
+						"<node_internals>/**/*.js"
+					]
+				}
+    ]
+}

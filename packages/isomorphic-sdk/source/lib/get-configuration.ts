@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {type BeforeRequestHook} from 'ky'
 import {createEnv} from 'neon-env'
-import {type ILogger} from './c8-logger.js'
+import {type Logger} from './c8-logger.js'
 
 const getEnv = () =>
 	createEnv({
@@ -259,6 +259,8 @@ export const isoSdkEnvironmentVariableDictionary
 		'CAMUNDA_CONSOLE_OAUTH_AUDIENCE',
 		'CAMUNDA_CUSTOM_CERT_CHAIN_STRING',
 		'CAMUNDA_CUSTOM_PRIVATE_KEY_STRING',
+		'CAMUNDA_OPERATE_BASE_URL',
+		'CAMUNDA_OPERATE_OAUTH_AUDIENCE',
 		'CAMUNDA_CUSTOM_CERT_STRING',
 	])
 
@@ -279,7 +281,7 @@ export type IsoSdkConfiguration = ReturnType<
 }
 
 export type IsoSdkClientConfiguration = Partial<IsoSdkConfiguration> & {
-	logger?: ILogger;
+	logger?: Logger;
 }
 
 export function requireConfiguration<T>(

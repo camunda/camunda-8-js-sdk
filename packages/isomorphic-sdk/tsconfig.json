@@ -4,12 +4,16 @@
 		/* Basic Options */
 		"target": "es2022" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
 		"module": "Node16" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
-		"types": ["jest", "node"],
+		"types": [
+			"node"
+		],
 		"moduleResolution": "Node16",
-		"lib": ["es2022"],
+		"lib": [
+			"es2022"
+		],
 		"declaration": true /* Generates corresponding '.d.ts' file. */,
 		"sourceMap": true /* Generates corresponding '.map' file. */,
-		"outDir": "./dist" /* Redirect output structure to the directory. */,
+		"outDir": "./distribution" /* Redirect output structure to the directory. */,
 		"rootDir": "./source" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
 		/* Strict Type-Checking Options */
 		"forceConsistentCasingInFileNames": true,
@@ -21,6 +25,7 @@
 		"strictNullChecks": true,
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
 		"resolveJsonModule": false,
 		"plugins": [
 			{
@@ -28,6 +33,11 @@
 			}
 		]
 	},
-	"include": ["source"],
-	"exclude": ["node_modules", "test"]
+	"include": [
+		"source"
+	],
+	"exclude": [
+		"node_modules",
+		"test"
+	]
 }

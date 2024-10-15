@@ -1,10 +1,11 @@
+import process from 'node:process'
 import test from 'ava'
 import delay from 'delay'
 import {LosslessNumber} from '@camunda8/lossless-json'
 import {type HTTPError} from 'ky'
-import {CamundaRestClient} from '../../source/c8rest/camunda-rest-client.js'
-import {type ProcessDefinition, type Query} from '../../source/dto/operate-dto.js'
-import {OperateApiClient} from '../../source/operate/index.js'
+import {CamundaRestClient} from '../../c8-rest/index.js'
+import {type ProcessDefinition, type Query} from '../../dto/operate-dto.js'
+import {OperateApiClient} from '../../operate/index.js'
 
 // eslint-disable-next-line ava/no-skip-test
 test.skip('It can get the Incident', async t => {
@@ -40,8 +41,9 @@ test.skip('It can search process definitions', async t => {
 test('getJSONVariablesforProcess works', async t => {
 	const c = new OperateApiClient()
 	const zeebe = new CamundaRestClient()
+	console.log(process.cwd())
 	await zeebe.deployResourcesFromFiles({
-		files: ['src/__tests__/testdata/Operate-StraightThrough.bpmn'],
+		files: ['./distribution/test/resources/Operate-StraightThrough.bpmn'],
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
 		processDefinitionId: 'operate-straightthrough',
@@ -54,10 +56,10 @@ test('getJSONVariablesforProcess works', async t => {
 	await delay(15_000)
 
 	// Make sure that the process instance exists in Operate.
-	const process = await c.getProcessInstance(p.processInstanceKey)
+	const processInstance = await c.getProcessInstance(p.processInstanceKey)
 	// If this fails, it is probably a timing issue.
 	// Operate is eventually consistent, so we need to wait a bit.
-	t.is(process.key, p.processInstanceKey)
+	t.is(processInstance.key, p.processInstanceKey)
 	const response = await c.getJsonVariablesforProcess(p.processInstanceKey)
 	t.is(response.foo as unknown as string, 'bar')
 })
@@ -66,7 +68,7 @@ test('test error type', async t => {
 	const c = new OperateApiClient()
 	const zeebe = new CamundaRestClient()
 	await zeebe.deployResourcesFromFiles({
-		files: ['src/__tests__/testdata/Operate-StraightThrough.bpmn'],
+		files: ['./test/resources/Operate-StraightThrough.bpmn'],
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
 		processDefinitionId: 'operate-straightthrough',
@@ -86,7 +88,7 @@ test('test error type', async t => {
 	 * Do we really want to expose consumers to this?
 	 */
 	try {
-		const response = await c
+		await c
 			.getProcessInstance(`${p.processInstanceKey}1`)
 		t.fail()
 	} catch (error: unknown) {
