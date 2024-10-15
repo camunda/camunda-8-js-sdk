@@ -6,7 +6,7 @@ import {type CamundaJobWorker, CamundaRestClient} from '../../c8-rest/index.js'
 const c8 = new CamundaRestClient()
 
 class CustomHeaders extends LosslessDto {
-	ProcessVersion!: number // eslint-disable-line @typescript-eslint/naming-convention
+	ProcessVersion!: string // eslint-disable-line @typescript-eslint/naming-convention
 }
 
 test('RestClient can migrate a process instance', async t => {
@@ -29,7 +29,7 @@ test('RestClient can migrate a process instance', async t => {
 	})
 
 	let instanceKey = ''
-	let processVersion = 0
+	let processVersion = '0'
 
 	await new Promise<CamundaJobWorker<LosslessDto, CustomHeaders>>(resolve => {
 		const w = c8.createJobWorker({
@@ -42,7 +42,6 @@ test('RestClient can migrate a process instance', async t => {
 			async jobHandler(job) {
 				instanceKey = job.processInstanceKey
 				processVersion = job.customHeaders.ProcessVersion
-
 				const response = await job.complete()
 				resolve(w)
 				return response
@@ -51,7 +50,7 @@ test('RestClient can migrate a process instance', async t => {
 	}).then(async w => w.stop())
 
 	t.is(instanceKey, processInstance.processInstanceKey)
-	t.is(processVersion, 1)
+	t.is(processVersion, '1')
 
 	// Deploy the updated process model
 	const response = await c8.deployResourcesFromFiles({
@@ -107,5 +106,5 @@ test('RestClient can migrate a process instance', async t => {
 	}).then(async w => w.stop())
 
 	t.is(instanceKey, processInstance.processInstanceKey)
-	t.is(processVersion, 2)
+	t.is(processVersion, '2')
 })

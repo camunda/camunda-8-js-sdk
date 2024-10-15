@@ -524,6 +524,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-process-instance/
 	 *
+	 * @throws {TimeoutError} Ky.TimeoutError if the process instance does not complete within the timeout.
 	 * @since 8.6.0
 	 */
 	public async createProcessInstanceWithResult<

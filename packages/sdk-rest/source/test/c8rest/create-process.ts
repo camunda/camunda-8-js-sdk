@@ -1,7 +1,7 @@
 import path from 'node:path'
 import test from 'ava'
 import {createDtoInstance, LosslessDto} from '@camunda8/lossless-json'
-import {HTTPError} from 'ky'
+import {TimeoutError} from 'ky'
 import {CamundaRestClient} from '../../c8-rest/index.js'
 
 let processDefinitionId: string
@@ -92,12 +92,15 @@ test('What happens if we time out?', async t => {
 		],
 	})
 	const {processDefinitionId} = response.processDefinitions[0]
-	const error = await t.throwsAsync(async () => restClient.createProcessInstanceWithResult({
-		processDefinitionId,
-		variables: createDtoInstance(MyVariableDto, {someNumberField: 9}),
-		requestTimeout: 5000,
-	}))
-	t.true(error instanceof HTTPError)
-	t.is((error as HTTPError).response.status, 504)
+	const error = await t.throwsAsync(async () => {
+		t.timeout(17_000)
+		void await restClient.createProcessInstanceWithResult({
+			processDefinitionId,
+			variables: createDtoInstance(MyVariableDto, {someNumberField: 9}),
+			requestTimeout: 3000,
+		})
+		t.fail('Should have thrown')
+	})
+	t.true(error instanceof TimeoutError)
 })
 

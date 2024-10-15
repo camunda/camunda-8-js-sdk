@@ -39,6 +39,7 @@ test.skip('It can search process definitions', async t => {
 })
 
 test('getJSONVariablesforProcess works', async t => {
+	t.timeout(17_000)
 	const c = new OperateApiClient()
 	const zeebe = new CamundaRestClient()
 	console.log(process.cwd())
@@ -65,10 +66,11 @@ test('getJSONVariablesforProcess works', async t => {
 })
 
 test('test error type', async t => {
+	t.timeout(7000)
 	const c = new OperateApiClient()
 	const zeebe = new CamundaRestClient()
 	await zeebe.deployResourcesFromFiles({
-		files: ['./test/resources/Operate-StraightThrough.bpmn'],
+		files: ['./distribution/test/resources/Operate-StraightThrough.bpmn'],
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
 		processDefinitionId: 'operate-straightthrough',

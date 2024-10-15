@@ -1,6 +1,6 @@
 import test from 'ava'
 import {LosslessDto} from '@camunda8/lossless-json'
-import {v4} from 'uuid'
+import {v6} from 'uuid'
 import {CamundaRestClient} from '../../c8-rest/index.js'
 
 const c8 = new CamundaRestClient()
@@ -12,7 +12,7 @@ test.before(async () => {
 })
 
 test('Can publish a message', async t => {
-	const uuid = v4()
+	const uuid = v6()
 	const outputVariablesDto = class extends LosslessDto {
 		messageReceived!: boolean
 	}
@@ -36,7 +36,7 @@ test('Can publish a message', async t => {
 })
 
 test('Can correlate a message', async t => {
-	const uuid = v4()
+	const uuid = v6()
 	const outputVariablesDto = class extends LosslessDto {
 		messageReceived!: boolean
 	}
@@ -67,7 +67,7 @@ test('Can correlate a message', async t => {
 })
 
 test('Correlate message returns expected data', async t => {
-	const uuid = v4()
+	const uuid = v6()
 	let processInstanceKey: string
 	await new Promise(resolve => {
 		void c8.createProcessInstance({

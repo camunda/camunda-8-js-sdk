@@ -11,6 +11,7 @@ test.before(async () => {
 })
 
 test('Can start a process with a signal', async t => {
+	t.timeout(10_000)
 	await c8.deployResourcesFromFiles({
 		files: ['./distribution/test/resources/Signal.bpmn'],
 	})
@@ -24,6 +25,7 @@ test('Can start a process with a signal', async t => {
 
 	t.is(Boolean(response.signalKey), true)
 
+	let success = false
 	await new Promise(resolve => {
 		const w = c8.createJobWorker({
 			type: 'signal-service-task',
@@ -36,11 +38,12 @@ test('Can start a process with a signal', async t => {
 			},
 			async jobHandler(job) {
 				const ack = job.complete()
-				t.is(job.variables.success, true)
-				await w.stop()
+				success = job.variables.success
+				void w.stop()
 				resolve(null);
 				return ack
 			},
 		})
 	})
+	t.is(success, true)
 })
