@@ -1,19 +1,23 @@
-// import { CamundaRestClient } from '@camunda8/isomorphic-sdk'
+import { CamundaRestClient } from '@camunda8/sdk-rest'
 import './App.css'
 import logo from './logo.svg'
 import ky from 'ky'
 
 function App() {
-	// const camunda = new CamundaRestClient({
-	// 	configuration: {
-	// 		CAMUNDA_AUTH_STRATEGY: 'OAUTH',
-	// 		ZEEBE_CLIENT_ID: 'zeebe',
-	// 		ZEEBE_CLIENT_SECRET: 'zecret',
-	// 		ZEEBE_REST_ADDRESS: 'http://localhost:8080',
-	// 		CAMUNDA_OAUTH_URL:
-	// 			'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
-	// 	},
-	// })
+	const camunda = new CamundaRestClient({
+		configuration: {
+			CAMUNDA_AUTH_STRATEGY: 'OAUTH',
+			ZEEBE_CLIENT_ID: 'zeebe',
+			ZEEBE_CLIENT_SECRET: 'zecret',
+			ZEEBE_REST_ADDRESS: 'http://localhost:8080',
+			CAMUNDA_OAUTH_URL:
+				'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
+		},
+	})
+
+	camunda.getTopology().then((topology) => {
+		console.log(topology)
+	})
 	
 	deploy()
 	return (

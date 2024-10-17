@@ -6,6 +6,7 @@ import {type HTTPError} from 'ky'
 import {CamundaRestClient} from '../../c8-rest/index.js'
 import {type ProcessDefinition, type Query} from '../../dto/operate-dto.js'
 import {OperateApiClient} from '../../operate/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 // eslint-disable-next-line ava/no-skip-test
 test.skip('It can get the Incident', async t => {
@@ -43,8 +44,9 @@ test('getJSONVariablesforProcess works', async t => {
 	const c = new OperateApiClient()
 	const zeebe = new CamundaRestClient()
 	console.log(process.cwd())
-	await zeebe.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/Operate-StraightThrough.bpmn'],
+	await zeebe.deployResources({
+		resources:
+		loadResourcesFromFiles(['./distribution/test/resources/Operate-StraightThrough.bpmn']),
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
 		processDefinitionId: 'operate-straightthrough',
@@ -69,8 +71,9 @@ test('test error type', async t => {
 	t.timeout(7000)
 	const c = new OperateApiClient()
 	const zeebe = new CamundaRestClient()
-	await zeebe.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/Operate-StraightThrough.bpmn'],
+	await zeebe.deployResources({
+		resources:
+		loadResourcesFromFiles(['./distribution/test/resources/Operate-StraightThrough.bpmn']),
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
 		processDefinitionId: 'operate-straightthrough',

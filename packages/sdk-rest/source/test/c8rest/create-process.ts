@@ -3,23 +3,23 @@ import test from 'ava'
 import {createDtoInstance, LosslessDto} from '@camunda8/lossless-json'
 import {TimeoutError} from 'ky'
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 let processDefinitionId: string
 let processDefinitionKey: string
 const restClient = new CamundaRestClient()
 
 test.before(async () => {
-	const response = await restClient.deployResourcesFromFiles({
-		files: [
-			path.join(
-				'.',
-				'distribution',
-				'test',
-				'resources',
-				'create-process-rest.bpmn',
-			),
-		],
-	});
+	const resources = loadResourcesFromFiles([
+		path.join(
+			'.',
+			'distribution',
+			'test',
+			'resources',
+			'create-process-rest.bpmn',
+		),
+	])
+	const response = await restClient.deployResources({resources});
 	({processDefinitionId, processDefinitionKey} = response.processDefinitions[0])
 })
 
@@ -86,10 +86,9 @@ test('Can create a process and get the result (without output Dto)', async t => 
 })
 
 test('What happens if we time out?', async t => {
-	const response = await restClient.deployResourcesFromFiles({
-		files: [
-			path.join('.', 'distribution', 'test', 'resources', 'time-out-rest.bpmn'),
-		],
+	const resources = loadResourcesFromFiles([path.join('.', 'distribution', 'test', 'resources', 'time-out-rest.bpmn')])
+	const response = await restClient.deployResources({
+		resources,
 	})
 	const {processDefinitionId} = response.processDefinitions[0]
 	const error = await t.throwsAsync(async () => {

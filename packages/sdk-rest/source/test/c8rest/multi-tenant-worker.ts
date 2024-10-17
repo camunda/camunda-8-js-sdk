@@ -1,19 +1,23 @@
 
 import test from 'ava'
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 test('A worker can be multi-tenant', async t => {
 	const client = new CamundaRestClient()
 
 	t.timeout(10_000)
 
-	await client.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/multi-tenant-worker-test.bpmn'],
+	await client.deployResources({
+		resources: loadResourcesFromFiles([
+			'./distribution/test/resources/multi-tenant-worker-test.bpmn',
+		]),
 		tenantId: '<default>',
 	})
 
-	await client.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/multi-tenant-worker-test.bpmn'],
+	await client.deployResources({
+		resources:
+		loadResourcesFromFiles(['./distribution/test/resources/multi-tenant-worker-test.bpmn']),
 		tenantId: 'green',
 	})
 

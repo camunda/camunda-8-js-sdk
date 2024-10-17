@@ -1,21 +1,23 @@
 import path from 'node:path'
 import test from 'ava'
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 let processDefinitionId: string
 const restClient = new CamundaRestClient()
 
 test.before(async () => {
-	const response = await restClient.deployResourcesFromFiles({
-		files: [
-			path.join(
-				'.',
-				'distribution',
-				'test',
-				'resources',
-				'hello-world-complete-rest.bpmn',
-			),
-		],
+	const resources = loadResourcesFromFiles([
+		path.join(
+			'.',
+			'distribution',
+			'test',
+			'resources',
+			'hello-world-complete-rest.bpmn',
+		),
+	])
+	const response = await restClient.deployResources({
+		resources,
 	})
 	processDefinitionId = response.processDefinitions[0].processDefinitionId
 })

@@ -48,7 +48,6 @@ export class CamundaRestClient {
 	private readonly oAuthProvider: OAuthInterfaces.IOAuthProvider
 	private readonly rest: typeof ky
 	private readonly tenantId?: string
-	private fs?: any
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
@@ -736,41 +735,6 @@ export class CamundaRestClient {
 		}
 
 		return deploymentResponse
-	}
-
-	/**
-	 * Deploy resources to Camunda 8 from files
-	 * @param files an array of file paths
-	 *
-	 * @since 8.6.0
-	 */
-	public async deployResourcesFromFiles({
-		files,
-		tenantId,
-	}: {
-		files: string[];
-		tenantId?: string;
-	}) {
-		try {
-			this.fs ??= await (async () => import ('node:fs'))(); // @todo: this won't work in the browser
-		} catch (error) {
-			console.error(
-				'Note: deployResourcesFromFiles is not available in the browser',
-			)
-			throw error
-		}
-
-		const resources: Array<{content: string; name: string}> = []
-
-		for (const file of files) {
-			resources.push({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				content: this.fs.readFileSync(file, {encoding: 'binary'}), // eslint-disable-line @typescript-eslint/no-unsafe-call
-				name: file,
-			})
-		}
-
-		return this.deployResources({resources, tenantId})
 	}
 
 	/**

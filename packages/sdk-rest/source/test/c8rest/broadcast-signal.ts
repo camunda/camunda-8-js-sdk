@@ -1,19 +1,22 @@
 import test from 'ava'
 import {LosslessDto} from '@camunda8/lossless-json'
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 const c8 = new CamundaRestClient()
 
 test.before(async () => {
-	await c8.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/Signal.bpmn'],
+	const resources = loadResourcesFromFiles(['./distribution/test/resources/Signal.bpmn'])
+	await c8.deployResources({
+		resources,
 	})
 })
 
 test('Can start a process with a signal', async t => {
 	t.timeout(10_000)
-	await c8.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/Signal.bpmn'],
+	const resources = loadResourcesFromFiles(['./distribution/test/resources/Signal.bpmn'])
+	await c8.deployResources({
+		resources,
 	})
 
 	const response = await c8.broadcastSignal({

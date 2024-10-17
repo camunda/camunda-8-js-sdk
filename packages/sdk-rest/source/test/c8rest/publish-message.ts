@@ -2,13 +2,12 @@ import test from 'ava'
 import {LosslessDto} from '@camunda8/lossless-json'
 import {v6} from 'uuid'
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 const c8 = new CamundaRestClient()
 
 test.before(async () => {
-	await c8.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/rest-message-test.bpmn'],
-	})
+	await c8.deployResources({resources: loadResourcesFromFiles(['./distribution/test/resources/rest-message-test.bpmn'])})
 })
 
 test('Can publish a message', async t => {

@@ -2,6 +2,7 @@ import path from 'node:path'
 import test from 'ava'
 import {LosslessDto} from '@camunda8/lossless-json'
 import {type CamundaJobWorker, CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 const c8 = new CamundaRestClient()
 
@@ -11,15 +12,15 @@ class CustomHeaders extends LosslessDto {
 
 test('RestClient can migrate a process instance', async t => {
 	// Deploy a process model
-	await c8.deployResourcesFromFiles({
-		files: [
+	await c8.deployResources({
+		resources: loadResourcesFromFiles([
 			path.join(
 				'distribution',
 				'test',
 				'resources',
 				'MigrateProcess-Rest-Version-1.bpmn',
 			),
-		],
+		]),
 	})
 
 	// Create an instance of the process model
@@ -53,8 +54,8 @@ test('RestClient can migrate a process instance', async t => {
 	t.is(processVersion, '1')
 
 	// Deploy the updated process model
-	const response = await c8.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/MigrateProcess-Rest-Version-2.bpmn'],
+	const response = await c8.deployResources({
+		resources: loadResourcesFromFiles(['./distribution/test/resources/MigrateProcess-Rest-Version-2.bpmn']),
 	})
 
 	// Migrate the process instance to the updated process model

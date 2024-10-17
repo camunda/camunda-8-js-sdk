@@ -1,4 +1,4 @@
-import process from 'node:process'
+import process from 'process' // eslint-disable-line unicorn/prefer-node-protocol
 import {isoSdkEnvironmentVariableDictionary} from '../../lib/index.js'
 
 const storage: Map<string, string | undefined> = new Map<string, string | undefined>()

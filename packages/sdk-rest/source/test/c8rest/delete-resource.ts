@@ -1,12 +1,14 @@
 import test from 'ava'
 import {HTTPError} from 'ky'
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 const c8 = new CamundaRestClient()
 
 test('It can delete a resource', async t => {
-	const response = await c8.deployResourcesFromFiles({
-		files: ['./distribution/test/resources/Delete-Resource-Rest.bpmn'],
+	const resources = loadResourcesFromFiles(['./distribution/test/resources/Delete-Resource-Rest.bpmn'])
+	const response = await c8.deployResources({
+		resources,
 	})
 	const key = response.processDefinitions[0].processDefinitionKey
 	const id = response.processDefinitions[0].processDefinitionId

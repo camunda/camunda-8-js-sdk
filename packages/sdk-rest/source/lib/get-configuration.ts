@@ -266,12 +266,20 @@ export const isoSdkEnvironmentVariableDictionary
 
 export const isoSdkEnvironmentConfigurator = {
 	getEnv,
-	mergeConfigWithEnvironment: (
+	mergeConfigWithEnvironment(
 		config: Partial<IsoSdkConfiguration> = {},
-	): IsoSdkConfiguration => ({
-		...getEnv(),
-		...config,
-	}),
+	): IsoSdkConfiguration {
+		// eslint-disable-next-line n/prefer-global/process
+		if (globalThis.process === undefined) {
+			// eslint-disable-next-line n/prefer-global/process
+			(globalThis.process as any) = {env: {}}
+		}
+
+		return {
+			...getEnv(),
+			...config,
+		}
+	},
 }
 
 export type IsoSdkConfiguration = ReturnType<

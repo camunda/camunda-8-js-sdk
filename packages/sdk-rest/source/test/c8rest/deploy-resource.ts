@@ -7,6 +7,7 @@ import {promisify} from 'node:util'
 import test from 'ava'
 import multiparty from 'multiparty';
 import {CamundaRestClient} from '../../c8-rest/index.js'
+import {loadResourcesFromFiles} from '../helpers/_load-resources.js'
 
 type HttpTestServer = http.Server & {
 	stop: () => Promise<void>;
@@ -88,7 +89,8 @@ test('Correctly sends a deploy request', async t => {
 			CAMUNDA_AUTH_STRATEGY: 'NONE',
 		},
 	})
-	const response = await client.deployResourcesFromFiles({files: [path.join('distribution', 'test', 'resources', 'MigrateProcess-Rest-Version-1.bpmn')]})
+	const resources = loadResourcesFromFiles([path.join('distribution', 'test', 'resources', 'MigrateProcess-Rest-Version-1.bpmn')])
+	const response = await client.deployResources({resources})
 
 	t.is(response.deployments.length, 1)
 	t.is(response.processDefinitions[0].processDefinitionKey, '2343232')

@@ -4,6 +4,7 @@ import delay from 'delay'
 import {type HTTPError} from 'ky'
 import {CamundaRestClient} from '../../../c8-rest/camunda-rest-client.js'
 import {OperateApiClient} from '../../../operate/index.js'
+import {loadResourcesFromFiles} from '../../helpers/_load-resources.js'
 
 test('It can get the process instance from green tenant and not the red tenant', async t => {
 	/**
@@ -26,8 +27,8 @@ test('It can get the process instance from green tenant and not the red tenant',
 	})
 	const zbc = new CamundaRestClient()
 	// Deploy to green tenant
-	await zbc.deployResourcesFromFiles({
-		files: ['./test/resources/OperateMultitenancy.bpmn'],
+	await zbc.deployResources({
+		resources: loadResourcesFromFiles(['./test/resources/OperateMultitenancy.bpmn']),
 		tenantId: 'green',
 	})
 
