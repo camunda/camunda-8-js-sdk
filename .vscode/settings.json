@@ -9,7 +9,8 @@
 		"operate",
 		"camunda8",
 		"optimize",
-		"lossless-parser"
+		"lossless-parser",
+		"sdk-rest"
 	],
 	"editor.formatOnSave": true,
 	"xo.enable": true,

@@ -178,10 +178,10 @@ export class CamundaJobWorker<
 		JobCompletionInterfaceRest<ProcessVariables>,
 	) {
 		try {
-			this.log.debug(`Invoking job handler for job ${job.key}`, this.logMeta())
+			this.log.debug(`Invoking job handler for job ${job.jobKey}`, this.logMeta())
 			await this.config.jobHandler(job, this.log)
 			this.log.debug(
-				`Completed job handler for job ${job.key}.`,
+				`Completed job handler for job ${job.jobKey}.`,
 				this.logMeta(),
 			)
 		} catch (error) {
@@ -189,7 +189,7 @@ export class CamundaJobWorker<
 			if (error instanceof Error) {
 				// If err is an instance of Error, we can safely access its properties
 				this.log.error(
-					`Unhandled exception in job handler for job ${job.key}`,
+					`Unhandled exception in job handler for job ${job.jobKey}`,
 					this.logMeta(),
 				)
 				this.log.error(`Error: ${error.message}`, {

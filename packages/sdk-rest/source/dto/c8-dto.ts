@@ -463,7 +463,7 @@ export type Job<
 	CustomHeaderShape = CustomHeaders,
 > = {
 	/** The key, a unique identifier for the job */
-	readonly key: string;
+	readonly jobKey: string;
 	/**
 	 * The job type, as defined in the BPMN process (e.g. <zeebe:taskDefinition
 	 * type="payment-service" />)

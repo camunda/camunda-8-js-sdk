@@ -844,25 +844,25 @@ export class CamundaRestClient {
 		},
 		complete: async (variables: Dto.ProcessVariables = {}) =>
 			this.completeJob({
-				jobKey: job.key,
+				jobKey: job.jobKey,
 				variables,
 			}),
 		error: async error =>
 			this.errorJob({
 				...error,
-				jobKey: job.key,
+				jobKey: job.jobKey,
 			}),
 		fail: async failJobRequest =>
 			this.failJob({
 				retries: job.retries - 1,
 				retryBackOff: 0,
 				...failJobRequest,
-				jobKey: job.key,
+				jobKey: job.jobKey,
 			}),
 		/* This has an effect in a Job Worker, decrementing the currently active job count */
 		forward: () => Dto.jobActionAcknowledgement,
 		modifyJobTimeout: async ({newTimeoutMs}: {newTimeoutMs: number}) =>
-			this.updateJob({jobKey: job.key, timeout: newTimeoutMs}),
+			this.updateJob({jobKey: job.jobKey, timeout: newTimeoutMs}),
 	})
 
 	/**
