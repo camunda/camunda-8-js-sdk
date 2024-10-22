@@ -1,14 +1,14 @@
 import { LosslessNumber } from 'lossless-json'
 
 import { Int64String, LosslessDto } from '../../lib'
-import { JSONDoc } from '../../zeebe/types'
+import { ICustomHeaders, IInputVariables, JSONDoc } from '../../zeebe/types'
 
 export class RestApiJob<
 	Variables = LosslessDto,
 	CustomHeaders = LosslessDto,
 > extends LosslessDto {
 	@Int64String
-	key!: string
+	jobKey!: string
 	type!: string
 	@Int64String
 	processInstanceKey!: string
@@ -308,4 +308,48 @@ export interface PatchAuthorizationRequest {
 		/** A list of resource IDs the permission relates to. */
 		resourceIds: []
 	}[]
+}
+
+export interface RestJob<
+	Variables = IInputVariables,
+	CustomHeaderShape = ICustomHeaders,
+> {
+	/** The key, a unique identifier for the job */
+	readonly jobKey: string
+	/**
+	 * The job type, as defined in the BPMN process (e.g. <zeebe:taskDefinition
+	 * type="payment-service" />)
+	 */
+	readonly type: string
+	/** The job's process instance key */
+	readonly processInstanceKey: string
+	/** The bpmn process ID of the job process definition */
+	readonly bpmnProcessId: string
+	/** The version of the job process definition */
+	readonly processDefinitionVersion: number
+	/** The associated task element ID */
+	readonly elementId: string
+	/**
+	 * The unique key identifying the associated task, unique within the scope of the
+	 * process instance
+	 */
+	readonly elementInstanceKey: string
+	/**
+	 * A set of custom headers defined during modelling
+	 */
+	readonly customHeaders: Readonly<CustomHeaderShape>
+	/** The name of the worker that activated this job */
+	readonly worker: string
+	/* The amount of retries left to this job (should always be positive) */
+	readonly retries: number
+	/** Epoch milliseconds */
+	readonly deadline: string
+	/**
+	 * All visible variables in the task scope, computed at activation time.
+	 */
+	readonly variables: Readonly<Variables>
+	/**
+	 * The `tenantId` of the job in a multi-tenant cluster
+	 */
+	readonly tenantId: string
 }

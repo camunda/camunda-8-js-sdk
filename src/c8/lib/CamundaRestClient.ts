@@ -4,7 +4,6 @@ import { debug } from 'debug'
 import FormData from 'form-data'
 import got from 'got'
 import { parse, stringify } from 'lossless-json'
-import winston from 'winston'
 
 import {
 	Camunda8ClientConfiguration,
@@ -29,7 +28,6 @@ import {
 	ErrorJobWithVariables,
 	FailJobRequest,
 	IProcessVariables,
-	Job,
 	JOB_ACTION_ACKNOWLEDGEMENT,
 	JobCompletionInterfaceRest,
 	JSONDoc,
@@ -54,10 +52,11 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	RestJob,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
 } from './C8Dto'
-import { getLogger } from './C8Logger'
+import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
@@ -77,14 +76,14 @@ class DefaultLosslessDto extends LosslessDto {}
  * `CAMUNDA_LOG_LEVEL` in the environment or the constructor options can be used to set the log level to one of 'error', 'warn', 'info', 'http', 'verbose', 'debug', or 'silly'.
  *
  * @since 8.6.0
- *
+ * @experimental this API may be removed from this package in a future version, and moved to an ESM package. Can you use ESM in your project? Comment [on this issue](https://github.com/camunda/camunda-8-js-sdk/issues/267).
  */
 export class CamundaRestClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
 	private rest: Promise<typeof got>
 	private tenantId?: string
-	public log: winston.Logger
+	public log: Logger
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
@@ -97,7 +96,7 @@ export class CamundaRestClient {
 			options?.config ?? {}
 		)
 		this.log = getLogger(config)
-		this.log.info(`Using REST API version ${CAMUNDA_REST_API_VERSION}`)
+		this.log.debug(`Using REST API version ${CAMUNDA_REST_API_VERSION}`)
 		trace('options.config', options?.config)
 		trace('config', config)
 		this.oAuthProvider =
@@ -136,7 +135,7 @@ export class CamundaRestClient {
 								trace(`${method} ${path}`)
 								trace(body)
 								this.log.debug(`${method} ${path}`)
-								this.log.silly(body)
+								this.log.trace(body?.toString())
 							},
 							...(config.middleware ?? []),
 						],
@@ -443,7 +442,7 @@ export class CamundaRestClient {
 			customHeadersDto?: Ctor<CustomHeadersDto>
 		}
 	): Promise<
-		(Job<VariablesDto, CustomHeadersDto> &
+		(RestJob<VariablesDto, CustomHeadersDto> &
 			JobCompletionInterfaceRest<IProcessVariables>)[]
 	> {
 		const headers = await this.getHeaders()
@@ -475,7 +474,7 @@ export class CamundaRestClient {
 					headers,
 					parseJson: (text) => losslessParse(text, jobDto, 'jobs'),
 				})
-				.json<Job<VariablesDto, CustomHeadersDto>[]>()
+				.json<RestJob<VariablesDto, CustomHeadersDto>[]>()
 				.then((activatedJobs) => activatedJobs.map(this.addJobMethods))
 		)
 	}
@@ -773,10 +772,12 @@ export class CamundaRestClient {
 		 */
 		const isProcessDeployment = (
 			deployment
-		): deployment is { processDefinition: ProcessDeployment } => !!deployment.processDefinition
+		): deployment is { processDefinition: ProcessDeployment } =>
+			!!deployment.processDefinition
 		const isDecisionDeployment = (
 			deployment
-		): deployment is { decisionDefinition: DecisionDeployment } => !!deployment.decisionDefinition
+		): deployment is { decisionDefinition: DecisionDeployment } =>
+			!!deployment.decisionDefinition
 		const isDecisionRequirementsDeployment = (
 			deployment
 		): deployment is { decisionRequirements: DecisionRequirementsDeployment } =>
@@ -796,7 +797,9 @@ export class CamundaRestClient {
 					stringify(deployment.processDefinition)!,
 					ProcessDeployment
 				)
-				deploymentResponse.deployments.push({ processDefinition: processDeployment })
+				deploymentResponse.deployments.push({
+					processDefinition: processDeployment,
+				})
 				deploymentResponse.processes.push(processDeployment)
 			}
 			if (isDecisionDeployment(deployment)) {
@@ -804,7 +807,9 @@ export class CamundaRestClient {
 					stringify(deployment)!,
 					DecisionDeployment
 				)
-				deploymentResponse.deployments.push({ decisionDefinition: decisionDeployment })
+				deploymentResponse.deployments.push({
+					decisionDefinition: decisionDeployment,
+				})
 				deploymentResponse.decisions.push(decisionDeployment)
 			}
 			if (isDecisionRequirementsDeployment(deployment)) {
@@ -927,8 +932,8 @@ export class CamundaRestClient {
 	}
 
 	private addJobMethods = <Variables, CustomHeaders>(
-		job: Job<Variables, CustomHeaders>
-	): Job<Variables, CustomHeaders> &
+		job: RestJob<Variables, CustomHeaders>
+	): RestJob<Variables, CustomHeaders> &
 		JobCompletionInterfaceRest<IProcessVariables> => {
 		return {
 			...job,
@@ -937,19 +942,19 @@ export class CamundaRestClient {
 			},
 			complete: (variables: IProcessVariables = {}) =>
 				this.completeJob({
-					jobKey: job.key,
+					jobKey: job.jobKey,
 					variables,
 				}),
 			error: (error) =>
 				this.errorJob({
 					...error,
-					jobKey: job.key,
+					jobKey: job.jobKey,
 				}),
 			fail: (failJobRequest) => this.failJob(failJobRequest),
 			/* This has an effect in a Job Worker, decrementing the currently active job count */
 			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
 			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
-				this.updateJob({ jobKey: job.key, timeout: newTimeoutMs }),
+				this.updateJob({ jobKey: job.jobKey, timeout: newTimeoutMs }),
 		}
 	}
 

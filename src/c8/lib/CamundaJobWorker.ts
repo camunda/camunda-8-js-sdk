@@ -1,19 +1,17 @@
 import { EventEmitter } from 'events'
 
 import TypedEmitter from 'typed-emitter'
-import winston from 'winston'
 
 import { LosslessDto } from '../../lib'
 import {
 	ActivateJobsRequest,
 	IProcessVariables,
-	Job,
 	JobCompletionInterfaceRest,
 	MustReturnJobActionAcknowledgement,
 } from '../../zeebe/types'
 
-import { Ctor } from './C8Dto'
-import { getLogger } from './C8Logger'
+import { Ctor, RestJob } from './C8Dto'
+import { getLogger, Logger } from './C8Logger'
 import { CamundaRestClient } from './CamundaRestClient'
 
 type CamundaJobWorkerEvents = {
@@ -40,11 +38,11 @@ export interface CamundaJobWorkerConfig<
 	/** How often the worker will poll for new jobs. Defaults to 30s */
 	pollIntervalMs?: number
 	jobHandler: (
-		job: Job<VariablesDto, CustomHeadersDto> &
+		job: RestJob<VariablesDto, CustomHeadersDto> &
 			JobCompletionInterfaceRest<IProcessVariables>,
-		log: winston.Logger
+		log: Logger
 	) => MustReturnJobActionAcknowledgement
-	logger?: winston.Logger
+	logger?: Logger
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
 	autoStart?: boolean
 }
@@ -57,7 +55,7 @@ export class CamundaJobWorker<
 	public capacity: number
 	private loopHandle?: NodeJS.Timeout
 	private pollInterval: number
-	public log: winston.Logger
+	public log: Logger
 	logMeta: () => {
 		worker: string
 		type: string
@@ -147,7 +145,7 @@ export class CamundaJobWorker<
 			return
 		}
 
-		this.log.silly(`Polling for jobs`, this.logMeta())
+		this.log.trace(`Polling for jobs`, this.logMeta())
 
 		const remainingJobCapacity =
 			this.config.maxJobsToActivate - this.currentlyActiveJobCount
@@ -167,14 +165,17 @@ export class CamundaJobWorker<
 	}
 
 	private async handleJob(
-		job: Job<VariablesDto, CustomHeadersDto> &
+		job: RestJob<VariablesDto, CustomHeadersDto> &
 			JobCompletionInterfaceRest<IProcessVariables>
 	) {
 		try {
-			this.log.debug(`Invoking job handler for job ${job.key}`, this.logMeta())
+			this.log.debug(
+				`Invoking job handler for job ${job.jobKey}`,
+				this.logMeta()
+			)
 			await this.config.jobHandler(job, this.log)
 			this.log.debug(
-				`Completed job handler for job ${job.key}.`,
+				`Completed job handler for job ${job.jobKey}.`,
 				this.logMeta()
 			)
 		} catch (e) {
@@ -182,7 +183,7 @@ export class CamundaJobWorker<
 			if (e instanceof Error) {
 				// If err is an instance of Error, we can safely access its properties
 				this.log.error(
-					`Unhandled exception in job handler for job ${job.key}`,
+					`Unhandled exception in job handler for job ${job.jobKey}`,
 					this.logMeta()
 				)
 				this.log.error(`Error: ${e.message}`, {
