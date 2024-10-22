@@ -128,8 +128,8 @@
 		"win-ca": "3.5.1"
 	},
 	"dependencies": {
-		"@camunda8/certificates": "^1.0.0",
-		"@camunda8/lossless-json": "^1.0.0",
+		"@camunda8/certificates": "workspace:*",
+		"@camunda8/lossless-json": "workspace:*",
 		"@grpc/grpc-js": "1.10.9",
 		"@grpc/proto-loader": "0.7.13",
 		"chalk": "^2.4.2",

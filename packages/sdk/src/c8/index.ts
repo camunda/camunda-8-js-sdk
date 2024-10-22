@@ -14,9 +14,6 @@ import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 
-import { getLogger } from './lib/C8Logger'
-import { CamundaRestClient } from './lib/CamundaRestClient'
-
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
  *
@@ -46,7 +43,6 @@ export class Camunda8 {
 	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IOAuthProvider
-	private camundaRestClient?: CamundaRestClient
 	public log: winston.Logger
 
 	/**
@@ -144,17 +140,5 @@ export class Camunda8 {
 			})
 		}
 		return this.zeebeRestClient
-	}
-
-	public getCamundaRestClient(
-		config: Camunda8ClientConfiguration = {}
-	): CamundaRestClient {
-		if (!this.camundaRestClient) {
-			this.camundaRestClient = new CamundaRestClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
-		}
-		return this.camundaRestClient
 	}
 }

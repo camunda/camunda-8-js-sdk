@@ -58,8 +58,8 @@
 		}
 	},
 	"dependencies": {
-		"@camunda8/lossless-json": "^1.0.0",
-		"@camunda8/oauth": "^8.6.2",
+		"@camunda8/lossless-json": "workspace:*",
+		"@camunda8/oauth": "workspace:*",
 		"@types/multiparty": "^4.2.1",
 		"debug": "^4.3.7",
 		"eventemitter3": "^5.0.1",
@@ -69,6 +69,7 @@
 	},
 	"devDependencies": {
 		"@ava/typescript": "^5.0.0",
+		"@types/debug": "^4.1.12",
 		"@types/node": "^22.7.5",
 		"@types/uuid": "^10.0.0",
 		"ava": "^6.1.3",

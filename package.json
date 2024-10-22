@@ -6,7 +6,7 @@
 		"test": "echo \"Error: no test specified\" && exit 0",
 		"sm:start": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d",
 		"sm:stop": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down",
-		"preinstall": "node ./check-yarn.js"
+		"preinstall": "node ./check-pnpm.js"
 	},
 	"private": true,
 	"type": "module",
@@ -14,15 +14,6 @@
 	"author": "",
 	"license": "ISC",
 	"description": "",
-	"workspaces": {
-		"packages": [
-			"packages/*"
-		],
-		"nohoist": [
-			"**",
-			"**/**"
-		]
-	},
 	"xo": {
 		"rules": {
 			"semicolon": false
