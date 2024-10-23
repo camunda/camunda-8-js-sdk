@@ -8,7 +8,7 @@ import {
 
 import * as Admin from './admin'
 import { Camunda8 } from './c8'
-import { CamundaRestClient } from './c8/lib/CamundaRestClient'
+// import { CamundaRestClient } from './c8/lib/CamundaRestClient'
 import * as Modeler from './modeler'
 import * as Auth from './oauth'
 import * as Operate from './operate'
@@ -30,7 +30,7 @@ export {
 	Admin,
 	Auth,
 	Camunda8,
-	CamundaRestClient,
+	// CamundaRestClient,
 	Modeler,
 	Operate,
 	Optimize,

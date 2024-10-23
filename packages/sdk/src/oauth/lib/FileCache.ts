@@ -5,6 +5,7 @@ import path from 'path'
 import { debug } from 'debug'
 
 import { CamundaPlatform8Configuration } from '../../lib'
+import { OAuthProvider } from './OAuthProvider'
 
 const trace = debug('camunda:oauth')
 

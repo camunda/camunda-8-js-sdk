@@ -1,5 +1,3 @@
-import winston from 'winston'
-
 import { AdminApiClient } from '../admin'
 import {
 	Camunda8ClientConfiguration,
@@ -13,6 +11,7 @@ import { OperateApiClient } from '../operate'
 import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
+import { getLogger, ILogger } from '../lib/C8Logger'
 
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
@@ -43,7 +42,7 @@ export class Camunda8 {
 	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IOAuthProvider
-	public log: winston.Logger
+	public log: ILogger
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.

@@ -49,6 +49,25 @@ export class OAuthProvider implements IOAuthProvider {
 	private refreshWindow: number
 	private rest: Promise<typeof got>
 
+	public static isTokenExpired(token: Token, refreshWindow: number) {
+		const d = new Date()
+		const currentTime = d.setSeconds(d.getSeconds())
+
+		// Token.expiry is seconds since Unix Epoch
+		// The Date constructor expects milliseconds since Unix Epoch
+		const tokenExpiryMs = token.expiry * 1000
+
+		trace(`Checking token expiry for ${token.audience}`)
+		trace(`  Current time: ${currentTime}`)
+		trace(`  Token expiry: ${tokenExpiryMs}`)
+
+		// If the token has 10 seconds (by default) or less left, renew it.
+		// The Identity server token cache is cleared 30 seconds before the token expires, allowing us to renew it
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/125
+		const tokenIsExpired = currentTime >= tokenExpiryMs - refreshWindow
+		return tokenIsExpired
+	}
+
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
 	}) {

@@ -1,7 +1,7 @@
 import { BeforeRequestHook } from 'got'
 import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
-import winston from 'winston'
+import { ILogger } from './C8Logger'
 
 const getMainEnv = () =>
 	createEnv({
@@ -443,5 +443,5 @@ export type DeepPartial<T> = {
 
 export type Camunda8ClientConfiguration =
 	DeepPartial<CamundaPlatform8Configuration> & {
-		logger?: winston.Logger
+		logger?: ILogger
 	}

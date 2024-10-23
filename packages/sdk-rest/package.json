@@ -15,6 +15,11 @@
 		"format": "xo --fix",
 		"write-package-version": "node ../../write-package-version.js"
 	},
+	"lint-staged": {
+		"**/*.ts": [
+			"xo --write"
+		]
+	},
 	"keywords": [
 		"zeebe",
 		"zeebe-node",

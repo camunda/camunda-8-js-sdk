@@ -21,7 +21,6 @@
 		"test:smoketest": "npm run build && node smoke-test/smoke-test.js && npx tsd --typings dist/",
 		"prepublishOnly": "npm run build && npm run test",
 		"commit": "cz",
-		"prepare": "husky install",
 		"lint": "eslint 'src/**/*.{ts,tsx}'",
 		"format": "prettier --write 'src/**/*.ts'"
 	},

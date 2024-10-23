@@ -1,6 +1,6 @@
 import { createLogger, format, transports } from 'winston'
 
-import { IsoSdkClientConfiguration, IsoSdkEnvironmentConfigurator } from '.'
+import { Camunda8ClientConfiguration, CamundaEnvironmentConfigurator } from '.'
 
 let cachedLogger: ILogger | undefined
 
@@ -14,9 +14,9 @@ export interface ILogger {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export function getLogger(config: IsoSdkClientConfiguration = {}) {
+export function getLogger(config: Camunda8ClientConfiguration = {}) {
 	const configuration =
-		IsoSdkEnvironmentConfigurator.mergeConfigWithEnvironment(config)
+		CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
 	if (config.logger) {
 		return config.logger
 	}

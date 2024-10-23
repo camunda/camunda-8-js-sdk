@@ -1,4 +1,4 @@
-import { LosslessNumber } from 'lossless-json'
+import { LosslessNumber } from '@camunda8/lossless-json'
 
 import {
 	HTTPError,

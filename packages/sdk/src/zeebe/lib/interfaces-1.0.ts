@@ -1,7 +1,7 @@
 import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
 import { Response } from 'got'
-import { LosslessNumber } from 'lossless-json'
+import { LosslessNumber } from '@camunda8/lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
 import { GrpcClient } from './GrpcClient'

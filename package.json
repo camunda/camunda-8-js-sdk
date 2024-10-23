@@ -3,10 +3,12 @@
 	"version": "1.0.0",
 	"main": "commitlint.config.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 0",
+		"test": "pnpm -r run test",
 		"sm:start": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d",
 		"sm:stop": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down",
-		"preinstall": "node ./check-pnpm.js"
+		"build": "pnpm -r run build",
+		"preinstall": "node ./check-pnpm.js",
+		"prepare": "husky install"
 	},
 	"private": true,
 	"type": "module",
@@ -38,6 +40,7 @@
 	"devDependencies": {
 		"@commitlint/config-conventional": "^19.5.0",
 		"commitlint": "^19.5.0",
+		"husky": "^8.0.3",
 		"lint-staged": "^15.2.10",
 		"prettier": "^3.3.3"
 	}

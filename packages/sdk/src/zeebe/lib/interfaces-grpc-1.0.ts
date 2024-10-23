@@ -1,4 +1,4 @@
-import { LosslessNumber } from 'lossless-json'
+import { LosslessNumber } from '@camunda8/lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
 import { IInputVariables, IProcessVariables, JSONDoc } from './interfaces-1.0'
