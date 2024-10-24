@@ -43,12 +43,11 @@ export interface CreateFileDto {
 	/** maxLength: 255, minLength: 1 */
 	name: string
 	/** maxLength: 255, minLength: 1 */
-	folderId: string
+	folderId?: string
 	/** maxLength: 255, minLength: 1 */
-	projectId: string
+	projectId?: string
 	content: string
-	fileType: string
-	pattern: 'bpmn' | 'dmn' | 'form' | 'connector_template'
+	fileType: 'bpmn' | 'dmn' | 'form' | 'connector_template'
 }
 
 export interface PathElementDto {
@@ -112,7 +111,7 @@ export interface CreateFolderDto {
 	/** maxLength: 255 minLength: 1 */
 	projectId: string
 	/** maxLength: 255 minLength: 1 */
-	parentId: string
+	parentId?: string
 }
 
 export interface FolderMetadataDto {
