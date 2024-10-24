@@ -213,9 +213,11 @@ export class ModelerApiClient {
 	async deleteFile(fileId: string): Promise<null> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`files/${fileId}`, {
-			headers,
-		}).then(this.decodeResponseOrThrow) as Promise<null>
+		return rest
+			.delete(`files/${fileId}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**
@@ -241,12 +243,14 @@ export class ModelerApiClient {
 	): Promise<Dto.FileMetadataDto> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`files/${fileId}`, {
-			headers,
-			body: JSON.stringify(update),
-		}).then((res) =>
-			JSON.parse(this.decodeResponseOrThrow(res))
-		) as Promise<Dto.FileMetadataDto>
+		return rest
+			.patch(`files/${fileId}`, {
+				headers,
+				body: JSON.stringify(update),
+			})
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.FileMetadataDto>
 	}
 
 	/**
@@ -280,12 +284,14 @@ export class ModelerApiClient {
 	): Promise<Dto.PubSearchResultDtoFileMetadataDto> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`files/search`, {
-			headers,
-			body: JSON.stringify(req),
-		}).then((res) =>
-			JSON.parse(this.decodeResponseOrThrow(res))
-		) as Promise<Dto.PubSearchResultDtoFileMetadataDto>
+		return rest
+			.post(`files/search`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.PubSearchResultDtoFileMetadataDto>
 	}
 
 	/**
