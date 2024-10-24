@@ -1,3 +1,10 @@
+## [8.6.15](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.14...v8.6.15) (2024-10-24)
+
+
+### Bug Fixes
+
+* **modeler:** correct HTTP methods for file methods. fixes [#269](https://github.com/camunda/camunda-8-js-sdk/issues/269) ([7819baa](https://github.com/camunda/camunda-8-js-sdk/commit/7819baa83124a4e0cdf40e33e55803a64a1b6282))
+
 ## [8.6.14](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.13...v8.6.14) (2024-10-24)
 
 
