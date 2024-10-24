@@ -1,5 +1,8 @@
+import { BeforeRequestHook } from 'got'
 import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
+
+import { Logger } from '../c8/lib/C8Logger'
 
 const getMainEnv = () =>
 	createEnv({
@@ -20,10 +23,18 @@ const getMainEnv = () =>
 			optional: true,
 			default: 1000,
 		},
+		/** The log level for logging. Defaults to 'info'. Values (in order of priority): 'error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly' */
+		CAMUNDA_LOG_LEVEL: {
+			type: 'string',
+			optional: true,
+			choices: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+			default: 'info',
+		},
 		/** The address for the Zeebe GRPC. */
 		ZEEBE_GRPC_ADDRESS: {
 			type: 'string',
 			optional: true,
+			default: 'localhost:26500',
 		},
 		/** The address for the Zeebe REST API. Defaults to localhost:8080 */
 		ZEEBE_REST_ADDRESS: {
@@ -35,7 +46,6 @@ const getMainEnv = () =>
 		ZEEBE_ADDRESS: {
 			type: 'string',
 			optional: true,
-			default: 'localhost:26500',
 		},
 		/** This is the client ID for the client credentials */
 		ZEEBE_CLIENT_ID: {
@@ -357,9 +367,8 @@ const getEnv = () => ({
 
 // Helper type for enforcing array contents to match an object's keys
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type EnforceArrayContent<T, K extends keyof any> = T extends Array<K>
-	? T
-	: never
+type EnforceArrayContent<T, K extends keyof any> =
+	T extends Array<K> ? T : never
 
 // Function to create a complete keys array, enforcing completeness at compile time
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -378,6 +387,7 @@ export const CamundaEnvironmentVariableDictionary =
 		'CAMUNDA_CONSOLE_CLIENT_ID',
 		'CAMUNDA_CONSOLE_CLIENT_SECRET',
 		'CAMUNDA_CONSOLE_OAUTH_AUDIENCE',
+		'CAMUNDA_LOG_LEVEL',
 		'CAMUNDA_MODELER_BASE_URL',
 		'CAMUNDA_MODELER_OAUTH_AUDIENCE',
 		'CAMUNDA_OPERATE_BASE_URL',
@@ -424,8 +434,15 @@ export class CamundaEnvironmentConfigurator {
 
 export type CamundaPlatform8Configuration = ReturnType<
 	typeof CamundaEnvironmentConfigurator.ENV
->
+> & {
+	middleware?: BeforeRequestHook[]
+}
 
 export type DeepPartial<T> = {
 	[K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
 }
+
+export type Camunda8ClientConfiguration =
+	DeepPartial<CamundaPlatform8Configuration> & {
+		logger?: Logger
+	}

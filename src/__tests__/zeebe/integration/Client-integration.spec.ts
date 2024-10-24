@@ -70,7 +70,7 @@ test("does not retry to cancel a process instance that doesn't exist", async () 
 	// See: https://github.com/zeebe-io/zeebe/issues/2680
 	// await zbc.cancelProcessInstance('123LoL')
 	try {
-		await zbc.cancelProcessInstance(2251799813686202)
+		await zbc.cancelProcessInstance('2251799813686202')
 	} catch (e: unknown) {
 		expect((e as Error).message.indexOf('5 NOT_FOUND:')).toBe(0)
 	}
