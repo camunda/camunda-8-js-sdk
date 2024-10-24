@@ -1,7 +1,6 @@
 import path from 'path'
 
-import { CamundaJobWorker } from 'c8/lib/CamundaJobWorker'
-
+import { CamundaJobWorker } from '../../../c8/lib/CamundaJobWorker'
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
 
@@ -41,9 +40,6 @@ test('RestClient can migrate a process instance', async () => {
 			worker: 'Migrant Worker 1',
 			customHeadersDto: CustomHeaders,
 			jobHandler: async (job) => {
-				// tslint:disable-next-line: no-console
-				console.log('job', job) // @DEBUG
-
 				instanceKey = job.processInstanceKey
 				processVersion = job.customHeaders.ProcessVersion as number
 				return job.complete().then(async (outcome) => {
