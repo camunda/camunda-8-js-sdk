@@ -89,6 +89,7 @@ export class OptimizeApiClient {
 							),
 						],
 						beforeError: [gotBeforeErrorHook],
+						beforeRequest: config.middleware ?? [],
 					},
 				})
 		)

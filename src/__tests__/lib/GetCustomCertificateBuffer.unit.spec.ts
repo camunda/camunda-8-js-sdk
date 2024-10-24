@@ -5,6 +5,7 @@ import path from 'path'
 import { loadPackageDefinition, Server, ServerCredentials } from '@grpc/grpc-js'
 import { loadSync } from '@grpc/proto-loader'
 import express from 'express'
+import { getPort } from 'get-port-please'
 
 import {
 	BrokerInfo,
@@ -82,86 +83,95 @@ test('Can use a custom root certificate to connect to a REST API', async () => {
 	server.close()
 })
 
-test('gRPC server with self-signed certificate', (done) => {
-	// Load the protobuf definition
-	const packageDefinition = loadSync(
-		path.join(__dirname, '..', '..', 'proto', 'zeebe.proto'),
-		{
-			keepCase: true,
-			longs: String,
-			enums: String,
-			defaults: true,
-			oneofs: true,
-		}
-	)
-
-	const zeebeProto = loadPackageDefinition(
-		packageDefinition
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	) as unknown as { gateway_protocol: { Gateway: any } }
-
-	// Create the server
-	server = new Server()
-
-	// Add a service to the server
-	server.addService(zeebeProto.gateway_protocol.Gateway.service, {
-		Topology: (_, callback) => {
-			const t = new TopologyResponse()
-			const b = new BrokerInfo()
-			b.setHost('localhost')
-			const partition = new Partition()
-			partition.setHealth(0)
-			partition.setPartitionid(0)
-			partition.setRole(0)
-			b.setPartitionsList([partition])
-			t.setBrokersList([b])
-			callback(null, t)
-		},
-		// Implement your service methods here
-	})
-
-	// Read the key and certificate
-	const key = fs.readFileSync(path.join(__dirname, 'localhost.key'))
-	const cert = fs.readFileSync(path.join(__dirname, 'localhost.crt'))
-
-	// Start the server
-	server.bindAsync(
-		'localhost:50051',
-		ServerCredentials.createSsl(null, [
+test('gRPC server with self-signed certificate', async () => {
+	// eslint-disable-next-line no-async-promise-executor
+	return new Promise<void>(async (resolve) => {
+		// Load the protobuf definition
+		const packageDefinition = loadSync(
+			path.join(__dirname, '..', '..', 'proto', 'zeebe.proto'),
 			{
-				private_key: key,
-				cert_chain: cert,
-			},
-		]),
-		(err) => {
-			if (err) {
-				console.error(err)
-				done()
-				return
+				keepCase: true,
+				longs: String,
+				enums: String,
+				defaults: true,
+				oneofs: true,
 			}
+		)
 
-			const zbc = new ZeebeGrpcClient({
-				config: {
-					CAMUNDA_OAUTH_DISABLED: true,
-					ZEEBE_ADDRESS: 'localhost:50051',
-					CAMUNDA_CUSTOM_ROOT_CERT_PATH: path.join(__dirname, 'localhost.crt'),
-					CAMUNDA_SECURE_CONNECTION: true,
-					zeebeGrpcSettings: {
-						ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
-					},
+		const zeebeProto = loadPackageDefinition(
+			packageDefinition
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		) as unknown as { gateway_protocol: { Gateway: any } }
+
+		// Create the server
+		server = new Server()
+
+		// Add a service to the server
+		server.addService(zeebeProto.gateway_protocol.Gateway.service, {
+			Topology: (_, callback) => {
+				const t = new TopologyResponse()
+				const b = new BrokerInfo()
+				b.setHost('localhost')
+				const partition = new Partition()
+				partition.setHealth(0)
+				partition.setPartitionid(0)
+				partition.setRole(0)
+				b.setPartitionsList([partition])
+				t.setBrokersList([b])
+				callback(null, t)
+			},
+			// Implement your service methods here
+		})
+
+		// Read the key and certificate
+		const key = fs.readFileSync(path.join(__dirname, 'localhost.key'))
+		const cert = fs.readFileSync(path.join(__dirname, 'localhost.crt'))
+
+		const port = await getPort()
+
+		// Start the server
+		server.bindAsync(
+			`localhost:${port}`,
+			ServerCredentials.createSsl(null, [
+				{
+					private_key: key,
+					cert_chain: cert,
 				},
-			})
-			zbc.topology().then(() => {
-				expect(true).toBe(true)
-				zbc.close()
-				// Stop the server after the test
-				server.tryShutdown((err) => {
-					if (err) console.error(err)
-					done()
+			]),
+			(err) => {
+				if (err) {
+					console.error(err)
+					resolve()
+					return
+				}
+
+				const zbc = new ZeebeGrpcClient({
+					config: {
+						CAMUNDA_OAUTH_DISABLED: true,
+						ZEEBE_ADDRESS: `localhost:${port}`,
+						CAMUNDA_CUSTOM_ROOT_CERT_PATH: path.join(
+							__dirname,
+							'localhost.crt'
+						),
+						CAMUNDA_SECURE_CONNECTION: true,
+						zeebeGrpcSettings: {
+							ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
+						},
+					},
 				})
-			})
-		}
-	)
+				zbc.topology().then(() => {
+					expect(true).toBe(true)
+					zbc.close()
+					// Stop the server after the test
+					server.tryShutdown((err) => {
+						if (err) console.error(err)
+						resolve()
+						return
+					})
+				})
+			}
+		)
+	})
 })
 
 test('gRPC server with self-signed certificate provided via string', (done) => {

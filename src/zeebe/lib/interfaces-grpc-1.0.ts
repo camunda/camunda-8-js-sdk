@@ -1,3 +1,4 @@
+import { LosslessNumber } from 'lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
 import { IInputVariables, IProcessVariables, JSONDoc } from './interfaces-1.0'
@@ -60,7 +61,7 @@ export interface ActivateJobsRequest {
 	 * To immediately complete the request when no job is activated set the requestTimeout to a negative value
 	 *
 	 */
-	requestTimeout: MaybeTimeDuration
+	requestTimeout?: MaybeTimeDuration
 	/**
 	 * a list of IDs of tenants for which to activate jobs
 	 */
@@ -142,6 +143,8 @@ export interface CreateProcessInstanceRequest
 	 * instructions after it has been created
 	 */
 	startInstructions: ProcessInstanceCreationStartInstruction[]
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
 }
 
 export interface ProcessInstanceCreationStartInstruction {
@@ -463,12 +466,16 @@ export interface PublishStartMessageRequest<Variables = IProcessVariables> {
 export interface UpdateJobRetriesRequest {
 	readonly jobKey: string
 	retries: number
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
 }
 
 export interface UpdateJobTimeoutRequest {
 	readonly jobKey: string
 	/** the duration of the new timeout in ms, starting from the current moment */
 	timeout: number
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
 }
 
 export interface FailJobRequest {
@@ -476,6 +483,7 @@ export interface FailJobRequest {
 	retries: number
 	errorMessage: string
 	retryBackOff: number
+	variables?: JSONDoc
 }
 
 export interface ThrowErrorRequest {
@@ -521,14 +529,19 @@ interface SetVariablesRequestBase {
 export interface SetVariablesRequest<Variables = IProcessVariables>
 	extends SetVariablesRequestBase {
 	variables: Partial<Variables>
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
 }
 
 export interface SetVariablesRequestOnTheWire extends SetVariablesRequestBase {
 	variables: string
+	operationReference?: string
 }
 
 export interface ResolveIncidentRequest {
 	readonly incidentKey: string
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
 }
 
 export interface ActivateInstruction {
@@ -575,6 +588,8 @@ export interface ModifyProcessInstanceRequest {
 	activateInstructions?: ActivateInstruction[]
 	/** instructions describing which elements should be terminated */
 	terminateInstructions?: TerminateInstruction[]
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
 }
 
 export type ModifyProcessInstanceResponse = Record<string, never>
@@ -584,16 +599,18 @@ export interface MigrateProcessInstanceRequest {
 	processInstanceKey: string
 	// the migration plan that defines target process and element mappings
 	migrationPlan: MigrationPlan
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: string
 }
 
-interface MigrationPlan {
+export interface MigrationPlan {
 	// the key of process definition to migrate the process instance to
 	targetProcessDefinitionKey: string
 	// the mapping instructions describe how to map elements from the source process definition to the target process definition
 	mappingInstructions: MappingInstruction[]
 }
 
-interface MappingInstruction {
+export interface MappingInstruction {
 	// the element id to migrate from
 	sourceElementId: string
 	// the element id to migrate into
@@ -743,6 +760,8 @@ export interface DeleteResourceRequest {
 	 * of a process definition, the key of a decision requirements definition or the key of a form.
 	 */
 	resourceKey: string
+	/** a reference key chosen by the user and will be part of all records resulted from this operation */
+	operationReference?: number | LosslessNumber
 }
 
 export interface BroadcastSignalRequest {

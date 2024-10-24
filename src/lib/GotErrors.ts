@@ -20,7 +20,7 @@ export class HTTPError extends Got.HTTPError {
 	}
 }
 
-export type RESTError =
+export type RestError =
 	| HTTPError
 	| Got.RequestError
 	| Got.ReadError

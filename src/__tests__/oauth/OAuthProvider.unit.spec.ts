@@ -249,13 +249,13 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Uses form encoding for request', (done) => {
-		const serverPort3001 = 3001
+		const serverPort3010 = 3010
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId8',
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3001}`,
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3010}`,
 			},
 		})
 		const secret = 'YOUR_SECRET'
@@ -281,7 +281,7 @@ describe('OAuthProvider', () => {
 					})
 				}
 			})
-			.listen(serverPort3001)
+			.listen(serverPort3010)
 		o.getToken('OPERATE')
 	})
 

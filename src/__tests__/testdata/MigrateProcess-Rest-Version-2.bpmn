@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1cfwunf" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.4.0">
+  <bpmn:process id="migrant-work-rest" name="migrant-work" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start MigrationTest Process">
+      <bpmn:outgoing>Flow_167nn02</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_167nn02" sourceRef="StartEvent_1" targetRef="Activity_1fbznct" />
+    <bpmn:endEvent id="Event_0zwmdqk" name="End">
+      <bpmn:incoming>Flow_1r250pk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Activity_1fbznct" name="Migrant Worker Task 1">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="migrant-rest-worker-task-1" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="ProcessVersion" value="2" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_167nn02</bpmn:incoming>
+      <bpmn:outgoing>Flow_04fsyv6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1r250pk" sourceRef="Activity_0wjb7yn" targetRef="Event_0zwmdqk" />
+    <bpmn:sequenceFlow id="Flow_04fsyv6" sourceRef="Activity_1fbznct" targetRef="Activity_050vmrm" />
+    <bpmn:serviceTask id="Activity_0wjb7yn" name="Migrant Worker Task 2">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="migrant-rest-worker-task-2" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="ProcessVersion" value="2" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1igeic8</bpmn:incoming>
+      <bpmn:outgoing>Flow_1r250pk</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1igeic8" sourceRef="Activity_050vmrm" targetRef="Activity_0wjb7yn" />
+    <bpmn:serviceTask id="Activity_050vmrm" name="Migration Checkpoint">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="migration-rest-checkpoint" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04fsyv6</bpmn:incoming>
+      <bpmn:outgoing>Flow_1igeic8</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmn:message id="Message_2h617dg" name="MigrationFinished">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=messageCorrelationKey" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="migrant-work-rest">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="164" y="142" width="66" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0zwmdqk_di" bpmnElement="Event_0zwmdqk">
+        <dc:Bounds x="822" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="830" y="142" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1rj9fgz_di" bpmnElement="Activity_1fbznct">
+        <dc:Bounds x="330" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0uo9rxu_di" bpmnElement="Activity_0wjb7yn">
+        <dc:Bounds x="600" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1io10nl_di" bpmnElement="Activity_050vmrm">
+        <dc:Bounds x="460" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_167nn02_di" bpmnElement="Flow_167nn02">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="330" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1r250pk_di" bpmnElement="Flow_1r250pk">
+        <di:waypoint x="700" y="117" />
+        <di:waypoint x="822" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04fsyv6_di" bpmnElement="Flow_04fsyv6">
+        <di:waypoint x="430" y="117" />
+        <di:waypoint x="460" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1igeic8_di" bpmnElement="Flow_1igeic8">
+        <di:waypoint x="560" y="117" />
+        <di:waypoint x="600" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -35,6 +35,9 @@ interface TaskChangeSet {
 	candidateGroups?: string[]
 }
 
+/**
+ * @deprecated Since 8.6. Please use `C8RestClient` instead.
+ */
 export class ZeebeRestClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider

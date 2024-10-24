@@ -22,18 +22,22 @@ export const gotErrorHandler = (options, next) => {
  */
 export const gotBeforeErrorHook = (error) => {
 	const { request } = error
+	let detail = ''
 	if (error instanceof GotHTTPError) {
 		error = new HTTPError(error.response)
 		try {
-			const details = JSON.parse((error.response?.body as string) || '{}')
+			const details = JSON.parse(
+				(error.response?.body as string) || '{detail:""}'
+			)
 			error.statusCode = details.status
+			detail = details.detail ?? ''
 		} catch (e) {
 			error.statusCode = 0
 		}
 	}
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	;(error as any).source = (error as any).options.context.stack.split('\n')
-	error.message += ` (request to ${request?.options.url.href})`
+	error.message += ` (request to ${request?.options.url.href}). ${detail}`
 	return error
 }
 
