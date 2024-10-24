@@ -1,3 +1,82 @@
+## [8.6.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.12...v8.6.13) (2024-09-26)
+
+
+### Bug Fixes
+
+* **operate:** use post request for decision definitions and decision instances endpoints ([419ae56](https://github.com/camunda/camunda-8-js-sdk/commit/419ae568327bc1451e6ea59ec3f0c340b80758f9))
+
+## [8.6.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.11...v8.6.12) (2024-08-30)
+
+
+### Bug Fixes
+
+* **zeebe:** fail job if variables cannot be parsed ([495c05e](https://github.com/camunda/camunda-8-js-sdk/commit/495c05ef22254f231349dc432982aa9419e8c91d)), closes [#236](https://github.com/camunda/camunda-8-js-sdk/issues/236)
+
+## [8.6.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.10...v8.6.11) (2024-08-21)
+
+
+### Bug Fixes
+
+* **oauth:** uri encode clientId and clientSecret ([dd8583a](https://github.com/camunda/camunda-8-js-sdk/commit/dd8583a87c3cabb74997649242ab574b00b76119)), closes [#230](https://github.com/camunda/camunda-8-js-sdk/issues/230)
+
+## [8.6.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.9...v8.6.10) (2024-07-29)
+
+
+### Bug Fixes
+
+* **lossless-parser:** correctly handle null in objects ([b712651](https://github.com/camunda/camunda-8-js-sdk/commit/b7126518dd0ac92e592cad66e88e3d8f6611d22f)), closes [#212](https://github.com/camunda/camunda-8-js-sdk/issues/212)
+
+## [8.6.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.8...v8.6.9) (2024-07-29)
+
+
+### Features
+
+* **zeebe:** add support for ZEEBE_INSECURE_CONNECTION env var ([ed14df8](https://github.com/camunda/camunda-8-js-sdk/commit/ed14df894557a248b4dc958f13fd353d3163edb2))
+* **zeebe:** fix activate jobs stream ([68bb5da](https://github.com/camunda/camunda-8-js-sdk/commit/68bb5daf7cad65a68e826f13277b3da366c35851))
+
+## [8.6.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.7...v8.6.8) (2024-07-12)
+
+
+### Bug Fixes
+
+* **admin:** fix members endpoint - fixes [#206](https://github.com/camunda/camunda-8-js-sdk/issues/206) ([#208](https://github.com/camunda/camunda-8-js-sdk/issues/208)) ([19c4c5c](https://github.com/camunda/camunda-8-js-sdk/commit/19c4c5c712c53441eeff108f0517389f9eaf4486)), closes [#207](https://github.com/camunda/camunda-8-js-sdk/issues/207)
+* **camunda8:** respect CAMUNDA_OAUTH_STRATEGY ([#209](https://github.com/camunda/camunda-8-js-sdk/issues/209)) ([70c9954](https://github.com/camunda/camunda-8-js-sdk/commit/70c995414ac49f2ee06861c88968b93c2d6a7b95))
+
+## [8.6.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.6...v8.6.7) (2024-06-21)
+
+
+### Bug Fixes
+
+* **docs:** update config for disabling authentication ([df5879f](https://github.com/camunda/camunda-8-js-sdk/commit/df5879ffb8821e2c49e8e71c5a7cedc40e53c869))
+
+## [8.6.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.5...v8.6.6) (2024-06-18)
+
+
+### Bug Fixes
+
+* **optimize:** fix exportReportDefinitions REST call path ([e5f5da7](https://github.com/camunda/camunda-8-js-sdk/commit/e5f5da7bf1e5ab7752fad622d150ec3dfe3e8f47)), closes [#192](https://github.com/camunda/camunda-8-js-sdk/issues/192)
+
+## [8.6.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.4...v8.6.5) (2024-06-18)
+
+
+### Bug Fixes
+
+* **zeebe:** add headers to all REST method calls ([9b99177](https://github.com/camunda/camunda-8-js-sdk/commit/9b991775536ca838d1b278f81126404373389a17))
+
+## [8.6.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.3...v8.6.4) (2024-06-13)
+
+
+### Bug Fixes
+
+* **optimize:** fix labelVariables method ([b8a4c68](https://github.com/camunda/camunda-8-js-sdk/commit/b8a4c68fb42435f0e8c9af22a68cd00dfc0989b1))
+
+## [8.6.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.2...v8.6.3) (2024-06-13)
+
+
+### Bug Fixes
+
+* specify the correct audience when getting an Optimize auth token ([#185](https://github.com/camunda/camunda-8-js-sdk/issues/185)) ([a852281](https://github.com/camunda/camunda-8-js-sdk/commit/a852281c7f5e902f8199282723b2d35efdaaa846))
+
 ## [8.6.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.1...v8.6.2) (2024-06-12)
 
 
