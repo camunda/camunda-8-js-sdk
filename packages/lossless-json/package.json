@@ -2,13 +2,14 @@
 	"name": "@camunda8/lossless-json",
 	"version": "1.0.0",
 	"description": "Lossless JSON parsing with optional Dto mapping",
-	"main": "dist/index.js",
+	"main": "distribution/index.js",
+	"type": "module",
 	"scripts": {
 		"test": "jest",
 		"build": "npm run clean && tsc --project tsconfig.json",
-		"clean": "rm -rf ./dist && rm -f ./tsconfig.tsbuildinfo",
-		"lint": "eslint 'src/**/*.{ts,tsx}'",
-		"format": "prettier --write 'src/**/*.ts'"
+		"clean": "rm -rf ./distribution && rm -f ./tsconfig.tsbuildinfo",
+		"lint": "eslint 'source/**/*.{ts,tsx}'",
+		"format": "prettier --write 'source/**/*.ts'"
 	},
 	"repository": {
 		"type": "git",
@@ -38,7 +39,7 @@
 			"^.+\\.(ts|tsx)$": [
 				"ts-jest",
 				{
-					"tsconfig": "src/__tests__/tsconfig.json"
+					"tsconfig": "source/__tests__/tsconfig.json"
 				}
 			]
 		},

@@ -21,7 +21,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { debug as d } from 'debug'
+// import { debug as d } from 'debug'
 import {
 	LosslessNumber,
 	isLosslessNumber,
@@ -31,6 +31,7 @@ import {
 } from 'lossless-json'
 import 'reflect-metadata'
 
+const d = _namespace => (_msg, _data?) => null
 const debug = d('lossless-json-parser')
 
 const MetadataKey = {

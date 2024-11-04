@@ -5,5 +5,7 @@
 		"../**/*" // Includes all files in the src directory
 	],
 	"compilerOptions": {},
-	"exclude": ["node_modules"]
+	"exclude": [
+		"node_modules"
+	]
 }

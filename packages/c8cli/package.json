@@ -1,0 +1,28 @@
+{
+	"name": "@camunda8/c8cli",
+	"version": "1.0.0",
+	"description": "Cross-platform Camunda 8 CLI",
+	"main": "run.ts",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"clean": "rm -rf distribution",
+		"mkdirs": "mkdir -p distribution/linux-x86_64 && mkdir -p distribution/linux-arm64 && mkdir -p distribution/windows-x86_64 && mkdir -p distribution/darwin-x86_64 && mkdir -p distribution/darwin-arm64",
+		"build": "pnpm run clean && pnpm run mkdirs && pnpm run build:linux-x86_64 && pnpm run build:linux-arm64 && pnpm run build:windows-x86_64 && pnpm run build:darwin-x86_64 && pnpm run build:darwin-arm64",
+		"build:linux-x86_64": "deno compile --allow-all --target x86_64-unknown-linux-gnu --output distribution/linux-x86_64/c8cli source/main.ts",
+		"build:linux-arm64": "deno compile --allow-all --target aarch64-unknown-linux-gnu --output distribution/linux-arm64/c8cli source/main.ts",
+		"build:windows-x86_64": "deno compile --allow-all --target x86_64-pc-windows-msvc --output distribution/windows_x86_64/c8cli.exe source/main.ts",
+		"build:darwin-x86_64": "deno compile --allow-all --target x86_64-apple-darwin --output distribution/darwin-x86_64/c8cli source/main.ts",
+		"build:darwin-arm64": "deno compile --allow-all --node-modules-dir=auto --target aarch64-apple-darwin --output distribution/darwin-arm64/c8cli source/main.ts"
+	},
+	"dependencies": {
+		"@camunda8/sdk-rest": "workspace:*"
+	},
+	"keywords": [
+		"Camunda 8",
+		"Camunda",
+		"cli"
+	],
+	"engine": "deno",
+	"author": "Josh Wulf <josh.wulf@camunda.com>",
+	"license": "ISC"
+}

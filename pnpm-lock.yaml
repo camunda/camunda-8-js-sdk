@@ -34,6 +34,12 @@ importers:
         specifier: ^22.7.4
         version: 22.7.8
 
+  packages/c8cli:
+    dependencies:
+      '@camunda8/sdk-rest':
+        specifier: workspace:*
+        version: link:../sdk-rest
+
   packages/certificates:
     dependencies:
       debug:
@@ -387,9 +393,6 @@ importers:
       '@camunda8/oauth':
         specifier: workspace:*
         version: link:../oauth
-      '@types/multiparty':
-        specifier: ^4.2.1
-        version: 4.2.1
       debug:
         specifier: ^4.3.7
         version: 4.3.7
@@ -2283,9 +2286,6 @@ packages:
 
   '@types/ms@0.7.34':
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
-
-  '@types/multiparty@4.2.1':
-    resolution: {integrity: sha512-Wi6aK3FgvHLvCDxD7ngG4w8MsCK9h64EB53Gvc8t7FVX81tleiz8vFS3ebBohGxqHRzNGHaNwhfdxTGOGAXm6A==}
 
   '@types/node-fetch@2.6.11':
     resolution: {integrity: sha512-24xFj9R5+rfQJLRyM56qh+wnVSYhyXC2tkoBndtY0U+vubqNsYXGjufB2nn8Q6gt0LrARwL6UBtMCSVCwl4B1g==}
@@ -11988,10 +11988,6 @@ snapshots:
   '@types/minimist@1.2.5': {}
 
   '@types/ms@0.7.34': {}
-
-  '@types/multiparty@4.2.1':
-    dependencies:
-      '@types/node': 22.7.8
 
   '@types/node-fetch@2.6.11':
     dependencies:

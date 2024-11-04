@@ -8,7 +8,7 @@ import {
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
-} from '../'
+} from '../index.js'
 
 test('LosslessJsonParser correctly handles nested Dtos', () => {
 	class DecisionInstanceOutput extends LosslessDto {

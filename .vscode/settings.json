@@ -26,5 +26,6 @@
 	},
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "samverschueren.linter-xo"
-	}
+	},
+	"deno.enable": false
 }
