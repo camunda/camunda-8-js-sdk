@@ -613,4 +613,37 @@ describe('OAuthProvider', () => {
 				expect(res).toBeTruthy()
 			})
 	})
+
+	it('Can use Bearer Token Auth as a strategy', async () => {
+		const server = http.createServer((req, res) => {
+			const authHeader = req.headers['authorization']
+
+			if (!authHeader || authHeader !== 'Bearer mysecrettoken') {
+				res.statusCode = 401
+				res.setHeader('WWW-Authenticate', 'Bearer realm="example"')
+				res.end('Access denied')
+			} else {
+				res.end('Access granted')
+			}
+		})
+
+		server.listen(3033)
+
+		const oAuthProvider = constructOAuthProvider({
+			CAMUNDA_AUTH_STRATEGY: 'BEARER',
+			CAMUNDA_OAUTH_TOKEN: 'mysecrettoken',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any)
+		const token = await oAuthProvider.getToken('ZEEBE')
+		await got
+			.get('http://localhost:3033', {
+				headers: {
+					Authorization: 'Bearer ' + token,
+				},
+			})
+			.then((res) => {
+				server.close()
+				expect(res).toBeTruthy()
+			})
+	})
 })

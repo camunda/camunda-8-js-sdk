@@ -62,6 +62,11 @@ const getMainEnv = () =>
 			type: 'string',
 			optional: true,
 		},
+		/** The OAuth token (used for CAMUNDA_AUTH_STRATEGY "BEARER") */
+		CAMUNDA_OAUTH_TOKEN: {
+			type: 'string',
+			optional: true,
+		},
 		/** Optional scope parameter for OAuth (needed by some OIDC) */
 		CAMUNDA_TOKEN_SCOPE: {
 			type: 'string',
@@ -195,7 +200,7 @@ const getMainEnv = () =>
 		},
 		CAMUNDA_AUTH_STRATEGY: {
 			type: 'string',
-			choices: ['BASIC', 'OAUTH', 'NONE'],
+			choices: ['BASIC', 'OAUTH', 'BEARER', 'NONE'],
 			default: 'OAUTH',
 		},
 	})
@@ -367,8 +372,9 @@ const getEnv = () => ({
 
 // Helper type for enforcing array contents to match an object's keys
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type EnforceArrayContent<T, K extends keyof any> =
-	T extends Array<K> ? T : never
+type EnforceArrayContent<T, K extends keyof any> = T extends Array<K>
+	? T
+	: never
 
 // Function to create a complete keys array, enforcing completeness at compile time
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -396,6 +402,7 @@ export const CamundaEnvironmentVariableDictionary =
 		'CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE',
 		'CAMUNDA_OAUTH_DISABLED',
 		'CAMUNDA_OAUTH_URL',
+		'CAMUNDA_OAUTH_TOKEN',
 		'CAMUNDA_SECURE_CONNECTION',
 		'CAMUNDA_TASKLIST_BASE_URL',
 		'CAMUNDA_TASKLIST_OAUTH_AUDIENCE',
