@@ -1,3 +1,10 @@
+## [8.6.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.15...v8.6.16) (2024-11-15)
+
+
+### Features
+
+* **authorization:** add bearer token authorization ([f7d1ff3](https://github.com/camunda/camunda-8-js-sdk/commit/f7d1ff30e53583a09a1fc49ba258e9af7471b2dc))
+
 ## [8.6.15](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.14...v8.6.15) (2024-10-24)
 
 
