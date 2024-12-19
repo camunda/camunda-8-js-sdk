@@ -1,3 +1,10 @@
+## [8.6.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.16...v8.6.17) (2024-12-19)
+
+
+### Bug Fixes
+
+* **zeebe:** update JS GPRC lib dependency, release stream resources on end ([89fd95c](https://github.com/camunda/camunda-8-js-sdk/commit/89fd95c5d1c0a90d37bd18a80ffd62b017f9a8a0))
+
 ## [8.6.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.15...v8.6.16) (2024-11-15)
 
 
