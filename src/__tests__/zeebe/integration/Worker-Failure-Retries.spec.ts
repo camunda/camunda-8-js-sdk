@@ -17,14 +17,10 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-	try {
-		if (wf?.processInstanceKey) {
-			await zbc.cancelProcessInstance(wf.processInstanceKey)
-		}
-	} catch (e: unknown) {
-	} finally {
-		await zbc.close() // Makes sure we don't forget to close connection
+	if (wf?.processInstanceKey) {
+		await zbc.cancelProcessInstance(wf.processInstanceKey).catch((e) => e)
 	}
+	await zbc.close() // Makes sure we don't forget to close connection
 })
 
 test('Decrements the retries count by default', async () => {
