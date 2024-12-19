@@ -203,7 +203,11 @@ export class ZBWorkerBase<
 			() => this.poll(),
 			Duration.milliseconds.from(this.pollInterval)
 		)
-		debug(`Created worker for task type ${taskType}`)
+		debug(
+			`Created worker for task type ${taskType} - polling interval ${Duration.milliseconds.from(
+				this.pollInterval
+			)}`
+		)
 	}
 
 	/**
@@ -551,7 +555,7 @@ You should call only one job action method in the worker handler. This is a bug 
 
 		const amount = this.maxJobsToActivate - this.activeJobs
 
-		const requestTimeout = this.longPoll || -1
+		const requestTimeout = this.longPoll ?? -1
 
 		const activateJobsRequest: ActivateJobsRequest = {
 			maxJobsToActivate: amount,

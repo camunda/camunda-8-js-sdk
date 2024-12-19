@@ -355,7 +355,7 @@ const getZeebeEnv = () =>
 		ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS: {
 			type: 'number',
 			optional: true,
-			default: 60,
+			default: 50, // At 60 seconds, SaaS will throw a 504 Gateway Timeout
 		},
 		/** After a long poll Job Activation request, this is the cool-off period in milliseconds before the worker requests more work. Defaults to 300  */
 		ZEEBE_GRPC_WORKER_POLL_INTERVAL_MS: {
