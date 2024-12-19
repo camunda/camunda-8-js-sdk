@@ -339,17 +339,38 @@ export class GrpcClient extends EventEmitter {
 						}
 					}
 
+					// Free the stream resources. When it emits 'end', we remove all listeners and destroy it.
+					stream.on('end', () => {
+						stream.removeAllListeners()
+						stream.destroy()
+					})
+
 					// This deals with the case where during a broker restart the call returns a stream
 					// but that stream is not a legit Gateway activation. In that case, the Gateway will
 					// never time out or close the stream. So we have to manage that case.
+					// Also, no end event is emitted when there are no jobs, so we have to emit it ourselves.
 					const clientsideTimeoutDuration =
-						Duration.milliseconds.from(this.longPoll!) + 1000
-					const clientSideTimeout = setTimeout(() => {
-						debug(
-							`Triggered client-side timeout after ${clientsideTimeoutDuration}ms`
-						)
-						stream.emit('end')
-					}, clientsideTimeoutDuration)
+						Duration.milliseconds.from(
+							timeNormalisedRequest.requestTimeout ?? this.longPoll!
+						) + 1000
+
+					// We will not trigger a client-side timeout if the requestTimeout was set to 0 or -1, as we don't know how long to wait
+					// This could result in resource leaks when using a worker with a longPoll set to -1 or 0.
+					const clientSideTimeout =
+						timeNormalisedRequest.requestTimeout !== 0 &&
+						timeNormalisedRequest.requestTimeout !== -1
+							? setTimeout(() => {
+									if (
+										clientsideTimeoutDuration !== 1000 &&
+										clientsideTimeoutDuration !== 999
+									) {
+										debug(
+											`Triggered client-side timeout after ${clientsideTimeoutDuration}ms`
+										)
+										stream.emit('end')
+									}
+								}, clientsideTimeoutDuration)
+							: 0
 
 					/**
 					 * Once this gets attached here, it is attached to *all* calls

@@ -53,11 +53,8 @@ beforeAll(async () => {
 })
 
 afterEach(async () => {
-	try {
-		if (wf?.processInstanceKey) {
-			await zbc.cancelProcessInstance(wf.processInstanceKey)
-		}
-	} catch (e: unknown) {
+	if (wf?.processInstanceKey) {
+		await zbc.cancelProcessInstance(wf.processInstanceKey).catch((e) => e)
 	}
 })
 

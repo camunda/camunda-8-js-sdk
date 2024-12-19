@@ -2,6 +2,7 @@ import fs from 'fs'
 
 import { ModelerApiClient } from '../../modeler'
 
+jest.setTimeout(10000)
 describe('ModelerApiClient', () => {
 	let modeler: ModelerApiClient
 
