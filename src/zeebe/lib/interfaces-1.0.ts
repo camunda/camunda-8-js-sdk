@@ -502,7 +502,7 @@ export interface ZBGrpc extends GrpcClient {
 	completeJobSync: (req: CompleteJobRequest) => Promise<void>
 	activateJobsStream: (
 		req: ActivateJobsRequest
-	) => ClientReadableStream<unknown>
+	) => Promise<ClientReadableStream<unknown>>
 	publishMessageSync(
 		publishMessageRequest: PublishMessageRequest
 	): Promise<PublishMessageResponse>

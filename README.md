@@ -65,9 +65,9 @@ For `int64` values whose type is not known ahead of time, such as job variables,
 
 Calls to APIs can be authorized using basic auth or via OAuth - a token that is obtained via a client id/secret pair exchange.
 
-### Disable Auth
+### Disable OAuth
 
-To disable OAuth, set the environment variable `CAMUNDA_OAUTH_DISABLED=true`. You can use this when running against a minimal Zeebe broker in a development environment, for example.
+To disable OAuth, set the environment variable `CAMUNDA_OAUTH_DISABLED=true`. You can use this when running against a minimal Zeebe broker in a development environment, for example. You can also use this when your authentication is being done using an x509 mTLS certificate.
 
 ### Basic Auth
 
@@ -77,6 +77,15 @@ To use basic auth, set the following values either via the environment or explic
 CAMUNDA_AUTH_STRATEGY=BASIC
 CAMUNDA_BASIC_AUTH_USERNAME=....
 CAMUNDA_BASIC_AUTH_PASSWORD=...
+```
+
+### Bearer Token Auth
+
+To use a Bearer token that you have already obtained, set the following value:
+
+```bash
+CAMUNDA_AUTH_STRATEGY=BEARER
+CAMUNDA_OAUTH_TOKEN=....
 ```
 
 ### OAuth
