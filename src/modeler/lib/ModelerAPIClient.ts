@@ -33,8 +33,7 @@ export class ModelerApiClient {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
-		const modelerApiUrl =
-			config.CAMUNDA_MODELER_BASE_URL ?? 'https://modeler.cloud.camunda.io/api'
+		const modelerApiUrl = config.CAMUNDA_MODELER_BASE_URL
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
 		this.userAgentString = createUserAgentString(config)
