@@ -1,3 +1,10 @@
+## [8.6.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.17...v8.6.18) (2024-12-20)
+
+
+### Bug Fixes
+
+* **modeler:** update SaaS URL for Modeler ([563e866](https://github.com/camunda/camunda-8-js-sdk/commit/563e86662f93daadc71fd433fbb4bce26de240c1))
+
 ## [8.6.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.16...v8.6.17) (2024-12-19)
 
 
