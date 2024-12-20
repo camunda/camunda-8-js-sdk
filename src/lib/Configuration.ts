@@ -167,11 +167,12 @@ const getMainEnv = () =>
 			type: 'string',
 			optional: true,
 		},
-		/** The base url for the Modeler API. Defaults to Camunda Saas - https://modeler.cloud.camunda.io/api */
+		// https://github.com/camunda/camunda-8-js-sdk/issues/203
+		/** The base url for the Modeler API. Defaults to Camunda Saas - https://modeler.camunda.io/api */
 		CAMUNDA_MODELER_BASE_URL: {
 			type: 'string',
 			optional: true,
-			default: 'https://modeler.cloud.camunda.io/api',
+			default: 'https://modeler.camunda.io/api',
 		},
 		/** The base url for the Admin Console API. */
 		CAMUNDA_CONSOLE_BASE_URL: {
