@@ -179,6 +179,12 @@ export interface JobCompletionInterface<WorkerOutputVariables> {
 		updatedVariables?: WorkerOutputVariables
 	) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
 	/**
+	 * Complete the job with success, and a job result that may contain corrections. Since Camunda 8.7.
+	 */
+	completeWithJobResult: (
+		req: Pick<CompleteJobRequest, 'result' | 'variables'>
+	) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
+	/**
 	 * Fail the job with an informative message as to the cause. Optionally, pass in a
 	 * value remaining retries. If no value is passed for retries then the current retry
 	 * count is decremented. Pass in `0`for retries to raise an incident in Operate. Optionally,

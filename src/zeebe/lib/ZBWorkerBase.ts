@@ -23,6 +23,8 @@ import * as ZB from './interfaces-1.0'
 import {
 	ActivateJobsRequest,
 	ActivateJobsResponse,
+	CompleteJobRequest,
+	JobResult,
 } from './interfaces-grpc-1.0'
 import { ZBClientOptions } from './interfaces-published-contract'
 
@@ -350,6 +352,14 @@ You should call only one job action method in the worker handler. This is a bug 
 			(completedVariables?: T) =>
 				this.completeJob(job.key, completedVariables ?? {})
 
+		const correctJob =
+			(job: ZB.Job<WorkerInputVariables, CustomHeaderShape>) =>
+			(req: Pick<CompleteJobRequest, 'result' | 'variables'>) =>
+				this.completeJob(job.key, {
+					result: req.result,
+					variables: req.variables,
+				})
+
 		const errorJob =
 			(job: ZB.Job<WorkerInputVariables, CustomHeaderShape>) =>
 			(e: string | ZB.ErrorJobWithVariables, errorMessage: string = '') => {
@@ -372,9 +382,14 @@ You should call only one job action method in the worker handler. This is a bug 
 
 		const fail = failJob(thisJob)
 		const succeed = succeedJob(thisJob)
+		const completeWithResult = correctJob(thisJob)
 		return {
 			cancelWorkflow: cancelWorkflow(thisJob),
 			complete: errorMsgOnPriorMessageCall('job.complete', succeed),
+			completeWithJobResult: errorMsgOnPriorMessageCall(
+				'job.completeWithJobResult',
+				completeWithResult
+			),
 			error: errorMsgOnPriorMessageCall('error', errorJob(thisJob)),
 			fail: errorMsgOnPriorMessageCall('job.fail', fail),
 			forward: errorMsgOnPriorMessageCall('job.forward', () => {
@@ -412,11 +427,16 @@ You should call only one job action method in the worker handler. This is a bug 
 			})
 	}
 
-	private completeJob(jobKey: string, completedVariables = {}) {
+	private completeJob(
+		jobKey: string,
+		completedVariables = {},
+		result: JobResult = {}
+	) {
 		return this.zbClient
 			.completeJob({
 				jobKey,
 				variables: completedVariables,
+				result,
 			})
 			.then((res) => {
 				this.logger.logDebug(`Completed job ${jobKey} for ${this.taskType}`)
