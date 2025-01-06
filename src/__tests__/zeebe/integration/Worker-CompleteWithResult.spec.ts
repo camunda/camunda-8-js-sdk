@@ -46,9 +46,11 @@ test('Can complete a task with job corrections', (done) => {
 				taskType: 'job-correction',
 				taskHandler: async (job) => {
 					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
-					const res1 = await job.complete({
-						// @TODO: correction interface
+					const res1 = await job.completeWithJobResult({
+						variables: {},
+						result: {},
 					})
+					// @TODO: correction interface
 					done(null)
 					return res1
 				},
