@@ -15,7 +15,11 @@ import {
 	ZBGrpc,
 	ZBWorkerTaskHandler,
 } from './interfaces-1.0'
-import { ActivatedJob, StreamActivatedJobsRequest } from './interfaces-grpc-1.0'
+import {
+	ActivatedJob,
+	CompleteJobRequest,
+	StreamActivatedJobsRequest,
+} from './interfaces-grpc-1.0'
 
 import { parseVariablesAndCustomHeadersToJSON } from '.'
 
@@ -195,13 +199,30 @@ You should call only one job action method in the worker handler. This is a bug 
 				})
 			}
 
+		const correctJob =
+			(job: Job) => (req: Pick<CompleteJobRequest, 'result' | 'variables'>) =>
+				this.completeJob(
+					job.key,
+					{
+						result: req.result,
+						variables: req.variables,
+					},
+					taskType
+				)
+
 		const fail = failJob(thisJob)
 		const succeed = succeedJob(thisJob)
+		const completeWithResult = correctJob(thisJob)
+
 		return {
 			cancelWorkflow: cancelWorkflow(thisJob),
 			complete: errorMsgOnPriorMessageCall('job.complete', succeed),
 			error: errorMsgOnPriorMessageCall('error', errorJob(thisJob)),
 			fail: errorMsgOnPriorMessageCall('job.fail', fail),
+			completeWithJobResult: errorMsgOnPriorMessageCall(
+				'job.completeWithJobResult',
+				completeWithResult
+			),
 			forward: errorMsgOnPriorMessageCall('job.forward', () => {
 				return JOB_ACTION_ACKNOWLEDGEMENT
 			}),

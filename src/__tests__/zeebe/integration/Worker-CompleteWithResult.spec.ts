@@ -13,7 +13,7 @@ let bpmnProcessId1: string
 
 beforeAll(async () => {
 	const res1 = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/Worker-JobCorrection.bpmn',
+		processFilename: './src/__tests__/testdata/Worker-JobResult.bpmn',
 	})
 	;({
 		processDefinitionKey: processDefinitionKey1,
@@ -48,7 +48,9 @@ test('Can complete a task with job corrections', (done) => {
 					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
 					const res1 = await job.completeWithJobResult({
 						variables: {},
-						result: {},
+						result: {
+							denied: true,
+						},
 					})
 					// @TODO: correction interface
 					done(null)
