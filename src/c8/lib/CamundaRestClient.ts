@@ -46,6 +46,7 @@ import {
 	DeployResourceResponse,
 	DeployResourceResponseDto,
 	FormDeployment,
+	GetVariableResponse,
 	JobUpdateChangeset,
 	MigrationRequest,
 	NewUserInfo,
@@ -929,6 +930,15 @@ export class CamundaRestClient {
 				body: stringify(request),
 			})
 		)
+	}
+
+	public async getVariable(req: {
+		variableKey: string
+	}): Promise<GetVariableResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`variables/${req.variableKey}`, { headers }).json()
+		) as Promise<GetVariableResponse>
 	}
 
 	private addJobMethods = <Variables, CustomHeaders>(
