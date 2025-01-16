@@ -522,11 +522,11 @@ export interface JobResult {
 	denied?: boolean
 	// Attributes that were corrected by the worker.
 	// The following attributes can be corrected, additional attributes will be ignored:
-	//   * `assignee` - reset by providing an empty String
-	//   * `dueDate` - reset by providing an empty String
-	//   * `followUpDate` - reset by providing an empty String
-	//   * `candidateGroups` - reset by providing an empty list
-	//   * `candidateUsers` - reset by providing an empty list
+	//   * `assignee` - clear by providing an empty String
+	//   * `dueDate` - clear by providing an empty String
+	//   * `followUpDate` - clear by providing an empty String
+	//   * `candidateGroups` - clear by providing an empty list
+	//   * `candidateUsers` - clear by providing an empty list
 	//   * `priority` - minimum 0, maximum 100, default 50
 	//  Omitting any of the attributes will preserve the persisted attribute's value.
 	corrections?: JobResultCorrections
