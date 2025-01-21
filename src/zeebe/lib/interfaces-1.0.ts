@@ -219,7 +219,9 @@ export interface JobCompletionInterfaceRest<WorkerOutputVariables> {
 	 * specify a retry backoff period in milliseconds. Default is 0ms (immediate retry) if not
 	 * specified.
 	 */
-	fail: typeof FailureHandler
+	fail: (
+		failureConfiguration: JobFailureConfiguration
+	) => Promise<JOB_ACTION_ACKNOWLEDGEMENT>
 	/**
 	 * Mark this job as forwarded to another system for completion. No action is taken by the broker.
 	 * This method releases worker capacity to handle another job.

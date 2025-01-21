@@ -353,3 +353,89 @@ export interface RestJob<
 	 */
 	readonly tenantId: string
 }
+
+export interface QueryPageRequest {
+	from: number
+	limit: number
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	searchAfter: any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	searchBefore: any
+}
+
+export interface AdvancedStringFilter {
+	/** Checks for equality with the provided value. */
+	$eq?: string
+	/** Checks for inequality with the provided value. */
+	$neq?: string
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Checks if the property matches any of the provided values. */
+	$in: string[]
+	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
+	$like: string
+}
+
+export interface AdvancedNumberFilter {
+	$eq?: number
+	$neq?: number
+	$exists: boolean
+	$in: number[]
+	$gt: number
+	$gte: number
+	$lt: number
+	$lte: number
+}
+
+export interface QueryFilterRequest {
+	/** The key for this variable. */
+	variableKey?: string | AdvancedStringFilter
+	/** Name of the variable. */
+	name?: string | AdvancedStringFilter
+	/** The value of the variable. */
+	value?: string | AdvancedStringFilter
+	/** The key of the scope of this variable. */
+	scopeKey?: string | AdvancedStringFilter
+	/** The key of the process instance of this variable. */
+	processInstanceKey?: string | AdvancedStringFilter
+	/** Tenant ID of this variable. */
+	tenantId?: string
+	/** Whether the value is truncated or not. */
+	isTruncated?: boolean
+}
+
+export interface QuerySortRequest {
+	field: string
+	/** The order in which to sort the related field. Default value: ASC */
+	order?: 'ASC' | 'DESC'
+}
+
+export interface QueryVariablesRequest {
+	/** Sort field criteria. */
+	sort?: QuerySortRequest
+	/** Pagination criteria. */
+	page?: QueryPageRequest
+	/** Variable filter request. */
+	filter: QueryFilterRequest
+}
+
+export interface QueryVariablesResponse {
+	/** Pagination information about the search results. */
+	page: {
+		/** Total items matching the criteria. */
+		totalItems: number
+		/** The sort values of the first item in the result set. Use this in the searchBefore field of an ensuing request. */
+		firstSortValues: unknown
+		/** The sort values of the last item in the result set. Use this in the searchAfter field of an ensuing request. */
+		lastSortValues: unknown
+	}
+	/** The matching variables. */
+	items: Array<{
+		/** The key for this variable. */
+		variableKey: string
+		/** The key of the scope of this variable. */
+		scopeKey: string
+		/** The key of the process instance of this variable. */
+		processInstanceKey: string
+	}>
+}
