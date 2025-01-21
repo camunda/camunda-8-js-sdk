@@ -206,7 +206,6 @@ test('LosslessJsonParser will not throw if a string type is encountered in an in
 		expect(parsed.key).toBe('12345678901234567890')
 		expect(parsed.optionalKey).toBe('optional')
 	} catch (e) {
-		expect((e as Error).message.includes('Unexpected type')).toBe(true)
 		threw = true
 	}
 	expect(threw).toBe(false)
