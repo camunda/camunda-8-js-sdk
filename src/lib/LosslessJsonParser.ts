@@ -280,6 +280,10 @@ function parseWithAnnotations<T>(
 				debug(`Parsing int64 array field "${key}" to string`)
 				if (Array.isArray(value)) {
 					instance[key] = value.map((item) => {
+						// item is already a string - from 8.7, the broker returns strings for int64 entity keys
+						if (typeof item === 'string') {
+							return item
+						}
 						if (isLosslessNumber(item)) {
 							return item.toString()
 						} else {
@@ -300,7 +304,10 @@ function parseWithAnnotations<T>(
 			) {
 				debug(`Parsing int64 field "${key}" to string`)
 				if (value) {
-					if (isLosslessNumber(value)) {
+					// value is already a string - from 8.7, the broker returns strings for int64 entity keys
+					if (typeof value === 'string') {
+						instance[key] = value
+					} else if (isLosslessNumber(value)) {
 						instance[key] = value.toString()
 					} else {
 						if (Array.isArray(value)) {
