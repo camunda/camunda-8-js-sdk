@@ -62,7 +62,15 @@ export class ZBWorker<
 				`Caught an unhandled exception in a task handler for process instance ${job.processInstanceKey}:`
 			)
 			this.logger.logDebug(job)
-			this.logger.logError((e as Error).message)
+			// If the exception has a details field, log it
+			// This is the case for exceptions thrown when the job is not found. The details field contains an explanation.
+			const hasDetails = (e: unknown): e is { details?: string } =>
+				!!(e as { details: string }).details
+			if (hasDetails(e)) {
+				this.logger.logError(e.details)
+			} else {
+				this.logger.logError((e as Error).message)
+			}
 			if (this.cancelWorkflowOnException) {
 				const { processInstanceKey } = job
 				this.logger.logDebug(
@@ -74,7 +82,21 @@ export class ZBWorker<
 					this.drainOne()
 				}
 			} else {
-				this.logger.logInfo(`Failing job ${job.key}`)
+				const message = (e as Error).message
+				// This is *most probably* an error thrown because the job was not found when job.complete() or job.fail() was called.
+				// It could also happen in some cases where the handler does another operation that returns an error with the same code.
+				if (
+					message.includes('5 NOT_FOUND') &&
+					message.includes(job.key) &&
+					(message.includes('COMPLETE') || message.includes('FAIL'))
+				) {
+					this.logger.logDebug(
+						`Job ${job.key} was already completed or failed, or the process instance was cancelled. Ignoring.`
+					)
+					this.drainOne()
+					return
+				}
+				this.logger.logInfo(`Failing job ${job.key} due to unhandled exception`)
 				const retries = job.retries - 1
 				try {
 					this.zbClient
