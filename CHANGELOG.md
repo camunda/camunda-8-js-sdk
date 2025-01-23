@@ -1,3 +1,10 @@
+## [8.6.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.18...v8.6.19) (2025-01-23)
+
+
+### Bug Fixes
+
+* **zeebe:** propagate 'NOT_FOUND' error on job.complete(). fixes [#351](https://github.com/camunda/camunda-8-js-sdk/issues/351) ([59ebf5d](https://github.com/camunda/camunda-8-js-sdk/commit/59ebf5d91626927619d20e0656b2ed2ec538c0e4))
+
 ## [8.6.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.17...v8.6.18) (2024-12-20)
 
 
