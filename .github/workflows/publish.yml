@@ -46,7 +46,7 @@ jobs:
 
       # Workaround for https://github.com/actions/runner-images/issues/2821
       - name: Remove mono blocking 8084 port
-        run: sudo kill -9 $(sudo lsof -t -i:8084)
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
 
       - name: Set up Docker
         run: |
@@ -92,7 +92,7 @@ jobs:
 
       # Workaround for https://github.com/actions/runner-images/issues/2821
       - name: Remove mono blocking 8084 port
-        run: sudo kill -9 $(sudo lsof -t -i:8084)
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
 
       - name: Set up Docker
         run: |

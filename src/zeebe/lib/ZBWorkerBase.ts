@@ -416,7 +416,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.logger.logDebug(
 					`Completing job ${jobKey} for ${this.taskType} threw ${e.message}`
 				)
-				return e
+				throw e
 			})
 			.then(() => ZB.JOB_ACTION_ACKNOWLEDGEMENT)
 			.finally(() => {
