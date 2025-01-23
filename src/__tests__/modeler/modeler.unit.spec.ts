@@ -17,7 +17,6 @@ test('Constructor does not throws without base url', () => {
 		})
 		expect(m).toBeTruthy()
 	} catch (e) {
-		console.log(e)
 		expect((e as Error).message.includes('Missing')).toBe(true)
 	}
 	expect(thrown).toBe(false)

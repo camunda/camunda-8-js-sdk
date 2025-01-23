@@ -118,14 +118,16 @@ test('Does not fail a process when the handler throws, by default', async () => 
 			taskType: 'console-log-worker-failure-2',
 			taskHandler: async (job) => {
 				if (alreadyFailed) {
-					await zbc.cancelProcessInstance(wf!.processInstanceKey) // throws if not found. Should NOT throw in this test
-					job.complete()
-					return w.close().then(() => resolve(null))
+					// The job was failed and reactivated, so we can cancel the process instance
+					await zbc.cancelProcessInstance(wf!.processInstanceKey) // throws if process instance is not found. Should NOT throw in this test
+					resolve(null)
+					w.close()
+					return job.forward()
 				}
 				alreadyFailed = true
 				throw new Error(
 					'Unhandled exception in task handler for testing purposes'
-				) // Will be caught in the library
+				) // Will be caught in the library, and should fail the job, allowing it to be reactivated by this worker
 			},
 			pollInterval: 10000,
 		})
