@@ -1,3 +1,11 @@
+## [8.6.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.19...v8.6.20) (2025-01-23)
+
+
+### Bug Fixes
+
+* **zeebe:** catch exception in fail job on unhandled exception in job handler. fixes [#351](https://github.com/camunda/camunda-8-js-sdk/issues/351) ([91e7213](https://github.com/camunda/camunda-8-js-sdk/commit/91e7213a8530ff8d8a46e2f71186e929b9154bc7))
+* **zeebe:** do not fail jobs that are already not found ([448575c](https://github.com/camunda/camunda-8-js-sdk/commit/448575c6489811869cc88f7e6db7b0e9a7e201ec))
+
 ## [8.6.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.18...v8.6.19) (2025-01-23)
 
 
