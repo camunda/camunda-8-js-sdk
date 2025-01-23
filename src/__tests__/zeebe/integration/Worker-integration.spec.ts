@@ -1,9 +1,11 @@
+import { JOB_ACTION_ACKNOWLEDGEMENT } from 'zeebe/types'
+
 import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
-jest.setTimeout(30000)
+jest.setTimeout(120000)
 suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
@@ -11,9 +13,11 @@ let wf: CreateProcessInstanceResponse | undefined
 let processDefinitionKey1: string
 let processDefinitionKey2: string
 let processDefinitionKey3: string
+let processDefinitionKey4: string
 let bpmnProcessId1: string
 let bpmnProcessId2: string
 let bpmnProcessId3: string
+let bpmnProcessId4: string
 
 beforeAll(async () => {
 	const res1 = await zbc.deployResource({
@@ -40,6 +44,13 @@ beforeAll(async () => {
 		bpmnProcessId: bpmnProcessId3,
 	} = res3.deployments[0].process)
 	await cancelProcesses(processDefinitionKey3)
+	const res4 = await zbc.deployResource({
+		processFilename: './src/__tests__/testdata/job-complete-error-test.bpmn',
+	})
+	;({
+		processDefinitionKey: processDefinitionKey4,
+		bpmnProcessId: bpmnProcessId4,
+	} = res4.deployments[0].process)
 })
 
 afterEach(async () => {
@@ -53,6 +64,7 @@ afterAll(async () => {
 	await cancelProcesses(processDefinitionKey1)
 	await cancelProcesses(processDefinitionKey2)
 	await cancelProcesses(processDefinitionKey3)
+	await cancelProcesses(processDefinitionKey4)
 	restoreZeebeLogging()
 })
 
@@ -94,6 +106,50 @@ test('Can service a task with complete.success', (done) => {
 					return res1
 				},
 				loglevel: 'NONE',
+			})
+		})
+})
+
+test('An already completed job will throw NOT_FOUND if another worker invocation tries to complete it', (done) => {
+	let alreadyActivated = false
+	let threw = false
+	const jobTimeout = 30000 // The job is made available for reactivation after this time
+	const jobDuration = 40000 // The job takes this long to complete
+	const secondWorkerDuration = jobDuration - jobTimeout + 5000 // The second worker will try to complete the job after this time
+	zbc
+		.createProcessInstance({
+			bpmnProcessId: bpmnProcessId4,
+			variables: {},
+		})
+		.then((res) => {
+			wf = res
+			zbc.createWorker({
+				taskType: 'job-complete-error',
+				taskHandler: async (job) => {
+					const delay = alreadyActivated ? secondWorkerDuration : jobDuration
+					const shouldThrow = alreadyActivated
+					alreadyActivated = true
+					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
+					let res: JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT'
+					try {
+						await new Promise((resolve) =>
+							setTimeout(() => resolve(null), delay)
+						)
+						res = await job.complete(job.variables)
+						if (shouldThrow) {
+							throw new Error('Should have thrown NOT_FOUND')
+						}
+						return res
+					} catch (e: unknown) {
+						expect((e as Error).message.includes('NOT_FOUND')).toBe(true)
+						threw = true
+						done(null)
+					}
+					expect(shouldThrow).toBe(threw)
+					return res
+				},
+				loglevel: 'NONE',
+				timeout: jobTimeout,
 			})
 		})
 })
