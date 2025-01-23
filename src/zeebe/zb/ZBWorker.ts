@@ -77,12 +77,19 @@ export class ZBWorker<
 				this.logger.logInfo(`Failing job ${job.key}`)
 				const retries = job.retries - 1
 				try {
-					this.zbClient.failJob({
-						errorMessage: `Unhandled exception in task handler ${e}`,
-						jobKey: job.key,
-						retries,
-						retryBackOff: 0,
-					})
+					this.zbClient
+						.failJob({
+							errorMessage: `Unhandled exception in task handler ${e}`,
+							jobKey: job.key,
+							retries,
+							retryBackOff: 0,
+						})
+						.catch((e) => {
+							console.error(
+								'Any error was thrown while failing the job after an unhandled exception in the task handler'
+							)
+							console.error(e.message)
+						})
 				} catch (e: unknown) {
 					this.logger.logDebug(e)
 				} finally {
