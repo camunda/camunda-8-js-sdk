@@ -223,6 +223,7 @@ The SDK uses the [`debug`](https://github.com/debug-js/debug) library. To enable
 | `camunda:oauth`        | OAuth Token Exchange |
 | `camunda:grpc`         | Zeebe gRPC channel   |
 | `camunda:worker`       | Zeebe Worker         |
+| `camunda:worker:verbose`| Zeebe Worker (additional detail) |
 | `camunda:zeebeclient`  | Zeebe Client         |
 
 Here is an example of turning on debugging for the OAuth and Operate components:
