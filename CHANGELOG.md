@@ -1,3 +1,10 @@
+## [8.6.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.20...v8.6.21) (2025-01-24)
+
+
+### Bug Fixes
+
+* **zeebe:** move polling blocked log message to new verbose level. fixes [#356](https://github.com/camunda/camunda-8-js-sdk/issues/356) ([62c1459](https://github.com/camunda/camunda-8-js-sdk/commit/62c1459afcca368a6712d75ead4d7c4f1c68dd82))
+
 ## [8.6.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.19...v8.6.20) (2025-01-23)
 
 
