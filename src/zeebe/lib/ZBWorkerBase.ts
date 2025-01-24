@@ -26,6 +26,8 @@ import { ZBClientOptions } from './interfaces-published-contract'
 import { parseVariablesAndCustomHeadersToJSON } from '.'
 
 const debug = d('camunda:worker')
+const verbose = d('camunda:worker:verbose')
+
 debug('Loaded ZBWorkerBase')
 
 const MIN_ACTIVE_JOBS_RATIO_BEFORE_ACTIVATING_JOBS = 0.3
@@ -475,7 +477,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			workerIsClosing ||
 			insufficientCapacityAvailable
 		) {
-			debug('Worker polling blocked', {
+			verbose('Worker polling blocked', {
 				pollAlreadyInProgress,
 				workerIsClosing,
 				insufficientCapacityAvailable,
