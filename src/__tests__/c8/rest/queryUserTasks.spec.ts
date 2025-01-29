@@ -39,5 +39,5 @@ test('It can query user tasks', async () => {
 			},
 		],
 	})
-	console.log('tasks', tasks)
+	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
 })
