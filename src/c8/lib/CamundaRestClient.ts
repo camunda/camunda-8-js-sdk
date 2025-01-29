@@ -61,6 +61,7 @@ import {
 	RestJob,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
+	UserTask,
 } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
@@ -346,6 +347,20 @@ export class CamundaRestClient {
 					body: losslessStringify(request),
 				})
 				.json()
+		)
+	}
+
+	/**
+	 * Get the user task by the user task key.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-user-task/
+	 *
+	 * @since 8.7.0
+	 */
+	public async getUserTask(userTaskKey: string): Promise<UserTask> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`user-tasks/${userTaskKey}`, { headers }).json()
 		)
 	}
 
