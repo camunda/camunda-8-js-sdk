@@ -54,6 +54,8 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	QueryTasksRequest,
+	QueryTasksResponse,
 	QueryVariablesRequest,
 	QueryVariablesResponse,
 	RestJob,
@@ -323,6 +325,27 @@ export class CamundaRestClient {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest.delete(`user-tasks/${userTaskKey}/assignee`, { headers }).json()
+		)
+	}
+
+	/**
+	 * Search for user tasks based on given criteria.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-tasks/
+	 *
+	 * @since 8.7.0
+	 */
+	public async findUserTasks(
+		request: QueryTasksRequest
+	): Promise<QueryTasksResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`user-tasks/search`, {
+					headers,
+					body: losslessStringify(request),
+				})
+				.json()
 		)
 	}
 
