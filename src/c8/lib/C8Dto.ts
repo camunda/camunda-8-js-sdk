@@ -601,6 +601,17 @@ export interface UserTask {
 	processInstanceKey: string
 	/** The key of the form. */
 	formKey?: string
+export interface UserTaskFormResponse {
+	/**T he tenant ID of the form. */
+	tenantId: string
+	/** The BPMN ID of the form. */
+	bpmnId: string
+	/** The form content. */
+	schema: object
+	/** The version of the the deployed form. */
+	version: number
+	/** The key of the form. */
+	formKey: string
 }
 
 /** Sort field criteria. */
