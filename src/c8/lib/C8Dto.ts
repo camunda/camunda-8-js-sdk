@@ -547,3 +547,49 @@ export interface QueryTasksResponse {
 		formKey: string
 	}>
 }
+
+export interface UserTask {
+	/** The name for this user task. */
+	name: string
+	/** The state of the user task. Possible values: [CREATED, COMPLETED, CANCELED, FAILED] */
+	state: 'CREATED' | 'COMPLETED' | 'CANCELED' | 'FAILED'
+	/** The assignee of the user task. */
+	assignee?: string
+	/** The element ID of the user task.
+	 */
+	elementId: string
+	/** The candidate groups for this user task. */
+	candidateGroups?: string[]
+	/** The candidate users for this user task. */
+	candidateUsers?: string[]
+	/** The ID of the process definition. */
+	processDefinitionId: string
+	/** The creation date of a user task. */
+	creationDate: string
+	/** The completion date of a user task. */
+	completionDate?: string
+	/** The follow date of a user task. */
+	followUpDate?: string
+	/** The due date of a user task. */
+	dueDate?: string
+	/** Tenant ID of this user task. */
+	tenantId: string
+	/** The external form reference. */
+	externalFormReference?: string
+	/** The version of the process definition. */
+	processDefinitionVersion: number
+	/** Custom headers for the user task. */
+	customHeaders: { [key: string]: string }
+	/** The priority of a user task. The higher the value the higher the priority. Possible values: <= 100. Default value: 50 */
+	priority: number
+	/** The key of the user task. */
+	userTaskKey: string
+	/** The key of the element instance. */
+	elementInstanceKey: string
+	/** The key of the process definition. */
+	processDefinitionKey: string
+	/** The key of the process instance. */
+	processInstanceKey: string
+	/** The key of the form. */
+	formKey?: string
+}
