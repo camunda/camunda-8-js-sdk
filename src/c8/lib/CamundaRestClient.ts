@@ -54,6 +54,8 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	QueryProcessInstanceRequest,
+	QueryProcessInstanceResponse,
 	QueryTasksRequest,
 	QueryTasksResponse,
 	QueryVariablesRequest,
@@ -781,6 +783,27 @@ export class CamundaRestClient {
 				headers,
 				body: losslessStringify(request),
 			})
+		)
+	}
+
+	/**
+	 * Query process instances
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-process-instances/
+	 *
+	 * @since 8.7.0
+	 */
+	public async searchProcessInstances(
+		request: QueryProcessInstanceRequest
+	): Promise<QueryProcessInstanceResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`process-instances/search`, {
+					headers,
+					body: losslessStringify(request),
+				})
+				.json()
 		)
 	}
 
