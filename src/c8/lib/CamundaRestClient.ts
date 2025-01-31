@@ -57,6 +57,8 @@ import {
 	QueryProcessInstanceRequest,
 	QueryProcessInstanceResponse,
 	QueryTasksRequest,
+	QueryUsersReponse,
+	QueryUsersRequest,
 	QueryUserTasksResponse,
 	QueryVariablesRequest,
 	QueryVariablesResponse,
@@ -428,12 +430,25 @@ export class CamundaRestClient {
 	}
 
 	/**
-	 * Search for user tasks based on given criteria.
+	 * Search users
 	 *
-	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/query-user-tasks-alpha/
-	 * @experimental
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-users/
+	 *
+	 * @since 8.7.0
 	 */
-	// public async queryTasks() {}
+	public async searchUsers(
+		request: QueryUsersRequest
+	): Promise<QueryUsersReponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`users/search`, {
+					body: JSON.stringify(request),
+					headers,
+				})
+				.json()
+		)
+	}
 
 	/**
 	 * Publish a Message and correlates it to a subscription. If correlation is successful it will return the first process instance key the message correlated with.
