@@ -1,0 +1,42 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Jest Tests",
+			"program": "${workspaceFolder}/node_modules/jest/bin/jest",
+			"args": [
+				// "Worker-Backoff", // set to the name of the test file you want to run
+				"--runInBand",
+				"--watchAll=false"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"env": {
+				"NODE_ENV": "test",
+				"CAMUNDA_UNIT_TEST": "true",
+				"ZEEBE_ADDRESS": "localhost:26500",
+				"ZEEBE_REST_ADDRESS": "http://localhost:8080",
+				"ZEEBE_GRPC_ADDRESS": "localhost:26500",
+				"ZEEBE_CLIENT_ID": "zeebe",
+				"ZEEBE_CLIENT_SECRET": "not_a_real_thing",
+				"CAMUNDA_OAUTH_URL": "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token",
+				"ZEEBE_AUTHORIZATION_SERVER_URL": "http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token",
+				"CAMUNDA_TASKLIST_BASE_URL": "http://localhost:8082",
+				"CAMUNDA_OPERATE_BASE_URL": "http://localhost:8081",
+				"CAMUNDA_OPTIMIZE_BASE_URL": "http://localhost:8083",
+				"CAMUNDA_MODELER_BASE_URL": "http://localhost:8070/api",
+				"CAMUNDA_ZEEBE_OAUTH_AUDIENCE": "zeebe.camunda.io",
+				"CAMUNDA_TENANT_ID": "<default>",
+				"CAMUNDA_SECURE_CONNECTION": "false",
+				"ZEEBE_INSECURE_CONNECTION": "true",
+				"CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS": "10000",
+				"CAMUNDA_AUTH_STRATEGY": "OAUTH",
+				"CAMUNDA_OPTIMIZE_OAUTH_AUDIENCE": "optimize-api",
+				"ZEEBE_TOKEN_AUDIENCE": "zeebe.camunda.io"
+			}
+		}
+	]
+}

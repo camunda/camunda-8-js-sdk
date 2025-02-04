@@ -12,7 +12,10 @@ import * as uuid from 'uuid'
 import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
-import { ConnectionStatusEvent } from './ConnectionStatusEvent'
+import {
+	ConnectionStatusEvent,
+	ConnectionStatusEventMap,
+} from './ConnectionStatusEvent'
 import { GrpcError } from './GrpcError'
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
 import { TypedEmitter } from './TypedEmitter'
@@ -68,7 +71,7 @@ export class ZBWorkerBase<
 	CustomHeaderShape = any,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	WorkerOutputVariables = any,
-> extends TypedEmitter<typeof ConnectionStatusEvent> {
+> extends TypedEmitter<ConnectionStatusEventMap> {
 	private static readonly DEFAULT_JOB_ACTIVATION_TIMEOUT =
 		Duration.seconds.of(60)
 	private static readonly DEFAULT_MAX_ACTIVE_JOBS = 32
@@ -113,6 +116,7 @@ export class ZBWorkerBase<
 		new (...args: any[]): CustomHeaderShape
 	}
 	private tenantIds: string[] | [string] | undefined
+	private CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: number
 
 	constructor({
 		grpcClient,
@@ -200,7 +204,8 @@ export class ZBWorkerBase<
 
 		this.logger = log
 		this.capacityEmitter = new EventEmitter()
-
+		this.CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS =
+			options.CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS! // We assert because it is optional in the explicit arguments, but hydrated from env config with a default
 		this.pollLoop = setInterval(
 			() => this.poll(),
 			Duration.milliseconds.from(this.pollInterval)
@@ -229,6 +234,7 @@ export class ZBWorkerBase<
 			if (this.activeJobs <= 0) {
 				await this.grpcClient.close(timeout)
 				this.grpcClient.removeAllListeners()
+				this.jobStream?.removeAllListeners()
 				this.jobStream?.cancel?.()
 				this.jobStream = undefined
 				this.logger.logDebug('Cancelled Job Stream')
@@ -460,6 +466,7 @@ You should call only one job action method in the worker handler. This is a bug 
 	}
 
 	private handleStreamEnd = (id) => {
+		this.jobStream?.removeAllListeners()
 		this.jobStream = undefined
 		this.logger.logDebug(
 			`Deleted job stream [${id}] listeners and job stream reference`
@@ -468,7 +475,7 @@ You should call only one job action method in the worker handler. This is a bug 
 
 	private async poll() {
 		const pollAlreadyInProgress = this.pollMutex || this.jobStream !== undefined
-		const workerIsClosing = this.closePromise !== undefined || this.closing
+		const workerIsClosing = !!this.closePromise || this.closing
 		const insufficientCapacityAvailable =
 			this.activeJobs > this.activeJobsThresholdForReactivation
 
@@ -497,45 +504,79 @@ You should call only one job action method in the worker handler. This is a bug 
 			start
 		)
 
+		let doBackoff = false
 		if (jobStream.stream) {
 			this.logger.logDebug(`Stream [${id}] opened...`)
 			this.jobStream = jobStream.stream
+
+			jobStream.stream.on('error', (error) => {
+				this.pollMutex = true
+				this.logger.logDebug(
+					`Stream [${id}] error after ${(Date.now() - start) / 1000} seconds`,
+					error
+				)
+				const errorCode = (error as Error & { code: number }).code
+				// Backoff on
+				const backoffErrorCodes: number[] = [
+					GrpcError.RESOURCE_EXHAUSTED,
+					GrpcError.INTERNAL,
+					GrpcError.UNAUTHENTICATED,
+				]
+				doBackoff = backoffErrorCodes.includes(errorCode)
+				this.emit('streamError', error)
+				if (doBackoff) {
+					const backoffDuration = Math.min(
+						this.CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS,
+						1000 * 2 ** this.backPressureRetryCount++
+					)
+
+					this.emit('backoff', backoffDuration)
+
+					setTimeout(() => {
+						this.handleStreamEnd(id)
+						this.pollMutex = false
+					}, backoffDuration)
+				} else {
+					this.handleStreamEnd(id)
+					this.pollMutex = false
+				}
+			})
+
 			// This event happens when the server cancels the call after the deadline
 			// And when it has completed a response with work
+			// And also after an error event.
 			jobStream.stream.on('end', () => {
 				this.logger.logDebug(
 					`Stream [${id}] ended after ${(Date.now() - start) / 1000} seconds`
 				)
 				this.handleStreamEnd(id)
-				this.backPressureRetryCount = 0
-			})
-
-			jobStream.stream.on('error', (error) => {
-				this.logger.logDebug(
-					`Stream [${id}] error after ${(Date.now() - start) / 1000} seconds`,
-					error
-				)
-				// Backoff on
-				if (
-					(error as Error & { code: number }).code ===
-						GrpcError.RESOURCE_EXHAUSTED ||
-					(error as Error & { code: number }).code === GrpcError.INTERNAL
-				) {
-					setTimeout(
-						() => this.handleStreamEnd(id),
-						1000 * 2 ** this.backPressureRetryCount++
-					)
-				} else {
-					this.handleStreamEnd(id)
-				}
 			})
 		}
 
 		if (jobStream.error) {
-			const error = jobStream.error?.message
+			const error = jobStream.error!.message
+			const message = 'Grpc Stream Error: '
+			const backoffErrorCodes: string[] = [
+				`${message}${GrpcError.RESOURCE_EXHAUSTED}`,
+				`${message}${GrpcError.INTERNAL}`,
+				`${message}${GrpcError.UNAUTHENTICATED}`,
+			]
+			doBackoff = backoffErrorCodes.map((e) => error.includes(e)).includes(true)
+			const backoffDuration = Math.min(
+				this.CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS,
+				1000 * 2 ** this.backPressureRetryCount++
+			)
 			this.logger.logError({ id, error })
+			if (doBackoff) {
+				this.emit('backoff', backoffDuration)
+				setTimeout(() => {
+					this.handleStreamEnd(id)
+					this.pollMutex = false
+				}, backoffDuration)
+			}
+		} else {
+			this.pollMutex = false
 		}
-		this.pollMutex = false
 	}
 
 	private async activateJobs(id: string) {
@@ -549,6 +590,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				closing: true as const,
 			}
 		}
+
 		if (this.debugMode) {
 			this.logger.logDebug('Activating Jobs...')
 		}
@@ -605,6 +647,13 @@ You should call only one job action method in the worker handler. This is a bug 
 		if (this.closing) {
 			return
 		}
+		/**
+		 * At this point we know that we have a working connection to the server, so we can reset the backpressure retry count.
+		 * Putting it here means that if we have a lot of connection errors and increment the backpressure count,
+		 * then get a connection, but no jobs are activated, and before any jobs are activated we get another error condition
+		 * then the backoff will start not from 0, but from the level of backoff we were at previously.
+		 */
+		this.backPressureRetryCount = 0
 		this.activeJobs += res.jobs.length
 
 		Promise.all(
