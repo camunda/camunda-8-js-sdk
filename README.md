@@ -51,7 +51,7 @@ The configuration for the SDK can be done by any combination of environment vari
 
 Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment.
 
-The configuration object fields and the environment variables have exactly the same names. See the file `src/lib/Configuration.ts` for a complete configuration outline.
+The configuration object fields and the environment variables have exactly the same names. See the file [`src/lib/Configuration.ts`](https://github.com/camunda/camunda-8-js-sdk/blob/main/src/lib/Configuration.ts) for a complete list of configuration parameters that can be set via environment variables or constructor parameters.
 
 ## A note on how int64 is handled in the JavaScript SDK
 
