@@ -458,7 +458,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			id: config.id || null,
 			idColor,
 			log,
-			options: { ...this.options, ...options },
+			options: {
+				...this.options,
+				...options,
+				CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS:
+					this.config.CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS,
+			},
 			taskHandler: config.taskHandler,
 			taskType: config.taskType,
 			zbClient: this,

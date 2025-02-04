@@ -339,6 +339,7 @@ export class GrpcClient extends EventEmitter {
 						}
 					}
 
+					let _error: GrpcStreamError | undefined
 					// Free the stream resources. When it emits 'end', we remove all listeners and destroy it.
 					stream.on('end', () => {
 						stream.removeAllListeners()
@@ -380,6 +381,7 @@ export class GrpcClient extends EventEmitter {
 					 * streaming calls, and each worker, which only does streaming calls
 					 */
 					stream.on('error', (error: GrpcStreamError) => {
+						_error = error
 						clearTimeout(clientSideTimeout)
 						debug(`${methodName}Stream error emitted by stream`, error)
 						this.emit(MiddlewareSignals.Event.Error)
@@ -410,7 +412,7 @@ export class GrpcClient extends EventEmitter {
 					)
 					stream.on('end', () => clearTimeout(clientSideTimeout))
 
-					return stream
+					return _error ? { error: _error } : stream
 				}
 
 				this[`${methodName}Sync`] = (data) => {

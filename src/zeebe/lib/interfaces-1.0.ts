@@ -358,6 +358,10 @@ export interface ZBWorkerOptions<InputVars = IInputVariables> {
 	 * Enable debug tracking
 	 */
 	debug?: boolean
+	/**
+	 * Maximum backoff time in milliseconds
+	 */
+	CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS?: number
 }
 
 export const JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT' as const

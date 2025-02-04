@@ -6,6 +6,12 @@ import { Logger } from '../c8/lib/C8Logger'
 
 const getMainEnv = () =>
 	createEnv({
+		/** Maximum polling backoff time in milliseconds for Job Workers when an error is encountered. Defaults to 16000 (16 seconds). */
+		CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: {
+			type: 'number',
+			optional: true,
+			default: 16000,
+		},
 		/** Custom user agent  */
 		CAMUNDA_CUSTOM_USER_AGENT_STRING: {
 			type: 'string',
