@@ -1,3 +1,10 @@
+## [8.6.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.21...v8.6.22) (2025-02-04)
+
+
+### Features
+
+* **zeebe:** implement backoff on UNAUTHENTICATED error for workers ([56c3c78](https://github.com/camunda/camunda-8-js-sdk/commit/56c3c78429e899aa139c92ac03bcf6d62e5d0850)), closes [#366](https://github.com/camunda/camunda-8-js-sdk/issues/366)
+
 ## [8.6.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.20...v8.6.21) (2025-01-24)
 
 
