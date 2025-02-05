@@ -29,6 +29,6 @@ export class BearerAuthProvider implements IOAuthProvider {
 	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
 		debug(`Token request for ${audienceType}`)
 
-		return Promise.resolve(this.bearerToken)
+		return Promise.resolve(`Bearer ${this.bearerToken}`)
 	}
 }

@@ -96,11 +96,11 @@ export class OptimizeApiClient {
 	}
 
 	private async getHeaders(auth = true) {
-		const token = await this.oAuthProvider.getToken('OPTIMIZE')
+		const authorization = await this.oAuthProvider.getToken('OPTIMIZE')
 
 		const authHeader: { authorization: string } | Record<string, never> = auth
 			? {
-					authorization: `Bearer ${token}`,
+					authorization,
 				}
 			: {}
 
