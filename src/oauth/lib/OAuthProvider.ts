@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import * as fs from 'fs'
 import * as os from 'os'
 import path from 'path'
@@ -6,16 +7,17 @@ import { debug } from 'debug'
 import got from 'got'
 import { jwtDecode } from 'jwt-decode'
 
+import { getLogger, Logger } from '../../c8/lib/C8Logger'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
+	createUserAgentString,
 	DeepPartial,
 	GetCustomCertificateBuffer,
-	GotRetryConfig,
-	RequireConfiguration,
-	createUserAgentString,
 	gotBeforeErrorHook,
 	gotErrorHandler,
+	GotRetryConfig,
+	RequireConfiguration,
 } from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
@@ -48,6 +50,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
 	private rest: Promise<typeof got>
+	private log: Logger
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -55,6 +58,7 @@ export class OAuthProvider implements IOAuthProvider {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+		this.log = getLogger(config)
 
 		this.authServerUrl = RequireConfiguration(
 			config.CAMUNDA_OAUTH_URL,
@@ -138,7 +142,7 @@ export class OAuthProvider implements IOAuthProvider {
 					})
 				}
 				// Try to write a temporary file to the directory
-				const tempfilename = path.join(this.cacheDir, 'temp.txt')
+				const tempfilename = path.join(this.cacheDir, `${randomUUID()}.tmp`)
 				if (fs.existsSync(tempfilename)) {
 					fs.unlinkSync(tempfilename) // Remove the temporary file
 				}
@@ -147,7 +151,7 @@ export class OAuthProvider implements IOAuthProvider {
 			} catch (e) {
 				throw new Error(
 					`FATAL: Cannot write to OAuth cache dir ${this.cacheDir}\n` +
-						'If you are running on AWS Lambda, set the HOME environment variable of your lambda function to /tmp'
+						'If you are running on AWS Lambda, set the HOME environment variable of your lambda function to /tmp\n'
 				)
 			}
 		}
@@ -210,6 +214,15 @@ export class OAuthProvider implements IOAuthProvider {
 
 		if (!this.inflightTokenRequest) {
 			this.inflightTokenRequest = new Promise((resolve, reject) => {
+				const failureBackoff = Math.min(
+					BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
+					15000
+				)
+				if (this.failed) {
+					this.log.warn(
+						`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
+					)
+				}
 				setTimeout(
 					() => {
 						this.makeDebouncedTokenRequest({
@@ -230,7 +243,7 @@ export class OAuthProvider implements IOAuthProvider {
 								reject(e)
 							})
 					},
-					this.failed ? BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount : 0
+					this.failed ? failureBackoff : 0
 				)
 			})
 		}
@@ -309,10 +322,10 @@ export class OAuthProvider implements IOAuthProvider {
 			rest
 				.post(this.authServerUrl, options)
 				.catch((e) => {
-					console.log(
-						`Erroring requesting token for Client Id ${clientIdToUse}`
+					this.log.error(
+						`Error requesting token for Client Id ${clientIdToUse}`
 					)
-					console.log(e)
+					this.log.error(e)
 					throw e
 				})
 				.then((res) => JSON.parse(res.body))

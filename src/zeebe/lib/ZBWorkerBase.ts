@@ -531,6 +531,9 @@ You should call only one job action method in the worker handler. This is a bug 
 					)
 
 					this.emit('backoff', backoffDuration)
+					this.logger.logInfo(
+						`Backing off worker poll due to failure. Next attempt will be made in ${backoffDuration}ms...`
+					)
 
 					setTimeout(() => {
 						this.handleStreamEnd(id)
