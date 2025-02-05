@@ -30,6 +30,7 @@ import {
 	IProcessVariables,
 	JOB_ACTION_ACKNOWLEDGEMENT,
 	JobCompletionInterfaceRest,
+	JobFailureConfiguration,
 	JSONDoc,
 	PublishMessageRequest,
 	TopologyResponse,
@@ -52,9 +53,14 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	QueryTasksRequest,
+	QueryTasksResponse,
+	QueryVariablesRequest,
+	QueryVariablesResponse,
 	RestJob,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
+	UserTask,
 } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
@@ -317,6 +323,41 @@ export class CamundaRestClient {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest.delete(`user-tasks/${userTaskKey}/assignee`, { headers }).json()
+		)
+	}
+
+	/**
+	 * Search for user tasks based on given criteria.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-tasks/
+	 *
+	 * @since 8.7.0
+	 */
+	public async findUserTasks(
+		request: QueryTasksRequest
+	): Promise<QueryTasksResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`user-tasks/search`, {
+					headers,
+					body: losslessStringify(request),
+				})
+				.json()
+		)
+	}
+
+	/**
+	 * Get the user task by the user task key.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-user-task/
+	 *
+	 * @since 8.7.0
+	 */
+	public async getUserTask(userTaskKey: string): Promise<UserTask> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`user-tasks/${userTaskKey}`, { headers }).json()
 		)
 	}
 
@@ -931,6 +972,20 @@ export class CamundaRestClient {
 		)
 	}
 
+	public async queryVariables(
+		req: QueryVariablesRequest
+	): Promise<QueryVariablesResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`variables/search`, {
+					headers,
+					body: stringify(req),
+				})
+				.json()
+		)
+	}
+
 	private addJobMethods = <Variables, CustomHeaders>(
 		job: RestJob<Variables, CustomHeaders>
 	): RestJob<Variables, CustomHeaders> &
@@ -938,6 +993,9 @@ export class CamundaRestClient {
 		return {
 			...job,
 			cancelWorkflow: () => {
+				this.cancelProcessInstance({
+					processInstanceKey: job.processInstanceKey,
+				})
 				throw new Error('Not Implemented')
 			},
 			complete: (variables: IProcessVariables = {}) =>
@@ -950,7 +1008,14 @@ export class CamundaRestClient {
 					...error,
 					jobKey: job.jobKey,
 				}),
-			fail: (failJobRequest) => this.failJob(failJobRequest),
+			fail: (failJobRequest: JobFailureConfiguration) =>
+				this.failJob({
+					jobKey: job.jobKey,
+					errorMessage: failJobRequest.errorMessage,
+					retries: failJobRequest.retries ?? job.retries - 1,
+					retryBackOff: failJobRequest.retryBackOff ?? 0,
+					variables: failJobRequest.variables,
+				}),
 			/* This has an effect in a Job Worker, decrementing the currently active job count */
 			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
 			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
