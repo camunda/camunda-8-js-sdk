@@ -10,7 +10,7 @@ const getMainEnv = () =>
 		CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: {
 			type: 'number',
 			optional: true,
-			default: 16000,
+			default: 15000,
 		},
 		/** Custom user agent  */
 		CAMUNDA_CUSTOM_USER_AGENT_STRING: {

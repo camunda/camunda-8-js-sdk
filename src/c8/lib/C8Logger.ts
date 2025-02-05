@@ -50,3 +50,11 @@ export function getLogger(config?: Camunda8ClientConfiguration) {
 	}
 	return config?.logger ?? defaultLogger
 }
+
+export function createLogger(options?: winston.LoggerOptions) {
+	const logger: winston.Logger & {
+		trace: (message: string | undefined, ...meta: any[]) => void // eslint-disable-line @typescript-eslint/no-explicit-any
+	} = winston.createLogger(options) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+	logger.trace = logger.silly
+	return logger
+}
