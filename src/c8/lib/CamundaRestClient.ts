@@ -55,6 +55,7 @@ import {
 	RestJob,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
+	UserTaskFormResponse,
 } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
@@ -928,6 +929,25 @@ export class CamundaRestClient {
 				headers,
 				body: stringify(request),
 			})
+		)
+	}
+
+	/**
+	 *
+	 * Get the form of a user task.
+	 *
+	 * Note that this endpoint will only return linked forms. This endpoint does not support embedded forms.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-user-task-form/
+	 * @since 8.7.0
+	 *
+	 */
+	public async getUserTaskForm(
+		userTaskKey: string
+	): Promise<UserTaskFormResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`user-tasks/${userTaskKey}/form`, { headers }).json()
 		)
 	}
 
