@@ -1,3 +1,10 @@
+## [8.6.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.22...v8.6.23) (2025-02-05)
+
+
+### Bug Fixes
+
+* **oauth:** pass out full auth header from getToken method ([55a19b6](https://github.com/camunda/camunda-8-js-sdk/commit/55a19b65e0d2e9bcb6e168139ee1af0f8770d6f9)), closes [#367](https://github.com/camunda/camunda-8-js-sdk/issues/367)
+
 ## [8.6.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.21...v8.6.22) (2025-02-04)
 
 
