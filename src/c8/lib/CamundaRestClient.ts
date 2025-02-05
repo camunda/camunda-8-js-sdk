@@ -149,7 +149,7 @@ export class CamundaRestClient {
 
 		const headers = {
 			'content-type': 'application/json',
-			authorization: `Bearer ${token}`,
+			authorization: token,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}

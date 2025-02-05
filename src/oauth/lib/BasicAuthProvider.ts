@@ -34,6 +34,6 @@ export class BasicAuthProvider implements IOAuthProvider {
 		const token = Buffer.from(`${this.username}:${this.password}`).toString(
 			'base64'
 		)
-		return Promise.resolve(token)
+		return Promise.resolve(`Basic ${token}`)
 	}
 }

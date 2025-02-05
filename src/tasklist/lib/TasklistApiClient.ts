@@ -98,10 +98,10 @@ export class TasklistApiClient {
 	}
 
 	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('TASKLIST')
+		const authorization = await this.oAuthProvider.getToken('TASKLIST')
 		return {
 			'content-type': 'application/json',
-			authorization: `Bearer ${token}`,
+			authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}
