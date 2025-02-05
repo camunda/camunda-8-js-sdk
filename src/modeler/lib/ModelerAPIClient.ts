@@ -63,8 +63,7 @@ export class ModelerApiClient {
 	}
 
 	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('MODELER')
-		const authorization = `Bearer ${token}`
+		const authorization = await this.oAuthProvider.getToken('MODELER')
 		const headers = {
 			'content-type': 'application/json',
 			authorization,

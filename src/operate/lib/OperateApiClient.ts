@@ -120,11 +120,11 @@ export class OperateApiClient {
 	}
 
 	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('OPERATE')
+		const authorization = await this.oAuthProvider.getToken('OPERATE')
 
 		return {
 			'content-type': 'application/json',
-			authorization: `Bearer ${token}`,
+			authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}

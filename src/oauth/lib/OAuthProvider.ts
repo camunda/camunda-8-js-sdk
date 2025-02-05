@@ -188,7 +188,7 @@ export class OAuthProvider implements IOAuthProvider {
 				trace(`In-memory token ${token.audience} is expired`)
 			} else {
 				trace(`Using in-memory cached token ${token.audience}`)
-				return this.tokenCache[key].access_token
+				return this.addBearer(this.tokenCache[key].access_token)
 			}
 		}
 		if (this.useFileCache) {
@@ -203,7 +203,7 @@ export class OAuthProvider implements IOAuthProvider {
 					trace(`File cached token ${cachedToken.audience} is expired`)
 				} else {
 					trace(`Using file cached token ${cachedToken.audience}`)
-					return cachedToken.access_token
+					return this.addBearer(cachedToken.access_token)
 				}
 			}
 		}
@@ -344,7 +344,7 @@ export class OAuthProvider implements IOAuthProvider {
 						})
 					}
 					this.sendToMemoryCache({ audience: audienceType, token })
-					return token.access_token
+					return this.addBearer(token.access_token)
 				})
 		)
 	}
@@ -474,5 +474,9 @@ export class OAuthProvider implements IOAuthProvider {
 
 	private getAudience(audience: TokenGrantAudienceType) {
 		return this.audienceMap[audience]
+	}
+
+	private addBearer(token: string) {
+		return `Bearer ${token}`
 	}
 }

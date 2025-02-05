@@ -601,11 +601,11 @@ describe('OAuthProvider', () => {
 			CAMUNDA_BASIC_AUTH_USERNAME: 'admin',
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any)
-		const token = await oAuthProvider.getToken('ZEEBE')
+		const Authorization = await oAuthProvider.getToken('ZEEBE')
 		await got
 			.get('http://localhost:3033', {
 				headers: {
-					Authorization: 'Basic ' + token,
+					Authorization,
 				},
 			})
 			.then((res) => {
@@ -634,11 +634,11 @@ describe('OAuthProvider', () => {
 			CAMUNDA_OAUTH_TOKEN: 'mysecrettoken',
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any)
-		const token = await oAuthProvider.getToken('ZEEBE')
+		const Authorization = await oAuthProvider.getToken('ZEEBE')
 		await got
 			.get('http://localhost:3033', {
 				headers: {
-					Authorization: 'Bearer ' + token,
+					Authorization,
 				},
 			})
 			.then((res) => {
