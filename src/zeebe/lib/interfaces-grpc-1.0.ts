@@ -506,6 +506,45 @@ export interface ThrowErrorRequest {
 export interface CompleteJobRequest<Variables = IProcessVariables> {
 	readonly jobKey: string
 	variables: Variables
+	/** Since Camunda 8.7 */
+	result?: JobResult
+}
+
+/**
+ * Since Camunda 8.7
+ */
+export interface JobResult {
+	// Indicates whether the worker denies the work, i.e. explicitly doesn't approve it.
+	// For example, a Task Listener can deny the completion of a task by setting this flag to true.
+	// In this example, the completion of a task is represented by a job that the worker can complete as denied.
+	// As a result, the completion request is rejected and the task remains active.
+	// Defaults to false.
+	denied?: boolean
+	// Attributes that were corrected by the worker.
+	// The following attributes can be corrected, additional attributes will be ignored:
+	//   * `assignee` - clear by providing an empty String
+	//   * `dueDate` - clear by providing an empty String
+	//   * `followUpDate` - clear by providing an empty String
+	//   * `candidateGroups` - clear by providing an empty list
+	//   * `candidateUsers` - clear by providing an empty list
+	//   * `priority` - minimum 0, maximum 100, default 50
+	//  Omitting any of the attributes will preserve the persisted attribute's value.
+	corrections?: JobResultCorrections
+}
+
+export interface JobResultCorrections {
+	// The assignee of the task.
+	assignee?: string
+	// The due date of the task.
+	dueDate?: string
+	// The follow-up date of the task.
+	followUpDate?: string
+	// The list of candidate users of the task.
+	candidateUsers?: { values: string[] }
+	// The list of candidate groups of the task.
+	candidateGroups?: { values: string[] }
+	// The priority of the task.
+	priority?: number
 }
 
 interface SetVariablesRequestBase {

@@ -49,11 +49,7 @@ export class ZBWorker<
 			)(
 				{
 					...job,
-					cancelWorkflow: workerCallback.cancelWorkflow,
-					complete: workerCallback.complete,
-					fail: workerCallback.fail,
-					error: workerCallback.error,
-					forward: workerCallback.forward,
+					...workerCallback,
 				},
 				this
 			)
