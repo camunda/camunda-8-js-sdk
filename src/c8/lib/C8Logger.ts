@@ -1,4 +1,4 @@
-import winston, { transports } from 'winston' // Import Winston
+import winston, { transports } from 'winston'; // Import Winston
 
 import {
 	Camunda8ClientConfiguration,

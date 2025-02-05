@@ -1,10 +1,6 @@
 import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
-/**
- * This is a manually verified test. To check it, comment out the next line, then check the console output.
- * You should see the error messages from the worker, and the backoff expanding the time between them.
- */
 suppressZeebeLogging()
 
 jest.setTimeout(30000)
@@ -18,7 +14,6 @@ test('gRPC worker will backoff on UNAUTHENTICATED', (done) => {
 	const zbc = new ZeebeGrpcClient({
 		config: {
 			CAMUNDA_AUTH_STRATEGY: 'NONE',
-			CAMUNDA_LOG_LEVEL: 'DEBUG',
 		},
 	})
 
