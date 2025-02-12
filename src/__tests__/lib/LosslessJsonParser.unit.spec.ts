@@ -176,7 +176,12 @@ test('LosslessJsonParser is ok with missing optional fields at runtime', () => {
 	expect((parsedDto as any).age).toBe(42)
 })
 
-test('LosslessJsonParser will throw if an unexpected type is encountered at runtime', () => {
+/**
+ * In versions prior to 8.7, entity keys were transmitted as JSON number values.
+ * In 8.7, they are transmitted as JSON strings.
+ * This test ensures that the parser can handle both cases.
+ */
+test('LosslessJsonParser will not throw if a string type is encountered in an int64String annotated field at runtime', () => {
 	class InputVariables extends LosslessDto {
 		name!: string
 		@Int64String
@@ -195,13 +200,16 @@ test('LosslessJsonParser will throw if an unexpected type is encountered at runt
 			"optionalKey": "optional"
 		}`
 	let threw = false
+	let parsed: InputVariables
 	try {
-		losslessParse(json, InputVariables)
+		parsed = losslessParse(json, InputVariables)
+		expect(parsed.key).toBe('12345678901234567890')
+		expect(parsed.optionalKey).toBe('optional')
 	} catch (e) {
 		expect((e as Error).message.includes('Unexpected type')).toBe(true)
 		threw = true
 	}
-	expect(threw).toBe(true)
+	expect(threw).toBe(false)
 })
 
 test('LosslessJsonParser throws for unexpected unsafe numbers at runtime', () => {
