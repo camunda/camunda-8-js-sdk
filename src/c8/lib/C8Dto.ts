@@ -353,3 +353,243 @@ export interface RestJob<
 	 */
 	readonly tenantId: string
 }
+
+export interface QueryPageRequest {
+	from: number
+	limit: number
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	searchAfter: any[]
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	searchBefore: any[]
+}
+
+export interface AdvancedStringFilter {
+	/** Checks for equality with the provided value. */
+	$eq?: string
+	/** Checks for inequality with the provided value. */
+	$neq?: string
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Checks if the property matches any of the provided values. */
+	$in: string[]
+	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
+	$like: string
+}
+
+export interface AdvancedNumberFilter {
+	$eq?: number
+	$neq?: number
+	$exists: boolean
+	$in: number[]
+	$gt: number
+	$gte: number
+	$lt: number
+	$lte: number
+}
+
+export interface QueryFilterRequest {
+	/** The key for this variable. */
+	variableKey?: string | AdvancedStringFilter
+	/** Name of the variable. */
+	name?: string | AdvancedStringFilter
+	/** The value of the variable. */
+	value?: string | AdvancedStringFilter
+	/** The key of the scope of this variable. */
+	scopeKey?: string | AdvancedStringFilter
+	/** The key of the process instance of this variable. */
+	processInstanceKey?: string | AdvancedStringFilter
+	/** Tenant ID of this variable. */
+	tenantId?: string
+	/** Whether the value is truncated or not. */
+	isTruncated?: boolean
+}
+
+export interface QuerySortRequest {
+	field: string
+	/** The order in which to sort the related field. Default value: ASC */
+	order?: 'ASC' | 'DESC'
+}
+
+export interface QueryVariablesRequest {
+	/** Sort field criteria. */
+	sort?: QuerySortRequest
+	/** Pagination criteria. */
+	page?: QueryPageRequest
+	/** Variable filter request. */
+	filter: QueryFilterRequest
+}
+
+export interface QueryResponsePagination {
+	/** Total items matching the criteria. */
+	totalItems: number
+	/** The sort values of the first item in the result set. Use this in the searchBefore field of an ensuing request. */
+	firstSortValues: unknown
+	/** The sort values of the last item in the result set. Use this in the searchAfter field of an ensuing request. */
+	lastSortValues: unknown
+}
+
+export interface QueryVariablesResponse {
+	/** Pagination information about the search results. */
+	page: QueryResponsePagination
+	/** The matching variables. */
+	items: Array<{
+		/** The key for this variable. */
+		variableKey: string
+		/** The key of the scope of this variable. */
+		scopeKey: string
+		/** The key of the process instance of this variable. */
+		processInstanceKey: string
+	}>
+}
+
+export type QueryTasksSortRequest = Array<{
+	/** The field to sort by. */
+	field:
+		| 'creationDate'
+		| 'completionDate'
+		| 'dueDate'
+		| 'followUpDate'
+		| 'priority'
+	/** The order in which to sort the related field. Default: ASC */
+	order?: 'ASC' | 'DESC'
+}>
+
+export interface AdvancedDateTimeFilter {
+	/** Checks for equality with the provided value. */
+	$eq?: string
+	/** Checks for inequality with the provided value. */
+	$neq?: string
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Greater than comparison with the provided value. */
+	$gt: string
+	/** Greater than or equal comparison with the provided value. */
+	$gte: string
+	/** Lower than comparison with the provided value. */
+	$lt: string
+	/** Lower than or equal comparison with the provided value. */
+	$lte: string
+	/** Checks if the property matches any of the provided values. */
+	$in: string[]
+}
+
+/** User task filter request. */
+export interface QueryUserTasksFilter {
+	/** The key for this user task. */
+	userTaskKey?: string
+	/** The state of the user task. */
+	state?: 'CREATED' | 'COMPLETED' | 'CANCELED' | 'FAILED'
+	/** The assignee of the user task. */
+	assignee?: string | AdvancedStringFilter
+	/** The priority of the user task. */
+	priority?: number | AdvancedNumberFilter
+	/** The element ID of the user task. */
+	elementId?: string
+	/** The candidate group for this user task. */
+	candidateGroup?: string | AdvancedStringFilter
+	/** The candidate user for this user task. */
+	candidateUser?: string | AdvancedStringFilter
+	/** The key of the process definition. */
+	processDefinitionKey?: string
+	/** The key of the process instance. */
+	processInstanceKey?: string
+	/** Tenant ID of this user task. */
+	tenantId?: string
+	/** The ID of the process definition. */
+	processDefinitionId?: string
+	/** The key of the element instance. */
+	elementInstanceKey?: string
+	/** The user task creation date. */
+	creationDate?: string | AdvancedDateTimeFilter
+	/** The user task completion date. */
+	completionDate?: string | AdvancedDateTimeFilter
+	/** The user task follow-up date. */
+	followupDate?: string | AdvancedDateTimeFilter
+	/** The user task due date. */
+	dueDate?: string | AdvancedDateTimeFilter
+	/** Process Instance variables associated with the user task. */
+	processInstanceVariables?: Array<{
+		/** Name of the variable. */
+		name: string
+		/** The value of the variable. */
+		value: string | boolean | number
+	}>
+	/** Local variables associated with the user task. */
+	localVariables?: Array<{
+		/** Name of the variable. */
+		name: string
+		/** The value of the variable. */
+		value: string | boolean | number
+	}>
+}
+
+export interface QueryTasksRequest {
+	/** Pagination criteria. */
+	page: QueryPageRequest
+	/** Sort field criteria. */
+	sort: QueryTasksSortRequest
+	/** User task filter request. */
+	filter: QueryUserTasksFilter
+}
+
+export interface QueryTasksResponse {
+	page: QueryResponsePagination
+	items: Array<{
+		/** The key of the user task. */
+		userTaskKey: string
+		/** The key of the element instance. */
+		elementInstanceKey: string
+		/** The key of the process definition. */
+		processDefinitionKey: string
+		/** The key of the process instance. */
+		processInstanceKey: string
+		/** The key of the form. */
+		formKey: string
+	}>
+}
+
+export interface UserTask {
+	/** The name for this user task. */
+	name: string
+	/** The state of the user task. Possible values: [CREATED, COMPLETED, CANCELED, FAILED] */
+	state: 'CREATED' | 'COMPLETED' | 'CANCELED' | 'FAILED'
+	/** The assignee of the user task. */
+	assignee?: string
+	/** The element ID of the user task.
+	 */
+	elementId: string
+	/** The candidate groups for this user task. */
+	candidateGroups?: string[]
+	/** The candidate users for this user task. */
+	candidateUsers?: string[]
+	/** The ID of the process definition. */
+	processDefinitionId: string
+	/** The creation date of a user task. */
+	creationDate: string
+	/** The completion date of a user task. */
+	completionDate?: string
+	/** The follow date of a user task. */
+	followUpDate?: string
+	/** The due date of a user task. */
+	dueDate?: string
+	/** Tenant ID of this user task. */
+	tenantId: string
+	/** The external form reference. */
+	externalFormReference?: string
+	/** The version of the process definition. */
+	processDefinitionVersion: number
+	/** Custom headers for the user task. */
+	customHeaders: { [key: string]: string }
+	/** The priority of a user task. The higher the value the higher the priority. Possible values: <= 100. Default value: 50 */
+	priority: number
+	/** The key of the user task. */
+	userTaskKey: string
+	/** The key of the element instance. */
+	elementInstanceKey: string
+	/** The key of the process definition. */
+	processDefinitionKey: string
+	/** The key of the process instance. */
+	processInstanceKey: string
+	/** The key of the form. */
+	formKey?: string
+}
