@@ -1,3 +1,10 @@
+## [8.6.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.23...v8.6.24) (2025-02-12)
+
+
+### Features
+
+* **zeebe:** support 8.7 string entity keys (backwards-compatible with int64) ([1ea31f0](https://github.com/camunda/camunda-8-js-sdk/commit/1ea31f00bfcda30cc1e683abd75210c62e1c363d)), closes [#279](https://github.com/camunda/camunda-8-js-sdk/issues/279)
+
 ## [8.6.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.22...v8.6.23) (2025-02-05)
 
 
