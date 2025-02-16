@@ -7,7 +7,11 @@ jest.setTimeout(17000)
 
 let processDefinitionId: string
 let processDefinitionKey: string
-const restClient = new CamundaRestClient()
+const restClient = new CamundaRestClient({
+	config: {
+		CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'zeebe-api',
+	},
+})
 
 beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([

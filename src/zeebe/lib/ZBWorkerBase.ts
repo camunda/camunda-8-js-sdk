@@ -624,6 +624,7 @@ You should call only one job action method in the worker handler. This is a bug 
 
 		try {
 			stream = await this.grpcClient.activateJobsStream(activateJobsRequest)
+
 			if (this.debugMode) {
 				this.pollCount++
 			}

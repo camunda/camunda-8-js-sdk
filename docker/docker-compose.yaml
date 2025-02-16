@@ -29,6 +29,7 @@ services:
       - ZEEBE_BROKER_DATA_DISKUSAGECOMMANDWATERMARK=0.998
       - ZEEBE_BROKER_DATA_DISKUSAGEREPLICATIONWATERMARK=0.999
       - "JAVA_TOOL_OPTIONS=-Xms512m -Xmx512m"
+      - CAMUNDA_DATABASE_URL=http://elasticsearch:9200
     restart: always
     healthcheck:
       test:
