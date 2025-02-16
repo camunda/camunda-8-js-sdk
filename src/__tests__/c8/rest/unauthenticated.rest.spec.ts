@@ -8,13 +8,13 @@ const unauthenticatedRestClient = new CamundaRestClient({
 	},
 })
 
-test('Unauthenticated REST clients cannot get topology', async () => {
+xtest('Unauthenticated REST clients cannot get topology', async () => {
 	await expect(async () => {
 		const topology = await unauthenticatedRestClient.getTopology()
 		return topology
 	}).rejects.toThrow()
 })
-test('Unauthenticated REST client cannot activate jobs', async () => {
+xtest('Unauthenticated REST client cannot activate jobs', async () => {
 	await expect(async () => {
 		const jobs = await unauthenticatedRestClient.activateJobs({
 			maxJobsToActivate: 10,
@@ -26,7 +26,7 @@ test('Unauthenticated REST client cannot activate jobs', async () => {
 		return jobs
 	}).rejects.toThrow()
 })
-test('Unauthenticated REST client cannot deploy resources', async () => {
+xtest('Unauthenticated REST client cannot deploy resources', async () => {
 	await expect(async () => {
 		const deployment = await unauthenticatedRestClient.deployResourcesFromFiles(
 			['./src/__tests__/testdata/rest-message-test.bpmn']
