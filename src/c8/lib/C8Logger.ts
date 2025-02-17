@@ -1,4 +1,4 @@
-import winston from 'winston' // Import Winston
+import winston, { transports } from 'winston' // Import Winston
 
 import {
 	Camunda8ClientConfiguration,
@@ -28,10 +28,7 @@ export function getLogger(config?: Camunda8ClientConfiguration) {
 	}
 	if (!defaultLogger) {
 		// Define the default logger
-		const logger: winston.Logger & {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			trace: (message: string | undefined, ...meta: any[]) => void
-		} = winston.createLogger({
+		const logger = createLogger({
 			level: configuration.CAMUNDA_LOG_LEVEL,
 			format: winston.format.combine(
 				winston.format.timestamp(),
@@ -39,9 +36,8 @@ export function getLogger(config?: Camunda8ClientConfiguration) {
 				winston.format.simple()
 			),
 			transports: [new winston.transports.Console()],
-		}) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+		})
 
-		logger.trace = logger.silly
 		defaultLogger = logger
 	}
 	if (!cachedLogger) {
@@ -50,3 +46,15 @@ export function getLogger(config?: Camunda8ClientConfiguration) {
 	}
 	return config?.logger ?? defaultLogger
 }
+
+export function createLogger(options?: winston.LoggerOptions) {
+	const logger: winston.Logger & {
+		trace: (message: string | undefined, ...meta: any[]) => void // eslint-disable-line @typescript-eslint/no-explicit-any
+	} = winston.createLogger(options) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+	logger.trace = logger.silly
+	return logger
+}
+
+export const NullLogger = createLogger({
+	transports: [new transports.Console({ silent: true })],
+})

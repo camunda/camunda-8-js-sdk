@@ -6,16 +6,17 @@ import { debug } from 'debug'
 import got from 'got'
 import { jwtDecode } from 'jwt-decode'
 
+import { getLogger, Logger } from '../../c8/lib/C8Logger'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
+	createUserAgentString,
 	DeepPartial,
 	GetCustomCertificateBuffer,
-	GotRetryConfig,
-	RequireConfiguration,
-	createUserAgentString,
 	gotBeforeErrorHook,
 	gotErrorHandler,
+	GotRetryConfig,
+	RequireConfiguration,
 } from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
@@ -48,6 +49,7 @@ export class OAuthProvider implements IOAuthProvider {
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
 	private rest: Promise<typeof got>
+	log: Logger
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -56,6 +58,7 @@ export class OAuthProvider implements IOAuthProvider {
 			options?.config ?? {}
 		)
 
+		this.log = getLogger(config)
 		this.authServerUrl = RequireConfiguration(
 			config.CAMUNDA_OAUTH_URL,
 			'CAMUNDA_OAUTH_URL'
@@ -309,8 +312,9 @@ export class OAuthProvider implements IOAuthProvider {
 			rest
 				.post(this.authServerUrl, options)
 				.catch((e) => {
-					console.log(
-						`Erroring requesting token for Client Id ${clientIdToUse}`
+					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
+					this.log.error(
+						`Error requesting token for Client Id ${clientIdToUse}`
 					)
 					console.log(e)
 					throw e
@@ -359,7 +363,8 @@ export class OAuthProvider implements IOAuthProvider {
 		const key = this.getCacheKey(audience)
 		try {
 			const decoded = jwtDecode(token.access_token)
-			trace(`Caching token: ${JSON.stringify(decoded, null, 2)}`)
+			// Keeping this in the code base to help with debugging
+			// trace(`Caching token in memory: ${JSON.stringify(decoded, null, 2)}`)
 			trace(`Caching token for ${audience} in memory. Expiry: ${decoded.exp}`)
 			token.expiry = decoded.exp ?? 0
 			this.tokenCache[key] = token
@@ -386,8 +391,9 @@ export class OAuthProvider implements IOAuthProvider {
 			token = JSON.parse(
 				fs.readFileSync(this.getCachedTokenFileName(clientId, audience), 'utf8')
 			)
-
+			trace(`Retrieved token from file cache`)
 			if (this.isExpired(token)) {
+				trace(`File cached token is expired`)
 				return null
 			}
 			this.sendToMemoryCache({ audience, token })

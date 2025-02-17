@@ -331,6 +331,39 @@ export class GrpcClient extends EventEmitter {
 						this.setNotReady()
 						return { error }
 					}
+
+					let _error: GrpcStreamError | undefined
+					/**
+					 * Once this gets attached here, it is attached to *all* calls
+					 * This is an issue if you do a sync call like cancelWorkflowSync
+					 * The error will not propagate, and the channel will be closed.
+					 * So we use a separate GRPCClient for the client, which never does
+					 * streaming calls, and each worker, which only does streaming calls
+					 */
+					stream.on('error', (error: GrpcStreamError) => {
+						_error = error
+						clearTimeout(clientSideTimeout)
+						debug(`${methodName}Stream error emitted by stream`, error)
+						this.emit(MiddlewareSignals.Event.Error)
+						if (error.message.includes('14 UNAVAILABLE')) {
+							this.emit(
+								MiddlewareSignals.Log.Error,
+								`Grpc Stream Error: ${error.message} - ${host}`
+							)
+						} else {
+							this.emit(
+								MiddlewareSignals.Log.Error,
+								`Grpc Stream Error: ${error.message}`
+							)
+						}
+						// Do not handle stream errors the same way
+						// this.handleGrpcError(stream)(error)
+						this.setNotReady()
+					})
+
+					if (stream.errored) {
+						console.log('error!')
+					}
 					if (!stream) {
 						return {
 							error: new Error(
@@ -339,7 +372,6 @@ export class GrpcClient extends EventEmitter {
 						}
 					}
 
-					let _error: GrpcStreamError | undefined
 					// Free the stream resources. When it emits 'end', we remove all listeners and destroy it.
 					stream.on('end', () => {
 						stream.removeAllListeners()
@@ -373,33 +405,6 @@ export class GrpcClient extends EventEmitter {
 								}, clientsideTimeoutDuration)
 							: 0
 
-					/**
-					 * Once this gets attached here, it is attached to *all* calls
-					 * This is an issue if you do a sync call like cancelWorkflowSync
-					 * The error will not propagate, and the channel will be closed.
-					 * So we use a separate GRPCClient for the client, which never does
-					 * streaming calls, and each worker, which only does streaming calls
-					 */
-					stream.on('error', (error: GrpcStreamError) => {
-						_error = error
-						clearTimeout(clientSideTimeout)
-						debug(`${methodName}Stream error emitted by stream`, error)
-						this.emit(MiddlewareSignals.Event.Error)
-						if (error.message.includes('14 UNAVAILABLE')) {
-							this.emit(
-								MiddlewareSignals.Log.Error,
-								`Grpc Stream Error: ${error.message} - ${host}`
-							)
-						} else {
-							this.emit(
-								MiddlewareSignals.Log.Error,
-								`Grpc Stream Error: ${error.message}`
-							)
-						}
-						// Do not handle stream errors the same way
-						// this.handleGrpcError(stream)(error)
-						this.setNotReady()
-					})
 					stream.on('data', () => (this.gRPCRetryCount = 0))
 					stream.on('metadata', (md) =>
 						this.emit(MiddlewareSignals.Log.Debug, JSON.stringify(md))

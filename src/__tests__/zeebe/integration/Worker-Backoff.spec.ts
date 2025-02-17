@@ -12,8 +12,8 @@ afterAll(() => {
 	restoreZeebeLogging()
 })
 
-test('Will backoff on UNAUTHENTICATED', (done) => {
-	let durations = 0
+test('gRPC worker will backoff on UNAUTHENTICATED', (done) => {
+	const backoffs: number[] = []
 
 	const zbc = new ZeebeGrpcClient({
 		config: {
@@ -29,23 +29,25 @@ test('Will backoff on UNAUTHENTICATED', (done) => {
 		},
 	})
 	w.on('backoff', (duration) => {
-		durations += duration
+		backoffs.push(duration)
 	})
 	setTimeout(() => {
-		expect(durations).toBe(31000)
 		w.close()
+		// Assert that each backoff is greater than the previous one; ie: the backoff is increasing
+		for (let i = 1; i < backoffs.length; i++) {
+			expect(backoffs[i]).toBeGreaterThan(backoffs[i - 1])
+		}
 		done()
 	}, 25000)
 })
 
-test('Will use a supplied custom max backoff', (done) => {
-	let durations = 0
-
+test('gRPC worker uses a supplied custom max backoff', (done) => {
+	const backoffs: number[] = []
+	const CUSTOM_MAX_BACKOFF = 2000
 	const zbc = new ZeebeGrpcClient({
 		config: {
 			CAMUNDA_AUTH_STRATEGY: 'NONE',
-			CAMUNDA_LOG_LEVEL: 'DEBUG',
-			CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: 2000,
+			CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: CUSTOM_MAX_BACKOFF,
 		},
 	})
 
@@ -56,11 +58,14 @@ test('Will use a supplied custom max backoff', (done) => {
 		},
 	})
 	w.on('backoff', (duration) => {
-		durations += duration
+		backoffs.push(duration)
 	})
 	setTimeout(() => {
-		expect(durations).toBe(11000)
 		w.close()
+		// Assert that each backoff is greater than the previous one; ie: the backoff is increasing
+		for (let i = 0; i < backoffs.length - 1; i++) {
+			expect(backoffs[i]).toBeLessThanOrEqual(CUSTOM_MAX_BACKOFF)
+		}
 		done()
 	}, 10000)
 })

@@ -281,7 +281,19 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			try {
 				const jobs: ZB.Job<Variables, CustomHeaders>[] = []
 
-				const stream = await (await this.grpc).activateJobsStream(req)
+				const stream = await (
+					await this.grpc
+				).activateJobsStream({
+					...req,
+					tenantIds: req.tenantIds ?? this.tenantId ? [this.tenantId!] : [],
+				})
+				if (stream.error) {
+					throw stream.error
+				}
+
+				stream.on('error', (e) => {
+					reject(e)
+				})
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
 					res.jobs.forEach((job) =>
 						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
