@@ -353,3 +353,14 @@ export interface RestJob<
 	 */
 	readonly tenantId: string
 }
+
+export class GetVariableResponse {
+	variableKey!: string
+	scopeKey!: string
+	processInstanceKey!: string
+	name!: string
+	value!: string
+	fullValue!: string
+	tenantId!: string
+	isTruncated!: boolean
+}
