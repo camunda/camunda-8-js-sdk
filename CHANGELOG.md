@@ -1,3 +1,10 @@
+## [8.6.25](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.24...v8.6.25) (2025-02-17)
+
+
+### Bug Fixes
+
+* **zeebe:** throw UNAUTHENTICATED error on ActivateJobs from stream.error event ([d44029e](https://github.com/camunda/camunda-8-js-sdk/commit/d44029e3c181a9c458de91319db4631c67d4bdf7)), closes [#378](https://github.com/camunda/camunda-8-js-sdk/issues/378)
+
 ## [8.6.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.23...v8.6.24) (2025-02-12)
 
 
