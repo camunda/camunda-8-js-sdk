@@ -3,6 +3,10 @@ import { ZeebeGrpcClient } from '../../../zeebe'
 
 suppressZeebeLogging()
 
+afterAll(() => {
+	restoreZeebeLogging()
+})
+
 const zbc = new ZeebeGrpcClient()
 
 test('it can get the topology', async () => {

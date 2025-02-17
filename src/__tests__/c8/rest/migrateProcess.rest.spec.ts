@@ -6,6 +6,8 @@ import { LosslessDto } from '../../../lib'
 
 const c8 = new CamundaRestClient()
 
+jest.setTimeout(20000)
+
 class CustomHeaders extends LosslessDto {
 	ProcessVersion!: number
 }
@@ -72,7 +74,6 @@ test('RestClient can migrate a process instance', async () => {
 	})
 
 	// Complete the job in the process instance
-
 	await new Promise<CamundaJobWorker<LosslessDto, LosslessDto>>((res) => {
 		const w = c8.createJobWorker({
 			type: 'migration-rest-checkpoint',

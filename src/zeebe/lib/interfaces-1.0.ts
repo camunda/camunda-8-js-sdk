@@ -502,11 +502,13 @@ export interface MigrateProcessInstanceReq {
 	operationReference?: number | LosslessNumber
 }
 
+type StreamWithError = ClientReadableStream<unknown> & {
+	error?: Error
+}
+
 export interface ZBGrpc extends GrpcClient {
 	completeJobSync: (req: CompleteJobRequest) => Promise<void>
-	activateJobsStream: (
-		req: ActivateJobsRequest
-	) => Promise<ClientReadableStream<unknown>>
+	activateJobsStream: (req: ActivateJobsRequest) => Promise<StreamWithError>
 	publishMessageSync(
 		publishMessageRequest: PublishMessageRequest
 	): Promise<PublishMessageResponse>
