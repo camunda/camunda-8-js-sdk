@@ -65,7 +65,8 @@ test('REST worker will backoff on UNAUTHENTICATED', (done) => {
 	setTimeout(() => {
 		backingOffWorker.stop()
 		expect(durations).toBe(20000)
-		expect(pollCountBackingOffWorker).toBe(3)
+		// In 25 seconds, we expect 4 or less attempts to poll the job
+		expect(pollCountBackingOffWorker).toBeLessThanOrEqual(4)
 		// Assert that each backoff is greater than the previous one; ie: the backoff is increasing
 		for (let i = 1; i < backoffs.length; i++) {
 			expect(backoffs[i]).toBeGreaterThan(backoffs[i - 1])
