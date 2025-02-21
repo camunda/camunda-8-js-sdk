@@ -3,9 +3,9 @@
  *
  * We expect this case to succeed.
  */
-import { Camunda8 } from '../../../c8/index'
+import path from 'node:path'
 
-const path = require('node:path')
+import { Camunda8 } from '../../../c8/index'
 
 jest.setTimeout(15000)
 
