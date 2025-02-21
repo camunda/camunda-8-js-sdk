@@ -2,9 +2,18 @@ import { format } from 'winston'
 import Transport from 'winston-transport'
 
 import { createLogger } from '../../../c8/lib/C8Logger'
+import { CamundaJobWorker } from '../../../c8/lib/CamundaJobWorker'
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { LosslessDto } from '../../../lib'
+
+let restJobWorker: CamundaJobWorker<LosslessDto, LosslessDto>
 
 jest.setTimeout(30000)
+afterEach(() => {
+	if (restJobWorker) {
+		restJobWorker.stop()
+	}
+})
 
 // Custom log transport to suppress errors in the console, and allow them to be examined
 class MemoryTransport extends Transport {
@@ -45,7 +54,7 @@ test('REST worker will backoff on UNAUTHENTICATED', (done) => {
 	const restClientBackingoffWorker = new CamundaRestClient({
 		config: { CAMUNDA_AUTH_STRATEGY: 'NONE', logger: logBackingOffWorker },
 	})
-	const backingOffWorker = restClientBackingoffWorker.createJobWorker({
+	restJobWorker = restClientBackingoffWorker.createJobWorker({
 		type: 'unauthenticated-worker',
 		jobHandler: async () => {
 			throw new Error('Not Implemented') // is never called
@@ -55,15 +64,15 @@ test('REST worker will backoff on UNAUTHENTICATED', (done) => {
 		timeout: 30000,
 	})
 
-	backingOffWorker.on('backoff', (duration) => {
+	restJobWorker.on('backoff', (duration) => {
 		durations += duration
 		backoffs.push(duration)
 	})
-	backingOffWorker.on('poll', () => {
+	restJobWorker.on('poll', () => {
 		pollCountBackingOffWorker++
 	})
 	setTimeout(() => {
-		backingOffWorker.stop()
+		restJobWorker.stop()
 		expect(durations).toBe(20000)
 		// In 25 seconds, we expect 4 or less attempts to poll the job
 		expect(pollCountBackingOffWorker).toBeLessThanOrEqual(4)
@@ -90,7 +99,7 @@ test('REST worker uses a supplied custom max backoff', (done) => {
 		},
 	})
 
-	const w = restClient.createJobWorker({
+	restJobWorker = restClient.createJobWorker({
 		type: 'unauthenticated-worker',
 		jobHandler: async () => {
 			throw new Error('Not Implemented') // is never called
@@ -99,15 +108,15 @@ test('REST worker uses a supplied custom max backoff', (done) => {
 		maxJobsToActivate: 10,
 		timeout: 30000,
 	})
-	w.on('backoff', (duration) => {
+	restJobWorker.on('backoff', (duration) => {
 		expect(duration).toBeLessThanOrEqual(MAX_BACKOFF)
 		backoffs.push(duration)
 	})
-	w.on('poll', () => {
+	restJobWorker.on('poll', () => {
 		// pollCount++
 	})
 	setTimeout(() => {
-		w.stop()
+		restJobWorker.stop()
 		expect(backoffs.length).toBe(3)
 		for (const backoff of backoffs) {
 			expect(backoff).toBeLessThanOrEqual(MAX_BACKOFF)
@@ -149,7 +158,7 @@ xtest('REST worker uses a supplied custom max backoff with invalid secret', (don
 		},
 	})
 
-	const w = restClient.createJobWorker({
+	restJobWorker = restClient.createJobWorker({
 		type: 'unauthenticated-worker',
 		jobHandler: async () => {
 			throw new Error('Not Implemented') // is never called
@@ -159,16 +168,16 @@ xtest('REST worker uses a supplied custom max backoff with invalid secret', (don
 		timeout: 30000,
 		autoStart: false, // Do not autostart, so we can attach event listeners before it starts polling
 	})
-	w.on('backoff', (duration) => {
+	restJobWorker.on('backoff', (duration) => {
 		durations += duration
 		backoffs.push(duration)
 	})
-	w.on('poll', () => {
+	restJobWorker.on('poll', () => {
 		pollCount++
 	})
-	w.start() // Start the worker now that the event listeners are attached
+	restJobWorker.start() // Start the worker now that the event listeners are attached
 	setTimeout(() => {
-		w.stop()
+		restJobWorker.stop()
 		const logs = memoryTransport.logs
 		// Convert timestamp strings to milliseconds since epoch.
 		const times = logs

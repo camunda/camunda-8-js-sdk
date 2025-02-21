@@ -5,8 +5,6 @@
  */
 import { Camunda8 } from '../../../c8/index'
 
-const path = require('node:path')
-
 jest.setTimeout(15000)
 
 const c8 = new Camunda8({
