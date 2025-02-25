@@ -7,6 +7,7 @@ suppressZeebeLogging()
 
 afterAll(() => {
 	restoreZeebeLogging()
+	unauthenticatedGrpcClient.close()
 })
 
 const unauthenticatedGrpcClient = new ZeebeGrpcClient({

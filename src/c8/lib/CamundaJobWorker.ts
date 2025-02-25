@@ -73,6 +73,7 @@ export class CamundaJobWorker<
 		capacity: number
 		currentload: number
 	}
+	stopping: boolean = false
 
 	constructor(
 		private readonly config: CamundaJobWorkerConfig<
@@ -104,6 +105,7 @@ export class CamundaJobWorker<
 	start() {
 		this.log.debug(`Starting poll loop`, this.logMeta())
 		this.emit('start')
+		this.stopping = false
 		this.poll()
 		this.loopHandle = setInterval(() => this.poll(), this.pollInterval)
 	}
@@ -113,8 +115,10 @@ export class CamundaJobWorker<
 	 */
 	async stop(deadlineMs = 30000) {
 		this.log.debug(`Stop requested`, this.logMeta())
+		this.stopping = true
 		/** Stopping polling for new jobs */
 		clearInterval(this.loopHandle)
+		clearTimeout(this.backoffTimer)
 		/** Do not allow the backoff retry to restart polling */
 		clearTimeout(this.backoffTimer)
 		return new Promise((resolve, reject) => {
@@ -150,7 +154,7 @@ export class CamundaJobWorker<
 	}
 
 	private poll() {
-		if (this.pollLock) {
+		if (this.pollLock || this.stopping) {
 			return
 		}
 		this.emit('poll', {

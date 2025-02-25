@@ -16,6 +16,7 @@ const c8 = new Camunda8({
 })
 const zeebe = c8.getZeebeGrpcApiClient()
 
+afterAll(() => zeebe.close())
 describe('Authenticated gRPC client (default tenant)', () => {
 	test('can activate jobs', async () => {
 		const res = await zeebe.activateJobs({

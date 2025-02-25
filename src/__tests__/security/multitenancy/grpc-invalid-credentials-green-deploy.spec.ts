@@ -21,6 +21,7 @@ const c8 = new Camunda8({
 	logger: NullLogger,
 })
 const zeebe = c8.getZeebeGrpcApiClient()
+afterAll(() => zeebe.close())
 
 describe('Invalid credentials gRPC client (green tenant)', () => {
 	test('cannot deploy process', async () => {

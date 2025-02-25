@@ -117,6 +117,7 @@ export class ZBWorkerBase<
 	}
 	private tenantIds: string[] | [string] | undefined
 	private CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: number
+	backoffTimeout: NodeJS.Timeout | undefined
 
 	constructor({
 		grpcClient,
@@ -230,6 +231,7 @@ export class ZBWorkerBase<
 			// this.closing prevents the worker from starting work on any new tasks
 			this.closing = true
 			clearInterval(this.pollLoop)
+			clearTimeout(this.backoffTimeout)
 
 			if (this.activeJobs <= 0) {
 				await this.grpcClient.close(timeout)
@@ -572,7 +574,7 @@ You should call only one job action method in the worker handler. This is a bug 
 			this.logger.logError({ id, error })
 			if (doBackoff) {
 				this.emit('backoff', backoffDuration)
-				setTimeout(() => {
+				this.backoffTimeout = setTimeout(() => {
 					this.handleStreamEnd(id)
 					this.pollMutex = false
 				}, backoffDuration)
