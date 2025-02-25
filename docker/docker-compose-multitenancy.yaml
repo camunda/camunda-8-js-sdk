@@ -33,11 +33,11 @@ services:
       # Enabling REST API security
       # Without this, the REST API is open to the public
       # With this, the REST API rejects a valid JWT token with 401 unauthorized
-      # - CAMUNDA_REST_ENABLED=true
-      # - SPRING_PROFILES_ACTIVE=identity-auth
-      # - CAMUNDA_IDENTITY_AUDIENCE=zeebe-api
-      # - CAMUNDA_IDENTITY_BASEURL=http://identity:8084
-      # - CAMUNDA_IDENTITY_ISSUER_BACKENDURL=http://keycloak:8080/auth/realms/camunda-platform
+      - CAMUNDA_REST_ENABLED=true
+      - SPRING_PROFILES_ACTIVE=identity-auth
+      - CAMUNDA_IDENTITY_AUDIENCE=zeebe-api
+      - CAMUNDA_IDENTITY_BASEURL=http://identity:8084
+      - CAMUNDA_IDENTITY_ISSUERBACKENDURL=http://keycloak:8080/auth/realms/camunda-platform
       # End REST API security
       - ZEEBE_GATEWAY_MULTITENANCY_ENABLED=true
       - "JAVA_TOOL_OPTIONS=-Xms512m -Xmx512m"
