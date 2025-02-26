@@ -1,3 +1,15 @@
+## [8.6.26](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.25...v8.6.26) (2025-02-26)
+
+
+### Bug Fixes
+
+* **repo:** close backoff timers on worker close ([405595a](https://github.com/camunda/camunda-8-js-sdk/commit/405595a2d7c9a4ca6687204e83fce3614ccf5599))
+
+
+### Features
+
+* **camunda:** implement backoff on errors for REST job worker ([4895942](https://github.com/camunda/camunda-8-js-sdk/commit/4895942ac8a98caef346997d63d75a48a69a4b2c)), closes [#370](https://github.com/camunda/camunda-8-js-sdk/issues/370)
+
 ## [8.6.25](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.24...v8.6.25) (2025-02-17)
 
 
