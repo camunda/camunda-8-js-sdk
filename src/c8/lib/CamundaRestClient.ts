@@ -8,6 +8,7 @@ import { parse, stringify } from 'lossless-json'
 import {
 	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
+	CamundaPlatform8Configuration,
 	constructOAuthProvider,
 	createUserAgentString,
 	GetCustomCertificateBuffer,
@@ -84,6 +85,7 @@ export class CamundaRestClient {
 	private rest: Promise<typeof got>
 	private tenantId?: string
 	public log: Logger
+	private config: CamundaPlatform8Configuration
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
@@ -95,6 +97,7 @@ export class CamundaRestClient {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
+		this.config = config
 		this.log = getLogger(config)
 		this.log.debug(`Using REST API version ${CAMUNDA_REST_API_VERSION}`)
 		trace('options.config', options?.config)
@@ -414,6 +417,10 @@ export class CamundaRestClient {
 	 * Create a new polling Job Worker.
 	 * You can pass in an optional winston.Logger instance as `logger`. This enables you to have distinct logging levels for different workers.
 	 *
+	 * Polling: The worker polls periodically. If no jobs are available, the poll stays open for 10 seconds.
+	 * If no jobs become available in that time, the poll is closed, and the worker polls again.
+	 * When jobs are available, they are returned, and the worker polls again for more jobs as soon as it has capacity for more jobs.
+	 *
 	 * @since 8.6.0
 	 */
 	public createJobWorker<
@@ -421,7 +428,6 @@ export class CamundaRestClient {
 		CustomHeaders extends LosslessDto,
 	>(config: CamundaJobWorkerConfig<Variables, CustomHeaders>) {
 		const worker = new CamundaJobWorker(config, this)
-		// worker.start()
 		return worker
 	}
 	/**
@@ -456,6 +462,8 @@ export class CamundaRestClient {
 
 		/**
 		 * The ActivateJobs endpoint can take multiple tenantIds, and activate jobs for multiple tenants at once.
+		 *
+		 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/activate-jobs/
 		 */
 		const body = losslessStringify({
 			...req,
@@ -929,6 +937,10 @@ export class CamundaRestClient {
 				body: stringify(request),
 			})
 		)
+	}
+
+	public getConfig() {
+		return this.config
 	}
 
 	private addJobMethods = <Variables, CustomHeaders>(

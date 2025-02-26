@@ -1,10 +1,6 @@
 import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
-/**
- * This is a manually verified test. To check it, comment out the next line, then check the console output.
- * You should see the error messages from the worker, and the backoff expanding the time between them.
- */
 suppressZeebeLogging()
 
 jest.setTimeout(30000)
@@ -18,7 +14,6 @@ test('gRPC worker will backoff on UNAUTHENTICATED', (done) => {
 	const zbc = new ZeebeGrpcClient({
 		config: {
 			CAMUNDA_AUTH_STRATEGY: 'NONE',
-			CAMUNDA_LOG_LEVEL: 'DEBUG',
 		},
 	})
 
@@ -33,6 +28,7 @@ test('gRPC worker will backoff on UNAUTHENTICATED', (done) => {
 	})
 	setTimeout(() => {
 		w.close()
+		zbc.close()
 		// Assert that each backoff is greater than the previous one; ie: the backoff is increasing
 		for (let i = 1; i < backoffs.length; i++) {
 			expect(backoffs[i]).toBeGreaterThan(backoffs[i - 1])
@@ -62,6 +58,7 @@ test('gRPC worker uses a supplied custom max backoff', (done) => {
 	})
 	setTimeout(() => {
 		w.close()
+		zbc.close()
 		// Assert that each backoff is greater than the previous one; ie: the backoff is increasing
 		for (let i = 0; i < backoffs.length - 1; i++) {
 			expect(backoffs[i]).toBeLessThanOrEqual(CUSTOM_MAX_BACKOFF)
