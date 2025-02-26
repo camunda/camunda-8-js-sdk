@@ -32,7 +32,6 @@ services:
       - ZEEBE_BROKER_GATEWAY_MULTITENANCY_ENABLED=true
       # Enabling REST API security
       # Without this, the REST API is open to the public
-      # With this, the REST API rejects a valid JWT token with 401 unauthorized
       - CAMUNDA_REST_ENABLED=true
       - SPRING_PROFILES_ACTIVE=identity-auth
       - CAMUNDA_IDENTITY_AUDIENCE=zeebe-api
