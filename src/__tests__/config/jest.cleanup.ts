@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 
+import wtf from 'wtfnode'
+
 // See: https://stackoverflow.com/a/74206721/1758461
 // Without this, the paths in tsconfig.json are not resolved correctly
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -75,5 +77,7 @@ export const cleanUp = async () => {
 				}
 			}
 		}
+		await zeebe.close()
 	}
+	wtf.dump()
 }

@@ -341,3 +341,12 @@ client.streamJobs({
 	timeout: 2000,
 })
 ```
+
+## Polling worker backoff in error conditions
+
+When a polling worker encounters an error, including not being authenticated, the worker will back off subsequent polls by +2 seconds with each subsequent failure, up to a maximum of `CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS`, which is 15000 by default (15 seconds). If the failure is due to invalid credentials and occurs during the token request, then the worker backoff will be compounded with a token endpoint backoff, which is +1000ms for each subsequent failure up to a maximum of 15s.
+
+This means that if you start a worker with invalid credentials, then the polling backoff will look like this, by default (times in seconds): 3, 6, 9, 12, 15, 18, 21, 23, 24, 25, 26, 27, 28, 29, 30, 30, 30...
+
+If the worker is backing off for a reason other than invalid credentials - for example a backpressure signal from the gateway - it will be: 2, 4, 6, 8, 10, 12, 14, 15, 15, 15.....
+

@@ -15,6 +15,7 @@ const c8 = new Camunda8({
 	CAMUNDA_TENANT_ID: '<default>',
 })
 const zeebe = c8.getZeebeGrpcApiClient()
+afterAll(() => zeebe.close())
 
 describe('Authenticated gRPC client (default tenant)', () => {
 	test('can get topology', async () => {

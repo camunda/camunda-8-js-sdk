@@ -23,10 +23,15 @@ type CamundaJobWorkerEvents = {
 		maxJobsToActivate,
 		worker,
 	}: {
+		/** How many jobs are currently activated */
 		currentlyActiveJobCount: number
+		/** The max number of jobs we are requesting to activate */
 		maxJobsToActivate: number
+		/** The worker name */
 		worker: string
 	}) => void
+	backoff: (backoffDuration: number) => void
+	work: (jobs: RestJob<unknown, unknown>[]) => void
 }
 
 export interface CamundaJobWorkerConfig<
@@ -35,7 +40,7 @@ export interface CamundaJobWorkerConfig<
 > extends ActivateJobsRequest {
 	inputVariableDto?: Ctor<VariablesDto>
 	customHeadersDto?: Ctor<CustomHeadersDto>
-	/** How often the worker will poll for new jobs. Defaults to 30s */
+	/** How often the worker will poll for new jobs. Defaults to 300ms */
 	pollIntervalMs?: number
 	jobHandler: (
 		job: RestJob<VariablesDto, CustomHeadersDto> &
@@ -45,8 +50,9 @@ export interface CamundaJobWorkerConfig<
 	logger?: Logger
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
 	autoStart?: boolean
+	maxBackoffTimeMs?: number
 }
-// Make this class extend event emitter and have a typed event 'pollError'
+
 export class CamundaJobWorker<
 	VariablesDto extends LosslessDto,
 	CustomHeadersDto extends LosslessDto,
@@ -55,6 +61,10 @@ export class CamundaJobWorker<
 	public capacity: number
 	private loopHandle?: NodeJS.Timeout
 	private pollInterval: number
+	private pollLock: boolean = false
+	private backoffTimer: NodeJS.Timeout | undefined
+	private backoffRetryCount: number = 0
+	private maxBackoffTimeMs: number
 	public log: Logger
 	logMeta: () => {
 		worker: string
@@ -63,6 +73,7 @@ export class CamundaJobWorker<
 		capacity: number
 		currentload: number
 	}
+	stopping: boolean = false
 
 	constructor(
 		private readonly config: CamundaJobWorkerConfig<
@@ -72,9 +83,12 @@ export class CamundaJobWorker<
 		private readonly restClient: CamundaRestClient
 	) {
 		super()
-		this.pollInterval = config.pollIntervalMs ?? 30000
+		this.pollInterval = config.pollIntervalMs ?? 300
 		this.capacity = this.config.maxJobsToActivate
-		this.log = getLogger({ logger: config.logger })
+		this.maxBackoffTimeMs =
+			config.maxBackoffTimeMs ??
+			restClient.getConfig().CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS
+		this.log = getLogger({ logger: config.logger ?? restClient.log })
 		this.logMeta = () => ({
 			worker: this.config.worker,
 			type: this.config.type,
@@ -91,6 +105,7 @@ export class CamundaJobWorker<
 	start() {
 		this.log.debug(`Starting poll loop`, this.logMeta())
 		this.emit('start')
+		this.stopping = false
 		this.poll()
 		this.loopHandle = setInterval(() => this.poll(), this.pollInterval)
 	}
@@ -100,8 +115,12 @@ export class CamundaJobWorker<
 	 */
 	async stop(deadlineMs = 30000) {
 		this.log.debug(`Stop requested`, this.logMeta())
+		this.stopping = true
 		/** Stopping polling for new jobs */
 		clearInterval(this.loopHandle)
+		clearTimeout(this.backoffTimer)
+		/** Do not allow the backoff retry to restart polling */
+		clearTimeout(this.backoffTimer)
 		return new Promise((resolve, reject) => {
 			if (this.currentlyActiveJobCount === 0) {
 				this.log.debug(`All jobs drained. Worker stopped.`, this.logMeta())
@@ -135,11 +154,15 @@ export class CamundaJobWorker<
 	}
 
 	private poll() {
+		if (this.pollLock || this.stopping) {
+			return
+		}
 		this.emit('poll', {
 			currentlyActiveJobCount: this.currentlyActiveJobCount,
 			maxJobsToActivate: this.config.maxJobsToActivate,
 			worker: this.config.worker,
 		})
+		this.pollLock = true
 		if (this.currentlyActiveJobCount >= this.config.maxJobsToActivate) {
 			this.log.debug(`At capacity - not requesting more jobs`, this.logMeta())
 			return
@@ -158,10 +181,32 @@ export class CamundaJobWorker<
 				const count = jobs.length
 				this.currentlyActiveJobCount += count
 				this.log.debug(`Activated ${count} jobs`, this.logMeta())
+				this.emit('work', jobs)
 				// The job handlers for the activated jobs will run in parallel
 				jobs.forEach((job) => this.handleJob(job))
+				this.pollLock = false
+				this.backoffRetryCount = 0
 			})
-			.catch((e) => this.emit('pollError', e))
+			.catch((e) => {
+				// This can throw a 400 or 500 REST Error with the Content-Type application/problem+json
+				// The schema is:
+				// { type: string, title: string, status: number, detail: string, instance: string }
+				this.log.error('Error during job worker poll')
+				this.log.error(e)
+				this.emit('pollError', e)
+				const backoffDuration = Math.min(
+					2000 * ++this.backoffRetryCount,
+					this.maxBackoffTimeMs
+				)
+				this.log.warn(
+					`Backing off worker poll due to failure. Next attempt will be made in ${backoffDuration}ms...`
+				)
+				this.emit('backoff', backoffDuration)
+				this.backoffTimer = setTimeout(() => {
+					this.pollLock = false
+					this.poll()
+				}, backoffDuration)
+			})
 	}
 
 	private async handleJob(

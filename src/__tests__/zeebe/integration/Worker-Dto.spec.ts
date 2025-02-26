@@ -16,7 +16,7 @@ test("Let's test worker handler signatures", () => {
 			bigInt!: bigint
 		}
 
-		zbc.createWorker({
+		const worker = zbc.createWorker({
 			taskType: 'test',
 			taskHandler: (job) => {
 				job.variables.age
@@ -25,5 +25,7 @@ test("Let's test worker handler signatures", () => {
 			},
 			inputVariableDto: InputVariables,
 		})
+		worker.close()
+		zbc.close()
 	}
 })

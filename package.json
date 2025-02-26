@@ -108,6 +108,7 @@
 		"@types/node-fetch": "^2.6.11",
 		"@types/promise-retry": "^1.1.6",
 		"@types/uuid": "^9.0.8",
+		"@types/wtfnode": "^0.7.3",
 		"@typescript-eslint/eslint-plugin": "^6.14.0",
 		"@typescript-eslint/parser": "^6.14.0",
 		"basic-auth": "^2.0.1",
@@ -136,7 +137,8 @@
 		"typedoc": "^0.25.9",
 		"typedoc-plugin-include-example": "^1.2.0",
 		"typedoc-plugin-missing-exports": "^2.2.0",
-		"typescript": "^5.3.3"
+		"typescript": "^5.3.3",
+		"wtfnode": "^0.10.0"
 	},
 	"optionalDependencies": {
 		"win-ca": "3.5.1"

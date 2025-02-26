@@ -23,6 +23,14 @@ services:
       - ZEEBE_BROKER_GATEWAY_SECURITY_AUTHENTICATION_IDENTITY_AUDIENCE=zeebe-api
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      # Enabling REST API security
+      # Without this, the REST API is open to the public
+      - CAMUNDA_REST_ENABLED=true
+      - SPRING_PROFILES_ACTIVE=identity-auth
+      - CAMUNDA_IDENTITY_AUDIENCE=zeebe-api
+      - CAMUNDA_IDENTITY_BASEURL=http://identity:8084
+      - CAMUNDA_IDENTITY_ISSUERBACKENDURL=http://keycloak:8080/auth/realms/camunda-platform
+      # End REST API security
       # default is 1000, see here: https://github.com/camunda/zeebe/blob/main/exporters/elasticsearch-exporter/src/main/java/io/camunda/zeebe/exporter/ElasticsearchExporterConfiguration.java#L259
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_BULK_SIZE=1
       # allow running with low disk space

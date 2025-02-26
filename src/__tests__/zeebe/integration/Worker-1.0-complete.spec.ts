@@ -1,5 +1,7 @@
+import { ICustomHeaders, IInputVariables, IOutputVariables } from 'zeebe/types'
+
 import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
-import { ZeebeGrpcClient } from '../../../zeebe'
+import { ZBWorker, ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
@@ -59,9 +61,10 @@ test('Can service a task', async () => {
 		variables: {},
 	})
 
+	let worker: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
 	// Use a promise to wait for the worker task to complete
 	await new Promise((resolve, reject) => {
-		zbc.createWorker({
+		worker = zbc.createWorker({
 			taskType: 'console-log',
 			taskHandler: async (job) => {
 				try {
@@ -76,15 +79,16 @@ test('Can service a task', async () => {
 			},
 			loglevel: 'NONE',
 		})
-	})
+	}).finally(() => worker.close())
 })
 test('Can service a task with complete.success', async () => {
 	wf = await zbc.createProcessInstance({
 		bpmnProcessId: bpmnProcessId2,
 		variables: {},
 	})
-	await new Promise((resolve) =>
-		zbc.createWorker({
+	let worker: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
+	await new Promise((resolve) => {
+		worker = zbc.createWorker({
 			taskType: 'console-log-complete',
 			taskHandler: async (job) => {
 				expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
@@ -94,7 +98,7 @@ test('Can service a task with complete.success', async () => {
 			},
 			loglevel: 'NONE',
 		})
-	)
+	}).finally(() => worker.close())
 })
 
 test('Can update process variables with complete.success()', async () => {
@@ -107,7 +111,7 @@ test('Can update process variables with complete.success()', async () => {
 	const wfi = wf?.processInstanceKey
 	expect(wfi).toBeTruthy()
 
-	zbc.createWorker({
+	const worker1 = zbc.createWorker({
 		taskType: 'wait',
 		taskHandler: async (job) => {
 			expect(job.processInstanceKey).toBe(wfi)
@@ -118,8 +122,9 @@ test('Can update process variables with complete.success()', async () => {
 		loglevel: 'NONE',
 	})
 
-	await new Promise((resolve) =>
-		zbc.createWorker({
+	let worker2: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
+	await new Promise((resolve) => {
+		worker2 = zbc.createWorker({
 			taskType: 'pathB',
 			taskHandler: async (job) => {
 				expect(job.processInstanceKey).toBe(wfi)
@@ -131,5 +136,8 @@ test('Can update process variables with complete.success()', async () => {
 			},
 			loglevel: 'NONE',
 		})
-	)
+	}).finally(() => {
+		worker1.close()
+		worker2.close()
+	})
 })
