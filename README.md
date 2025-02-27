@@ -4,9 +4,11 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+Full API Docs are [here](https://camunda.github.io/camunda-8-js-sdk/).
+
 This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
 
-Full API Docs are [here](https://camunda.github.io/camunda-8-js-sdk/). See the QUICKSTART.md file in [the repository](https://github.com/camunda/camunda-8-js-sdk) for a quick start.
+See the QUICKSTART.md file in [the repository](https://github.com/camunda/camunda-8-js-sdk) for a quick start.
 
 ## What does "supported" mean?
 
@@ -36,8 +38,9 @@ In this release, the functionality of Camunda 8 is exposed via dedicated clients
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8()
+const restClient = c8.getCamundaRestClient() // New REST API
 const zeebe = c8.getZeebeGrpcApiClient()
-const zeebeRest = c8.getZeebeRestClient()
+const zeebeRest = c8.getZeebeRestClient() // Deprecated
 const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
