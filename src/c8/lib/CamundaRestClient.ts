@@ -335,7 +335,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.7.0
 	 */
-	public async findUserTasks(
+	public async searchUserTasks(
 		request: QueryTasksRequest
 	): Promise<QueryTasksResponse> {
 		const headers = await this.getHeaders()
