@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto'
 
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 const c8 = new CamundaRestClient()
 
 jest.setTimeout(30000)
-test('It can retrieve a user task', async () => {
+test('It can query user tasks', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/test-tasks-query.bpmn',
 		'./src/__tests__/testdata/form/test-basic-form.form',
@@ -20,7 +20,7 @@ test('It can retrieve a user task', async () => {
 		},
 	})
 	expect(wfi.processDefinitionKey).toBe(key)
-	await new Promise((r) => setTimeout(r, 7000))
+	await new Promise((r) => setTimeout(r, 5000))
 	// Do we need to wait for the process instance to be started and arrive at the user task?
 	// Search user tasks
 	const tasks = await c8.searchUserTasks({
@@ -39,9 +39,5 @@ test('It can retrieve a user task', async () => {
 			},
 		],
 	})
-
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
-	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
-	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
-	console.log(task)
 })

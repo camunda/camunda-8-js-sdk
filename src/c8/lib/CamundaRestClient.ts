@@ -334,7 +334,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
-	 * @since 8.7.0
+	 * @since 8.8.0
 	 */
 	public async searchUserTasks(
 		request: QueryTasksRequest
@@ -984,7 +984,13 @@ export class CamundaRestClient {
 		return this.config
 	}
 
-	public async queryVariables(
+	/**
+	 * Search for process and local variables based on given criteria.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-variables/
+	 * @since 8.8.0
+	 */
+	public async searchVariables(
 		req: QueryVariablesRequest
 	): Promise<QueryVariablesResponse> {
 		const headers = await this.getHeaders()
