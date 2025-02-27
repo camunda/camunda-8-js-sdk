@@ -23,6 +23,8 @@ services:
       - ZEEBE_BROKER_GATEWAY_SECURITY_AUTHENTICATION_IDENTITY_AUDIENCE=zeebe-api
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
       - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      # Enable REST Query API
+      - CAMUNDA_REST_QUERY_ENABLED=true
       # Enabling REST API security
       # Without this, the REST API is open to the public
       - CAMUNDA_REST_ENABLED=true
