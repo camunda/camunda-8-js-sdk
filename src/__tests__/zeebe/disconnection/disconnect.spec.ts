@@ -5,7 +5,7 @@ import { ZeebeGrpcClient } from '../../../zeebe'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 
-const ZEEBE_DOCKER_TAG = '8.4.0'
+const ZEEBE_DOCKER_TAG = '8.7.0-alpha4'
 
 jest.setTimeout(900000)
 
