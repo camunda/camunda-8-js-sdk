@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0vpl6p9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.30.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:process id="test-queryVariables" name="Test queryVariables method" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Test queryVariables REST method">
+      <bpmn:outgoing>Flow_0xxocbj</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0xxocbj" sourceRef="StartEvent_1" targetRef="Activity_1amwh0c" />
+    <bpmn:endEvent id="Event_07htauo" name="Tested queryVariables REST method">
+      <bpmn:incoming>Flow_0fc59wl</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0fc59wl" sourceRef="Activity_1amwh0c" targetRef="Event_07htauo" />
+    <bpmn:serviceTask id="Activity_1amwh0c" name="Query Variables">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="query-variables" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0xxocbj</bpmn:incoming>
+      <bpmn:outgoing>Flow_0fc59wl</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="test-queryVariables">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="164" y="145" width="73" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_07htauo_di" bpmnElement="Event_07htauo">
+        <dc:Bounds x="422" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="404" y="145" width="73" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06l9sw4_di" bpmnElement="Activity_1amwh0c">
+        <dc:Bounds x="270" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0xxocbj_di" bpmnElement="Flow_0xxocbj">
+        <di:waypoint x="218" y="120" />
+        <di:waypoint x="270" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fc59wl_di" bpmnElement="Flow_0fc59wl">
+        <di:waypoint x="370" y="120" />
+        <di:waypoint x="422" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
