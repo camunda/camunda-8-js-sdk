@@ -29,11 +29,7 @@ export const cleanUp = async () => {
 	}
 	console.log('Removing any running test process instances...')
 	const filePath = path.join(__dirname, '..', 'testdata')
-	const files = fs
-		.readdirSync(filePath)
-		.map((file) => path.join(filePath, file))
-		.filter((file) => fs.statSync(file).isFile())
-
+	const files = getFilesRecursively(filePath)
 	const bpmn = BpmnParser.parseBpmn(files)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const processIds = (bpmn as any[]).map(
@@ -87,4 +83,20 @@ export const cleanUp = async () => {
 	}
 	await zeebe.close()
 	wtf.dump()
+}
+
+function getFilesRecursively(dir: string, rootDir = dir) {
+	let results: string[] = []
+	const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+	for (const entry of entries) {
+		const fullPath = path.join(dir, entry.name)
+		if (entry.isDirectory()) {
+			results = results.concat(getFilesRecursively(fullPath, rootDir))
+		} else {
+			results.push(fullPath)
+		}
+	}
+
+	return results
 }
