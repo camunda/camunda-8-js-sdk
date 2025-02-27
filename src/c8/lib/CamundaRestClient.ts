@@ -851,7 +851,10 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async deployResourcesFromFiles(files: string[]) {
+	public async deployResourcesFromFiles(
+		files: string[],
+		{ tenantId }: { tenantId?: string } = {}
+	) {
 		const resources: { content: string; name: string }[] = []
 
 		for (const file of files) {
@@ -861,7 +864,7 @@ export class CamundaRestClient {
 			})
 		}
 
-		return this.deployResources(resources)
+		return this.deployResources(resources, tenantId ?? this.tenantId)
 	}
 
 	/**
