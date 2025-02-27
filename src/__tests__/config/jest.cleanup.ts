@@ -32,6 +32,8 @@ export const cleanUp = async () => {
 	const files = fs
 		.readdirSync(filePath)
 		.map((file) => path.join(filePath, file))
+		.filter((file) => fs.statSync(file).isFile())
+
 	const bpmn = BpmnParser.parseBpmn(files)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const processIds = (bpmn as any[]).map(
