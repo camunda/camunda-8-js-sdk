@@ -83,7 +83,6 @@ class DefaultLosslessDto extends LosslessDto {}
  * `CAMUNDA_LOG_LEVEL` in the environment or the constructor options can be used to set the log level to one of 'error', 'warn', 'info', 'http', 'verbose', 'debug', or 'silly'.
  *
  * @since 8.6.0
- * @experimental this API may be moved to an ESM package in a future release. Can you use ESM in your project? Comment [on this issue](https://github.com/camunda/camunda-8-js-sdk/issues/267).
  */
 export class CamundaRestClient {
 	private userAgentString: string
