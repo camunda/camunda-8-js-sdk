@@ -1,3 +1,17 @@
+## [8.6.27](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.26...v8.6.27) (2025-02-27)
+
+
+### Bug Fixes
+
+* **camunda8:** add optional tenantId to deployResourcesFromFiles ([dff868e](https://github.com/camunda/camunda-8-js-sdk/commit/dff868ea75eeac04c56c26ed3dc6e0e65bf6e201)), closes [#375](https://github.com/camunda/camunda-8-js-sdk/issues/375)
+
+
+### Features
+
+* **camunda8:** add queryVariables method. fixes [#343](https://github.com/camunda/camunda-8-js-sdk/issues/343) ([b361d71](https://github.com/camunda/camunda-8-js-sdk/commit/b361d71028b7d58afa88a3bbea21ef55117ca2a5))
+* **camunda8:** implement findUserTasks ([d2baa70](https://github.com/camunda/camunda-8-js-sdk/commit/d2baa70502516cf1c18daed1253c079fd8a4e271)), closes [#341](https://github.com/camunda/camunda-8-js-sdk/issues/341)
+* **camunda:** implement getUserTask. fixes [#339](https://github.com/camunda/camunda-8-js-sdk/issues/339) ([8bcb59a](https://github.com/camunda/camunda-8-js-sdk/commit/8bcb59affcc4b7ef9b1d4ff9a0f0a1500d3b257a))
+
 ## [8.6.26](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.25...v8.6.26) (2025-02-26)
 
 
