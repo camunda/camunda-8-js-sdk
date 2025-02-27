@@ -31,6 +31,7 @@ import {
 	IProcessVariables,
 	JOB_ACTION_ACKNOWLEDGEMENT,
 	JobCompletionInterfaceRest,
+	JobFailureConfiguration,
 	JSONDoc,
 	PublishMessageRequest,
 	TopologyResponse,
@@ -53,9 +54,20 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	QueryProcessInstanceRequest,
+	QueryProcessInstanceResponse,
+	QueryTasksRequest,
+	QueryTasksResponse,
+	QueryUsersReponse,
+	QueryUsersRequest,
+	QueryVariablesRequest,
+	QueryVariablesResponse,
 	RestJob,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
+	UserTask,
+	UserTaskVariablesRequest,
+	UserTaskVariablesResponse,
 } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
@@ -324,6 +336,63 @@ export class CamundaRestClient {
 	}
 
 	/**
+	 * Search for user tasks based on given criteria.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-tasks/
+	 *
+	 * @since 8.7.0
+	 */
+	public async findUserTasks(
+		request: QueryTasksRequest
+	): Promise<QueryTasksResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`user-tasks/search`, {
+					headers,
+					body: losslessStringify(request),
+				})
+				.json()
+		)
+	}
+
+	/**
+	 * Get the user task by the user task key.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-user-task/
+	 *
+	 * @since 8.7.0
+	 */
+	public async getUserTask(userTaskKey: string): Promise<UserTask> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`user-tasks/${userTaskKey}`, { headers }).json()
+		)
+	}
+
+	/**
+	 *
+	 * Search for user task variables based on given criteria.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-task-variables/
+	 *
+	 * @since 8.7.0
+	 */
+	public async getUserTaskVariables(
+		request: UserTaskVariablesRequest
+	): Promise<UserTaskVariablesResponse> {
+		const { userTaskKey, ...req } = request
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`user-tasks/${userTaskKey}/variables/search`, {
+					headers,
+					body: losslessStringify(req),
+				})
+				.json()
+		)
+	}
+	/**
 	 * Create a user.
 	 *
 	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-user/
@@ -343,12 +412,25 @@ export class CamundaRestClient {
 	}
 
 	/**
-	 * Search for user tasks based on given criteria.
+	 * Search users
 	 *
-	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/query-user-tasks-alpha/
-	 * @experimental
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-users/
+	 *
+	 * @since 8.7.0
 	 */
-	// public async queryTasks() {}
+	public async searchUsers(
+		request: QueryUsersRequest
+	): Promise<QueryUsersReponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`users/search`, {
+					body: JSON.stringify(request),
+					headers,
+				})
+				.json()
+		)
+	}
 
 	/**
 	 * Publish a Message and correlates it to a subscription. If correlation is successful it will return the first process instance key the message correlated with.
@@ -721,6 +803,27 @@ export class CamundaRestClient {
 	}
 
 	/**
+	 * Query process instances
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-process-instances/
+	 *
+	 * @since 8.7.0
+	 */
+	public async searchProcessInstances(
+		request: QueryProcessInstanceRequest
+	): Promise<QueryProcessInstanceResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`process-instances/search`, {
+					headers,
+					body: losslessStringify(request),
+				})
+				.json()
+		)
+	}
+
+	/**
 	 * Deploy resources to the broker.
 	 * @param resources - An array of binary data strings representing the resources to deploy.
 	 * @param tenantId - Optional tenant ID to deploy the resources to. If not provided, the default tenant ID is used.
@@ -946,6 +1049,20 @@ export class CamundaRestClient {
 		return this.config
 	}
 
+	public async queryVariables(
+		req: QueryVariablesRequest
+	): Promise<QueryVariablesResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`variables/search`, {
+					headers,
+					body: stringify(req),
+				})
+				.json()
+		)
+	}
+
 	private addJobMethods = <Variables, CustomHeaders>(
 		job: RestJob<Variables, CustomHeaders>
 	): RestJob<Variables, CustomHeaders> &
@@ -953,6 +1070,9 @@ export class CamundaRestClient {
 		return {
 			...job,
 			cancelWorkflow: () => {
+				this.cancelProcessInstance({
+					processInstanceKey: job.processInstanceKey,
+				})
 				throw new Error('Not Implemented')
 			},
 			complete: (variables: IProcessVariables = {}) =>
@@ -965,7 +1085,14 @@ export class CamundaRestClient {
 					...error,
 					jobKey: job.jobKey,
 				}),
-			fail: (failJobRequest) => this.failJob(failJobRequest),
+			fail: (failJobRequest: JobFailureConfiguration) =>
+				this.failJob({
+					jobKey: job.jobKey,
+					errorMessage: failJobRequest.errorMessage,
+					retries: failJobRequest.retries ?? job.retries - 1,
+					retryBackOff: failJobRequest.retryBackOff ?? 0,
+					variables: failJobRequest.variables,
+				}),
 			/* This has an effect in a Job Worker, decrementing the currently active job count */
 			forward: () => JOB_ACTION_ACKNOWLEDGEMENT,
 			modifyJobTimeout: ({ newTimeoutMs }: { newTimeoutMs: number }) =>
