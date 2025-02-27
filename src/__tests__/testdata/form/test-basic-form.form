@@ -1,0 +1,66 @@
+{
+  "components": [
+    {
+      "text": "# Text",
+      "type": "text",
+      "layout": {
+        "row": "Row_17fixin",
+        "columns": null
+      },
+      "id": "Field_0md10mq",
+      "properties": {
+        "_bind": "processInstanceKey"
+      }
+    },
+    {
+      "label": "First name",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_0ol9o23",
+        "columns": null
+      },
+      "id": "Field_1cbwwbj",
+      "key": "firstName"
+    },
+    {
+      "label": "Last name",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_00f2lx1",
+        "columns": null
+      },
+      "id": "Field_1pezk22",
+      "key": "lastName"
+    },
+    {
+      "label": "Phone number",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1mlj0fj",
+        "columns": null
+      },
+      "id": "Field_0aa2j1d",
+      "key": "phoneNumber"
+    },
+    {
+      "label": "Submit",
+      "action": "submit",
+      "type": "button",
+      "layout": {
+        "row": "Row_1h7s4he",
+        "columns": null
+      },
+      "id": "Field_0exznfr"
+    }
+  ],
+  "type": "default",
+  "id": "test-basic-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "versionTag": "1",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.30.0"
+  },
+  "schemaVersion": 17
+}
