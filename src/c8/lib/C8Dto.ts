@@ -601,6 +601,8 @@ export interface UserTask {
 	processInstanceKey: string
 	/** The key of the form. */
 	formKey?: string
+}
+
 export interface UserTaskFormResponse {
 	/**T he tenant ID of the form. */
 	tenantId: string
