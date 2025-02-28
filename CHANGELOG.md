@@ -1,3 +1,10 @@
+## [8.6.28](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.27...v8.6.28) (2025-02-28)
+
+
+### Bug Fixes
+
+* **camunda8:** remove experimental decorator ([809fe9b](https://github.com/camunda/camunda-8-js-sdk/commit/809fe9b26fb5952188c6f1f88b8d6f376669d917))
+
 ## [8.6.27](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.26...v8.6.27) (2025-02-27)
 
 
