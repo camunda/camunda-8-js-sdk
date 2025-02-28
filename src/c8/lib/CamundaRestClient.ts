@@ -808,9 +808,9 @@ export class CamundaRestClient {
 	/**
 	 * Query process instances
 	 *
-	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-process-instances/
+	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/query-process-instances-alpha/
 	 *
-	 * @since 8.7.0
+	 * @since 8.6.0
 	 */
 	public async searchProcessInstances(
 		request: QueryProcessInstanceRequest
