@@ -54,6 +54,8 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	QueryProcessInstanceRequest,
+	QueryProcessInstanceResponse,
 	QueryTasksRequest,
 	QueryTasksResponse,
 	QueryVariablesRequest,
@@ -62,6 +64,8 @@ import {
 	TaskChangeSet,
 	UpdateElementVariableRequest,
 	UserTask,
+	UserTaskVariablesRequest,
+	UserTaskVariablesResponse,
 } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
@@ -363,6 +367,28 @@ export class CamundaRestClient {
 		)
 	}
 
+	/**
+	 *
+	 * Search for user task variables based on given criteria.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-task-variables/
+	 *
+	 * @since 8.7.0
+	 */
+	public async getUserTaskVariables(
+		request: UserTaskVariablesRequest
+	): Promise<UserTaskVariablesResponse> {
+		const { userTaskKey, ...req } = request
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`user-tasks/${userTaskKey}/variables/search`, {
+					headers,
+					body: losslessStringify(req),
+				})
+				.json()
+		)
+	}
 	/**
 	 * Create a user.
 	 *
@@ -757,6 +783,27 @@ export class CamundaRestClient {
 				headers,
 				body: losslessStringify(request),
 			})
+		)
+	}
+
+	/**
+	 * Query process instances
+	 *
+	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/query-process-instances-alpha/
+	 *
+	 * @since 8.6.0
+	 */
+	public async searchProcessInstances(
+		request: QueryProcessInstanceRequest
+	): Promise<QueryProcessInstanceResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`process-instances/search`, {
+					headers,
+					body: losslessStringify(request),
+				})
+				.json()
 		)
 	}
 
