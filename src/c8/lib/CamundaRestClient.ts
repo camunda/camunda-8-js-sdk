@@ -333,7 +333,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
-	 * @since 8.7.0
+	 * @since 8.8.0
 	 */
 	public async searchUserTasks(
 		request: QueryTasksRequest
@@ -344,14 +344,29 @@ export class CamundaRestClient {
 			limit: 100,
 		}
 		const sort = request.sort ?? [{ field: 'creationDate', order: 'asc' }]
-		return this.rest.then((rest) =>
+		const response = await this.rest.then((rest) =>
 			rest
 				.post(`user-tasks/search`, {
 					headers,
 					body: losslessStringify({ ...request, page, sort }),
 				})
-				.json()
+				.json<QueryUserTasksResponse>()
 		)
+		/**
+		 * The 8.6 and 8.7 API have different key names for the userTaskKey. This code block normalizes the key names.
+		 */
+		return {
+			...response,
+			items: response.items.map((item) => {
+				if (!item.key) {
+					item.key = item.userTaskKey
+				}
+				if (!item.userTaskKey) {
+					item.userTaskKey = item.key
+				}
+				return item
+			}),
+		}
 	}
 
 	/**
