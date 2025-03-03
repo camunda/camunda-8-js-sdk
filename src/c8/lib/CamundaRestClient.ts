@@ -333,7 +333,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
-	 * @since 8.8.0
+	 * @since 8.8.0 - alpha status in 8.6 and 8.7
 	 */
 	public async searchUserTasks(
 		request: QueryTasksRequest
@@ -358,11 +358,10 @@ export class CamundaRestClient {
 		return {
 			...response,
 			items: response.items.map((item) => {
-				if (!item.key) {
-					item.key = item.userTaskKey
-				}
-				if (!item.userTaskKey) {
-					item.userTaskKey = item.key
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				if (!item.userTaskKey && (item as any).key) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					item.userTaskKey = (item as any).key
 				}
 				return item
 			}),

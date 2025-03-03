@@ -546,10 +546,6 @@ export interface QueryUserTasksResponse {
 	items: Array<{
 		/** The key of the user task. */
 		userTaskKey: string
-		/** The key of the user task.
-		 * @deprecated use `userTaskKey`
-		 */
-		key: string
 		/** The key of the element instance. */
 		elementInstanceKey: string
 		/** The key of the process definition. */
