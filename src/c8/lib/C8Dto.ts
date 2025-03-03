@@ -354,14 +354,23 @@ export interface RestJob<
 	readonly tenantId: string
 }
 
-export interface QueryPageRequest {
+interface QueryPageRequestSearchAfter {
 	from: number
 	limit: number
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	searchAfter: any[]
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	searchBefore: any[]
+	// example: [{}]. Pass in the lastSortValues from the previous response.
+	searchAfter?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
+
+interface QueryPageRequestSearchBefore {
+	from: number
+	limit: number
+	// example: [{}]. Pass in the lastSortValues from the previous response.
+	searchBefore?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+export type QueryPageRequest =
+	| QueryPageRequestSearchAfter
+	| QueryPageRequestSearchBefore
 
 export interface AdvancedStringFilter {
 	/** Checks for equality with the provided value. */
@@ -442,7 +451,7 @@ export interface QueryVariablesResponse {
 	}>
 }
 
-export type QueryTasksSortRequest = Array<{
+export type QueryUserTasksSortRequest = Array<{
 	/** The field to sort by. */
 	field:
 		| 'creationDate'
@@ -450,8 +459,8 @@ export type QueryTasksSortRequest = Array<{
 		| 'dueDate'
 		| 'followUpDate'
 		| 'priority'
-	/** The order in which to sort the related field. Default: ASC */
-	order?: 'ASC' | 'DESC'
+	/** The order in which to sort the related field. Default: asc */
+	order?: 'asc' | 'desc'
 }>
 
 export interface AdvancedDateTimeFilter {
@@ -525,14 +534,14 @@ export interface QueryUserTasksFilter {
 
 export interface QueryTasksRequest {
 	/** Pagination criteria. */
-	page: QueryPageRequest
+	page?: QueryPageRequest
 	/** Sort field criteria. */
-	sort: QueryTasksSortRequest
+	sort?: QueryUserTasksSortRequest
 	/** User task filter request. */
-	filter: QueryUserTasksFilter
+	filter?: QueryUserTasksFilter
 }
 
-export interface QueryTasksResponse {
+export interface QueryUserTasksResponse {
 	page: QueryResponsePagination
 	items: Array<{
 		/** The key of the user task. */

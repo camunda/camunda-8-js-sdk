@@ -21,14 +21,11 @@ test('It can query user tasks', async () => {
 	})
 	expect(wfi.processDefinitionKey).toBe(key)
 	await new Promise((r) => setTimeout(r, 5000))
-	// Do we need to wait for the process instance to be started and arrive at the user task?
 	// Search user tasks
 	const tasks = await c8.searchUserTasks({
 		page: {
 			from: 0,
 			limit: 10,
-			searchAfter: [],
-			searchBefore: [],
 		},
 		filter: {
 			state: 'CREATED',

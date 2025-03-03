@@ -55,7 +55,7 @@ import {
 	ProcessDeployment,
 	PublishMessageResponse,
 	QueryTasksRequest,
-	QueryTasksResponse,
+	QueryUserTasksResponse,
 	QueryVariablesRequest,
 	QueryVariablesResponse,
 	RestJob,
@@ -331,22 +331,41 @@ export class CamundaRestClient {
 	/**
 	 * Search for user tasks based on given criteria.
 	 *
-	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-tasks/
+	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
-	 * @since 8.8.0
+	 * @since 8.8.0 - alpha status in 8.6 and 8.7
 	 */
 	public async searchUserTasks(
 		request: QueryTasksRequest
-	): Promise<QueryTasksResponse> {
+	): Promise<QueryUserTasksResponse> {
 		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
+		const page = request.page ?? {
+			from: 0,
+			limit: 100,
+		}
+		const sort = request.sort ?? [{ field: 'creationDate', order: 'asc' }]
+		const response = await this.rest.then((rest) =>
 			rest
 				.post(`user-tasks/search`, {
 					headers,
-					body: losslessStringify(request),
+					body: losslessStringify({ ...request, page, sort }),
 				})
-				.json()
+				.json<QueryUserTasksResponse>()
 		)
+		/**
+		 * The 8.6 and 8.7 API have different key names for the userTaskKey. This code block normalizes the key names.
+		 */
+		return {
+			...response,
+			items: response.items.map((item) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				if (!item.userTaskKey && (item as any).key) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					item.userTaskKey = (item as any).key
+				}
+				return item
+			}),
+		}
 	}
 
 	/**
