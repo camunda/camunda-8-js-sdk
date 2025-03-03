@@ -55,7 +55,7 @@ import {
 	ProcessDeployment,
 	PublishMessageResponse,
 	QueryTasksRequest,
-	QueryTasksResponse,
+	QueryUserTasksResponse,
 	QueryVariablesRequest,
 	QueryVariablesResponse,
 	RestJob,
@@ -331,19 +331,24 @@ export class CamundaRestClient {
 	/**
 	 * Search for user tasks based on given criteria.
 	 *
-	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-tasks/
+	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
-	 * @since 8.8.0
+	 * @since 8.7.0
 	 */
 	public async searchUserTasks(
 		request: QueryTasksRequest
-	): Promise<QueryTasksResponse> {
+	): Promise<QueryUserTasksResponse> {
 		const headers = await this.getHeaders()
+		const page = request.page ?? {
+			from: 0,
+			limit: 100,
+		}
+		const sort = request.sort ?? [{ field: 'creationDate', order: 'asc' }]
 		return this.rest.then((rest) =>
 			rest
 				.post(`user-tasks/search`, {
 					headers,
-					body: losslessStringify(request),
+					body: losslessStringify({ ...request, page, sort }),
 				})
 				.json()
 		)
