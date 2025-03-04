@@ -394,7 +394,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.7.0
 	 */
-	public async getUserTaskVariables(
+	public async searchUserTaskVariables(
 		request: UserTaskVariablesRequest
 	): Promise<UserTaskVariablesResponse> {
 		const { userTaskKey, ...req } = request

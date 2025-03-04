@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 const c8 = new CamundaRestClient()
 
@@ -22,7 +22,7 @@ test('It can retrieve the variables for a user task', async () => {
 	expect(wfi.processDefinitionKey).toBe(key)
 	await new Promise((r) => setTimeout(r, 5000))
 	// Search user tasks
-	const tasks = await c8.findUserTasks({
+	const tasks = await c8.searchUserTasks({
 		page: {
 			from: 0,
 			limit: 10,
@@ -41,7 +41,7 @@ test('It can retrieve the variables for a user task', async () => {
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
 	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
 	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
-	const variables = await c8.getUserTaskVariables({
+	const variables = await c8.searchUserTaskVariables({
 		userTaskKey: tasks.items[0].userTaskKey,
 		sort: [{ field: 'name', order: 'ASC' }],
 	})
