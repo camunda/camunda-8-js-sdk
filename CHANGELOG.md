@@ -1,3 +1,10 @@
+## [8.6.29](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.28...v8.6.29) (2025-03-04)
+
+
+### Bug Fixes
+
+* fix searchUserTasks ([a39ad05](https://github.com/camunda/camunda-8-js-sdk/commit/a39ad05f58c0ae43fb1145ac2716dac996b8d667))
+
 ## [8.6.28](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.27...v8.6.28) (2025-02-28)
 
 
