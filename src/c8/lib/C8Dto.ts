@@ -662,27 +662,28 @@ export interface AdvancedProcessInstanceStateFilter {
 	$like: string
 }
 
+/** This is the 8.8 API.  */
 export interface QueryProcessInstanceRequest {
 	/** Pagination criteria. */
 	page?: QueryPageRequest
 	/** Sort field criteria. */
 	sort: Array<{
 		field:
-			| 'key'
-			| 'bpmnProcessId'
-			| 'processName'
-			| 'processVersion'
-			| 'processVersionTag'
+			| 'processInstanceKey'
+			| 'processDefinitionId'
+			| 'processDefinitionName'
+			| 'processDefinitionVersion'
+			| 'processDefinitionVersionTag'
 			| 'processDefinitionKey'
 			| 'parentProcessInstanceKey'
+			| 'parentFlowNodeInstanceKey'
 			| 'state'
 			| 'startDate'
 			| 'endDate'
-			| 'parentFlowNodeInstanceKey'
 			| 'tenantId'
-			| 'incident'
+			| 'hasIncident'
 		/** The order in which to sort the related field. Default value: ASC */
-		order: 'ASC' | 'DESC'
+		order?: 'ASC' | 'DESC'
 	}>
 	/** Process instance search filter. */
 	filter: {
@@ -702,12 +703,12 @@ export interface QueryProcessInstanceRequest {
 		parentProcessInstanceKey?: string | AdvancedStringFilter
 		/** The parent flow node instance key. */
 		parentFlowNodeInstanceKey?: string | AdvancedStringFilter
+		/** The process instance state. */
+		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
 		/** The start date. */
 		startDate?: string | AdvancedDateTimeFilter
 		/** The end date. */
 		endDate?: string | AdvancedDateTimeFilter
-		/** The state of the process instance. */
-		state?: string | AdvancedProcessInstanceStateFilter
 		/** The tenant ID. */
 		tenantId?: string | AdvancedStringFilter
 		/** The process instance variables. */

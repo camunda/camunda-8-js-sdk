@@ -392,7 +392,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-user-task-variables/
 	 *
-	 * @since 8.7.0
+	 * @since 8.8.0
 	 */
 	public async searchUserTaskVariables(
 		request: UserTaskVariablesRequest
@@ -810,19 +810,23 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/query-process-instances-alpha/
 	 *
-	 * @since 8.6.0
+	 * @since 8.8.0
 	 */
 	public async searchProcessInstances(
 		request: QueryProcessInstanceRequest
 	): Promise<QueryProcessInstanceResponse> {
 		const headers = await this.getHeaders()
+		const page = request.page ?? {
+			from: 0,
+			limit: 100,
+		}
 		return this.rest.then((rest) =>
 			rest
 				.post(`process-instances/search`, {
 					headers,
-					body: losslessStringify(request),
+					body: losslessStringify({ ...request, page }),
 				})
-				.json()
+				.json<QueryProcessInstanceResponse>()
 		)
 	}
 

@@ -1,10 +1,23 @@
 import { randomUUID } from 'crypto'
 
+import { CreateProcessInstanceResponse } from 'c8/lib/C8Dto'
+
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 const c8 = new CamundaRestClient()
 
 jest.setTimeout(30000)
+
+let wfi: CreateProcessInstanceResponse<unknown>
+
+afterAll(async () => {
+	if (wfi) {
+		await c8.cancelProcessInstance({
+			processInstanceKey: wfi.processInstanceKey,
+		})
+	}
+})
+
 test('It can retrieve the variables for a user task', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/test-tasks-query.bpmn',
@@ -13,7 +26,7 @@ test('It can retrieve the variables for a user task', async () => {
 	const key = res.processes[0].processDefinitionKey
 	const id = res.processes[0].processDefinitionId
 	const uuid = randomUUID()
-	const wfi = await c8.createProcessInstance({
+	wfi = await c8.createProcessInstance({
 		processDefinitionId: id,
 		variables: {
 			queryTag: uuid,
@@ -37,7 +50,6 @@ test('It can retrieve the variables for a user task', async () => {
 			},
 		],
 	})
-	console.log(tasks) //@debug
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
 	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
 	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
