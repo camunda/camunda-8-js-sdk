@@ -377,7 +377,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-user-task/
 	 *
-	 * @since 8.7.0
+	 * @since 8.8.0
 	 */
 	public async getUserTask(userTaskKey: string): Promise<UserTask> {
 		const headers = await this.getHeaders()

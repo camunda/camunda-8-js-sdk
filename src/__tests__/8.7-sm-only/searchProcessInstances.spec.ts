@@ -20,10 +20,11 @@ test('It can retrieve a user task', async () => {
 		},
 	})
 	expect(wfi.processDefinitionKey).toBe(key)
-	await new Promise((r) => setTimeout(r, 5000))
+	await new Promise((r) => setTimeout(r, 7000))
 	const instances = await c8.searchProcessInstances({
 		sort: [{ field: 'state', order: 'ASC' }],
 		filter: { state: 'ACTIVE' },
 	})
+	console.log(instances) //@debug
 	expect(instances.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
 })

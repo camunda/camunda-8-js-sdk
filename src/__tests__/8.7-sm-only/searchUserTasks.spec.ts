@@ -5,7 +5,7 @@ import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 const c8 = new CamundaRestClient()
 
 jest.setTimeout(30000)
-test('It can query user tasks', async () => {
+test('It can search user tasks', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/test-tasks-query.bpmn',
 		'./src/__tests__/testdata/form/test-basic-form.form',
@@ -20,7 +20,7 @@ test('It can query user tasks', async () => {
 		},
 	})
 	expect(wfi.processDefinitionKey).toBe(key)
-	await new Promise((r) => setTimeout(r, 5000))
+	await new Promise((r) => setTimeout(r, 7000))
 	// Search user tasks
 	const tasks = await c8.searchUserTasks({
 		page: {
@@ -37,6 +37,5 @@ test('It can query user tasks', async () => {
 		],
 	})
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
-	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
-	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
+	expect(tasks.items[0].userTaskKey).toBeTruthy()
 })
