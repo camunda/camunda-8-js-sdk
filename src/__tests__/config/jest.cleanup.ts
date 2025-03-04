@@ -44,6 +44,11 @@ export const cleanUp = async () => {
 			zeebeGrpcSettings: { ZEEBE_CLIENT_LOG_LEVEL: 'NONE' },
 		},
 	})
+	// Wait for the zeebe.connected property to be true
+	while (!zeebe.connected) {
+		// console.log('Waiting for Zeebe connection...')
+		await new Promise((resolve) => setTimeout(resolve, 100))
+	}
 	for (const id of processIds) {
 		if (id) {
 			// Are we running in a multi-tenant environment?
@@ -79,7 +84,7 @@ export const cleanUp = async () => {
 				}
 			}
 		}
-		await zeebe.close()
 	}
+	await zeebe.close()
 	wtf.dump()
 }
