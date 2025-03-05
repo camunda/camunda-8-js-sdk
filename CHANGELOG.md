@@ -1,3 +1,10 @@
+## [8.6.31](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.30...v8.6.31) (2025-03-05)
+
+
+### Bug Fixes
+
+* use ZEEBE_TOKEN_AUDIENCE if set ([ac46921](https://github.com/camunda/camunda-8-js-sdk/commit/ac46921f94a5c58fccc39553d9120eb82897b44e)), closes [#392](https://github.com/camunda/camunda-8-js-sdk/issues/392)
+
 ## [8.6.30](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.29...v8.6.30) (2025-03-05)
 
 
