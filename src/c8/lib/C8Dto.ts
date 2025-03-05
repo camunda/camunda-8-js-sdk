@@ -1038,19 +1038,25 @@ export interface SearchUsersRequest {
 	}
 }
 
+class UserItem extends LosslessDto {
+	/** The ID of the user. */
+	@Int64String
+	id!: string
+	/** The key of the user. */
+	key!: string
+	/** The username of the user. */
+	username!: string
+	/** The name of the user. */
+	name!: string
+	/** The email of the user. */
+	email!: string
+}
+
 /** The user search result. */
-export interface SearchUsersReponse {
+export class SearchUsersResponse extends LosslessDto {
 	/** Pagination information about the search results. */
-	page: SearchResponsePagination
+	page!: SearchResponsePagination
 	/** The matching users. */
-	items: Array<{
-		/** The key of the user. */
-		key: string
-		/** The username of the user. */
-		username: string
-		/** The name of the user. */
-		name: string
-		/** The email of the user. */
-		email: string
-	}>
+	@ChildDto(UserItem)
+	items!: UserItem[]
 }

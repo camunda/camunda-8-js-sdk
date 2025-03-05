@@ -68,8 +68,8 @@ import {
 	SearchProcessInstanceRequest,
 	SearchProcessInstanceResponse,
 	SearchTasksRequest,
-	SearchUsersReponse,
 	SearchUsersRequest,
+	SearchUsersResponse,
 	SearchUserTasksResponse,
 	SearchVariablesRequest,
 	SearchVariablesResponse,
@@ -485,7 +485,7 @@ export class CamundaRestClient {
 		return this.rest.then((rest) =>
 			rest
 				.post(`users`, {
-					body: JSON.stringify(newUserInfo),
+					body: losslessStringify(newUserInfo),
 					headers,
 				})
 				.json()
@@ -493,20 +493,42 @@ export class CamundaRestClient {
 	}
 
 	/**
-	 * Search users
+	 * Search users for tenant.
 	 *
 	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-users/
 	 *
-	 * @since 8.7.0
+	 * @since 8.8.0
 	 */
 	public async searchUsers(
 		request: SearchUsersRequest
-	): Promise<SearchUsersReponse> {
+	): Promise<SearchUsersResponse> {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
 				.post(`users/search`, {
-					body: JSON.stringify(request),
+					body: losslessStringify(request),
+					headers,
+				})
+				.json()
+		)
+	}
+
+	/**
+	 * Search users for tenant.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-users-for-tenant/
+	 *
+	 * @since 8.8.0
+	 */
+	public async searchUsersForTenant(
+		tenantId: string,
+		request: SearchUsersRequest
+	): Promise<SearchUsersResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`tenants/${tenantId}/users/search`, {
+					body: losslessStringify(request),
 					headers,
 				})
 				.json()
@@ -1460,10 +1482,11 @@ export class CamundaRestClient {
 	): JobWithMethods<Variables, CustomHeaders> => {
 		return {
 			...job,
-			cancelWorkflow: () => {
-				return this.cancelProcessInstance({
+			cancelWorkflow: async () => {
+				await this.cancelProcessInstance({
 					processInstanceKey: job.processInstanceKey,
-				}).then(() => JOB_ACTION_ACKNOWLEDGEMENT)
+				})
+				return JOB_ACTION_ACKNOWLEDGEMENT
 			},
 			complete: (variables: IProcessVariables = {}) =>
 				this.completeJob({
