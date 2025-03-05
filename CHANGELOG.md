@@ -1,3 +1,12 @@
+## [8.6.30](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.29...v8.6.30) (2025-03-05)
+
+
+### Features
+
+* **camunda8:** support getUserTask (8.8) ([26e0507](https://github.com/camunda/camunda-8-js-sdk/commit/26e0507e6d7b9f79802aa59df2520ffceb9126f9))
+* **camunda:** implement getUserTaskVariables ([6dd59f6](https://github.com/camunda/camunda-8-js-sdk/commit/6dd59f681039802a26344732c9ddbf94a733c91d)), closes [#342](https://github.com/camunda/camunda-8-js-sdk/issues/342)
+* **camunda:** implement searchProcessInstances. fixes [#320](https://github.com/camunda/camunda-8-js-sdk/issues/320) ([bce0eb1](https://github.com/camunda/camunda-8-js-sdk/commit/bce0eb1913764290ffd1427506052687b95b0586))
+
 ## [8.6.29](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.28...v8.6.29) (2025-03-04)
 
 
