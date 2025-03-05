@@ -1,6 +1,6 @@
 // import { randomUUID } from 'crypto'
 
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 const c8 = new CamundaRestClient()
 
@@ -21,8 +21,6 @@ test('It can search users', async () => {
 		page: {
 			from: 0,
 			limit: 10,
-			searchAfter: [],
-			searchBefore: [],
 		},
 		filter: {
 			username: 'jdoe',
