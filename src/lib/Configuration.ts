@@ -83,8 +83,18 @@ const getMainEnv = () =>
 			type: 'string',
 			optional: true,
 		},
-		/** The audience parameter for a Zeebe OAuth token request. Defaults to zeebe.camunda.io */
+		/**
+		 * The audience parameter for a Zeebe OAuth token request.
+		 * This is a synonym for and has precedence over ZEEBE_TOKEN_AUDIENCE. If this value is not set, ZEEBE_TOKEN_AUDIENCE will be used.
+		 * */
 		CAMUNDA_ZEEBE_OAUTH_AUDIENCE: {
+			type: 'string',
+			optional: true,
+		},
+		/**
+		 * The audience parameter for a Zeebe OAuth token request. Defaults to zeebe.camunda.io
+		 **/
+		ZEEBE_TOKEN_AUDIENCE: {
 			type: 'string',
 			optional: true,
 			default: 'zeebe.camunda.io',
