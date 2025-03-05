@@ -7,7 +7,9 @@ import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 const c8 = new CamundaRestClient()
 
 jest.setTimeout(30000)
+
 let wfi: CreateProcessInstanceResponse<unknown>
+
 afterAll(async () => {
 	if (wfi) {
 		await c8.cancelProcessInstance({
@@ -16,7 +18,7 @@ afterAll(async () => {
 	}
 })
 
-test('It can search user tasks', async () => {
+test('It can retrieve the variables for a user task', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/test-tasks-query.bpmn',
 		'./src/__tests__/testdata/form/test-basic-form.form',
@@ -44,9 +46,16 @@ test('It can search user tasks', async () => {
 		sort: [
 			{
 				field: 'creationDate',
+				order: 'asc',
 			},
 		],
 	})
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
-	expect(tasks.items[0].userTaskKey).toBeTruthy()
+	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
+	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
+	const variables = await c8.searchUserTaskVariables({
+		userTaskKey: tasks.items[0].userTaskKey,
+		sort: [{ field: 'name', order: 'ASC' }],
+	})
+	expect(variables.items[0].value).toBe(`"${uuid}"`)
 })
