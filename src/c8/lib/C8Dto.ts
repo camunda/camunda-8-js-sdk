@@ -432,9 +432,9 @@ export interface QueryResponsePagination {
 	/** Total items matching the criteria. */
 	totalItems: number
 	/** The sort values of the first item in the result set. Use this in the searchBefore field of an ensuing request. */
-	firstSortValues: unknown
+	firstSortValues: unknown[]
 	/** The sort values of the last item in the result set. Use this in the searchAfter field of an ensuing request. */
-	lastSortValues: unknown
+	lastSortValues: unknown[]
 }
 
 export interface QueryVariablesResponse {
@@ -520,15 +520,15 @@ export interface QueryUserTasksFilter {
 	processInstanceVariables?: Array<{
 		/** Name of the variable. */
 		name: string
-		/** The value of the variable. */
-		value: string | boolean | number
+		/** The value of the variable. If it is a string, it will be double-quoted. */
+		value: string
 	}>
 	/** Local variables associated with the user task. */
 	localVariables?: Array<{
 		/** Name of the variable. */
 		name: string
-		/** The value of the variable. */
-		value: string | boolean | number
+		/** The value of the variable. If it is a string, it will be double-quoted. */
+		value: string
 	}>
 }
 
@@ -601,4 +601,152 @@ export interface UserTask {
 	processInstanceKey: string
 	/** The key of the form. */
 	formKey?: string
+}
+
+/** Sort field criteria. */
+export interface UserTaskVariablesSortRequest {
+	/** The field to sort by. */
+	field:
+		| 'value'
+		| 'name'
+		| 'tenantId'
+		| 'variableKey'
+		| 'scopeKey'
+		| 'processInstanceKey'
+	/** The order in which to sort the related field. */
+	order: 'ASC' | 'DESC'
+}
+
+export interface UserTaskVariablesRequest {
+	userTaskKey: string
+	/** Pagination criteria. */
+	page?: QueryPageRequest
+	/** Sort field criteria. */
+	sort: UserTaskVariablesSortRequest[]
+	/** The user task variable search filters. */
+	filter?: {
+		/** Name of the variable. */
+		name: string
+	}
+}
+
+/** The user task variables search response. */
+export interface UserTaskVariablesResponse {
+	/** Pagination information about the search results. */
+	page: QueryResponsePagination
+	/** The matching variables. */
+	items: Array<{
+		/** The key for this variable. */
+		variableKey: string
+		/** The key of the scope of this variable. */
+		scopeKey: string
+		/** The key of the process instance of this variable. */
+		processInstanceKey: string
+		name: string
+		value: string
+		tenantId: string
+		isTruncated: boolean
+	}>
+}
+
+export interface AdvancedProcessInstanceStateFilter {
+	/** Checks for equality with the provided value. */
+	$eq?: 'ACTIVE' | 'COMPLETED' | 'CANCELED'
+	/** Checks for inequality with the provided value. */
+	$neq?: 'ACTIVE' | 'COMPLETED' | 'CANCELED'
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Checks if the property matches any of the provided values. */
+	$in: ('ACTIVE' | 'COMPLETED' | 'CANCELED')[]
+	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
+	$like: string
+}
+
+/** This is the 8.8 API.  */
+export interface QueryProcessInstanceRequest {
+	/** Pagination criteria. */
+	page?: QueryPageRequest
+	/** Sort field criteria. */
+	sort: Array<{
+		field:
+			| 'processInstanceKey'
+			| 'processDefinitionId'
+			| 'processDefinitionName'
+			| 'processDefinitionVersion'
+			| 'processDefinitionVersionTag'
+			| 'processDefinitionKey'
+			| 'parentProcessInstanceKey'
+			| 'parentFlowNodeInstanceKey'
+			| 'state'
+			| 'startDate'
+			| 'endDate'
+			| 'tenantId'
+			| 'hasIncident'
+		/** The order in which to sort the related field. Default value: ASC */
+		order?: 'ASC' | 'DESC'
+	}>
+	/** Process instance search filter. */
+	filter: {
+		/** The key of this process instance. */
+		processInstanceKey?: string | AdvancedStringFilter
+		/** The process definition ID. */
+		processDefinitionId?: string | AdvancedStringFilter
+		/** The process definition name. */
+		processDefinitionName?: string | AdvancedStringFilter
+		/** The process definition version. */
+		processDefinitionVersion?: string | AdvancedStringFilter
+		/** The process definition version tag. */
+		processDefinitionVersionTag?: string | AdvancedStringFilter
+		/** The process definition key. */
+		processDefinitionKey?: string | AdvancedStringFilter
+		/** The parent process instance key. */
+		parentProcessInstanceKey?: string | AdvancedStringFilter
+		/** The parent flow node instance key. */
+		parentFlowNodeInstanceKey?: string | AdvancedStringFilter
+		/** The process instance state. */
+		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+		/** The start date. */
+		startDate?: string | AdvancedDateTimeFilter
+		/** The end date. */
+		endDate?: string | AdvancedDateTimeFilter
+		/** The tenant ID. */
+		tenantId?: string | AdvancedStringFilter
+		/** The process instance variables. */
+		variables?: Array<{
+			/** Name of the variable. */
+			name: string
+			/** The value of the variable */
+			value: string
+		}>
+	}
+}
+
+export interface QueryProcessInstanceResponse {
+	page: QueryResponsePagination
+	items: Array<{
+		/** The key of the process instance. */
+		processInstanceKey: string
+		/** The key of the process definition. */
+		processDefinitionKey: string
+		/** The key of the parent process instance. */
+		parentProcessInstanceKey: string
+		/** The key of the parent flow node instance. */
+		parentFlowNodeInstanceKey: string
+		/** The BPMN process ID of the process definition. */
+		processDefinitionId: string
+		/** The name of the process definition. */
+		processDefinitionName: string
+		/** The version of the process definition. */
+		processDefinitionVersion: string
+		/** The state of the process instance. */
+		state: string
+		/** The start date of the process instance. */
+		startDate: string
+		/** The end date of the process instance. */
+		endDate?: string
+		/** The tenant ID. */
+		tenantId: string
+		/** Has an incident. */
+		hasIncident: boolean
+	}>
 }

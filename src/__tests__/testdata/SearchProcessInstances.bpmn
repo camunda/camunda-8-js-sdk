@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0y26dpz" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.31.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:process id="search-process-instances-test" name="Search Process Instances Test" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start Search Process Instance test">
+      <bpmn:outgoing>Flow_175417x</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_1lmtl4z" name="End Search Process Instance test">
+      <bpmn:incoming>Flow_150cg52</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_150cg52" sourceRef="Activity_1plrxmu" targetRef="Event_1lmtl4z" />
+    <bpmn:sequenceFlow id="Flow_175417x" sourceRef="StartEvent_1" targetRef="Activity_1plrxmu" />
+    <bpmn:serviceTask id="Activity_1plrxmu" name="Never serviced">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="this-job-will-never-be-served-12345a2oiea21" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_175417x</bpmn:incoming>
+      <bpmn:outgoing>Flow_150cg52</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="search-process-instances-test">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="158" y="145" width="85" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1lmtl4z_di" bpmnElement="Event_1lmtl4z">
+        <dc:Bounds x="462" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="438" y="145" width="85" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1wf9ez4_di" bpmnElement="Activity_1plrxmu">
+        <dc:Bounds x="310" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_150cg52_di" bpmnElement="Flow_150cg52">
+        <di:waypoint x="410" y="120" />
+        <di:waypoint x="462" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_175417x_di" bpmnElement="Flow_175417x">
+        <di:waypoint x="218" y="120" />
+        <di:waypoint x="310" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
