@@ -212,9 +212,36 @@ export CAMUNDA_CONSOLE_BASE_URL='https://api.cloud.camunda.io'
 export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
 ```
 
+## Logging
+
+The SDK uses a Winston / Pino compatible logging setup. By default it uses Winston.
+
+When using the default logging library, you can set the logging level of the SDK via the enviroment variable (or constructor configuration property) `CAMUNDA_LOG_LEVEL`. This defaults to 'info'. Values (in order of priority): `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`.
+
+### Custom logger
+
+You can supply a custom logger via the constructor. For example, to use the [Pino](https://getpino.io/) logging library:
+
+```typescript
+import pino from 'pino'
+
+import { Camunda8 } from '../../c8/index'
+
+const level = process.env.CAMUNDA_LOG_LEVEL ?? 'trace'
+const logger = pino({ level }) // Logging level controlled via the logging library
+
+logger.info('Pino logger created')
+const c8 = new Camunda8({
+    logger,
+})
+c8.log.info('Using pino logger')
+```
+
 ## Debugging
 
-The SDK uses the [`debug`](https://github.com/debug-js/debug) library. To enable debugging output, set a value for the `DEBUG` environment variable. The value is a comma-separated list of debugging namespaces. The SDK has the following namespaces:
+The SDK uses the [`debug`](https://github.com/debug-js/debug) library to help you debug specific issues. This produces verbose, low-level output from specific components to the console.
+
+To enable debugging output, set a value for the `DEBUG` environment variable. The value is a comma-separated list of debugging namespaces. The SDK has the following namespaces:
 
 | Value                  | Component            |
 | ---------------------- | -------------------- |

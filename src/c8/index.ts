@@ -55,6 +55,7 @@ export class Camunda8 {
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
 		this.oAuthProvider = constructOAuthProvider(this.configuration)
 		this.log = getLogger(config)
+		this.log.debug('Camunda8 SDK initialized')
 	}
 
 	public getOperateApiClient(
