@@ -61,10 +61,21 @@ test('getJSONVariablesforProcess works', async () => {
 	})
 
 	// Wait for Operate to catch up.
-	await new Promise((res) => setTimeout(() => res(null), 15000))
 	// Make sure that the process instance exists in Operate.
 	// Operate is eventually consistent, so we need to wait a bit.
-	const process = await c.getProcessInstance(p.processInstanceKey)
+	const maxRetries = 15
+	const delay = 1000
+	let process
+
+	for (let i = 0; i < maxRetries; i++) {
+		process = await c.getProcessInstance(p.processInstanceKey).catch(() => null)
+		if (process) break
+		await new Promise((res) => setTimeout(res, delay))
+	}
+	if (!process) {
+		throw new Error('Process instance not found within the timeout period')
+	}
+
 	// If this fails, it is probably a timing issue.
 	expect(process.key).toBe(p.processInstanceKey)
 	const res = await c.getJSONVariablesforProcess(p.processInstanceKey)
@@ -95,11 +106,21 @@ test('getVariablesforProcess paging works', async () => {
 	})
 
 	// Wait for Operate to catch up.
-	await new Promise((res) => setTimeout(() => res(null), 15000))
 	// Make sure that the process instance exists in Operate.
 	// Operate is eventually consistent, so we need to wait a bit.
-	const process = await c.getProcessInstance(p.processInstanceKey)
-	// If this fails, it is probably a timing issue.
+	const maxRetries = 15
+	const delay = 1000
+	let process
+
+	for (let i = 0; i < maxRetries; i++) {
+		process = await c.getProcessInstance(p.processInstanceKey).catch(() => null)
+		if (process) break
+		await new Promise((res) => setTimeout(res, delay))
+	}
+	if (!process) {
+		throw new Error('Process instance not found within the timeout period')
+	}
+
 	expect(process.key).toBe(p.processInstanceKey)
 	const res = await c.getVariablesforProcess(p.processInstanceKey, { size: 5 })
 	expect(res.items[0].name).toBe('foo')
