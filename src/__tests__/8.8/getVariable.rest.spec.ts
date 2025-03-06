@@ -1,9 +1,17 @@
 import path from 'node:path'
 
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { LosslessDto } from 'lib'
+
+import { CamundaJobWorker } from '../../c8/lib/CamundaJobWorker'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 let processDefinitionId: string
+let worker: CamundaJobWorker<LosslessDto, LosslessDto>
 const restClient = new CamundaRestClient()
+
+afterAll(() => {
+	worker && worker.stop()
+})
 
 beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([
@@ -19,7 +27,7 @@ test('Can get a variable', (done) => {
 			someNumberField: 8,
 		},
 	})
-	restClient.createJobWorker({
+	worker = restClient.createJobWorker({
 		type: 'get-variable',
 		jobHandler: async (job) => {
 			// query variables to get the variable key

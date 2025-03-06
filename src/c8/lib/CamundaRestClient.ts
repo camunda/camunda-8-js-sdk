@@ -1077,6 +1077,10 @@ export class CamundaRestClient {
 		)
 	}
 
+	/**
+	 * @description Get the variable by the variable key. Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-variable/
+	 * @since 8.8.0
+	 */
 	public async getVariable(req: {
 		variableKey: string
 	}): Promise<GetVariableResponse> {
