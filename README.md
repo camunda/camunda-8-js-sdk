@@ -216,8 +216,7 @@ export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
 
 The SDK uses a Winston / Pino compatible logging setup. By default it uses Winston.
 
-When using the default logging library, you can set the logging level of the SDK via the enviroment variable (or constructor configuration property) `CAMUNDA_LOG_LEVEL`. This defaults to 'info'. Values (in order of priority): `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`.
-
+When using the default logging library, you can set the logging level of the SDK via the environment variable (or constructor configuration property) `CAMUNDA_LOG_LEVEL`. This defaults to 'info'. Values (in order of priority): `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`.
 ### Custom logger
 
 You can supply a custom logger via the constructor. For example, to use the [Pino](https://getpino.io/) logging library:
