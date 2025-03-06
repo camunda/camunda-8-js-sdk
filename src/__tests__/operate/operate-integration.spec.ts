@@ -63,12 +63,51 @@ test('getJSONVariablesforProcess works', async () => {
 	// Wait for Operate to catch up.
 	await new Promise((res) => setTimeout(() => res(null), 15000))
 	// Make sure that the process instance exists in Operate.
+	// Operate is eventually consistent, so we need to wait a bit.
 	const process = await c.getProcessInstance(p.processInstanceKey)
 	// If this fails, it is probably a timing issue.
-	// Operate is eventually consistent, so we need to wait a bit.
 	expect(process.key).toBe(p.processInstanceKey)
 	const res = await c.getJSONVariablesforProcess(p.processInstanceKey)
 	expect(res.foo).toBe('bar')
+})
+
+test('getVariablesforProcess paging works', async () => {
+	const c = new OperateApiClient()
+	const zeebe = new ZeebeGrpcClient()
+	await zeebe.deployResource({
+		processFilename: 'src/__tests__/testdata/Operate-StraightThrough.bpmn',
+	})
+	const p = await zeebe.createProcessInstanceWithResult({
+		bpmnProcessId: 'operate-straightthrough',
+		variables: {
+			foo: 'bar',
+			foo1: 'bar1',
+			foo2: 'bar2',
+			foo3: 'bar3',
+			foo4: 'bar4',
+			foo5: 'bar5',
+			foo6: 'bar6',
+			foo7: 'bar7',
+			foo8: 'bar8',
+			foo9: 'bar9',
+			foo10: 'bar10',
+		},
+	})
+
+	// Wait for Operate to catch up.
+	await new Promise((res) => setTimeout(() => res(null), 15000))
+	// Make sure that the process instance exists in Operate.
+	// Operate is eventually consistent, so we need to wait a bit.
+	const process = await c.getProcessInstance(p.processInstanceKey)
+	// If this fails, it is probably a timing issue.
+	expect(process.key).toBe(p.processInstanceKey)
+	const res = await c.getVariablesforProcess(p.processInstanceKey, { size: 5 })
+	expect(res.items[0].name).toBe('foo')
+	const nextPage = await c.getVariablesforProcess(p.processInstanceKey, {
+		size: 5,
+		searchAfter: res.sortValues,
+	})
+	expect(nextPage.items[0].name).toBe('foo4')
 })
 
 test('test error type', async () => {

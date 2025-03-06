@@ -525,19 +525,27 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Retrieve the variables for a Process Instance, given its key
+	 * @description Retrieve the variables for a Process Instance, given its key. Documentation: https://docs.camunda.io/docs/apis-tools/operate-api/specifications/search/
 	 * @throws {RESTError}
 	 * @param processInstanceKey
 	 * @returns
 	 */
 	public async getVariablesforProcess(
-		processInstanceKey: number | string
-	): Promise<{ items: Variable[] }> {
+		processInstanceKey: number | string,
+		options: {
+			size?: number
+			searchAfter?: unknown[]
+			sort?: { field: string; order?: 'ASC' | 'DESC' }[]
+		} = {}
+	): Promise<{ items: Variable[]; sortValues: unknown[]; total: number }> {
 		const headers = await this.getHeaders()
 		const body = {
 			filter: {
 				processInstanceKey,
 			},
+			size: options.size ?? 1000,
+			searchAfter: options.searchAfter,
+			sort: options.sort ?? [{ field: 'name' }],
 		}
 		const rest = await this.rest
 
@@ -555,14 +563,15 @@ export class OperateApiClient {
 	 * @throws {RESTError}
 	 */
 	public async getJSONVariablesforProcess<T extends { [key: string]: JSONDoc }>(
-		processInstanceKey: number | string
+		processInstanceKey: number | string,
+		size = 1000
 	): Promise<T> {
 		const headers = await this.getHeaders()
 		const body = {
 			filter: {
 				processInstanceKey,
 			},
-			size: 1000,
+			size,
 		}
 		const rest = await this.rest
 
