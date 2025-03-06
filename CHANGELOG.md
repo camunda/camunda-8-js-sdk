@@ -1,3 +1,11 @@
+## [8.6.32](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.31...v8.6.32) (2025-03-06)
+
+
+### Bug Fixes
+
+* add tests and documentation for logging ([3522faf](https://github.com/camunda/camunda-8-js-sdk/commit/3522faf3cfcd0a7e80315ee1f49936ee5cd867f2)), closes [#397](https://github.com/camunda/camunda-8-js-sdk/issues/397)
+* **operate:** allow paging for getVariablesforProcess ([b94532d](https://github.com/camunda/camunda-8-js-sdk/commit/b94532d3480764bc6abda795f85b8d8db382d517)), closes [#387](https://github.com/camunda/camunda-8-js-sdk/issues/387)
+
 ## [8.6.31](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.30...v8.6.31) (2025-03-05)
 
 
