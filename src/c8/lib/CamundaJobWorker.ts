@@ -165,6 +165,7 @@ export class CamundaJobWorker<
 		this.pollLock = true
 		if (this.currentlyActiveJobCount >= this.config.maxJobsToActivate) {
 			this.log.debug(`At capacity - not requesting more jobs`, this.logMeta())
+			this.pollLock = false
 			return
 		}
 
