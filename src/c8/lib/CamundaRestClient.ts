@@ -48,6 +48,7 @@ import {
 	DeployResourceResponse,
 	DeployResourceResponseDto,
 	FormDeployment,
+	GetVariableResponse,
 	JobUpdateChangeset,
 	MigrationRequest,
 	NewUserInfo,
@@ -1074,6 +1075,19 @@ export class CamundaRestClient {
 				})
 				.json()
 		)
+	}
+
+	/**
+	 * @description Get the variable by the variable key. Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-variable/
+	 * @since 8.8.0
+	 */
+	public async getVariable(req: {
+		variableKey: string
+	}): Promise<GetVariableResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`variables/${req.variableKey}`, { headers }).json()
+		) as Promise<GetVariableResponse>
 	}
 
 	private addJobMethods = <Variables, CustomHeaders>(
