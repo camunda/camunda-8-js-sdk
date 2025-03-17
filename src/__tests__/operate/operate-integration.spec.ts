@@ -76,9 +76,11 @@ test('getJSONVariablesforProcess works', async () => {
 		throw new Error('Process instance not found within the timeout period')
 	}
 
-	// If this fails, it is probably a timing issue.
 	expect(process.key).toBe(p.processInstanceKey)
+	// We need to wait further for the variables to be populated in Operate
+	await new Promise((res) => setTimeout(res, 5000))
 	const res = await c.getJSONVariablesforProcess(p.processInstanceKey)
+
 	expect(res.foo).toBe('bar')
 })
 
@@ -122,6 +124,8 @@ test('getVariablesforProcess paging works', async () => {
 	}
 
 	expect(process.key).toBe(p.processInstanceKey)
+	// We need to wait further for the variables to be populated in Operate
+	await new Promise((res) => setTimeout(res, 5000))
 	const res = await c.getVariablesforProcess(p.processInstanceKey, { size: 5 })
 	expect(res.items[0].name).toBe('foo')
 	const nextPage = await c.getVariablesforProcess(p.processInstanceKey, {
