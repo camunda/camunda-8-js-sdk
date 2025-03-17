@@ -1,3 +1,10 @@
+## [8.6.33](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.32...v8.6.33) (2025-03-17)
+
+
+### Bug Fixes
+
+* polling when maxJobsToActivate is reached ([0dc7fe4](https://github.com/camunda/camunda-8-js-sdk/commit/0dc7fe4be7073c4fb3c69522dbb793b8dc418738))
+
 ## [8.6.32](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.31...v8.6.32) (2025-03-06)
 
 
