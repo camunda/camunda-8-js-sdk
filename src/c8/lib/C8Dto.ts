@@ -1,6 +1,6 @@
 import { LosslessNumber } from 'lossless-json'
 
-import { Int64String, LosslessDto } from '../../lib'
+import { ChildDto, Int64String, LosslessDto } from '../../lib'
 import { ICustomHeaders, IInputVariables, JSONDoc } from '../../zeebe/types'
 
 export class RestApiJob<
@@ -52,11 +52,11 @@ export interface JobUpdateChangeset {
 
 export interface NewUserInfo {
 	password: string
-	id: number
+	// id: number
 	username: string
 	name: string
 	email: string
-	enabled: boolean
+	// enabled: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -749,4 +749,48 @@ export interface QueryProcessInstanceResponse {
 		/** Has an incident. */
 		hasIncident: boolean
 	}>
+}
+
+export interface QueryUsersRequest {
+	/** Pagination criteria. */
+	page: QueryPageRequest
+	/** Sort field criteria. */
+	sort: Array<{
+		/** The field to sort by. */
+		field: 'username' | 'name' | 'email'
+		/** The order in which to sort the related field. */
+		order?: 'ASC' | 'DESC'
+	}>
+	/** User search filter. */
+	filter: {
+		/** The username of the user. */
+		username?: string
+		/** The name of the user. */
+		name?: string
+		/** The email of the user. */
+		email?: string
+	}
+}
+
+class UserItem extends LosslessDto {
+	/** The ID of the user. */
+	@Int64String
+	id!: string
+	/** The key of the user. */
+	key!: string
+	/** The username of the user. */
+	username!: string
+	/** The name of the user. */
+	name!: string
+	/** The email of the user. */
+	email!: string
+}
+
+/** The user search result. */
+export class QueryUsersResponse extends LosslessDto {
+	/** Pagination information about the search results. */
+	page!: QueryResponsePagination
+	/** The matching users. */
+	@ChildDto(UserItem)
+	items!: UserItem[]
 }
