@@ -64,6 +64,7 @@ import {
 	TaskChangeSet,
 	UpdateElementVariableRequest,
 	UserTask,
+	UserTaskFormResponse,
 	UserTaskVariablesRequest,
 	UserTaskVariablesResponse,
 } from './C8Dto'
@@ -175,6 +176,28 @@ export class CamundaRestClient {
 		}
 		trace('headers', safeHeaders)
 		return headers
+	}
+
+	/**
+	 * Dynamically change the broker log level. Ref: https://docs.camunda.io/docs/8.7/self-managed/zeebe-deployment/configuration/logging/#change-log-level-dynamically
+	 */
+	public async setBrokerLogLevel({
+		level,
+		baseUrl,
+	}: {
+		level: 'info' | 'debug' | 'trace'
+		baseUrl?: string
+	}) {
+		const url = baseUrl
+			? `${baseUrl}/actuator/loggers/io.camunda.zeebe`
+			: 'http://localhost:9600/actuator/loggers/io.camunda.zeebe'
+		const headers = await this.getHeaders()
+		return (
+			await got.post(url, {
+				headers,
+				body: JSON.stringify({ configuredLevel: level }),
+			})
+		).statusCode
 	}
 
 	/**
@@ -335,7 +358,7 @@ export class CamundaRestClient {
 	/**
 	 * Search for user tasks based on given criteria.
 	 *
-	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/find-user-tasks/
+	 * Documentation: https://docs.camunda.io/docs/8.8/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
 	 * @since 8.8.0 - alpha status in 8.6 and 8.7
 	 */
@@ -1073,6 +1096,24 @@ export class CamundaRestClient {
 					body: stringify(req),
 				})
 				.json()
+		)
+	}
+
+	/**
+	 * Get the form of a user task.
+	 *
+	 * Note that this endpoint will only return linked forms. This endpoint does not support embedded forms.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-user-task-form/
+	 * @since 8.8.0
+	 *
+	 */
+	public async getUserTaskForm(
+		userTaskKey: string
+	): Promise<UserTaskFormResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest.get(`user-tasks/${userTaskKey}/form`, { headers }).json()
 		)
 	}
 
