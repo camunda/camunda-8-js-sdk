@@ -20,6 +20,7 @@ export const cleanUp = async () => {
 			CAMUNDA_OAUTH_URL: 'dummy',
 			ZEEBE_CLIENT_ID: 'dummy',
 			ZEEBE_CLIENT_SECRET: 'dummy',
+			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: false,
 		},
 	})
 	o.flushFileCache()

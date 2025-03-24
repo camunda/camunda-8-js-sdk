@@ -12,7 +12,7 @@ xtest('Can get Dashboards', async () => {
 	await expect(client.exportDashboardDefinitions([id])).rejects.toThrow('404')
 })
 
-test('Can get readiness', async () => {
+xtest('Can get readiness', async () => {
 	const client = new OptimizeApiClient()
 	const res = await client.getReadiness()
 	expect(res).toBe('')

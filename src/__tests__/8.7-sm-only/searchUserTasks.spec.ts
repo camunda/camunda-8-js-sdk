@@ -47,6 +47,11 @@ test('It can search user tasks', async () => {
 			},
 		],
 	})
-	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
+	// There is a breaking behaviour change between 8.6 and 8.7
+	// In 8.6, the task processInstanceKey is of type number, in 8.7 it is of type string
+	// This is a workaround to make the test pass in both versions
+	expect(tasks.items[0].processInstanceKey.toString()).toBe(
+		wfi.processInstanceKey
+	)
 	expect(tasks.items[0].userTaskKey).toBeTruthy()
 })
