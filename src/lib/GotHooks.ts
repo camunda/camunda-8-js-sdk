@@ -21,7 +21,6 @@ export const gotErrorHandler = (options, next) => {
  * This enables users to see where the error originated from.
  */
 export const gotBeforeErrorHook = (error) => {
-	console.error('Got error', error.response.body)
 	const { request } = error
 	let detail = ''
 	if (error instanceof GotHTTPError) {
