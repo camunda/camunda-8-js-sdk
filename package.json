@@ -1,6 +1,6 @@
 {
 	"name": "@camunda8/sdk",
-	"version": "8.6.35",
+	"version": "8.6.36",
 	"description": "",
 	"main": "dist/index.js",
 	"scripts": {
