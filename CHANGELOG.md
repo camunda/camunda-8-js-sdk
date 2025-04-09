@@ -1,3 +1,15 @@
+## [8.6.34](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.33...v8.6.34) (2025-04-09)
+
+
+### Bug Fixes
+
+* **camunda8:** remove debugging console.error statement ([b4fa2b0](https://github.com/camunda/camunda-8-js-sdk/commit/b4fa2b033b89ca1b9a1dab7e617235f53ce49bd1))
+
+
+### Features
+
+* **camunda8:** implement uploadDocument and downloadDocument. fixes [#297](https://github.com/camunda/camunda-8-js-sdk/issues/297), fixes [#298](https://github.com/camunda/camunda-8-js-sdk/issues/298) ([b6b8b18](https://github.com/camunda/camunda-8-js-sdk/commit/b6b8b184212989d8a75fbf9bf6335965dc8ba222))
+
 ## [8.6.33](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.32...v8.6.33) (2025-03-17)
 
 
