@@ -322,7 +322,7 @@ export class CamundaRestClient {
 	}: {
 		userTaskKey: string
 		changeset: TaskChangeSet
-	}) {
+	}): Promise<void> {
 		return this.updateUserTask({ userTaskKey, changeset })
 	}
 
