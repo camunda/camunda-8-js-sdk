@@ -247,7 +247,7 @@ export class CamundaRestClient {
 		userTaskKey: string
 		variables?: Record<string, unknown>
 		action?: string
-	}) {
+	}): Promise<void> {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
