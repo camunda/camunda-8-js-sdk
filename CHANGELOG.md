@@ -1,3 +1,10 @@
+## [8.6.36](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.35...v8.6.36) (2025-04-09)
+
+
+### Features
+
+* **camunda8:** implement deleteDocument. closes Implement Delete document [#299](https://github.com/camunda/camunda-8-js-sdk/issues/299) ([18115c3](https://github.com/camunda/camunda-8-js-sdk/commit/18115c3796c15ddd8ebf8615f9ef287c7390a090))
+
 ## [8.6.35](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.34...v8.6.35) (2025-04-09)
 
 
