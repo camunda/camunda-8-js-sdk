@@ -4,16 +4,17 @@ import Transport from 'winston-transport'
 import { Camunda8 } from '../../c8/index'
 import { createLogger } from '../../c8/lib/C8Logger'
 
-const logger = pino({ level: 'trace' })
-logger.info('Pino console logger created')
-
 // Manually verified - it works
 xtest('It can use pino as a logging library', async () => {
+	const logger = pino({ level: 'trace' })
+	logger.info('Pino console logger created')
+
 	const c8 = new Camunda8({
 		logger,
 	})
 	const rest = c8.getCamundaRestClient()
 	const topology = await rest.getTopology()
+
 	c8.log.info(JSON.stringify(topology))
 })
 

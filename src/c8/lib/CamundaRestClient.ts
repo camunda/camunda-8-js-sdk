@@ -38,6 +38,7 @@ import {
 } from '../../zeebe/types'
 
 import {
+	AssignUserTaskRequest,
 	BroadcastSignalResponse,
 	CorrelateMessageResponse,
 	CreateProcessInstanceReq,
@@ -80,6 +81,7 @@ const trace = debug('camunda:zeebe-rest')
 const CAMUNDA_REST_API_VERSION = 'v2'
 
 class DefaultLosslessDto extends LosslessDto {}
+
 /**
  * The client for the unified Camunda 8 REST API.
  *
@@ -245,7 +247,7 @@ export class CamundaRestClient {
 		userTaskKey: string
 		variables?: Record<string, unknown>
 		action?: string
-	}) {
+	}): Promise<void> {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
@@ -266,22 +268,30 @@ export class CamundaRestClient {
 	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/assign-user-task/
 	 *
 	 * @since 8.6.0
+	 * @deprecated use `assignUserTask`
 	 */
 	public async assignTask({
 		userTaskKey,
 		assignee,
 		allowOverride = true,
 		action = 'assign',
-	}: {
-		/** The key of the user task to assign. */
-		userTaskKey: string
-		/** The assignee for the user task. The assignee must not be empty or null. */
-		assignee: string
-		/** By default, the task is reassigned if it was already assigned. Set this to false to return an error in such cases. The task must then first be unassigned to be assigned again. Use this when you have users picking from group task queues to prevent race conditions. */
-		allowOverride?: boolean
-		/** A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "assign". */
-		action: string
-	}) {
+	}: AssignUserTaskRequest): Promise<void> {
+		return this.assignUserTask({ userTaskKey, assignee, allowOverride, action })
+	}
+
+	/**
+	 * Assign a user task with the given key to the given assignee.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/assign-user-task/
+	 *
+	 * @since 8.6.0
+	 */
+	public async assignUserTask({
+		userTaskKey,
+		assignee,
+		allowOverride = true,
+		action = 'assign',
+	}: AssignUserTaskRequest): Promise<void> {
 		const headers = await this.getHeaders()
 		const req = {
 			allowOverride,
@@ -304,6 +314,7 @@ export class CamundaRestClient {
 	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/update-user-task/
 	 *
 	 * @since 8.6.0
+	 * @deprecated use `updateUserTask`
 	 */
 	public async updateTask({
 		userTaskKey,
@@ -311,7 +322,24 @@ export class CamundaRestClient {
 	}: {
 		userTaskKey: string
 		changeset: TaskChangeSet
-	}) {
+	}): Promise<void> {
+		return this.updateUserTask({ userTaskKey, changeset })
+	}
+
+	/**
+	 * Update a user task with the given key.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/update-user-task/
+	 *
+	 * @since 8.6.0
+	 */
+	public async updateUserTask({
+		userTaskKey,
+		changeset,
+	}: {
+		userTaskKey: string
+		changeset: TaskChangeSet
+	}): Promise<void> {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
@@ -322,6 +350,23 @@ export class CamundaRestClient {
 				.json()
 		)
 	}
+
+	/**
+	 * Remove the assignee of a task with the given key.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/unassign-user-task/
+	 *
+	 * @since 8.6.0
+	 * @deprecated use `unassignUserTask`
+	 */
+	public async unassignTask({
+		userTaskKey,
+	}: {
+		userTaskKey: string
+	}): Promise<void> {
+		return this.unassignUserTask({ userTaskKey })
+	}
+
 	/**
 	 * Remove the assignee of a task with the given key.
 	 *
@@ -329,7 +374,11 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async unassignTask({ userTaskKey }: { userTaskKey: string }) {
+	public async unassignUserTask({
+		userTaskKey,
+	}: {
+		userTaskKey: string
+	}): Promise<void> {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest.delete(`user-tasks/${userTaskKey}/assignee`, { headers }).json()
