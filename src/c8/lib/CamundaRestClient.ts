@@ -1225,7 +1225,7 @@ export class CamundaRestClient {
 			rest
 				.delete(`documents/${documentId}`, {
 					headers,
-					searchParams: { storeId },
+					searchParams: storeId ? { storeId } : undefined,
 				})
 				.json()
 		)
