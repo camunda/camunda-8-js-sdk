@@ -1,3 +1,10 @@
+## [8.6.35](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.34...v8.6.35) (2025-04-09)
+
+
+### Bug Fixes
+
+* **camunda8:** change userTask method names and set explict return types ([6fc8bee](https://github.com/camunda/camunda-8-js-sdk/commit/6fc8bee168a91398484299a43c314bb28ab4d36f))
+
 ## [8.6.34](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.33...v8.6.34) (2025-04-09)
 
 
