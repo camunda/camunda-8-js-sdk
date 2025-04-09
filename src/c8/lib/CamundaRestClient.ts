@@ -1207,6 +1207,31 @@ export class CamundaRestClient {
 	}
 
 	/**
+	 * Delete a document from the Camunda 8 cluster.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/delete-document/
+	 *
+	 * @since 8.7.0
+	 */
+	public async deleteDocument({
+		documentId,
+		storeId,
+	}: {
+		documentId: string
+		storeId?: string
+	}): Promise<void> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.delete(`documents/${documentId}`, {
+					headers,
+					searchParams: storeId ? { storeId } : undefined,
+				})
+				.json()
+		)
+	}
+
+	/**
 	 * Helper method to add the default job methods to a job
 	 * @param job The job to add the methods to
 	 * @returns The job with the added methods
