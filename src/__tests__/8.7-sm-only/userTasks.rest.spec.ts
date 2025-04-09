@@ -7,7 +7,7 @@ import path from 'node:path'
 
 import { QueryUserTasksResponse } from 'c8/lib/C8Dto'
 
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 jest.setTimeout(30000)
 
