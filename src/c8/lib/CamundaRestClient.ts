@@ -47,6 +47,7 @@ import {
 	DecisionRequirementsDeployment,
 	DeployResourceResponse,
 	DeployResourceResponseDto,
+	DownloadDocumentRequest,
 	FormDeployment,
 	JobUpdateChangeset,
 	MigrationRequest,
@@ -63,6 +64,8 @@ import {
 	RestJob,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
+	UploadDocumentRequest,
+	UploadDocumentResponse,
 	UserTask,
 	UserTaskVariablesRequest,
 	UserTaskVariablesResponse,
@@ -95,6 +98,7 @@ export class CamundaRestClient {
 	private tenantId?: string
 	public log: Logger
 	private config: CamundaPlatform8Configuration
+	private prefixUrl: string
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
@@ -121,12 +125,12 @@ export class CamundaRestClient {
 			'ZEEBE_REST_ADDRESS'
 		)
 
-		const prefixUrl = `${baseUrl}/${CAMUNDA_REST_API_VERSION}`
+		this.prefixUrl = `${baseUrl}/${CAMUNDA_REST_API_VERSION}`
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
 				got.extend({
-					prefixUrl,
+					prefixUrl: this.prefixUrl,
 					retry: GotRetryConfig,
 					https: {
 						certificateAuthority,
@@ -1076,6 +1080,88 @@ export class CamundaRestClient {
 		)
 	}
 
+	/**
+	 * Download a document from the Camunda 8 cluster.
+	 *
+	 * Note that this is currently supported for document stores of type: AWS, GCP, in-memory, local
+	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/get-document/
+	 *
+	 * @since 8.7.0
+	 */
+	public async downloadDocument(
+		request: DownloadDocumentRequest
+	): Promise<Buffer> {
+		const headers = await this.getHeaders()
+
+		return this.rest.then((rest) =>
+			rest
+				.get(`documents/${request.documentId}`, {
+					headers: {
+						...headers, // we need the headers to be passed in
+						accept: '*/*',
+					},
+					searchParams: {
+						contentHash: request.contentHash,
+						storeId: request.storeId,
+					},
+				})
+				.buffer()
+		)
+	}
+
+	/**
+	 * Upload a document to the Camunda 8 cluster.
+	 * Note that this is currently supported for document stores of type: AWS, GCP, in-memory, local
+	 *
+	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/create-document/
+	 * @since 8.7.0
+	 */
+	public async uploadDocument(
+		request: UploadDocumentRequest
+	): Promise<UploadDocumentResponse> {
+		const headers = await this.getHeaders()
+		const formData = new FormData()
+
+		const options =
+			request.metadata?.contentType || request.metadata?.fileName
+				? {
+						contentType: request.metadata?.contentType,
+						filename: request.metadata?.fileName,
+					}
+				: {}
+		formData.append('file', request.file, options)
+
+		// Add other form fields
+		if (request.metadata) {
+			formData.append('metadata', JSON.stringify(request.metadata), {
+				contentType: 'application/json',
+			})
+		}
+
+		return this.rest.then((rest) =>
+			rest
+				.post('documents', {
+					searchParams: {
+						storeId: request.storeId,
+						documentId: request.documentId,
+					},
+					headers: {
+						...headers,
+						...formData.getHeaders(),
+						accept: 'application/json',
+					},
+					body: formData,
+					parseJson: (text) => losslessParse(text, UploadDocumentResponse),
+				})
+				.json<UploadDocumentResponse>()
+		)
+	}
+
+	/**
+	 * Helper method to add the default job methods to a job
+	 * @param job The job to add the methods to
+	 * @returns The job with the added methods
+	 */
 	private addJobMethods = <Variables, CustomHeaders>(
 		job: RestJob<Variables, CustomHeaders>
 	): RestJob<Variables, CustomHeaders> &

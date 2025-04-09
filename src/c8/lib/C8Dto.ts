@@ -1,3 +1,5 @@
+import { ReadStream } from 'fs'
+
 import { LosslessNumber } from 'lossless-json'
 
 import { Int64String, LosslessDto } from '../../lib'
@@ -185,7 +187,7 @@ export interface UpdateElementVariableRequest {
 	/**
 	 * Defaults to false.
 	 * If set to true, the variables are merged strictly into the local scope (as specified by the elementInstanceKey). Otherwise, the variables are propagated to upper scopes and set at the outermost one.
-	 * Let’s consider the following example:
+	 * Let's consider the following example:
 	 * There are two scopes '1' and '2'. Scope '1' is the parent scope of '2'. The effective variables of the scopes are: 1 => { "foo" : 2 } 2 => { "bar" : 1 }
 	 * An update request with elementInstanceKey as '2', variables { "foo" : 5 }, and local set to true leaves scope '1' unchanged and adjusts scope '2' to { "bar" : 1, "foo" 5 }.
 	 * By default, with local set to false, scope '1' will be { "foo": 5 } and scope '2' will be { "bar" : 1 }.
@@ -749,4 +751,56 @@ export interface QueryProcessInstanceResponse {
 		/** Has an incident. */
 		hasIncident: boolean
 	}>
+}
+
+export interface DownloadDocumentRequest {
+	/** The ID of the document to download. */
+	documentId: string
+	/** The ID of the document store to download the document from. */
+	storeId?: string
+	/**
+	 * The hash of the document content that was computed by the document store during upload.
+	 * The hash is part of the document reference that is returned when uploading a document.
+	 * If the client fails to provide the correct hash, the request will be rejected.
+	 */
+	contentHash: string
+}
+
+export interface UploadDocumentRequest {
+	/** The ID of the document store to upload the document to. */
+	storeId?: string
+	/** The ID of the document to upload. If not provided, a new ID will be generated. Specifying an existing ID will result in an error if the document already exists. */
+	documentId?: string
+	/** A file ReadStream created with fs.createReadStream() */
+	file: ReadStream
+	metadata?: UploadDocumentMetadata
+}
+
+export interface UploadDocumentMetadata {
+	/** The content type of the document. */
+	contentType?: string
+	/** The name of the file. */
+	fileName?: string
+	/** The date and time when the document expires. */
+	expiresAt?: string //date-time
+	/** The size of the document in bytes */
+	size?: number
+	/** The ID of the process definition that created the document. */
+	processDefinitionId?: string
+	/** The key of the process instance that created the document. */
+	processInstanceKey?: string
+	/** Custom properties of the document. */
+	customProperties?: { [name: string]: string | number | boolean | null }
+}
+
+export class UploadDocumentResponse extends LosslessDto {
+	/** Document discriminator. Always set to "camunda". */
+	['camunda.document.type'] = 'camunda'
+	/** The ID of the document store. */
+	storeId!: string
+	/** The ID of the document. */
+	documentId!: string
+	/** The hash of the document. */
+	contentHash!: string
+	metadata!: UploadDocumentMetadata
 }
