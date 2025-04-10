@@ -1,4 +1,4 @@
-import fs from 'node:fs'
+import fs, { ReadStream } from 'node:fs'
 
 import { debug } from 'debug'
 import FormData from 'form-data'
@@ -41,6 +41,8 @@ import {
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
 	CorrelateMessageResponse,
+	CreateDocumentLinkRequest,
+	CreateDocumentLinkResponse,
 	CreateProcessInstanceReq,
 	CreateProcessInstanceResponse,
 	Ctor,
@@ -52,6 +54,7 @@ import {
 	FormDeployment,
 	JobUpdateChangeset,
 	MigrationRequest,
+	ModifyProcessInstanceRequest,
 	NewUserInfo,
 	PatchAuthorizationRequest,
 	ProcessDeployment,
@@ -67,6 +70,7 @@ import {
 	UpdateElementVariableRequest,
 	UploadDocumentRequest,
 	UploadDocumentResponse,
+	UploadDocumentsResponse,
 	UserTask,
 	UserTaskVariablesRequest,
 	UserTaskVariablesResponse,
@@ -1226,6 +1230,103 @@ export class CamundaRestClient {
 				.delete(`documents/${documentId}`, {
 					headers,
 					searchParams: storeId ? { storeId } : undefined,
+				})
+				.json()
+		)
+	}
+
+	/**
+	 *
+	 * Upload multiple documents to the Camunda 8 cluster.
+	 * The caller must provide a file name for each document, which will be used in case of a multi-status response to identify which documents failed to upload.
+	 * The file name can be provided in the Content-Disposition header of the file part or in the fileName field of the metadata part.
+	 * If both are provided, the fileName field takes precedence.
+	 *
+	 * In case of a multi-status response, the response body will contain a list of DocumentBatchProblemDetail objects,
+	 * each of which contains the file name of the document that failed to upload and the reason for the failure.
+	 * The client can choose to retry the whole batch or individual documents based on the response.
+	 *
+	 * Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-documents/
+	 * @since 8.7.0
+	 */
+	public async uploadDocuments(request: {
+		/** The ID of the document store to upload the documents to. Currently, only a single document store is supported per cluster.
+		 * However, this attribute is included to allow for potential future support of multiple document stores.
+		 **/
+		storeId?: string
+		files: ReadStream[]
+	}) {
+		const headers = await this.getHeaders()
+		const formData = new FormData()
+
+		for (const file of request.files) {
+			formData.append('files', file)
+		}
+
+		return this.rest.then((rest) =>
+			rest
+				.post('documents/batch', {
+					searchParams: {
+						storeId: request.storeId ? request.storeId : undefined,
+					},
+					headers: {
+						...headers,
+						...formData.getHeaders(),
+						accept: 'application/json',
+					},
+					body: formData,
+					parseJson: (text) => losslessParse(text, UploadDocumentsResponse),
+				})
+				.json<UploadDocumentsResponse>()
+		)
+	}
+
+	/**
+	 * Create document link
+	 *
+	 * Create a link to a document in the Camunda 8 cluster.
+	 * Note that this is currently supported for document stores of type: AWS, GCP
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-document-link/
+	 * @since 8.7.0
+	 */
+	public async createDocumentLink(request: CreateDocumentLinkRequest) {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`documents/${request.documentId}/link`, {
+					headers,
+					searchParams: {
+						storeId: request.storeId ? request.storeId : undefined,
+						contentHash: request.contentHash ? request.contentHash : undefined,
+					},
+					body: losslessStringify({ timeToLive: request.timeToLive }),
+				})
+				.json<CreateDocumentLinkResponse>()
+		)
+	}
+
+	/**
+	 * Modify process instance
+	 *
+	 * Modifies a running process instance. This request can contain multiple instructions to activate an element of the process or to terminate an active instance of an element.
+	 * Use this to repair a process instance that is stuck on an element or took an unintended path. For example, because an external system is not available or doesn't respond as expected.
+	 *
+	 * Documentation https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/modify-process-instance/
+	 * @since 8.6.0
+	 */
+	public async modifyProcessInstance(
+		request: ModifyProcessInstanceRequest
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const { processInstanceKey, ...req } = request
+		return this.rest.then((rest) =>
+			rest
+				.post(`process-instances/${processInstanceKey}/modification`, {
+					headers,
+					body: losslessStringify(req),
 				})
 				.json()
 		)

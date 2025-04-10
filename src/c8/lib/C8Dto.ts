@@ -815,3 +815,61 @@ export class UploadDocumentResponse extends LosslessDto {
 	contentHash!: string
 	metadata!: UploadDocumentMetadata
 }
+
+export class UploadDocumentsResponse {
+	/** Documents that were successfully created. */
+	createdDocuments!: UploadDocumentResponse[]
+	/** Documents that failed creation. */
+	failedDocuments!: Array<{
+		/** The name of the file. */
+		fileName: string
+		/** The detail of the failure. */
+		detail: string
+	}>
+}
+
+export interface CreateDocumentLinkRequest {
+	/** The ID of the document to link. */
+	documentId: string
+	/** The ID of the document store to link the document from. */
+	storeId?: string
+	/** The hash of the document content that was computed by the document store during upload.
+	 * The hash is part of the document reference that is returned when uploading a document.
+	 * If the client fails to provide the correct hash, the request will be rejected.
+	 **/
+	contentHash?: string
+	/** The time-to-live of the document link in ms. Default value: 3600000 */
+	timeToLive?: number
+}
+
+export interface CreateDocumentLinkResponse {
+	/* The link to the document. */
+	url: string
+	/* The date and time when the link expires. */
+	expiresAt: string
+}
+
+export interface ActivateInstructions {
+	/** The ID of the element that should be activated. */
+	elementId: string
+	variableInstructions?: Array<{
+		/** JSON document that will instantiate the variables for the root variable scope of the process instance. It must be a JSON object, as variables will be mapped in a key-value fashion. */
+		variables: { [key: string]: string | number | boolean | null }
+		/** The ID of the element in which scope the variables should be created. Leave empty to create the variables in the global scope of the process instance **/
+		scopeId?: string
+	}>
+	/** The key of the ancestor scope the element instance should be created in. Set to -1 to create the new element instance within an existing element instance of the flow scope. Default: -1*/
+	ancestorElementInstanceKey?: string
+}
+
+export interface ModifyProcessInstanceRequest {
+	/** A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided. */
+	operationReference?: number | LosslessNumber
+	/** The key of the process instance to modify. */
+	processInstanceKey: string
+	activateInstructions?: ActivateInstructions[]
+	terminateInstructions?: Array<{
+		/** The ID of the element that should be terminated. */
+		elementInstanceKey: string
+	}>
+}
