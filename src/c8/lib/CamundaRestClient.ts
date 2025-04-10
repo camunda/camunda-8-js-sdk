@@ -54,6 +54,7 @@ import {
 	FormDeployment,
 	JobUpdateChangeset,
 	MigrationRequest,
+	ModifyProcessInstanceRequest,
 	NewUserInfo,
 	PatchAuthorizationRequest,
 	ProcessDeployment,
@@ -1304,6 +1305,30 @@ export class CamundaRestClient {
 					body: losslessStringify({ timeToLive: request.timeToLive }),
 				})
 				.json<CreateDocumentLinkResponse>()
+		)
+	}
+
+	/**
+	 * Modify process instance
+	 *
+	 * Modifies a running process instance. This request can contain multiple instructions to activate an element of the process or to terminate an active instance of an element.
+	 * Use this to repair a process instance that is stuck on an element or took an unintended path. For example, because an external system is not available or doesn't respond as expected.
+	 *
+	 * Documentation https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/modify-process-instance/
+	 * @since 8.6.0
+	 */
+	public async modifyProcessInstance(
+		request: ModifyProcessInstanceRequest
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const { processInstanceKey, ...req } = request
+		return this.rest.then((rest) =>
+			rest
+				.post(`process-instances/${processInstanceKey}/modification`, {
+					headers,
+					body: losslessStringify(req),
+				})
+				.json()
 		)
 	}
 
