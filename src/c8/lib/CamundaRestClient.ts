@@ -1249,6 +1249,9 @@ export class CamundaRestClient {
 	 * @since 8.7.0
 	 */
 	public async uploadDocuments(request: {
+		/** The ID of the document store to upload the documents to. Currently, only a single document store is supported per cluster.
+		 * However, this attribute is included to allow for potential future support of multiple document stores.
+		 **/
 		storeId?: string
 		files: ReadStream[]
 	}) {
