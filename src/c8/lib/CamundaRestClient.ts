@@ -1274,7 +1274,7 @@ export class CamundaRestClient {
 						accept: 'application/json',
 					},
 					body: formData,
-					parseJson: (text) => losslessParse(text, UploadDocumentResponse),
+					parseJson: (text) => losslessParse(text, UploadDocumentsResponse),
 				})
 				.json<UploadDocumentsResponse>()
 		)

@@ -816,11 +816,11 @@ export class UploadDocumentResponse extends LosslessDto {
 	metadata!: UploadDocumentMetadata
 }
 
-export interface UploadDocumentsResponse {
+export class UploadDocumentsResponse {
 	/** Documents that were successfully created. */
-	createdDocuments: UploadDocumentResponse[]
+	createdDocuments!: UploadDocumentResponse[]
 	/** Documents that failed creation. */
-	failedDocuments: Array<{
+	failedDocuments!: Array<{
 		/** The name of the file. */
 		fileName: string
 		/** The detail of the failure. */
