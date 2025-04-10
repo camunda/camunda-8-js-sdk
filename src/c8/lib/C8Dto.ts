@@ -827,3 +827,24 @@ export class UploadDocumentsResponse {
 		detail: string
 	}>
 }
+
+export interface CreateDocumentLinkRequest {
+	/** The ID of the document to link. */
+	documentId: string
+	/** The ID of the document store to link the document from. */
+	storeId?: string
+	/** The hash of the document content that was computed by the document store during upload.
+	 * The hash is part of the document reference that is returned when uploading a document.
+	 * If the client fails to provide the correct hash, the request will be rejected.
+	 **/
+	contentHash?: string
+	/** The time-to-live of the document link in ms. Default value: 3600000 */
+	timeToLive?: number
+}
+
+export interface CreateDocumentLinkResponse {
+	/* The link to the document. */
+	url: string
+	/* The date and time when the link expires. */
+	expiresAt: string
+}
