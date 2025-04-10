@@ -34,8 +34,10 @@ test('It can complete a user task', async () => {
 	await new Promise((resolve) => setTimeout(resolve, 500))
 
 	// Poll until we find a task
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let availableTasks: SearchUserTasksResponse = { page: 1, items: [] } as any
+	let availableTasks: SearchUserTasksResponse = {
+		page: { totalItems: 0, lastSortValues: [], firstSortValues: [] },
+		items: [],
+	}
 	const maxAttempts = 200
 	let attempts = 0
 
