@@ -41,6 +41,8 @@ import {
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
 	CorrelateMessageResponse,
+	CreateDocumentLinkRequest,
+	CreateDocumentLinkResponse,
 	CreateProcessInstanceReq,
 	CreateProcessInstanceResponse,
 	Ctor,
@@ -1277,6 +1279,31 @@ export class CamundaRestClient {
 					parseJson: (text) => losslessParse(text, UploadDocumentsResponse),
 				})
 				.json<UploadDocumentsResponse>()
+		)
+	}
+
+	/**
+	 * Create document link
+	 *
+	 * Create a link to a document in the Camunda 8 cluster.
+	 * Note that this is currently supported for document stores of type: AWS, GCP
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-document-link/
+	 * @since 8.7.0
+	 */
+	public async createDocumentLink(request: CreateDocumentLinkRequest) {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`documents/${request.documentId}/link`, {
+					headers,
+					searchParams: {
+						storeId: request.storeId ? request.storeId : undefined,
+						contentHash: request.contentHash ? request.contentHash : undefined,
+					},
+					body: losslessStringify({ timeToLive: request.timeToLive }),
+				})
+				.json<CreateDocumentLinkResponse>()
 		)
 	}
 
