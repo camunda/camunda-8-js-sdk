@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_15pmers" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.31.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:process id="modify-process-instance-test" name="Modify Process Instance Test" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start modifyProcessInstance test">
+      <bpmn:outgoing>Flow_1l83wln</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1l83wln" sourceRef="StartEvent_1" targetRef="never-gets-completed-108" />
+    <bpmn:sequenceFlow id="Flow_01gpj2k" sourceRef="never-gets-completed-108" targetRef="gets-completed-108" />
+    <bpmn:endEvent id="Event_1e1pro2" name="End modifyProcessInstance test">
+      <bpmn:incoming>Flow_0e6ed0f</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0e6ed0f" sourceRef="gets-completed-108" targetRef="Event_1e1pro2" />
+    <bpmn:serviceTask id="never-gets-completed-108" name="Never Gets Completed&#10;">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="never-gets-completed-shntshntshn" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1l83wln</bpmn:incoming>
+      <bpmn:outgoing>Flow_01gpj2k</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="gets-completed-108" name="Gets Completed">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="gets-completed-108" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01gpj2k</bpmn:incoming>
+      <bpmn:outgoing>Flow_0e6ed0f</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="modify-process-instance-test">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="157" y="145" width="87" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1e1pro2_di" bpmnElement="Event_1e1pro2">
+        <dc:Bounds x="592" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="567" y="145" width="87" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1wri26j_di" bpmnElement="never-gets-completed-108">
+        <dc:Bounds x="270" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ij2pzb_di" bpmnElement="gets-completed-108">
+        <dc:Bounds x="430" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1l83wln_di" bpmnElement="Flow_1l83wln">
+        <di:waypoint x="218" y="120" />
+        <di:waypoint x="270" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01gpj2k_di" bpmnElement="Flow_01gpj2k">
+        <di:waypoint x="370" y="120" />
+        <di:waypoint x="430" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0e6ed0f_di" bpmnElement="Flow_0e6ed0f">
+        <di:waypoint x="530" y="120" />
+        <di:waypoint x="592" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
