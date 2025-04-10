@@ -5,7 +5,7 @@
  */
 import path from 'node:path'
 
-import { QueryUserTasksResponse } from 'c8/lib/C8Dto'
+import { SearchUserTasksResponse } from 'c8/lib/C8Dto'
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
@@ -35,7 +35,7 @@ test('It can complete a user task', async () => {
 
 	// Poll until we find a task
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let availableTasks: QueryUserTasksResponse = { page: 1, items: [] } as any
+	let availableTasks: SearchUserTasksResponse = { page: 1, items: [] } as any
 	const maxAttempts = 200
 	let attempts = 0
 
