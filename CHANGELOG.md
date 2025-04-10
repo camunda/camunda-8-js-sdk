@@ -1,3 +1,12 @@
+## [8.6.37](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.36...v8.6.37) (2025-04-10)
+
+
+### Features
+
+* **camunda8:** implement createDocumentLink. closes Implement Create Document link [#300](https://github.com/camunda/camunda-8-js-sdk/issues/300) ([e46114c](https://github.com/camunda/camunda-8-js-sdk/commit/e46114cadd225178d1449ff87e8b3f3af7f151ae))
+* **camunda8:** implement modifyProcessInstance. closes Implement Modify process instance [#321](https://github.com/camunda/camunda-8-js-sdk/issues/321) ([20ca335](https://github.com/camunda/camunda-8-js-sdk/commit/20ca335120f9c82acc5e36cf5734f80533916659))
+* **camunda8:** implement uploadDocuments. closes Implement Upload multiple documents [#404](https://github.com/camunda/camunda-8-js-sdk/issues/404) ([3f2ef14](https://github.com/camunda/camunda-8-js-sdk/commit/3f2ef14d26499200832cf37eb3dd8dfece70b578))
+
 ## [8.6.36](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.35...v8.6.36) (2025-04-09)
 
 
