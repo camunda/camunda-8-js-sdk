@@ -1,4 +1,4 @@
-import fs from 'node:fs'
+import fs, { ReadStream } from 'node:fs'
 
 import { debug } from 'debug'
 import FormData from 'form-data'
@@ -67,6 +67,7 @@ import {
 	UpdateElementVariableRequest,
 	UploadDocumentRequest,
 	UploadDocumentResponse,
+	UploadDocumentsResponse,
 	UserTask,
 	UserTaskVariablesRequest,
 	UserTaskVariablesResponse,
@@ -1228,6 +1229,51 @@ export class CamundaRestClient {
 					searchParams: storeId ? { storeId } : undefined,
 				})
 				.json()
+		)
+	}
+
+	/**
+	 *
+	 * Upload multiple documents to the Camunda 8 cluster.
+	 * The caller must provide a file name for each document, which will be used in case of a multi-status response to identify which documents failed to upload.
+	 * The file name can be provided in the Content-Disposition header of the file part or in the fileName field of the metadata part.
+	 * If both are provided, the fileName field takes precedence.
+	 *
+	 * In case of a multi-status response, the response body will contain a list of DocumentBatchProblemDetail objects,
+	 * each of which contains the file name of the document that failed to upload and the reason for the failure.
+	 * The client can choose to retry the whole batch or individual documents based on the response.
+	 *
+	 * Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-documents/
+	 * @since 8.7.0
+	 */
+	public async uploadDocuments(request: {
+		storeId?: string
+		files: ReadStream[]
+	}) {
+		const headers = await this.getHeaders()
+		const formData = new FormData()
+
+		for (const file of request.files) {
+			formData.append('files', file)
+		}
+
+		return this.rest.then((rest) =>
+			rest
+				.post('documents/batch', {
+					searchParams: {
+						storeId: request.storeId ? request.storeId : undefined,
+					},
+					headers: {
+						...headers,
+						...formData.getHeaders(),
+						accept: 'application/json',
+					},
+					body: formData,
+					parseJson: (text) => losslessParse(text, UploadDocumentResponse),
+				})
+				.json<UploadDocumentsResponse>()
 		)
 	}
 

@@ -815,3 +815,15 @@ export class UploadDocumentResponse extends LosslessDto {
 	contentHash!: string
 	metadata!: UploadDocumentMetadata
 }
+
+export interface UploadDocumentsResponse {
+	/** Documents that were successfully created. */
+	createdDocuments: UploadDocumentResponse[]
+	/** Documents that failed creation. */
+	failedDocuments: Array<{
+		/** The name of the file. */
+		fileName: string
+		/** The detail of the failure. */
+		detail: string
+	}>
+}
