@@ -51,6 +51,8 @@ import {
 	DeployResourceResponse,
 	DeployResourceResponseDto,
 	DownloadDocumentRequest,
+	EvaluateDecisionRequest,
+	EvaluateDecisionResponse,
 	FormDeployment,
 	JobUpdateChangeset,
 	MigrationRequest,
@@ -1329,6 +1331,27 @@ export class CamundaRestClient {
 					body: losslessStringify(req),
 				})
 				.json()
+		)
+	}
+
+	/**
+	 * Evaluate decision
+	 *
+	 * Evaluates a decision. You specify the decision to evaluate either by using its unique key (as returned by DeployResource), or using the decision ID.
+	 * When using the decision ID, the latest deployed version of the decision is used.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/evaluate-decision/
+	 * @since 8.6.0
+	 */
+	public async evaluateDecision(request: EvaluateDecisionRequest) {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`decision-definitions/evaluation`, {
+					headers,
+					body: losslessStringify(this.addDefaultTenantId(request)),
+				})
+				.json<EvaluateDecisionResponse>()
 		)
 	}
 
