@@ -2,7 +2,7 @@ import { ReadStream } from 'fs'
 
 import { LosslessNumber } from 'lossless-json'
 
-import { Int64String, LosslessDto } from '../../lib'
+import { ChildDto, Int64String, LosslessDto } from '../../lib'
 import { ICustomHeaders, IInputVariables, JSONDoc } from '../../zeebe/types'
 
 export class RestApiJob<
@@ -872,4 +872,102 @@ export interface ModifyProcessInstanceRequest {
 		/** The ID of the element that should be terminated. */
 		elementInstanceKey: string
 	}>
+}
+
+// We need to make a structure for a request param that takes only one of decisionDefinitionId or decisionDefinitionKey, and enforces this in the IDE
+export type EvaluateDecisionRequest =
+	| {
+			/** The ID of the decision to be evaluated. */
+			decisionDefinitionId: string
+			/** The message variables as JSON document. */
+			variables: JSONDoc
+			/** The tenant ID of the decision. */
+			tenantId?: string
+			/** The unique key identifying the decision to be evaluated. */
+			decisionDefinitionKey?: never
+	  }
+	| {
+			/** The ID of the decision to be evaluated. */
+			decisionDefinitionId?: never
+			/** The message variables as JSON document. */
+			variables: JSONDoc
+			/** The tenant ID of the decision. */
+			tenantId?: string
+			/** The unique key identifying the decision to be evaluated. */
+			decisionDefinitionKey: string
+	  }
+
+export class EvaluatedOutput extends LosslessDto {
+	/** The ID of the evaluated decision output. */
+	outputId!: string
+	/** The name of the evaluated decision output. */
+	outputName!: string
+	/** The value of the evaluated decision output. */
+	outputValue!: string
+}
+
+export class MatchedRule extends LosslessDto {
+	/** The ID of the matched rule. */
+	ruleId!: string
+	/** The index of the matched rule. */
+	ruleIndex!: string
+	@ChildDto(EvaluatedOutput)
+	evaluatedOutputs!: EvaluatedOutput[]
+}
+
+export class EvaluatedInput extends LosslessDto {
+	/** The ID of the evaluated decision input. */
+	inputId!: string
+	/** The name of the evaluated decision input. */
+	inputName!: string
+	/** The value of the evaluated decision input. */
+	inputValue!: string
+}
+
+export class EvaluatedDecision extends LosslessDto {
+	/** The ID of the decision which was evaluated. */
+	decisionDefinitionId!: string
+	/** The name of the decision which was evaluated. */
+	decisionDefinitionName!: string
+	/** The version of the decision which was evaluated. */
+	decisionDefinitionVersion!: number
+	/** The type of the decision which was evaluated. */
+	decisionDefinitionType!: string
+	/** JSON document that will instantiate the result of the decision which was evaluated. */
+	output!: string
+	/** The tenant ID of the evaluated decision. */
+	tenantId!: string
+	@ChildDto(MatchedRule)
+	matchedRules!: MatchedRule[]
+	@ChildDto(EvaluatedInput)
+	evaluatedInputs!: EvaluatedInput[]
+	/** The unique key identifying the decision which was evaluate. */
+	decisionDefinitionKey!: string
+}
+
+export class EvaluateDecisionResponse extends LosslessDto {
+	/** The ID of the decision which was evaluated. */
+	decisionDefinitionId!: string
+	/** The name of the decision which was evaluated. */
+	decisionDefinitionName!: string
+	/** The version of the decision which was evaluated. */
+	decisionDefinitionVersion!: number
+	/** The ID of the decision requirements graph that the decision which was evaluated is part of. */
+	decisionRequirementsId!: string
+	/** JSON document that will instantiate the result of the decision which was evaluated. */
+	output!: string
+	/** The ID of the decision which failed during evaluation. */
+	failedDecisionDefinitionId!: string
+	/** Message describing why the decision which was evaluated failed. */
+	failureMessage!: string
+	/** The tenant ID of the evaluated decision. */
+	tenantId!: string
+	/** The unique key identifying the decision which was evaluated. */
+	decisionDefinitionKey!: string
+	/** The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
+	decisionRequirementsKey!: string
+	/** The unique key identifying this decision evaluation. */
+	decisionInstanceKey!: string
+	@ChildDto(EvaluatedDecision)
+	evaluatedDecisions!: EvaluatedDecision[]
 }
