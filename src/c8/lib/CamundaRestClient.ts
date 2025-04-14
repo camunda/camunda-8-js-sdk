@@ -51,6 +51,8 @@ import {
 	DeployResourceResponse,
 	DeployResourceResponseDto,
 	DownloadDocumentRequest,
+	EvaluateDecisionRequest,
+	EvaluateDecisionResponse,
 	FormDeployment,
 	JobUpdateChangeset,
 	MigrationRequest,
@@ -59,13 +61,13 @@ import {
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
-	QueryProcessInstanceRequest,
-	QueryProcessInstanceResponse,
-	QueryTasksRequest,
-	QueryUserTasksResponse,
-	QueryVariablesRequest,
-	QueryVariablesResponse,
 	RestJob,
+	SearchProcessInstanceRequest,
+	SearchProcessInstanceResponse,
+	SearchTasksRequest,
+	SearchUserTasksResponse,
+	SearchVariablesRequest,
+	SearchVariablesResponse,
 	TaskChangeSet,
 	UpdateElementVariableRequest,
 	UploadDocumentRequest,
@@ -397,8 +399,8 @@ export class CamundaRestClient {
 	 * @since 8.8.0 - alpha status in 8.6 and 8.7
 	 */
 	public async searchUserTasks(
-		request: QueryTasksRequest
-	): Promise<QueryUserTasksResponse> {
+		request: SearchTasksRequest
+	): Promise<SearchUserTasksResponse> {
 		const headers = await this.getHeaders()
 		const page = request.page ?? {
 			from: 0,
@@ -411,7 +413,7 @@ export class CamundaRestClient {
 					headers,
 					body: losslessStringify({ ...request, page, sort }),
 				})
-				.json<QueryUserTasksResponse>()
+				.json<SearchUserTasksResponse>()
 		)
 		/**
 		 * The 8.6 and 8.7 API have different key names for the userTaskKey. This code block normalizes the key names.
@@ -488,9 +490,9 @@ export class CamundaRestClient {
 	 * Search for user tasks based on given criteria.
 	 *
 	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/query-user-tasks-alpha/
-	 * @experimental
+	 * @since 8.8.0
 	 */
-	// public async queryTasks() {}
+	// public async searchUserTasks() {}
 
 	/**
 	 * Publish a Message and correlates it to a subscription. If correlation is successful it will return the first process instance key the message correlated with.
@@ -870,8 +872,8 @@ export class CamundaRestClient {
 	 * @since 8.8.0
 	 */
 	public async searchProcessInstances(
-		request: QueryProcessInstanceRequest
-	): Promise<QueryProcessInstanceResponse> {
+		request: SearchProcessInstanceRequest
+	): Promise<SearchProcessInstanceResponse> {
 		const headers = await this.getHeaders()
 		const page = request.page ?? {
 			from: 0,
@@ -883,7 +885,7 @@ export class CamundaRestClient {
 					headers,
 					body: losslessStringify({ ...request, page }),
 				})
-				.json<QueryProcessInstanceResponse>()
+				.json<SearchProcessInstanceResponse>()
 		)
 	}
 
@@ -1120,8 +1122,8 @@ export class CamundaRestClient {
 	 * @since 8.8.0
 	 */
 	public async searchVariables(
-		req: QueryVariablesRequest
-	): Promise<QueryVariablesResponse> {
+		req: SearchVariablesRequest
+	): Promise<SearchVariablesResponse> {
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
@@ -1329,6 +1331,27 @@ export class CamundaRestClient {
 					body: losslessStringify(req),
 				})
 				.json()
+		)
+	}
+
+	/**
+	 * Evaluate decision
+	 *
+	 * Evaluates a decision. You specify the decision to evaluate either by using its unique key (as returned by DeployResource), or using the decision ID.
+	 * When using the decision ID, the latest deployed version of the decision is used.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/evaluate-decision/
+	 * @since 8.6.0
+	 */
+	public async evaluateDecision(request: EvaluateDecisionRequest) {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`decision-definitions/evaluation`, {
+					headers,
+					body: losslessStringify(this.addDefaultTenantId(request)),
+				})
+				.json<EvaluateDecisionResponse>()
 		)
 	}
 

@@ -2,7 +2,7 @@ import { ReadStream } from 'fs'
 
 import { LosslessNumber } from 'lossless-json'
 
-import { Int64String, LosslessDto } from '../../lib'
+import { ChildDto, Int64String, LosslessDto } from '../../lib'
 import { ICustomHeaders, IInputVariables, JSONDoc } from '../../zeebe/types'
 
 export class RestApiJob<
@@ -356,23 +356,23 @@ export interface RestJob<
 	readonly tenantId: string
 }
 
-interface QueryPageRequestSearchAfter {
+interface SearchPageRequestSearchAfter {
 	from: number
 	limit: number
 	// example: [{}]. Pass in the lastSortValues from the previous response.
 	searchAfter?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-interface QueryPageRequestSearchBefore {
+interface SearchPageRequestSearchBefore {
 	from: number
 	limit: number
 	// example: [{}]. Pass in the lastSortValues from the previous response.
 	searchBefore?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
-export type QueryPageRequest =
-	| QueryPageRequestSearchAfter
-	| QueryPageRequestSearchBefore
+export type SearchPageRequest =
+	| SearchPageRequestSearchAfter
+	| SearchPageRequestSearchBefore
 
 export interface AdvancedStringFilter {
 	/** Checks for equality with the provided value. */
@@ -398,7 +398,7 @@ export interface AdvancedNumberFilter {
 	$lte: number
 }
 
-export interface QueryFilterRequest {
+export interface SearchFilterRequest {
 	/** The key for this variable. */
 	variableKey?: string | AdvancedStringFilter
 	/** Name of the variable. */
@@ -415,22 +415,22 @@ export interface QueryFilterRequest {
 	isTruncated?: boolean
 }
 
-export interface QuerySortRequest {
+export interface SearchSortRequest {
 	field: string
 	/** The order in which to sort the related field. Default value: ASC */
 	order?: 'ASC' | 'DESC'
 }
 
-export interface QueryVariablesRequest {
+export interface SearchVariablesRequest {
 	/** Sort field criteria. */
-	sort?: QuerySortRequest
+	sort?: SearchSortRequest
 	/** Pagination criteria. */
-	page?: QueryPageRequest
+	page?: SearchPageRequest
 	/** Variable filter request. */
-	filter: QueryFilterRequest
+	filter: SearchFilterRequest
 }
 
-export interface QueryResponsePagination {
+export interface SearchResponsePagination {
 	/** Total items matching the criteria. */
 	totalItems: number
 	/** The sort values of the first item in the result set. Use this in the searchBefore field of an ensuing request. */
@@ -439,9 +439,9 @@ export interface QueryResponsePagination {
 	lastSortValues: unknown[]
 }
 
-export interface QueryVariablesResponse {
+export interface SearchVariablesResponse {
 	/** Pagination information about the search results. */
-	page: QueryResponsePagination
+	page: SearchResponsePagination
 	/** The matching variables. */
 	items: Array<{
 		/** The key for this variable. */
@@ -453,7 +453,7 @@ export interface QueryVariablesResponse {
 	}>
 }
 
-export type QueryUserTasksSortRequest = Array<{
+export type SearchUserTasksSortRequest = Array<{
 	/** The field to sort by. */
 	field:
 		| 'creationDate'
@@ -485,7 +485,7 @@ export interface AdvancedDateTimeFilter {
 }
 
 /** User task filter request. */
-export interface QueryUserTasksFilter {
+export interface SearchUserTasksFilter {
 	/** The key for this user task. */
 	userTaskKey?: string
 	/** The state of the user task. */
@@ -534,17 +534,17 @@ export interface QueryUserTasksFilter {
 	}>
 }
 
-export interface QueryTasksRequest {
+export interface SearchTasksRequest {
 	/** Pagination criteria. */
-	page?: QueryPageRequest
+	page?: SearchPageRequest
 	/** Sort field criteria. */
-	sort?: QueryUserTasksSortRequest
+	sort?: SearchUserTasksSortRequest
 	/** User task filter request. */
-	filter?: QueryUserTasksFilter
+	filter?: SearchUserTasksFilter
 }
 
-export interface QueryUserTasksResponse {
-	page: QueryResponsePagination
+export interface SearchUserTasksResponse {
+	page: SearchResponsePagination
 	items: Array<{
 		/** The key of the user task. */
 		userTaskKey: string
@@ -633,7 +633,7 @@ export interface UserTaskVariablesSortRequest {
 export interface UserTaskVariablesRequest {
 	userTaskKey: string
 	/** Pagination criteria. */
-	page?: QueryPageRequest
+	page?: SearchPageRequest
 	/** Sort field criteria. */
 	sort: UserTaskVariablesSortRequest[]
 	/** The user task variable search filters. */
@@ -646,7 +646,7 @@ export interface UserTaskVariablesRequest {
 /** The user task variables search response. */
 export interface UserTaskVariablesResponse {
 	/** Pagination information about the search results. */
-	page: QueryResponsePagination
+	page: SearchResponsePagination
 	/** The matching variables. */
 	items: Array<{
 		/** The key for this variable. */
@@ -676,9 +676,9 @@ export interface AdvancedProcessInstanceStateFilter {
 }
 
 /** This is the 8.8 API.  */
-export interface QueryProcessInstanceRequest {
+export interface SearchProcessInstanceRequest {
 	/** Pagination criteria. */
-	page?: QueryPageRequest
+	page?: SearchPageRequest
 	/** Sort field criteria. */
 	sort: Array<{
 		field:
@@ -734,8 +734,8 @@ export interface QueryProcessInstanceRequest {
 	}
 }
 
-export interface QueryProcessInstanceResponse {
-	page: QueryResponsePagination
+export interface SearchProcessInstanceResponse {
+	page: SearchResponsePagination
 	items: Array<{
 		/** The key of the process instance. */
 		processInstanceKey: string
@@ -872,4 +872,102 @@ export interface ModifyProcessInstanceRequest {
 		/** The ID of the element that should be terminated. */
 		elementInstanceKey: string
 	}>
+}
+
+// We need to make a structure for a request param that takes only one of decisionDefinitionId or decisionDefinitionKey, and enforces this in the IDE
+export type EvaluateDecisionRequest =
+	| {
+			/** The ID of the decision to be evaluated. */
+			decisionDefinitionId: string
+			/** The message variables as JSON document. */
+			variables: JSONDoc
+			/** The tenant ID of the decision. */
+			tenantId?: string
+			/** The unique key identifying the decision to be evaluated. */
+			decisionDefinitionKey?: never
+	  }
+	| {
+			/** The ID of the decision to be evaluated. */
+			decisionDefinitionId?: never
+			/** The message variables as JSON document. */
+			variables: JSONDoc
+			/** The tenant ID of the decision. */
+			tenantId?: string
+			/** The unique key identifying the decision to be evaluated. */
+			decisionDefinitionKey: string
+	  }
+
+export class EvaluatedOutput extends LosslessDto {
+	/** The ID of the evaluated decision output. */
+	outputId!: string
+	/** The name of the evaluated decision output. */
+	outputName!: string
+	/** The value of the evaluated decision output. */
+	outputValue!: string
+}
+
+export class MatchedRule extends LosslessDto {
+	/** The ID of the matched rule. */
+	ruleId!: string
+	/** The index of the matched rule. */
+	ruleIndex!: string
+	@ChildDto(EvaluatedOutput)
+	evaluatedOutputs!: EvaluatedOutput[]
+}
+
+export class EvaluatedInput extends LosslessDto {
+	/** The ID of the evaluated decision input. */
+	inputId!: string
+	/** The name of the evaluated decision input. */
+	inputName!: string
+	/** The value of the evaluated decision input. */
+	inputValue!: string
+}
+
+export class EvaluatedDecision extends LosslessDto {
+	/** The ID of the decision which was evaluated. */
+	decisionDefinitionId!: string
+	/** The name of the decision which was evaluated. */
+	decisionDefinitionName!: string
+	/** The version of the decision which was evaluated. */
+	decisionDefinitionVersion!: number
+	/** The type of the decision which was evaluated. */
+	decisionDefinitionType!: string
+	/** JSON document that will instantiate the result of the decision which was evaluated. */
+	output!: string
+	/** The tenant ID of the evaluated decision. */
+	tenantId!: string
+	@ChildDto(MatchedRule)
+	matchedRules!: MatchedRule[]
+	@ChildDto(EvaluatedInput)
+	evaluatedInputs!: EvaluatedInput[]
+	/** The unique key identifying the decision which was evaluate. */
+	decisionDefinitionKey!: string
+}
+
+export class EvaluateDecisionResponse extends LosslessDto {
+	/** The ID of the decision which was evaluated. */
+	decisionDefinitionId!: string
+	/** The name of the decision which was evaluated. */
+	decisionDefinitionName!: string
+	/** The version of the decision which was evaluated. */
+	decisionDefinitionVersion!: number
+	/** The ID of the decision requirements graph that the decision which was evaluated is part of. */
+	decisionRequirementsId!: string
+	/** JSON document that will instantiate the result of the decision which was evaluated. */
+	output!: string
+	/** The ID of the decision which failed during evaluation. */
+	failedDecisionDefinitionId!: string
+	/** Message describing why the decision which was evaluated failed. */
+	failureMessage!: string
+	/** The tenant ID of the evaluated decision. */
+	tenantId!: string
+	/** The unique key identifying the decision which was evaluated. */
+	decisionDefinitionKey!: string
+	/** The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
+	decisionRequirementsKey!: string
+	/** The unique key identifying this decision evaluation. */
+	decisionInstanceKey!: string
+	@ChildDto(EvaluatedDecision)
+	evaluatedDecisions!: EvaluatedDecision[]
 }
