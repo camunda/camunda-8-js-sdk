@@ -1,3 +1,15 @@
+## [8.6.38](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.37...v8.6.38) (2025-04-14)
+
+
+### Bug Fixes
+
+* **camunda8:** standardise on search for methods. closes [#363](https://github.com/camunda/camunda-8-js-sdk/issues/363) ([3e4deaa](https://github.com/camunda/camunda-8-js-sdk/commit/3e4deaaedbc3fb277eacd9be269b02736bca0a95))
+
+
+### Features
+
+* **camunda8:** implement evaluateDecision. closes [#291](https://github.com/camunda/camunda-8-js-sdk/issues/291) ([ff7ac09](https://github.com/camunda/camunda-8-js-sdk/commit/ff7ac090d343ab37678f0e2491900bdadec00409))
+
 ## [8.6.37](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.36...v8.6.37) (2025-04-10)
 
 
