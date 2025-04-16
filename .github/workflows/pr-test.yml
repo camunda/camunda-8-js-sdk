@@ -2,6 +2,9 @@ name: Pull Request tests
 
 on:
   pull_request:
+    branches-ignore:
+      - main
+      - alpha
   workflow_dispatch:
 
 jobs:
