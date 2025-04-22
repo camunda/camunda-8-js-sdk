@@ -1,4 +1,3 @@
-
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 const restClient = new CamundaRestClient()
