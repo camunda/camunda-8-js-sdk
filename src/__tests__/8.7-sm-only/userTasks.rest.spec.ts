@@ -57,7 +57,6 @@ test('It can complete a user task', async () => {
 		throw new Error('No user tasks became available after polling')
 	}
 
-	console.log('Available tasks:', availableTasks)
 	await c8.assignUserTask({
 		userTaskKey: availableTasks.items[0].userTaskKey,
 		assignee: 'demo',

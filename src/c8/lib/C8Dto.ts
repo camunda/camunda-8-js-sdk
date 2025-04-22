@@ -971,3 +971,19 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	@ChildDto(EvaluatedDecision)
 	evaluatedDecisions!: EvaluatedDecision[]
 }
+
+export interface ApiEndpointRequest<T> {
+	method: 'GET' | 'POST' | 'PUT' | 'DELETE'
+	/** The URL path of the API endpoint. */
+	urlPath: string
+	/** The request body. */
+	body?: T
+	/** TODO: multi-part form support needs to be implemented */
+	formData?: FormData
+	/** The query parameters. */
+	queryParams?: { [key: string]: string | number | boolean | undefined }
+	/** The headers. */
+	headers?: { [key: string]: string | number | boolean }
+	/** A custom JSON parsing function */
+	parseJson?: typeof JSON.parse
+}

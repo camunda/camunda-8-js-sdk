@@ -38,11 +38,11 @@ import {
 } from '../../zeebe/types'
 
 import {
+	ApiEndpointRequest,
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
 	CorrelateMessageResponse,
 	CreateDocumentLinkRequest,
-	CreateDocumentLinkResponse,
 	CreateProcessInstanceReq,
 	CreateProcessInstanceResponse,
 	Ctor,
@@ -1295,19 +1295,17 @@ export class CamundaRestClient {
 	 * @since 8.7.0
 	 */
 	public async createDocumentLink(request: CreateDocumentLinkRequest) {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.post(`documents/${request.documentId}/link`, {
-					headers,
-					searchParams: {
-						storeId: request.storeId ? request.storeId : undefined,
-						contentHash: request.contentHash ? request.contentHash : undefined,
-					},
-					body: losslessStringify({ timeToLive: request.timeToLive }),
-				})
-				.json<CreateDocumentLinkResponse>()
-		)
+		return this.callApiEndpoint({
+			method: 'POST',
+			urlPath: `documents/${request.documentId}/link`,
+			body: {
+				timeToLive: request.timeToLive,
+			},
+			queryParams: {
+				storeId: request.storeId ? request.storeId : undefined,
+				contentHash: request.contentHash ? request.contentHash : undefined,
+			},
+		})
 	}
 
 	/**
@@ -1322,16 +1320,12 @@ export class CamundaRestClient {
 	public async modifyProcessInstance(
 		request: ModifyProcessInstanceRequest
 	): Promise<void> {
-		const headers = await this.getHeaders()
 		const { processInstanceKey, ...req } = request
-		return this.rest.then((rest) =>
-			rest
-				.post(`process-instances/${processInstanceKey}/modification`, {
-					headers,
-					body: losslessStringify(req),
-				})
-				.json()
-		)
+		return this.callApiEndpoint<unknown, void>({
+			method: 'POST',
+			urlPath: `process-instances/${processInstanceKey}/modification`,
+			body: req,
+		})
 	}
 
 	/**
@@ -1344,15 +1338,33 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async evaluateDecision(request: EvaluateDecisionRequest) {
+		return this.callApiEndpoint<
+			EvaluateDecisionRequest,
+			EvaluateDecisionResponse
+		>({
+			method: 'POST',
+			urlPath: `decision-definitions/evaluation`,
+			body: request,
+		})
+	}
+
+	/**
+	 * This is a generic method to call an API endpoint. Use this method to call any REST API endpoint in the Camunda 8 cluster.
+	 * TODO: This does not currently support multipart form-data, but it will.
+	 */
+	public async callApiEndpoint<T, V = unknown>(
+		request: ApiEndpointRequest<T>
+	): Promise<V> {
 		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.post(`decision-definitions/evaluation`, {
-					headers,
-					body: losslessStringify(this.addDefaultTenantId(request)),
-				})
-				.json<EvaluateDecisionResponse>()
-		)
+		const { method, urlPath, body, queryParams } = request
+		const req = {
+			method,
+			headers: request.headers ? { ...headers, ...request.headers } : headers,
+			body: body ? losslessStringify(this.addDefaultTenantId(body)) : undefined,
+			searchParams: queryParams ?? {},
+			parseJson: request.parseJson ? request.parseJson : losslessParse,
+		}
+		return this.rest.then((rest) => rest(urlPath, req).json<V>())
 	}
 
 	/**
