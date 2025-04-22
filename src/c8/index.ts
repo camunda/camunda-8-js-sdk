@@ -25,13 +25,13 @@ import { CamundaRestClient } from './lib/CamundaRestClient'
  * import { Camunda8 } from '@camunda8/sdk'
  *
  * const c8 = new Camunda8()
+ * const c8Rest = c8.getCamundaRestClient()
  * const zeebe = c8.getZeebeGrpcApiClient()
  * const operate = c8.getOperateApiClient()
  * const optimize = c8.getOptimizeApiClient()
  * const tasklist = c8.getTasklistApiClient()
  * const modeler = c8.getModelerApiClient()
  * const admin = c8.getAdminApiClient()
- * const c8Rest = c8.getCamundaRestClient()
  * ```
  */
 export class Camunda8 {
@@ -58,6 +58,10 @@ export class Camunda8 {
 		this.log.debug('Camunda8 SDK initialized')
 	}
 
+	/**
+	 * Returns a client for the "Operate REST API"
+	 * See: https://docs.camunda.io/docs/apis-tools/operate-api/overview/
+	 */
 	public getOperateApiClient(
 		config: Camunda8ClientConfiguration = {}
 	): OperateApiClient {
@@ -70,6 +74,10 @@ export class Camunda8 {
 		return this.operateApiClient
 	}
 
+	/**
+	 * Returns a client for the Administration REST API
+	 * See: https://docs.camunda.io/docs/apis-tools/administration-api/administration-api-reference/
+	 */
 	public getAdminApiClient(
 		config: Camunda8ClientConfiguration = {}
 	): AdminApiClient {
@@ -82,6 +90,10 @@ export class Camunda8 {
 		return this.adminApiClient
 	}
 
+	/**
+	 * Returns a client for the Web Modeler REST API
+	 * See: https://docs.camunda.io/docs/apis-tools/web-modeler-api/overview/
+	 */
 	public getModelerApiClient(
 		config: Camunda8ClientConfiguration = {}
 	): ModelerApiClient {
@@ -94,6 +106,10 @@ export class Camunda8 {
 		return this.modelerApiClient
 	}
 
+	/**
+	 * Returns a client for the Optimize REST API
+	 * See: https://docs.camunda.io/docs/apis-tools/optimize-api/overview/
+	 */
 	public getOptimizeApiClient(
 		config: Camunda8ClientConfiguration = {}
 	): OptimizeApiClient {
@@ -106,6 +122,10 @@ export class Camunda8 {
 		return this.optimizeApiClient
 	}
 
+	/**
+	 * Returns a client for the Tasklist REST API
+	 * See: https://docs.camunda.io/docs/apis-tools/tasklist-api-rest/tasklist-api-rest-overview/
+	 */
 	public getTasklistApiClient(
 		config: Camunda8ClientConfiguration = {}
 	): TasklistApiClient {
@@ -118,6 +138,10 @@ export class Camunda8 {
 		return this.tasklistApiClient
 	}
 
+	/**
+	 * Returns a client for the Zeebe gRPC API
+	 * See: https://docs.camunda.io/docs/apis-tools/zeebe-api/overview/
+	 */
 	public getZeebeGrpcApiClient(
 		config: Camunda8ClientConfiguration = {}
 	): ZeebeGrpcClient {
@@ -145,6 +169,10 @@ export class Camunda8 {
 		return this.zeebeRestClient
 	}
 
+	/**
+	 * Returns a client for the Camunda 8 REST API
+	 * See: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-overview/
+	 */
 	public getCamundaRestClient(
 		config: Camunda8ClientConfiguration = {}
 	): CamundaRestClient {

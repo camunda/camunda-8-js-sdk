@@ -12,6 +12,5 @@ test('It can upload a document', async () => {
 			fs.createReadStream('CHANGELOG.md'),
 		],
 	})
-	console.log(JSON.stringify(response, null, 2))
 	expect(response.createdDocuments.length).toBe(2)
 })
