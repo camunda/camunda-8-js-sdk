@@ -1,3 +1,10 @@
+## [8.7.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.0...v8.7.1) (2025-04-23)
+
+
+### Features
+
+* add generic callApiEndpoint method ([384161e](https://github.com/camunda/camunda-8-js-sdk/commit/384161e050960f1965ceeea3f65aaf0258a42576))
+
 # [8.7.0](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.38...v8.7.0) (2025-04-16)
 
 ## [8.6.38](https://github.com/camunda/camunda-8-js-sdk/compare/v8.6.37...v8.6.38) (2025-04-14)
