@@ -1,6 +1,7 @@
 import path from 'node:path'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { delay } from '../../../lib'
 
 let processDefinitionId: string
 const restClient = new CamundaRestClient()
@@ -40,4 +41,30 @@ test('Can service a task', (done) => {
 					jobs[0].complete().then(() => done())
 				})
 		})
+})
+
+// https://github.com/camunda/camunda-8-js-sdk/issues/424
+test('Can cancel a call', async () => {
+	const res = restClient.activateJobs({
+		maxJobsToActivate: 2,
+		requestTimeout: 5000,
+		timeout: 5000,
+		type: 'console-log-complete-rest',
+		worker: 'test',
+	})
+
+	res.then(() => {
+		throw new Error('Should not have received jobs')
+	})
+	res.cancel(`Activate jobs call cancelled from test`)
+	const process = await restClient.createProcessInstance({
+		processDefinitionId,
+		variables: {
+			someNumberField: 8,
+		},
+	})
+	await delay(3000)
+	await restClient.cancelProcessInstance({
+		processInstanceKey: process.processInstanceKey,
+	})
 })
