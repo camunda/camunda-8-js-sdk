@@ -3,7 +3,13 @@ import { ReadStream } from 'fs'
 import { LosslessNumber } from 'lossless-json'
 
 import { ChildDto, Int64String, LosslessDto } from '../../lib'
-import { ICustomHeaders, IInputVariables, JSONDoc } from '../../zeebe/types'
+import {
+	ICustomHeaders,
+	IInputVariables,
+	IProcessVariables,
+	JobCompletionInterfaceRest,
+	JSONDoc,
+} from '../../zeebe/types'
 
 export class RestApiJob<
 	Variables = LosslessDto,
@@ -355,6 +361,12 @@ export interface RestJob<
 	 */
 	readonly tenantId: string
 }
+
+export type JobWithMethods<VariablesDto, CustomHeadersDto> = RestJob<
+	VariablesDto,
+	CustomHeadersDto
+> &
+	JobCompletionInterfaceRest<IProcessVariables>
 
 interface SearchPageRequestSearchAfter {
 	from: number
@@ -972,7 +984,8 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	evaluatedDecisions!: EvaluatedDecision[]
 }
 
-export interface ApiEndpointRequest<T> {
+// Base interface with common properties
+export interface BaseApiEndpointRequest<T> {
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE'
 	/** The URL path of the API endpoint. */
 	urlPath: string
@@ -987,3 +1000,20 @@ export interface ApiEndpointRequest<T> {
 	/** A custom JSON parsing function */
 	parseJson?: typeof JSON.parse
 }
+
+// Interface for requests that return JSON (json=true or undefined)
+export interface JsonApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
+	/** JSON-parse response? Default: true */
+	json?: true | undefined
+}
+
+// Interface for requests that return raw response (json=false)
+export interface RawApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
+	/** JSON-parse response? */
+	json: false
+}
+
+// Combined type for use in function signatures
+export type ApiEndpointRequest<T> =
+	| JsonApiEndpointRequest<T>
+	| RawApiEndpointRequest<T>

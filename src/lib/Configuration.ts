@@ -29,11 +29,20 @@ const getMainEnv = () =>
 			optional: true,
 			default: 1000,
 		},
-		/** The log level for logging. Defaults to 'info'. Values (in order of priority): 'error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly' */
+		/** The log level for logging. Defaults to 'info'. Values (in order of priority): 'error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'. Set to 'none' to suppress logging. */
 		CAMUNDA_LOG_LEVEL: {
 			type: 'string',
 			optional: true,
-			choices: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'],
+			choices: [
+				'error',
+				'warn',
+				'info',
+				'http',
+				'verbose',
+				'debug',
+				'silly',
+				'none',
+			],
 			default: 'info',
 		},
 		/** The address for the Zeebe GRPC. */
