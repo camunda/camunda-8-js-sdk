@@ -128,9 +128,22 @@ export class CamundaJobWorker<
 		// Cancel the active poll if it exists
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/424
 		if (this.activePoll && !this.activePoll.isCanceled) {
-			this.activePoll.cancel('Worker stopped')
-			this.log.debug(`Active poll cancelled`, this.logMeta())
-			this.activePoll = undefined
+			// I'm not sure that this will actually catch any thrown error, because the cancellation happens in a different context.
+			try {
+				this.activePoll.cancel('Worker stopped')
+				this.log.debug(`Active poll cancelled`, this.logMeta())
+			} catch (error) {
+				this.log.error(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					`Error while cancelling active poll: ${(error as any).message}`,
+					{
+						error,
+						...this.logMeta(),
+					}
+				)
+			} finally {
+				this.activePoll = undefined
+			}
 		}
 
 		return new Promise((resolve, reject) => {
