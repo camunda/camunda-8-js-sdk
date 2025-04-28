@@ -1,3 +1,10 @@
+## [8.7.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.1...v8.7.2) (2025-04-28)
+
+
+### Features
+
+* make activeJobs REST calls cancelable. fixes [#424](https://github.com/camunda/camunda-8-js-sdk/issues/424) ([7cf5e6d](https://github.com/camunda/camunda-8-js-sdk/commit/7cf5e6df1293db5a13e2427537576450e44f919c))
+
 ## [8.7.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.0...v8.7.1) (2025-04-23)
 
 
