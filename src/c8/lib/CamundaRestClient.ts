@@ -2,8 +2,9 @@ import fs, { ReadStream } from 'node:fs'
 
 import { debug } from 'debug'
 import FormData from 'form-data'
-import got from 'got'
+import got, { CancelableRequest, Response } from 'got'
 import { parse, stringify } from 'lossless-json'
+import PCancelable from 'p-cancelable'
 
 import {
 	Camunda8ClientConfiguration,
@@ -30,7 +31,6 @@ import {
 	FailJobRequest,
 	IProcessVariables,
 	JOB_ACTION_ACKNOWLEDGEMENT,
-	JobCompletionInterfaceRest,
 	JobFailureConfiguration,
 	JSONDoc,
 	PublishMessageRequest,
@@ -55,12 +55,15 @@ import {
 	EvaluateDecisionResponse,
 	FormDeployment,
 	JobUpdateChangeset,
+	JobWithMethods,
+	JsonApiEndpointRequest,
 	MigrationRequest,
 	ModifyProcessInstanceRequest,
 	NewUserInfo,
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
+	RawApiEndpointRequest,
 	RestJob,
 	SearchProcessInstanceRequest,
 	SearchProcessInstanceResponse,
@@ -583,7 +586,7 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async activateJobs<
+	public activateJobs<
 		VariablesDto extends LosslessDto,
 		CustomHeadersDto extends LosslessDto,
 	>(
@@ -591,12 +594,7 @@ export class CamundaRestClient {
 			inputVariableDto?: Ctor<VariablesDto>
 			customHeadersDto?: Ctor<CustomHeadersDto>
 		}
-	): Promise<
-		(RestJob<VariablesDto, CustomHeadersDto> &
-			JobCompletionInterfaceRest<IProcessVariables>)[]
-	> {
-		const headers = await this.getHeaders()
-
+	): PCancelable<JobWithMethods<VariablesDto, CustomHeadersDto>[]> {
 		const {
 			inputVariableDto = LosslessDto,
 			customHeadersDto = LosslessDto,
@@ -604,30 +602,45 @@ export class CamundaRestClient {
 			...req
 		} = request
 
-		/**
-		 * The ActivateJobs endpoint can take multiple tenantIds, and activate jobs for multiple tenants at once.
-		 *
-		 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/activate-jobs/
-		 */
-		const body = losslessStringify({
+		// The ActivateJobs endpoint can take multiple tenantIds, and activate jobs for multiple tenants at once.
+		// Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/activate-jobs/
+		const body = {
 			...req,
 			tenantIds,
-		})
+		}
 
 		const jobDto = createSpecializedRestApiJobClass(
 			inputVariableDto,
 			customHeadersDto
 		)
 
-		return this.rest.then((rest) =>
-			rest
-				.post(`jobs/activation`, {
-					body,
-					headers,
-					parseJson: (text) => losslessParse(text, jobDto, 'jobs'),
-				})
-				.json<RestJob<VariablesDto, CustomHeadersDto>[]>()
-				.then((activatedJobs) => activatedJobs.map(this.addJobMethods))
+		const gotRequest = this.callApiEndpoint<
+			unknown,
+			RestJob<VariablesDto, CustomHeadersDto>[]
+		>({
+			urlPath: 'jobs/activation',
+			method: 'POST',
+			body,
+			parseJson: (text) => losslessParse(text, jobDto, 'jobs'),
+		})
+
+		// Make the call cancelable
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/424
+		return new PCancelable<JobWithMethods<VariablesDto, CustomHeadersDto>[]>(
+			(resolve, reject, onCancel) => {
+				onCancel.shouldReject = false
+				onCancel(
+					() =>
+						!gotRequest.isCanceled &&
+						gotRequest.cancel(`Cancelling activateJobs request`)
+				)
+				gotRequest
+					.then((activatedJobs: RestJob<VariablesDto, CustomHeadersDto>[]) =>
+						activatedJobs.map(this.addJobMethods)
+					)
+					.then(resolve)
+					.catch(reject)
+			}
 		)
 	}
 
@@ -1352,19 +1365,73 @@ export class CamundaRestClient {
 	 * This is a generic method to call an API endpoint. Use this method to call any REST API endpoint in the Camunda 8 cluster.
 	 * TODO: This does not currently support multipart form-data, but it will.
 	 */
-	public async callApiEndpoint<T, V = unknown>(
+	// Function overloads
+	public callApiEndpoint<T, V = unknown>(
+		request: JsonApiEndpointRequest<T>
+	): PCancelable<V>
+
+	public callApiEndpoint<T>(
+		request: RawApiEndpointRequest<T>
+	): PCancelable<Response<string>>
+
+	public callApiEndpoint<T, V = unknown>(
 		request: ApiEndpointRequest<T>
-	): Promise<V> {
-		const headers = await this.getHeaders()
-		const { method, urlPath, body, queryParams } = request
-		const req = {
-			method,
-			headers: request.headers ? { ...headers, ...request.headers } : headers,
-			body: body ? losslessStringify(this.addDefaultTenantId(body)) : undefined,
-			searchParams: queryParams ?? {},
-			parseJson: request.parseJson ? request.parseJson : losslessParse,
-		}
-		return this.rest.then((rest) => rest(urlPath, req).json<V>())
+	): PCancelable<V | Response<string>> {
+		// Return a cancelable promise
+		// https://github.com/camunda/camunda-8-js-sdk/issues/424
+		return new PCancelable(async (resolve, reject, onCancel) => {
+			// eslint-disable-next-line prefer-const
+			let gotRequest: CancelableRequest<Response<string>>
+			let cancelled = false
+			// Register the cancel handler, we will cancel the request if the promise is cancelled
+			onCancel.shouldReject = false
+			onCancel(() => {
+				cancelled = true
+				if (gotRequest && !gotRequest.isCanceled) {
+					gotRequest.cancel(`REST operation cancelled`)
+				}
+			})
+			try {
+				const headers = await this.getHeaders()
+				const { method, urlPath, body, queryParams } = request
+				const req = {
+					method,
+					headers: request.headers
+						? { ...headers, ...request.headers }
+						: headers,
+					body: body
+						? losslessStringify(this.addDefaultTenantId(body))
+						: undefined,
+					searchParams: queryParams ?? {},
+					parseJson: request.parseJson ?? losslessParse,
+				}
+				const rest = await this.rest
+				if (cancelled) {
+					// If the request was already cancelled, we don't want to send it
+					return
+				}
+				gotRequest = rest(urlPath, req)
+				gotRequest.catch(reject)
+				/**
+				 * Without a listener for the error event, we get an unhandled promise rejection
+				 * when the request fails. This is because the underlying stream emits an error and with no listener
+				 * on that event, it is an unhandled exception at the process level
+				 *
+				 * Implemented as part of https://github.com/camunda/camunda-8-js-sdk/issues/424.
+				 */
+				;(await gotRequest).once('error', (err) => {
+					// Swallow the error, we don't want to crash the process
+					return err
+				})
+
+				if (request.json ?? true) {
+					return gotRequest.json<V>().then(resolve)
+				}
+				return gotRequest.then(resolve)
+			} catch (e) {
+				reject(e)
+			}
+		})
 	}
 
 	/**
@@ -1374,15 +1441,13 @@ export class CamundaRestClient {
 	 */
 	private addJobMethods = <Variables, CustomHeaders>(
 		job: RestJob<Variables, CustomHeaders>
-	): RestJob<Variables, CustomHeaders> &
-		JobCompletionInterfaceRest<IProcessVariables> => {
+	): JobWithMethods<Variables, CustomHeaders> => {
 		return {
 			...job,
 			cancelWorkflow: () => {
-				this.cancelProcessInstance({
+				return this.cancelProcessInstance({
 					processInstanceKey: job.processInstanceKey,
-				})
-				throw new Error('Not Implemented')
+				}).then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 			},
 			complete: (variables: IProcessVariables = {}) =>
 				this.completeJob({

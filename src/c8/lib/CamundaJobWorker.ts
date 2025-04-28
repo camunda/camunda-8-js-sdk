@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
 
+import PCancelable from 'p-cancelable'
 import TypedEmitter from 'typed-emitter'
 
 import { LosslessDto } from '../../lib'
@@ -10,7 +11,7 @@ import {
 	MustReturnJobActionAcknowledgement,
 } from '../../zeebe/types'
 
-import { Ctor, RestJob } from './C8Dto'
+import { Ctor, JobWithMethods, RestJob } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaRestClient } from './CamundaRestClient'
 
@@ -74,6 +75,9 @@ export class CamundaJobWorker<
 		currentload: number
 	}
 	stopping: boolean = false
+	private activePoll?: PCancelable<
+		JobWithMethods<VariablesDto, CustomHeadersDto>[]
+	>
 
 	constructor(
 		private readonly config: CamundaJobWorkerConfig<
@@ -121,6 +125,27 @@ export class CamundaJobWorker<
 		clearTimeout(this.backoffTimer)
 		/** Do not allow the backoff retry to restart polling */
 		clearTimeout(this.backoffTimer)
+		// Cancel the active poll if it exists
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/424
+		if (this.activePoll && !this.activePoll.isCanceled) {
+			// I'm not sure that this will actually catch any thrown error, because the cancellation happens in a different context.
+			try {
+				this.activePoll.cancel('Worker stopped')
+				this.log.debug(`Active poll cancelled`, this.logMeta())
+			} catch (error) {
+				this.log.error(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					`Error while cancelling active poll: ${(error as any).message}`,
+					{
+						error,
+						...this.logMeta(),
+					}
+				)
+			} finally {
+				this.activePoll = undefined
+			}
+		}
+
 		return new Promise((resolve, reject) => {
 			if (this.currentlyActiveJobCount === 0) {
 				this.log.debug(`All jobs drained. Worker stopped.`, this.logMeta())
@@ -173,11 +198,12 @@ export class CamundaJobWorker<
 
 		const remainingJobCapacity =
 			this.config.maxJobsToActivate - this.currentlyActiveJobCount
-		this.restClient
-			.activateJobs({
-				...this.config,
-				maxJobsToActivate: remainingJobCapacity,
-			})
+		this.activePoll = this.restClient.activateJobs({
+			...this.config,
+			maxJobsToActivate: remainingJobCapacity,
+		})
+
+		this.activePoll
 			.then((jobs) => {
 				const count = jobs.length
 				this.currentlyActiveJobCount += count
@@ -189,12 +215,13 @@ export class CamundaJobWorker<
 				this.backoffRetryCount = 0
 			})
 			.catch((e) => {
-				// This can throw a 400 or 500 REST Error with the Content-Type application/problem+json
+				// This can throw a 400, 401, or 500 REST Error with the Content-Type application/problem+json
 				// The schema is:
 				// { type: string, title: string, status: number, detail: string, instance: string }
 				this.log.error('Error during job worker poll')
 				this.log.error(e)
 				this.emit('pollError', e)
+				this.activePoll = undefined
 				const backoffDuration = Math.min(
 					2000 * ++this.backoffRetryCount,
 					this.maxBackoffTimeMs
