@@ -91,7 +91,7 @@ export class ZeebeRestClient {
 
 		const headers = {
 			'content-type': 'application/json',
-			authorization,
+			...authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}

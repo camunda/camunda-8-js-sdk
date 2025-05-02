@@ -101,7 +101,7 @@ export class TasklistApiClient {
 		const authorization = await this.oAuthProvider.getToken('TASKLIST')
 		return {
 			'content-type': 'application/json',
-			authorization,
+			...authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}

@@ -172,21 +172,22 @@ export class CamundaRestClient {
 	}
 
 	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('ZEEBE')
+		const authorization = await this.oAuthProvider.getToken('ZEEBE')
 
 		const headers = {
 			'content-type': 'application/json',
-			authorization: token,
+			...authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}
+		const auth = headers.authorization ? headers.authorization : headers.cookie
 		const safeHeaders = {
 			...headers,
-			authorization:
-				headers.authorization.substring(0, 15) +
-				(headers.authorization.length > 8)
+			authorization: auth
+				? auth.substring(0, 15) + (auth.length > 8)
 					? '...'
-					: '',
+					: ''
+				: '',
 		}
 		trace('headers', safeHeaders)
 		return headers

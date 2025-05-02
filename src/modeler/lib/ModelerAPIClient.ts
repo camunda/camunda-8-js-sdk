@@ -66,7 +66,7 @@ export class ModelerApiClient {
 		const authorization = await this.oAuthProvider.getToken('MODELER')
 		const headers = {
 			'content-type': 'application/json',
-			authorization,
+			...authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}

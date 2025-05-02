@@ -29,11 +29,11 @@ export class BasicAuthProvider implements IOAuthProvider {
 			'CAMUNDA_BASIC_AUTH_PASSWORD'
 		)
 	}
-	getToken(audience: TokenGrantAudienceType): Promise<string> {
+	getToken(audience: TokenGrantAudienceType) {
 		trace(`Requesting token for audience ${audience}`)
 		const token = Buffer.from(`${this.username}:${this.password}`).toString(
 			'base64'
 		)
-		return Promise.resolve(`Basic ${token}`)
+		return Promise.resolve({ authorization: `Basic ${token}` })
 	}
 }

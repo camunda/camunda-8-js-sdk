@@ -69,10 +69,10 @@ export class AdminApiClient {
 	}
 
 	private async getHeaders() {
-		const token = await this.oAuthProvider.getToken('CONSOLE')
+		const authorization = await this.oAuthProvider.getToken('CONSOLE')
 		const headers = {
 			'content-type': 'application/json',
-			authorization: token,
+			...authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}
