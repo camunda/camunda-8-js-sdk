@@ -1,6 +1,6 @@
 import debug from 'debug'
 
-import { NullAuthProvider, OAuthProvider } from '../oauth'
+import { CookieAuthProvider, NullAuthProvider, OAuthProvider } from '../oauth'
 import { BasicAuthProvider } from '../oauth/lib/BasicAuthProvider'
 import { BearerAuthProvider } from '../oauth/lib/BearerAuthProvider'
 
@@ -24,6 +24,9 @@ export function constructOAuthProvider(config: CamundaPlatform8Configuration) {
 		} else if (config.CAMUNDA_AUTH_STRATEGY === 'BEARER') {
 			trace(`Using Bearer Token`)
 			return new BearerAuthProvider({ config })
+		} else if (config.CAMUNDA_AUTH_STRATEGY === 'COOKIE') {
+			trace(`Using Cookie Auth`)
+			return new CookieAuthProvider({ config })
 		} else {
 			trace(`Using OAuth`)
 			return new OAuthProvider({ config })

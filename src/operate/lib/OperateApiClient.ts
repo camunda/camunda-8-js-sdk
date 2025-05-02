@@ -124,7 +124,7 @@ export class OperateApiClient {
 
 		return {
 			'content-type': 'application/json',
-			authorization,
+			...authorization,
 			'user-agent': this.userAgentString,
 			accept: '*/*',
 		}

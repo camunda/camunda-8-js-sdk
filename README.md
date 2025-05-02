@@ -91,6 +91,21 @@ CAMUNDA_AUTH_STRATEGY=BEARER
 CAMUNDA_OAUTH_TOKEN=....
 ```
 
+### Cookie Auth
+
+For C8Run with 8.7, you need to use [Cookie Authentication](https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-authentication/#authentication-via-cookie-c8run-only).
+
+To use cookie auth, set the following value:
+
+```
+CAMUNDA_AUTH_STRATEGY=COOKIE
+
+# Optional configurable values - these are the defaults
+CAMUNDA_AUTH_COOKIE_URL=http://localhost:8080/api/login
+CAMUNDA_AUTH_COOKIE_USERNAME=demo
+CAMUNDA_AUTH_COOKIE_PASSWORD=demo
+```
+
 ### OAuth
 
 If your platform is secured with OAuth token exchange (Camunda SaaS or Self-Managed with Identity), provide the following configuration fields at a minimum, either via the `Camunda8` constructor or in environment variables:
