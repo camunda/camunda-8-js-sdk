@@ -157,6 +157,24 @@ const getMainEnv = () =>
 			optional: true,
 			default: true,
 		},
+		/** The login endpoint for Cookie authentication (for use with c8run in 8.7). Defaults to http://localhost:8080/api/login */
+		CAMUNDA_COOKIE_AUTH_URL: {
+			type: 'string',
+			optional: true,
+			default: 'http://localhost:8080/api/login',
+		},
+		/** The username for Cookie authentication. Defaults to 'demo' */
+		CAMUNDA_COOKIE_AUTH_USERNAME: {
+			type: 'string',
+			optional: true,
+			default: 'demo',
+		},
+		/** The password for Cookie authentication. Defaults to 'demo' */
+		CAMUNDA_COOKIE_AUTH_PASSWORD: {
+			type: 'string',
+			optional: true,
+			default: 'demo',
+		},
 		/** In an environment using self-signed certificates, provide the path to the root certificate */
 		CAMUNDA_CUSTOM_ROOT_CERT_PATH: {
 			type: 'string',
@@ -226,7 +244,7 @@ const getMainEnv = () =>
 		},
 		CAMUNDA_AUTH_STRATEGY: {
 			type: 'string',
-			choices: ['BASIC', 'OAUTH', 'BEARER', 'NONE'],
+			choices: ['BASIC', 'OAUTH', 'BEARER', 'COOKIE', 'NONE'],
 			default: 'OAUTH',
 		},
 	})

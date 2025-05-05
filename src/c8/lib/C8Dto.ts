@@ -209,7 +209,7 @@ export interface UpdateElementVariableRequest {
 export class CorrelateMessageResponse extends LosslessDto {
 	/** the unique ID of the message that was published */
 	@Int64String
-	key!: string
+	messageKey!: string
 	/** the tenantId of the message */
 	tenantId!: string
 	/** The key of the first process instance the message correlated with */

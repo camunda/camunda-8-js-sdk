@@ -14,6 +14,7 @@ import {
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
+import { AuthHeader } from '../../oauth/lib/IOAuthProvider'
 
 import {
 	DashboardCollection,
@@ -98,10 +99,8 @@ export class OptimizeApiClient {
 	private async getHeaders(auth = true) {
 		const authorization = await this.oAuthProvider.getToken('OPTIMIZE')
 
-		const authHeader: { authorization: string } | Record<string, never> = auth
-			? {
-					authorization,
-				}
+		const authHeader: AuthHeader | Record<string, never> = auth
+			? authorization
 			: {}
 
 		return {

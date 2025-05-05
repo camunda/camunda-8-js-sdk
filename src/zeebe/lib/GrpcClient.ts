@@ -544,7 +544,7 @@ export class GrpcClient extends EventEmitter {
 		metadata.add('user-agent', this.userAgentString)
 		if (this.oAuth) {
 			const authorization = await this.oAuth.getToken('ZEEBE')
-			metadata.add('Authorization', authorization)
+			metadata.add('Authorization', authorization.authorization!)
 		}
 		return metadata
 	}

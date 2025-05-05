@@ -21,7 +21,7 @@ import {
 } from '../../lib'
 import { IOAuthProvider, Token, TokenError } from '../index'
 
-import { TokenGrantAudienceType } from './IOAuthProvider'
+import { HeadersPromise, TokenGrantAudienceType } from './IOAuthProvider'
 
 const trace = debug('camunda:oauth')
 
@@ -40,7 +40,7 @@ export class OAuthProvider implements IOAuthProvider {
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
 	private failureCount = 0
-	private inflightTokenRequest?: Promise<string>
+	private inflightTokenRequest?: HeadersPromise
 	public userAgentString: string
 	private scope: string | undefined
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
@@ -162,7 +162,7 @@ export class OAuthProvider implements IOAuthProvider {
 		)
 	}
 
-	public async getToken(audienceType: TokenGrantAudienceType): Promise<string> {
+	public async getToken(audienceType: TokenGrantAudienceType) {
 		debug(`Token request for ${audienceType}`)
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
@@ -494,6 +494,6 @@ export class OAuthProvider implements IOAuthProvider {
 	}
 
 	private addBearer(token: string) {
-		return `Bearer ${token}`
+		return { authorization: `Bearer ${token}` }
 	}
 }

@@ -237,13 +237,13 @@ describe('OAuthProvider', () => {
 
 		o.getToken('ZEEBE').then(async (token) => {
 			const token1 = token
-			expect(token).toBe(token1)
+			expect(token).toStrictEqual(token1)
 			await delay(500)
 			const token2 = await o.getToken('ZEEBE')
-			expect(token2).toBe(token1)
+			expect(token2).toStrictEqual(token1)
 			await delay(1600)
 			const token3 = await o.getToken('ZEEBE')
-			expect(token3).not.toBe(token1)
+			expect(token3).not.toStrictEqual(token1)
 			done()
 		})
 	})
@@ -605,7 +605,7 @@ describe('OAuthProvider', () => {
 		await got
 			.get('http://localhost:3033', {
 				headers: {
-					Authorization,
+					...Authorization,
 				},
 			})
 			.then((res) => {
@@ -638,7 +638,7 @@ describe('OAuthProvider', () => {
 		await got
 			.get('http://localhost:3033', {
 				headers: {
-					Authorization,
+					...Authorization,
 				},
 			})
 			.then((res) => {
