@@ -220,7 +220,7 @@ export class CorrelateMessageResponse extends LosslessDto {
 export class PublishMessageResponse extends LosslessDto {
 	/** the unique ID of the message that was published */
 	@Int64String
-	key!: string
+	messageKey!: string
 	/** the tenantId of the message */
 	tenantId!: string
 }
