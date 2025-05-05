@@ -1,3 +1,11 @@
+## [8.7.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.3...v8.7.4) (2025-05-05)
+
+
+### Bug Fixes
+
+* rename messageKey in PublishMessageResponse Dto ([9ce67f6](https://github.com/camunda/camunda-8-js-sdk/commit/9ce67f677b157f6cf5f98f3a475f54a1a3c58418))
+* update documentation around TLS and mTLS configuration, fixes [#395](https://github.com/camunda/camunda-8-js-sdk/issues/395) ([bcd4590](https://github.com/camunda/camunda-8-js-sdk/commit/bcd4590e62b9f8845320aba76a3f2c09ab1f8fc6))
+
 ## [8.7.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.2...v8.7.3) (2025-05-05)
 
 
