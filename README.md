@@ -146,6 +146,19 @@ const c8 = new Camunda8({
 
 If the cache directory does not exist, the SDK will attempt to create it (recursively). If the SDK is unable to create it, or the directory exists but is not writeable by your application, the SDK will throw an exception.
 
+## TLS
+
+If you are using self-signed certificates, you can provide the self-signed certificate path using the configuration parameter / environment variable: `CAMUNDA_CUSTOM_ROOT_CERT_PATH`.
+
+### mTLS
+
+The Zeebe gRPC client supports mTLS. You can provide the mTLS certificate and key with:
+
+```
+CAMUNDA_CUSTOM_CERT_CHAIN_PATH # path to mTLS certificate
+CAMUNDA_CUSTOM_PRIVATE_KEY_PATH # path to mTLS (client-side) key
+```
+
 ## Connection configuration examples
 
 ### Self-Managed

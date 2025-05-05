@@ -175,22 +175,22 @@ const getMainEnv = () =>
 			optional: true,
 			default: 'demo',
 		},
-		/** In an environment using self-signed certificates, provide the path to the root certificate */
+		/** In an environment using self-signed certificates, provide the path to the server certificate. Provide this to allow the client to connect to a server secured with this cert. */
 		CAMUNDA_CUSTOM_ROOT_CERT_PATH: {
 			type: 'string',
 			optional: true,
 		},
-		/** When using self-signed certificates, provide the root certificate as a string */
+		/** In an environment using self-signed certificates, provide the server certificate as a string. Provide this to allow the client to connect to a server secured with this cert. */
 		CAMUNDA_CUSTOM_ROOT_CERT_STRING: {
 			type: 'string',
 			optional: true,
 		},
-		/** When using custom or self-signed certificates, provide the path to the certificate chain */
+		/** When using custom or self-signed certificates with mTLS, provide the path to the client certificate chain. Works with Zeebe gRPC. */
 		CAMUNDA_CUSTOM_CERT_CHAIN_PATH: {
 			type: 'string',
 			optional: true,
 		},
-		/** When using custom or self-signed certificates, provide the path to the private key */
+		/** When using custom or self-signed certificates with mTLS, provide the path to the client private key. Works with Zeebe gRPC. */
 		CAMUNDA_CUSTOM_PRIVATE_KEY_PATH: {
 			type: 'string',
 			optional: true,
