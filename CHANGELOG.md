@@ -1,3 +1,16 @@
+## [8.7.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.2...v8.7.3) (2025-05-05)
+
+
+### Bug Fixes
+
+* change CorrelateMessageResponse Dto. fixes [#433](https://github.com/camunda/camunda-8-js-sdk/issues/433) ([c1f1fdc](https://github.com/camunda/camunda-8-js-sdk/commit/c1f1fdc76a1e88c5909993ed996d0ac00b656f3c))
+* created self-signed cert valid for 100 years ([4bdbab9](https://github.com/camunda/camunda-8-js-sdk/commit/4bdbab95e9a1749a606ce84a34a42ae7c290c3b4))
+
+
+### Features
+
+* add Cookie auth to support c8run ([1ee9ad1](https://github.com/camunda/camunda-8-js-sdk/commit/1ee9ad1f0e1e77ddf3e86c7a7b00f2a95bcb2726))
+
 ## [8.7.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.1...v8.7.2) (2025-04-28)
 
 
