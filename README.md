@@ -91,6 +91,8 @@ CAMUNDA_AUTH_STRATEGY=BEARER
 CAMUNDA_OAUTH_TOKEN=....
 ```
 
+To refresh the bearer token dynamically at runtime (for example, when it has expired), call `CamundaRestClient.setBearerToken(newTokenValue)`. This will also update the bearer token for all workers created by this client.
+
 ### Cookie Auth
 
 For C8Run with 8.7, you need to use [Cookie Authentication](https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-authentication/#authentication-via-cookie-c8run-only).

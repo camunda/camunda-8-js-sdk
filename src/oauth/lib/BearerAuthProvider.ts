@@ -11,7 +11,7 @@ import { IOAuthProvider } from '../index'
 import { TokenGrantAudienceType } from './IOAuthProvider'
 
 export class BearerAuthProvider implements IOAuthProvider {
-	private bearerToken: string
+	protected bearerToken: string
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -30,5 +30,9 @@ export class BearerAuthProvider implements IOAuthProvider {
 		debug(`Token request for ${audienceType}`)
 
 		return Promise.resolve({ authorization: `Bearer ${this.bearerToken}` })
+	}
+
+	public setToken(bearerToken: string) {
+		this.bearerToken = bearerToken
 	}
 }
