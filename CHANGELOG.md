@@ -1,3 +1,10 @@
+## [8.7.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.4...v8.7.5) (2025-05-07)
+
+
+### Features
+
+* allow dynamic update of Bearer token. fixes [#445](https://github.com/camunda/camunda-8-js-sdk/issues/445) ([fda54f5](https://github.com/camunda/camunda-8-js-sdk/commit/fda54f5d662d1ad8c5e4c8f095e38f3e00c43336))
+
 ## [8.7.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.3...v8.7.4) (2025-05-05)
 
 
