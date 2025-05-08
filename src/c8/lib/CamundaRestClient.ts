@@ -23,7 +23,6 @@ import {
 	RequireConfiguration,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
-import { BearerAuthProvider } from '../../oauth/lib/BearerAuthProvider'
 import {
 	ActivateJobsRequest,
 	BroadcastSignalReq,
@@ -1434,13 +1433,6 @@ export class CamundaRestClient {
 				reject(e)
 			}
 		})
-	}
-
-	/** Dynamically update the bearer token used to authorise requests. This only has an effect when using the Bearer auth strategy. */
-	public setBearerToken(bearerToken: string) {
-		if (this.oAuthProvider instanceof BearerAuthProvider) {
-			this.oAuthProvider.setToken(bearerToken)
-		}
 	}
 
 	/**

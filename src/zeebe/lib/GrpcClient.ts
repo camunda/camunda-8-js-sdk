@@ -543,8 +543,12 @@ export class GrpcClient extends EventEmitter {
 		const metadata = new Metadata({ waitForReady: false })
 		metadata.add('user-agent', this.userAgentString)
 		if (this.oAuth) {
-			const authorization = await this.oAuth.getToken('ZEEBE')
-			metadata.add('Authorization', authorization.authorization!)
+			const authProviderHeaders = await this.oAuth.getToken('ZEEBE')
+			// add arbitraty headers to metadata
+			// See: https://github.com/camunda/camunda-8-js-sdk/issues/448
+			Object.entries(authProviderHeaders).forEach(([key, value]) => {
+				metadata.add(key, value)
+			})
 		}
 		return metadata
 	}

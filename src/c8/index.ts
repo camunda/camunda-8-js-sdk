@@ -50,10 +50,18 @@ export class Camunda8 {
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
 	 */
-	constructor(config: Camunda8ClientConfiguration = {}) {
+
+	constructor(
+		config: Camunda8ClientConfiguration & {
+			oAuthProvider?: IOAuthProvider
+		} = {}
+	) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
-		this.oAuthProvider = constructOAuthProvider(this.configuration)
+		// Allow custom oAuthProvider to be passed in.
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/448
+		this.oAuthProvider =
+			config.oAuthProvider ?? constructOAuthProvider(this.configuration)
 		this.log = getLogger(config)
 		this.log.debug('Camunda8 SDK initialized')
 	}

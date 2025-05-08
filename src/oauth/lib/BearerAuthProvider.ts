@@ -32,6 +32,12 @@ export class BearerAuthProvider implements IOAuthProvider {
 		return Promise.resolve({ authorization: `Bearer ${this.bearerToken}` })
 	}
 
+	/**
+	 * Updates the bearer token used for authentication.
+	 *
+	 * @param bearerToken - The new bearer token to be used. This should be a valid
+	 *                      token string obtained from a trusted source.
+	 */
 	public setToken(bearerToken: string) {
 		this.bearerToken = bearerToken
 	}

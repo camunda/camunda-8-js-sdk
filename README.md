@@ -66,47 +66,20 @@ For `int64` values whose type is not known ahead of time, such as job variables,
 
 ## Authorization
 
-Calls to APIs can be authorized using basic auth or via OAuth - a token that is obtained via a client id/secret pair exchange.
+Calls to APIs can be authorized using a number of strategies. The most common is OAuth - a token that is obtained via a client id/secret pair exchange.
 
-### Disable OAuth
+* Camunda SaaS and Self-Managed by default are configured to use OAuth with token exchange. In most cases, you will use the `OAUTH` strategy and provide configuration only. The token exchange and its lifecycle are managed by the SDK in this strategy. This passes the token in the `authorization` header of requests.
+* If you secure the gateway behind an Nginx reverse-proxy secured with basic authentication, you will use the `BASIC` strategy. This adds the login credentials as the `authorization` header on requests.
+* For C8Run 8.7, you will need to use the `COOKIE` strategy. This manages a session cookie obtained from a login endpoint, and adds it as a cookie header to requests.
+* For more customisation, you can use the `BEARER` strategy. This is a strategy that allows you to dynamically provide the `Bearer` token directly. The currently set token is added as the `authorization` header on requests.
+* If you have a even more advanced use-case (for example, the need to add specific headers with specific values to authenticate with a proxy gateway), you can construct your own AuthProvider and pass it to the constructor.
+* You can also disable header auth completely and use mTLS (client certificate) — or no authentication at all — with the `NONE` strategy.
 
-To disable OAuth, set the environment variable `CAMUNDA_OAUTH_DISABLED=true`. You can use this when running against a minimal Zeebe broker in a development environment, for example. You can also use this when your authentication is being done using an x509 mTLS certificate.
+For more details on each of these scenarios, see the relevant section below.
 
-### Basic Auth
+### Disable Auth
 
-To use basic auth, set the following values either via the environment or explicitly in code via the constructor:
-
-```bash
-CAMUNDA_AUTH_STRATEGY=BASIC
-CAMUNDA_BASIC_AUTH_USERNAME=....
-CAMUNDA_BASIC_AUTH_PASSWORD=...
-```
-
-### Bearer Token Auth
-
-To use a Bearer token that you have already obtained, set the following value:
-
-```bash
-CAMUNDA_AUTH_STRATEGY=BEARER
-CAMUNDA_OAUTH_TOKEN=....
-```
-
-To refresh the bearer token dynamically at runtime (for example, when it has expired), call `CamundaRestClient.setBearerToken(newTokenValue)`. This will also update the bearer token for all workers created by this client.
-
-### Cookie Auth
-
-For C8Run with 8.7, you need to use [Cookie Authentication](https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-authentication/#authentication-via-cookie-c8run-only).
-
-To use cookie auth, set the following value:
-
-```
-CAMUNDA_AUTH_STRATEGY=COOKIE
-
-# Optional configurable values - these are the defaults
-CAMUNDA_AUTH_COOKIE_URL=http://localhost:8080/api/login
-CAMUNDA_AUTH_COOKIE_USERNAME=demo
-CAMUNDA_AUTH_COOKIE_PASSWORD=demo
-```
+To disable Auth, set the environment variable `CAMUNDA_AUTH_STRATEGY=NONE`. You can use this when running against a minimal Zeebe broker in a development environment, for example. You can also use this when your authentication is being done using an x509 mTLS certificate (see the section on mTLS).
 
 ### OAuth
 
@@ -114,7 +87,7 @@ If your platform is secured with OAuth token exchange (Camunda SaaS or Self-Mana
 
 ```bash
 CAMUNDA_AUTH_STRATEGY=OAUTH
-ZEEBE_GRPC_ADDRESS=...
+ZEEBE_ADDRESS=...
 ZEEBE_CLIENT_ID=...
 ZEEBE_CLIENT_SECRET=...
 CAMUNDA_OAUTH_URL=...
@@ -147,6 +120,77 @@ const c8 = new Camunda8({
 ```
 
 If the cache directory does not exist, the SDK will attempt to create it (recursively). If the SDK is unable to create it, or the directory exists but is not writeable by your application, the SDK will throw an exception.
+
+### Basic Auth
+
+To use basic auth, set the following values either via the environment or explicitly in code via the constructor:
+
+```bash
+CAMUNDA_AUTH_STRATEGY=BASIC
+CAMUNDA_BASIC_AUTH_USERNAME=....
+CAMUNDA_BASIC_AUTH_PASSWORD=...
+```
+
+### Cookie Auth
+
+For C8Run with 8.7, you need to use [Cookie Authentication](https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-authentication/#authentication-via-cookie-c8run-only).
+
+To use cookie auth, set the following value:
+
+```
+CAMUNDA_AUTH_STRATEGY=COOKIE
+
+# Optional configurable values - these are the defaults
+CAMUNDA_AUTH_COOKIE_URL=http://localhost:8080/api/login
+CAMUNDA_AUTH_COOKIE_USERNAME=demo
+CAMUNDA_AUTH_COOKIE_PASSWORD=demo
+```
+
+### Bearer Token Auth
+
+The BEARER auth strategy is provided as a low-level primitive for advanced use-cases that are not covered by the others. In this case, you need to pass an `authorization` header with a `Bearer` token on requests, but it is not issued by a supported OAuth token exchange endpoint. In this case, you can implement a token exchange mechanism and manage the lifecycle of the token, and dynamically inject it as a header through a `BearerAuthProvider`.
+
+To use a Bearer token that you have already obtained, and that does not need to be dynamically updated during the lifetime of the application, simply set the following values:
+
+```bash
+CAMUNDA_AUTH_STRATEGY=BEARER
+CAMUNDA_OAUTH_TOKEN=....
+```
+
+To refresh the bearer token dynamically at runtime (for example, when it has expired and your obtain a new one), you pass in a `BearerAuthProvider` that you control:
+
+```typescript
+import { Camunda8, Auth } from '@camunda8/sdk'
+
+const bearerAuth = new Auth.BearerAuthProvider()
+const c8 = new Camunda8({ oauthProvider: bearerAuth }) // All clients and workers will use bearerAuth
+// ... after obtaining a new token
+bearerAuth.setToken('SOMETOKENVALUE....') // Dynamically update the bearer token value
+```
+
+### Advanced Custom Headers
+
+You can add arbitrary headers to all requests by implementing `IOAuthProvider`:
+
+```typescript
+import { Camunda8, Auth } from '@camunda8/sdk'
+
+class MyCustomAuthProvider implements Auth.IOAuthProvider {
+    async getToken(audience: string) {
+        // here we give a static example, but this class may read configuration,
+        // exchange credentials with an endpoint, manage token lifecycles, and so forth...
+        // Return an object which will be merged with the headers on the request
+        return {
+           'x-custom-auth-header': 'someCustomValue'
+        }
+    }
+}
+
+const customAuthProvider = new MyCustomAuthProvider()
+const c8 = new Camunda8({ oauthProvider: customAuthProvider })
+```
+
+You can use this approach to wrap one of the existing strategy classes using a facade pattern to encapsulate and extend it.
 
 ## TLS
 

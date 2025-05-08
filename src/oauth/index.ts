@@ -12,7 +12,9 @@ export interface TokenError {
 	error_description: string
 }
 
+export { BearerAuthProvider } from './lib/BearerAuthProvider'
 export { CookieAuthProvider } from './lib/CookieAuthProvider'
 export { IOAuthProvider } from './lib/IOAuthProvider'
 export { NullAuthProvider } from './lib/NullAuthProvider'
 export { OAuthProvider } from './lib/OAuthProvider'
+
