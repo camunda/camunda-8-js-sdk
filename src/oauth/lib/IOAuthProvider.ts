@@ -9,9 +9,8 @@ export type TokenGrantAudienceType =
 export type AuthHeader = {
 	[K in 'authorization' | 'cookie']?: string
 }
-
 export type HeadersPromise = Promise<AuthHeader>
 
-export interface IOAuthProvider {
-	getToken(audience: TokenGrantAudienceType): HeadersPromise
+export interface IOAuthProvider<T = AuthHeader> {
+	getToken(audience: TokenGrantAudienceType): Promise<T>
 }
