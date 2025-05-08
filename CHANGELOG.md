@@ -1,3 +1,10 @@
+## [8.7.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.5...v8.7.6) (2025-05-08)
+
+
+### Features
+
+* enable arbitrary headers on requests. fixes [#448](https://github.com/camunda/camunda-8-js-sdk/issues/448) ([e07ab76](https://github.com/camunda/camunda-8-js-sdk/commit/e07ab7629ef55f124242eed0c8fb27279c3b76a2))
+
 ## [8.7.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.4...v8.7.5) (2025-05-07)
 
 
