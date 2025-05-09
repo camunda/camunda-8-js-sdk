@@ -28,6 +28,28 @@ const trace = debug('camunda:oauth')
 const homedir = os.homedir()
 const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
 
+/**
+ * The `OAuthProvider` class is an implementation of the {@link IOAuthProvider}
+ * interface that uses the OAuth 2.0 client credentials grant to authenticate
+ * with the Camunda Platform 8 Identity service. It handles token expiration
+ * and renewal, and caches tokens in memory and on disk.
+ *
+ * It is used by the SDK to authenticate with the Camunda Platform 8. You will
+ * rarely need to use this class directly, as it is used internally by the SDK.
+ *
+ * @example
+ * ```typescript
+ * const authProvider = new OAuthProvider({
+ *   config: {
+ *     CAMUNDA_OAUTH_URL: 'https://login.cloud.camunda.io/oauth/token',
+ *     ZEEBE_CLIENT_ID: 'your-client-id',
+ *     ZEEBE_CLIENT_SECRET: 'your-client-secret',
+ *   },
+ * })
+ *
+ * const token = await authProvider.getToken('ZEEBE')
+ * ```
+ */
 export class OAuthProvider implements IOAuthProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
 	private cacheDir: string

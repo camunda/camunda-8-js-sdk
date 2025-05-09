@@ -1,14 +1,7 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { TasklistApiClient } from '../../../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../../../zeebe'
 
 jest.setTimeout(30000)
-
-suppressZeebeLogging()
-
-afterAll(() => {
-	restoreZeebeLogging()
-})
 
 test('can update a task', async () => {
 	const grpc = new ZeebeGrpcClient()

@@ -1,11 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 jest.setTimeout(20000)
-
-suppressZeebeLogging()
-
-afterAll(() => restoreZeebeLogging())
 
 test('can delete a resource', async () => {
 	let thrown = false

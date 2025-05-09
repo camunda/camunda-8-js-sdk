@@ -113,7 +113,7 @@ export interface CloudEventV1<T> extends CloudEventV1Attributes<T> {
 	 * is unique for each distinct event. If a duplicate event is re-sent (e.g. due
 	 * to a network error) it MAY have the same `id`. Consumers MAY assume that
 	 * Events with identical `source` and `id` are duplicates.
-	 * @required Non-empty string. Unique within producer.
+	 * required Non-empty string. Unique within producer.
 	 * @example An event counter maintained by the producer
 	 * @example A UUID
 	 */
@@ -124,7 +124,7 @@ export interface CloudEventV1<T> extends CloudEventV1Attributes<T> {
 	 * uses. This enables the interpretation of the context. Compliant event
 	 * producers MUST use a value of `1.0` when referring to this version of the
 	 * specification.
-	 * @required MUST be a non-empty string.
+	 * required MUST be a non-empty string.
 	 */
 	specversion: string
 }
@@ -144,7 +144,7 @@ export interface CloudEventV1Attributes<T>
 	 * application-specific scheme to create unique `source` identifiers.
 	 * A source MAY include more than one producer. In that case the producers MUST
 	 * collaborate to ensure that `source` + `id` is unique for each distinct event.
-	 * @required Non-empty URI-reference
+	 * required Non-empty URI-reference
 	 */
 	source: string
 
@@ -154,10 +154,10 @@ export interface CloudEventV1Attributes<T>
 	 * routing, observability, policy enforcement, etc. The format of this is
 	 * producer defined and might include information such as the version of the
 	 * `type` - see
-	 * [Versioning of Attributes in the Primer](primer.md#versioning-of-attributes)
+	 * Versioning of Attributes in the Primer
 	 * for more information.
-	 * @required MUST be a non-empty string
-	 * @should SHOULD be prefixed with a reverse-DNS name. The prefixed domain dictates the
+	 * required MUST be a non-empty string
+	 * should SHOULD be prefixed with a reverse-DNS name. The prefixed domain dictates the
 	 *   organization which defines the semantics of this event type.
 	 * @example com.github.pull.create
 	 * @example com.example.object.delete.v2
@@ -174,18 +174,18 @@ export interface CloudEventV1OptionalAttributes<T> {
 	 * [OPTIONAL] Content type of `data` value. This attribute enables `data` to
 	 * carry any type of content, whereby format and encoding might differ from that
 	 * of the chosen event format. For example, an event rendered using the
-	 * [JSON envelope](./json-format.md#3-envelope) format might carry an XML payload
+	 * JSON envelope format might carry an XML payload
 	 * in `data`, and the consumer is informed by this attribute being set to
 	 * "application/xml". The rules for how `data` content is rendered for different
 	 * `datacontenttype` values are defined in the event format specifications; for
 	 * example, the JSON event format defines the relationship in
-	 * [section 3.1](./json-format.md#31-handling-of-data).
+	 * section 3.1.
 	 */
 	datacontenttype?: string
 	/**
 	 * [OPTIONAL] Identifies the schema that `data` adheres to. Incompatible
 	 * changes to the schema SHOULD be reflected by a different URI. See
-	 * [Versioning of Attributes in the Primer](primer.md#versioning-of-attributes)
+	 * Versioning of Attributes in the Primer
 	 * for more information.
 	 * If present, MUST be a non-empty URI.
 	 */

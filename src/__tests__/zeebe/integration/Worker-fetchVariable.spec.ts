@@ -1,11 +1,9 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(30000)
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
@@ -29,7 +27,6 @@ afterEach(async () => {
 afterAll(async () => {
 	await cancelProcesses(processDefinitionKey)
 	await zbc.close()
-	restoreZeebeLogging()
 })
 
 test('Can retrieve only specified variables using fetchVariable', (done) => {

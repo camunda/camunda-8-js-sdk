@@ -14,6 +14,16 @@ import { IOAuthProvider } from '../index'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'
 
+const trace = debug('camunda:cookie-auth')
+/**
+ * The `CookieAuthProvider` is an implementation of {@link IOAuthProvider} that
+ * supports the [authentication used in C8run 8.7](https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-authentication/#authentication-via-cookie-c8run-only).
+ * It retrieves a cookie from the C8run login endpoint, and passes it in the
+ * `cookie` header for subsequent requests.
+ *
+ * It does not handle token expiration or renewal. The cookie may be reset
+ * manually by calling the `setToken` method.
+ */
 export class CookieAuthProvider implements IOAuthProvider {
 	rest: Promise<typeof got>
 	cookie?: string
@@ -48,7 +58,7 @@ export class CookieAuthProvider implements IOAuthProvider {
 	}
 
 	public async getToken(audienceType: TokenGrantAudienceType) {
-		debug(`Token request for ${audienceType}`)
+		trace(`Token request for ${audienceType}`)
 		if (!this.cookie) {
 			const rest = await this.rest
 			this.cookie = await rest
@@ -61,5 +71,17 @@ export class CookieAuthProvider implements IOAuthProvider {
 				)
 		}
 		return { cookie: this.cookie! }
+	}
+
+	/**
+	 * Forces a new login by resetting the cookie.
+	 * This method is useful for scenarios where the cookie has expired
+	 * or when you want to refresh the authentication.
+	 * It will reset the cookie to undefined, which will trigger a new login
+	 * the next time the getToken method is called.
+	 */
+	public async setToken() {
+		this.cookie = undefined // Reset the cookie to force a new login
+		trace('Cookie reset')
 	}
 }

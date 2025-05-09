@@ -1,6 +1,5 @@
 import { Duration } from 'typed-duration'
 
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
@@ -10,12 +9,7 @@ jest.setTimeout(25000)
 let bpmnProcessId: string
 let processDefinitionKey: string
 
-beforeAll(async () => {
-	suppressZeebeLogging()
-})
-
 afterAll(async () => {
-	restoreZeebeLogging()
 	await cancelProcesses(processDefinitionKey)
 })
 

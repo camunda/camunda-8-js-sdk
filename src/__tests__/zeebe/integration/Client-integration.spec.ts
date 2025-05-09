@@ -1,4 +1,3 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
@@ -10,7 +9,6 @@ let processDefinitionKey: string
 let bpmnProcessId: string
 
 beforeAll(async () => {
-	suppressZeebeLogging()
 	const client = new ZeebeGrpcClient()
 	const res = await client.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
@@ -30,7 +28,6 @@ afterEach(async () => {
 })
 
 afterAll(async () => {
-	restoreZeebeLogging()
 	await cancelProcesses(processDefinitionKey)
 })
 

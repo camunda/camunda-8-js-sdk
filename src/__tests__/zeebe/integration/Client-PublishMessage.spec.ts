@@ -1,11 +1,9 @@
 import { v4 } from 'uuid'
 
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(45000)
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let processDefinitionKey: string
@@ -22,7 +20,6 @@ beforeAll(
 
 afterAll(async () => {
 	await zbc.close()
-	restoreZeebeLogging()
 	await cancelProcesses(processDefinitionKey)
 })
 

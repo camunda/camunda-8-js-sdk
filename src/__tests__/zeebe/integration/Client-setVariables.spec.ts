@@ -1,4 +1,3 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import {
@@ -14,8 +13,6 @@ const trace = async <T>(result: T) => {
 	// console.log(result)
 	return result
 }
-
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse
@@ -37,7 +34,6 @@ afterAll(async () => {
 		await zbc.cancelProcessInstance(wf.processInstanceKey).catch((e) => e) // Cleanup any active processes
 	}
 	await zbc.close() // Make sure to close the connection
-	restoreZeebeLogging()
 	await cancelProcesses(processDefinitionKey)
 })
 

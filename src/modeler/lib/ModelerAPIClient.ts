@@ -520,7 +520,7 @@ export class ModelerApiClient {
 	}
 
 	/**
-	 * @description This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
 	 * @throws {RESTError}
 	 */
 	async deleteProject(projectId: string) {

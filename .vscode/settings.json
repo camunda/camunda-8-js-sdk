@@ -12,13 +12,18 @@
 		"lossless-parser"
 	],
 	"editor.formatOnSave": true,
-
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"[typescript]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"eslint.validate": ["typescript"],
-	"eslint.workingDirectories": [{ "mode": "auto" }],
+	"eslint.validate": [
+		"typescript"
+	],
+	"eslint.workingDirectories": [
+		{
+			"mode": "auto"
+		}
+	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": "explicit",
 		"source.organizeImports": "explicit"

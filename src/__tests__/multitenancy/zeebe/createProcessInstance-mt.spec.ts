@@ -1,8 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
-suppressZeebeLogging()
 let res: DeployResourceResponse<ProcessDeployment>
 let bpmnProcessId: string
 beforeAll(async () => {
@@ -16,8 +14,6 @@ beforeAll(async () => {
 	})
 	bpmnProcessId = res.deployments[0].process.bpmnProcessId
 })
-
-afterAll(() => restoreZeebeLogging())
 
 test('Will not throw an error if tenantId is provided when starting a process instance on multi-tenant Zeebe', async () => {
 	let threwError = false

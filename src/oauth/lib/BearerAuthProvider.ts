@@ -10,6 +10,28 @@ import { IOAuthProvider } from '../index'
 
 import { TokenGrantAudienceType } from './IOAuthProvider'
 
+/**
+ * The `BearerAuthProvider` class is an implementation of {@link IOAuthProvider}
+ * that uses a bearer token for authentication. This class is
+ * responsible for providing the authentication headers to the SDK. Note that it does
+ * not handle token expiration or renewal. The token must be set manually using the
+ * `setToken` method. Nor does it handle token retrieval. The token must be provided
+ * in the configuration object or set manually using the `setToken` method.
+ *
+ * This class is useful for scenarios where you have a static bearer token that
+ * does not expire or where you want to manage the token lifecycle yourself.
+ *
+ * @example
+ * ```typescript
+ * const authProvider = new BearerAuthProvider({
+ *   config: {
+ *     CAMUNDA_OAUTH_TOKEN: 'your-bearer-token',
+ *   },
+ * })
+ *
+ * authProvider.setToken('newTokenValue')
+ * ```
+ */
 export class BearerAuthProvider implements IOAuthProvider {
 	protected bearerToken: string
 
@@ -38,7 +60,7 @@ export class BearerAuthProvider implements IOAuthProvider {
 	 * @param bearerToken - The new bearer token to be used. This should be a valid
 	 *                      token string obtained from a trusted source.
 	 */
-	public setToken(bearerToken: string) {
+	public async setToken(bearerToken: string) {
 		this.bearerToken = bearerToken
 	}
 }

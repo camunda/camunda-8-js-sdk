@@ -1,8 +1,4 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
-
-beforeAll(() => suppressZeebeLogging())
-afterAll(() => restoreZeebeLogging())
 
 test('EvaluateDecision', async () => {
 	const zbc = new ZeebeGrpcClient()

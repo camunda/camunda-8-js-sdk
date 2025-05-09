@@ -1,17 +1,13 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
 jest.setTimeout(15000)
 
-suppressZeebeLogging()
-
 let res: DeployResourceResponse<ProcessDeployment> | undefined
 let res1: DeployResourceResponse<ProcessDeployment> | undefined
 
 afterAll(async () => {
-	restoreZeebeLogging()
 	await cancelProcesses(
 		res?.deployments[0].process.processDefinitionKey as string
 	)

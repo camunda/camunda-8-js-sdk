@@ -1,8 +1,5 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
-
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let pid: string
@@ -17,7 +14,7 @@ beforeAll(async () => {
 afterAll(async () => {
 	zbc.cancelProcessInstance(pid).catch((_) => _)
 	await zbc.close()
-	restoreZeebeLogging()
+
 	await cancelProcesses(processDefinitionKey)
 })
 

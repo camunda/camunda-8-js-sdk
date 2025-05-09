@@ -1,12 +1,9 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(30000)
-
-suppressZeebeLogging()
 
 let zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse
@@ -50,7 +47,7 @@ afterAll(async () => {
 		id = null
 	}
 	await zbc.close() // Makes sure we don't forget to close connection
-	restoreZeebeLogging()
+
 	await cancelProcesses(processKey)
 	await cancelProcesses(processKey2)
 })

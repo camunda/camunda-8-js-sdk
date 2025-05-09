@@ -88,3 +88,17 @@ export const cleanUp = async () => {
 	await zeebe.close()
 	wtf.dump()
 }
+let previousLogState: string | undefined
+
+/**
+ * This now needs to be done in the test setup, because environment configuration is concretized and happens
+ * when the SDK is loaded into memory.
+ */
+export function suppressZeebeLogging() {
+	previousLogState = process.env.ZEEBE_CLIENT_LOG_LEVEL
+	process.env.ZEEBE_CLIENT_LOG_LEVEL = 'NONE'
+}
+
+export function restoreZeebeLogging() {
+	process.env.ZEEBE_CLIENT_LOG_LEVEL = previousLogState
+}

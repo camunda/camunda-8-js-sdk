@@ -29,21 +29,26 @@ services:
       - ZEEBE_BROKER_DATA_DISKUSAGECOMMANDWATERMARK=0.998
       - ZEEBE_BROKER_DATA_DISKUSAGEREPLICATIONWATERMARK=0.999
       - ZEEBE_BROKER_GATEWAY_SECURITY_AUTHENTICATION_IDENTITY_BASEURL=http://identity:8084
-      - ZEEBE_BROKER_GATEWAY_MULTITENANCY_ENABLED=true
+      - ZEEBE_BROKER_GATEWAY_MULTITENANCY_ENABLED=${MULTI_TENANCY_ENABLED}
       # Enable Camunda REST Query API
       - CAMUNDA_REST_QUERY_ENABLED=true
       # Enabling REST API security
       # Without this, the REST API is open to the public
       - CAMUNDA_REST_ENABLED=true
-      - SPRING_PROFILES_ACTIVE=identity-auth
+      - SPRING_PROFILES_ACTIVE=operate,tasklist,broker,identity,consolidated-auth
+      - management.endpoints.web.exposure.include=health,info,metrics,prometheus,configprops
       - CAMUNDA_IDENTITY_AUDIENCE=zeebe-api
       - CAMUNDA_IDENTITY_BASEURL=http://identity:8084
       - CAMUNDA_IDENTITY_ISSUERBACKENDURL=http://keycloak:8080/auth/realms/camunda-platform
       # End REST API security
-      - ZEEBE_GATEWAY_MULTITENANCY_ENABLED=true
+      - ZEEBE_GATEWAY_MULTITENANCY_ENABLED=${MULTI_TENANCY_ENABLED}
+      - MANAGEMENT_ENDPOINT_CONFIGPROPS_SHOW_VALUES=ALWAYS
       - "JAVA_TOOL_OPTIONS=-Xms512m -Xmx512m"
       - CAMUNDA_DATABASE_URL=http://elasticsearch:9200
     restart: always
+    env_file:
+      - path: .env
+        required: true
     healthcheck:
       test:
         [
@@ -63,7 +68,7 @@ services:
       - identity
 
   operate: # https://docs.camunda.io/docs/self-managed/platform-deployment/docker/#operate
-    image: camunda/operate:${CAMUNDA_PLATFORM_VERSION}
+    image: camunda/operate:${CAMUNDA_OPERATE_VERSION}
     container_name: operate
     ports:
       - "8081:8080"
@@ -105,7 +110,7 @@ services:
       - elasticsearch
 
   tasklist: # https://docs.camunda.io/docs/self-managed/platform-deployment/docker/#tasklist
-    image: camunda/tasklist:${CAMUNDA_PLATFORM_VERSION}
+    image: camunda/tasklist:${CAMUNDA_TASKLIST_VERSION}
     container_name: tasklist
     ports:
       - "8082:8080"
@@ -158,20 +163,38 @@ services:
     ports:
       - "8085:8080"
     environment:
-      - ZEEBE_CLIENT_BROKER_GATEWAY-ADDRESS=zeebe:26500
-      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
-      - ZEEBE_CLIENT_ID=${ZEEBE_CLIENT_ID}
-      - ZEEBE_CLIENT_SECRET=${ZEEBE_CLIENT_SECRET}
-      - ZEEBE_TOKEN_AUDIENCE=zeebe-api
-      - ZEEBE_AUTHORIZATION_SERVER_URL=http://keycloak:8080/auth/realms/camunda-platform/protocol/openid-connect/token
-      - CAMUNDA_OPERATE_CLIENT_KEYCLOAK-URL=http://keycloak:8080
-      - CAMUNDA_OPERATE_CLIENT_CLIENT-ID=connectors
-      - CAMUNDA_OPERATE_CLIENT_CLIENT-SECRET=XALaRPl5qwTEItdwCMiPS62nVpKs7dL7
-      - CAMUNDA_OPERATE_CLIENT_KEYCLOAK-REALM=camunda-platform
-      - CAMUNDA_OPERATE_CLIENT_URL=http://operate:8080
-      - JAVA_TOOL_OPTIONS=-Dlogging.level.io.camunda.zeebe.client.impl.ZeebeCallCredentials=ERROR
-      - management.endpoints.web.exposure.include=health
+      # - ZEEBE_CLIENT_BROKER_GATEWAY-ADDRESS=zeebe:26500
+      # - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
+      # - ZEEBE_CLIENT_ID=${ZEEBE_CLIENT_ID}
+      # - ZEEBE_CLIENT_SECRET=${ZEEBE_CLIENT_SECRET}
+      # - ZEEBE_TOKEN_AUDIENCE=zeebe-api
+      # - ZEEBE_AUTHORIZATION_SERVER_URL=http://keycloak:8080/auth/realms/camunda-platform/protocol/openid-connect/token
+      # - CAMUNDA_OPERATE_CLIENT_KEYCLOAK-URL=http://keycloak:8080
+      # - CAMUNDA_OPERATE_CLIENT_CLIENT-ID=connectors
+      # - CAMUNDA_OPERATE_CLIENT_CLIENT-SECRET=XALaRPl5qwTEItdwCMiPS62nVpKs7dL7
+      # - CAMUNDA_OPERATE_CLIENT_KEYCLOAK-REALM=camunda-platform
+      # - CAMUNDA_OPERATE_CLIENT_URL=http://operate:8080
+      # - JAVA_TOOL_OPTIONS=-Dlogging.level.io.camunda.zeebe.client.impl.ZeebeCallCredentials=ERROR
+      # - management.endpoints.web.exposure.include=health
+      # - management.endpoint.health.probes.enabled=true
+      - CAMUNDA_CLIENT_ZEEBE_RESTADDRESS=http://zeebe:8080
+      - CAMUNDA_CLIENT_ZEEBE_GRPCADDRESS=http://zeebe:26500
+      - CAMUNDA_CLIENT_RESTADDRESS=http://zeebe:8080
+      - CAMUNDA_CLIENT_GRPCADDRESS=http://zeebe:26500
+      - CAMUNDA_CLIENT_AUTH_TOKENURL=http://keycloak:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+      - CAMUNDA_CLIENT_AUTH_CLIENTID=${ZEEBE_CLIENT_ID}
+      - CAMUNDA_CLIENT_AUTH_CLIENTSECRET=${ZEEBE_CLIENT_SECRET}
+      - CAMUNDA_CLIENT_AUTH_CREDENTIALSCACHEPATH=/tmp/zeebe_auth_cache
+      - CAMUNDA_CLIENT_ZEEBE_AUDIENCE=zeebe-api
+      - OPERATE_CLIENT_BASEURL=http://zeebe:8080/operate
+      - OPERATE_CLIENT_AUTHURL=http://keycloak:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+      - OPERATE_CLIENT_AUDIENCE=operate-api
+      - OPERATE_CLIENT_PROFILE=oidc
+      - OPERATE_CLIENT_CLIENTID=connectors
+      - OPERATE_CLIENT_CLIENTSECRET=XALaRPl5qwTEItdwCMiPS62nVpKs7dL7
+      - management.endpoints.web.exposure.include=health,configprops
       - management.endpoint.health.probes.enabled=true
+      - MANAGEMENT_ENDPOINT_CONFIGPROPS_SHOW_VALUES=ALWAYS
     env_file: connector-secrets.txt
     healthcheck:
       test:
@@ -226,7 +249,7 @@ services:
 
   identity: # https://docs.camunda.io/docs/self-managed/platform-deployment/docker/#identity
     container_name: identity
-    image: camunda/identity:${CAMUNDA_PLATFORM_VERSION}
+    image: camunda/identity:${CAMUNDA_IDENTITY_VERSION}
     ports:
       - "8084:8084"
     environment: # https://docs.camunda.io/docs/self-managed/identity/deployment/configuration-variables/
@@ -382,6 +405,7 @@ services:
     ports:
       - "18080:8080"
     environment:
+      KEYCLOAK_HTTP_PORT: 18080
       KEYCLOAK_HTTP_RELATIVE_PATH: /auth
       KEYCLOAK_DATABASE_HOST: postgres
       KEYCLOAK_DATABASE_PASSWORD: "#3]O?4RGj)DE7Z!9SA5"

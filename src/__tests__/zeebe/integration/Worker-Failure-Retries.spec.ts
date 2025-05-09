@@ -1,4 +1,3 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
@@ -8,9 +7,6 @@ jest.setTimeout(60000)
 
 let zbc: ZeebeGrpcClient
 let wf: CreateProcessInstanceResponse | undefined
-
-beforeAll(() => suppressZeebeLogging())
-afterAll(() => restoreZeebeLogging())
 
 beforeEach(() => {
 	zbc = new ZeebeGrpcClient()

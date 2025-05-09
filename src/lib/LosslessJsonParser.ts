@@ -166,9 +166,19 @@ export function ChildDto(childClass: any) {
 }
 
 /**
- * Extend the LosslessDto class with your own Dto classes to enable lossless parsing of int64 values.
- * Decorate fields with `@Int64String` or `@BigIntValue` to specify how int64 JSON numbers should be parsed.
+ * Extend the `LosslessDto` class with your own Dto classes to enable lossless parsing of JSON `int64` values.
+ * These are Java `long` numbers with values that are not supported by JavaScript's `Number` type.
+ * The SDK uses the lossless-json library to parse all JSON numbers as `LosslessNumber` type.
+ * This allows us to safely parse large numbers without losing precision.
+ * Decorate fields with @{@link Int64String} or @{@link BigIntValue} to specify how known `int64` JSON numbers should be parsed.
+ *
+ * Prior to Camunda 8.7, the REST API returned entity keys as `int64` numbers. From 8.7, the broker returns them as strings. LosslessDtos are
+ * used to normalise this difference. It can also be used to parse large numbers in headers and variables, enabling lossless parsing of
+ * large numbers in applications that use the SDK.
  * @example
+ * This example is a Dto class that handles two int64 fields, decoding one as a `string` and one as a `bigint`.
+ * It also has a child Dto field and some normal fields.
+ * The child Dto is parsed as a `LosslessDto`, so it can also have `int64` fields. For more complex Dtos, see the implementations in the SDK.
  * ```typescript
  * class MyDto extends LosslessDto {
  *   @Int64String

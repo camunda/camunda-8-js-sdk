@@ -18,7 +18,7 @@ import { CamundaRestClient } from './lib/CamundaRestClient'
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
  *
- * This class is a facade for all the clients in the Camunda Platform 8 SDK.
+ * This class is a factory for all the clients in the Camunda Platform 8 SDK. It allows a single point of configuration for all clients.
  *
  * @example
  * ```typescript
@@ -49,10 +49,20 @@ export class Camunda8 {
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+	 * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+	 * Explicitly set values will override environment variables, which are merged into the configuration.
 	 */
 
 	constructor(
+		/**
+		 * Optional explicit overrides. With no configuration, the SDK will use environment variables to configure itself.
+		 */
 		config: Camunda8ClientConfiguration & {
+			/**
+			 * An optional {@link IOAuthProvider} implementation. This can be used to add headers to REST requests made by the SDK.
+			 * In most cases, you will not need to supply this. You can use `CAMUNDA_AUTH_STRATEGY` and appropriate config values to configure
+			 * a preconfigured auth strategy. This configuration parameter is provided for advanced use-cases.
+			 **/
 			oAuthProvider?: IOAuthProvider
 		} = {}
 	) {

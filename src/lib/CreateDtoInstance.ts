@@ -1,7 +1,7 @@
 /**
- * Create an instance of a DTO class with the provided data.
+ * Create an instance of a Dto class with the provided data.
  *
- * This provides a type-safe method to create a DTO instance from a plain object.
+ * This provides a type-safe method to create a Dto instance from a plain object.
  *
  * Node 22's experimental strip types does not play well with the previous "via the constructor" method.
  *
