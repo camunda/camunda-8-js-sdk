@@ -49,14 +49,13 @@ export class Camunda8 {
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+	 * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+	 * Explicitly set values will override environment variables, which are merged into the configuration.
 	 */
 
 	constructor(
 		/**
-		 * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters (they are in the {@link Camunda8SDKConfiguration} map).
-		 * Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
-		 *
-		 * Explicitly set values will override environment variables, which are merged into the configuration.
+		 * Optional explicit overrides. With no configuration, the SDK will use environment variables to configure itself.
 		 */
 		config: Camunda8ClientConfiguration & {
 			/**
