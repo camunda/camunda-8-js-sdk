@@ -17,6 +17,8 @@ import * as Optimize from './optimize'
 import * as Tasklist from './tasklist'
 import * as Zeebe from './zeebe'
 
+export { CamundaSDKConfiguration } from './lib'
+
 export { HTTPError } from './lib'
 
 /**

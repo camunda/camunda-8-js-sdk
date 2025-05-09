@@ -455,12 +455,12 @@ const zeebeEnv = createEnv({
  * You can pass these into a constructor to create a new client, and any explicit values you pass in will override the environment variables.
  * Otherwise, any of these values can be set in the environment variables and will be used by the SDK.
  */
-const camundaSDKConfiguration = {
+export const CamundaSDKConfiguration = {
 	...mainEnv,
 	zeebeGrpcSettings: { ...zeebeEnv },
 }
 
-export type CamundaPlatform8Configuration = typeof camundaSDKConfiguration
+export type CamundaPlatform8Configuration = typeof CamundaSDKConfiguration
 
 type ConfigWithMiddleware = CamundaPlatform8Configuration & {
 	middleware?: BeforeRequestHook[]
@@ -469,7 +469,7 @@ type ConfigWithMiddleware = CamundaPlatform8Configuration & {
 export class CamundaEnvironmentConfigurator {
 	public static mergeConfigWithEnvironment = (
 		config: DeepPartial<ConfigWithMiddleware>
-	): ConfigWithMiddleware => mergeWith({}, camundaSDKConfiguration, config)
+	): ConfigWithMiddleware => mergeWith({}, CamundaSDKConfiguration, config)
 }
 
 export type DeepPartial<T> = {

@@ -53,7 +53,7 @@ export class Camunda8 {
 
 	constructor(
 		/**
-		 * See {@link CamundaPlatform8Configuration} for the complete list of configuration parameters (they are in the {@link Camunda8SDKConfiguration} map).
+		 * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters (they are in the {@link Camunda8SDKConfiguration} map).
 		 * Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
 		 *
 		 * Explicitly set values will override environment variables, which are merged into the configuration.
