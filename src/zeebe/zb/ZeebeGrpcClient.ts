@@ -58,7 +58,44 @@ const idColors = [
 ]
 
 /**
- * @description A client for interacting with a Zeebe broker. With the connection credentials set in the environment, you can use a "zero-conf" constructor with no arguments.
+ * Validates settings consistency and logs warnings for conflicting TLS configuration.
+ *
+ * @param config The Camunda Platform 8 configuration
+ * @param logger The logger instance
+ */
+export function validateTlsSettings(
+	config: CamundaPlatform8Configuration
+	// logger: typeof ZBSimpleLogger
+): void {
+	// Case 1: CAMUNDA_SECURE_CONNECTION is true and ZEEBE_INSECURE_CONNECTION is true
+	if (
+		config.CAMUNDA_SECURE_CONNECTION === true &&
+		config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION === true
+	) {
+		console.error(
+			'Conflicting TLS configuration detected: CAMUNDA_SECURE_CONNECTION is set to true ' +
+				'while ZEEBE_INSECURE_CONNECTION is also set to true. ' +
+				'This configuration is contradictory. The client will use an insecure connection. ' +
+				'To use a secure connection, set ZEEBE_INSECURE_CONNECTION to false.'
+		)
+	}
+
+	// Case 2: CAMUNDA_SECURE_CONNECTION is false and ZEEBE_INSECURE_CONNECTION is false
+	if (
+		config.CAMUNDA_SECURE_CONNECTION === false &&
+		config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION === false
+	) {
+		console.error(
+			'Conflicting TLS configuration detected: CAMUNDA_SECURE_CONNECTION is set to false ' +
+				'while ZEEBE_INSECURE_CONNECTION is also set to false. ' +
+				'This configuration is contradictory. The client will use an insecure connection. ' +
+				'If you intended to use a secure connection, set CAMUNDA_SECURE_CONNECTION to true.'
+		)
+	}
+}
+
+/**
+ * A client for interacting with a Zeebe broker. With the connection credentials set in the environment, you can use a "zero-conf" constructor with no arguments.
  * @example
  * ```
  * const zbc = new ZeebeGrpcClient()
@@ -156,9 +193,11 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.maxRetryTimeout = Duration.seconds.of(
 			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT_SECONDS
 		)
+		validateTlsSettings(config)
 		this.useTLS =
 			config.CAMUNDA_SECURE_CONNECTION &&
 			!config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION
+
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
 
@@ -231,7 +270,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
-	 * @description activateJobs allows you to manually activate jobs, effectively building a worker; rather than using the ZBWorker class.
+	 * `activateJobs` allows you to manually activate jobs, effectively building a worker; rather than using the ZBWorker class.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -324,7 +363,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Broadcast a Signal
+	 * Broadcast a Signal
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -349,7 +388,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Cancel a process instance by process instance key.
+	 * Cancel a process instance by process instance key.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -376,7 +415,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Create a worker that polls the gateway for jobs and executes a job handler when units of work are available.
+	 * Create a worker that polls the gateway for jobs and executes a job handler when units of work are available.
 	 * @example
 	 * ```
 	 * const zbc = new ZB.ZeebeGrpcClient()
@@ -490,7 +529,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
-	 * @description Gracefully shut down all workers, draining existing tasks, and return when it is safe to exit.
+	 * Gracefully shut down all workers, draining existing tasks, and return when it is safe to exit.
 	 *
 	 * @example
 	 * ```
@@ -535,7 +574,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Explicitly complete a job. The method is useful for manually constructing a worker.
+	 * Explicitly complete a job. The method is useful for manually constructing a worker.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -576,7 +615,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	// tslint:disable: no-object-literal-type-assertion
 	/**
 	 *
-	 * @description Create a new process instance. Asynchronously returns a process instance id.
+	 * Create a new process instance. Asynchronously returns a process instance id.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -625,7 +664,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Create a process instance, and return a Promise that returns the outcome of the process.
+	 * Create a process instance, and return a Promise that returns the outcome of the process.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -696,7 +735,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Deploys a single resources (e.g. process or decision model) to Zeebe.
+	 * Deploys a single resources (e.g. process or decision model) to Zeebe.
 	 *
 	 * Errors:
 	 * PERMISSION_DENIED:
@@ -761,7 +800,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Deploys one or more resources (e.g. processes or decision models) to Zeebe.
+	 * Deploys one or more resources (e.g. processes or decision models) to Zeebe.
 	 * Note that this is an atomic call, i.e. either all resources are deployed, or none of them are.
 	 *
 	 * Errors:
@@ -809,7 +848,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Evaluates a decision. The decision to evaluate can be specified either by using its unique key (as returned by DeployResource), or using the decision ID. When using the decision ID, the latest deployed version of the decision is used.
+	 * Evaluates a decision. The decision to evaluate can be specified either by using its unique key (as returned by DeployResource), or using the decision ID. When using the decision ID, the latest deployed version of the decision is used.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -836,7 +875,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Fail a job. This is useful if you are using the decoupled completion pattern or building your own worker.
+	 * Fail a job. This is useful if you are using the decoupled completion pattern or building your own worker.
 	 * For the retry count, the current count is available in the job metadata.
 	 *
 	 * @example
@@ -863,7 +902,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
-	 * @description Return an array of task types contained in a BPMN file or array of BPMN files. This can be useful, for example, to do
+	 * Return an array of task types contained in a BPMN file or array of BPMN files. This can be useful, for example, to do
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -879,7 +918,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Modify a running process instance. This allows you to move the execution tokens, and change the variables. Added in 8.1.
+	 * Modify a running process instance. This allows you to move the execution tokens, and change the variables. Added in 8.1.
 	 * See the [gRPC protocol documentation](https://docs.camunda.io/docs/apis-clients/grpc/#modifyprocessinstance-rpc).
 	 * @example
 	 * ```
@@ -936,7 +975,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
-	 * @description Publish a message to the broker for correlation with a workflow instance. See [this tutorial](https://docs.camunda.io/docs/guides/message-correlation/) for a detailed description of message correlation.
+	 * Publish a message to the broker for correlation with a workflow instance. See [this tutorial](https://docs.camunda.io/docs/guides/message-correlation/) for a detailed description of message correlation.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -970,7 +1009,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
-	 * @description Publish a message to the broker for correlation with a workflow message start event.
+	 * Publish a message to the broker for correlation with a workflow message start event.
 	 * For a message targeting a start event, the correlation key is not needed to target a specific running process instance.
 	 * However, the hash of the correlationKey is used to determine the partition where this workflow will start.
 	 * So we assign a random uuid to balance workflow instances created via start message across partitions.
@@ -1033,7 +1072,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Resolve an incident by incident key.
+	 * Resolve an incident by incident key.
 	 * @example
 	 * ```
 	 * type JSONObject = {[key: string]: string | number | boolean | JSONObject}
@@ -1077,7 +1116,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Directly modify the variables is a process instance. This can be used with `resolveIncident` to update the process and resolve an incident.
+	 * Directly modify the variables is a process instance. This can be used with `resolveIncident` to update the process and resolve an incident.
 	 * @example
 	 * ```
 	 * type JSONObject = {[key: string]: string | number | boolean | JSONObject}
@@ -1133,7 +1172,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Create a worker that uses the StreamActivatedJobs RPC to activate jobs.
+	 * Create a worker that uses the StreamActivatedJobs RPC to activate jobs.
 	 * **NOTE**: This will only stream jobs created *after* the worker is started.
 	 * To activate existing jobs, use `activateJobs` or `createWorker`.
 	 * @example
@@ -1259,7 +1298,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Fail a job by throwing a business error (i.e. non-technical) that occurs while processing a job.
+	 * Fail a job by throwing a business error (i.e. non-technical) that occurs while processing a job.
 	 * The error is handled in the workflow by an error catch event.
 	 * If there is no error catch event with the specified `errorCode` then an incident will be raised instead.
 	 * This method is useful when building a worker, for example for the decoupled completion pattern.
@@ -1312,7 +1351,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}
 
 	/**
-	 * @description Return the broker cluster topology.
+	 * Return the broker cluster topology.
 	 * @example
 	 * ```
 	 * const zbc = new ZeebeGrpcClient()
@@ -1326,7 +1365,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	/**
 	 *
-	 * @description Update the number of retries for a Job. This is useful if a job has zero remaining retries and fails, raising an incident.
+	 * Update the number of retries for a Job. This is useful if a job has zero remaining retries and fails, raising an incident.
 	 * @example
 	 * ```
 	 * type JSONObject = {[key: string]: string | number | boolean | JSONObject}

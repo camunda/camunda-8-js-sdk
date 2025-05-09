@@ -36,7 +36,7 @@ interface TaskChangeSet {
 }
 
 /**
- * @deprecated Since 8.6. Please use `C8RestClient` instead.
+ * @deprecated Since 8.6. Please use `CamundaRestClient` instead.
  */
 export class ZeebeRestClient {
 	private userAgentString: string

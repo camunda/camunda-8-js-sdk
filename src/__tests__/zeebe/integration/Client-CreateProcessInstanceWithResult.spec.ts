@@ -1,11 +1,8 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
 jest.setTimeout(25000)
-
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let test1: DeployResourceResponse<ProcessDeployment>
@@ -29,7 +26,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
 	await zbc.close() // Makes sure we don't forget to close connection
-	restoreZeebeLogging()
 	await cancelProcesses(test1.deployments[0].process.processDefinitionKey)
 	await cancelProcesses(test2.deployments[0].process.processDefinitionKey)
 	await cancelProcesses(test3.deployments[0].process.processDefinitionKey)

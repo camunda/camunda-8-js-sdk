@@ -1,10 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 jest.setTimeout(10000)
-
-beforeAll(() => suppressZeebeLogging())
-afterAll(() => restoreZeebeLogging())
 
 test('Calls the onConnectionError handler if there is no broker and eagerConnection: true', () =>
 	new Promise((done) => {

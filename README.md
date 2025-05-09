@@ -68,12 +68,12 @@ For `int64` values whose type is not known ahead of time, such as job variables,
 
 Calls to APIs can be authorized using a number of strategies. The most common is OAuth - a token that is obtained via a client id/secret pair exchange.
 
-* Camunda SaaS and Self-Managed by default are configured to use OAuth with token exchange. In most cases, you will use the `OAUTH` strategy and provide configuration only. The token exchange and its lifecycle are managed by the SDK in this strategy. This passes the token in the `authorization` header of requests.
-* If you secure the gateway behind an Nginx reverse-proxy secured with basic authentication, you will use the `BASIC` strategy. This adds the login credentials as the `authorization` header on requests.
-* For C8Run 8.7, you will need to use the `COOKIE` strategy. This manages a session cookie obtained from a login endpoint, and adds it as a cookie header to requests.
-* For more customisation, you can use the `BEARER` strategy. This is a strategy that allows you to dynamically provide the `Bearer` token directly. The currently set token is added as the `authorization` header on requests.
-* If you have a even more advanced use-case (for example, the need to add specific headers with specific values to authenticate with a proxy gateway), you can construct your own AuthProvider and pass it to the constructor.
-* You can also disable header auth completely and use mTLS (client certificate) — or no authentication at all — with the `NONE` strategy.
+- Camunda SaaS and Self-Managed by default are configured to use OAuth with token exchange. In most cases, you will use the `OAUTH` strategy and provide configuration only. The token exchange and its lifecycle are managed by the SDK in this strategy. This passes the token in the `authorization` header of requests.
+- If you secure the gateway behind an Nginx reverse-proxy secured with basic authentication, you will use the `BASIC` strategy. This adds the login credentials as the `authorization` header on requests.
+- For C8Run 8.7, you will need to use the `COOKIE` strategy. This manages a session cookie obtained from a login endpoint, and adds it as a cookie header to requests.
+- For more customisation, you can use the `BEARER` strategy. This is a strategy that allows you to dynamically provide the `Bearer` token directly. The currently set token is added as the `authorization` header on requests.
+- If you have a even more advanced use-case (for example, the need to add specific headers with specific values to authenticate with a proxy gateway), you can construct your own AuthProvider and pass it to the constructor.
+- You can also disable header auth completely and use mTLS (client certificate) — or no authentication at all — with the `NONE` strategy.
 
 For more details on each of these scenarios, see the relevant section below.
 
@@ -176,14 +176,14 @@ You can add arbitrary headers to all requests by implementing `IOAuthProvider`:
 import { Camunda8, Auth } from '@camunda8/sdk'
 
 class MyCustomAuthProvider implements Auth.IOAuthProvider {
-    async getToken(audience: string) {
-        // here we give a static example, but this class may read configuration,
-        // exchange credentials with an endpoint, manage token lifecycles, and so forth...
-        // Return an object which will be merged with the headers on the request
-        return {
-           'x-custom-auth-header': 'someCustomValue'
-        }
-    }
+	async getToken(audience: string) {
+		// here we give a static example, but this class may read configuration,
+		// exchange credentials with an endpoint, manage token lifecycles, and so forth...
+		// Return an object which will be merged with the headers on the request
+		return {
+			'x-custom-auth-header': 'someCustomValue',
+		}
+	}
 }
 
 const customAuthProvider = new MyCustomAuthProvider()
@@ -213,7 +213,7 @@ This is the complete environment configuration needed to run against the Dockeri
 
 ```bash
 # Self-Managed
-export ZEEBE_GRPC_ADDRESS='localhost:26500'
+export ZEEBE_ADDRESS='localhost:26500'
 export ZEEBE_REST_ADDRESS='http://localhost:8080'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
@@ -244,7 +244,7 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-	ZEEBE_GRPC_ADDRESS: 'localhost:26500',
+	ZEEBE_ADDRESS: 'localhost:26500',
 	ZEEBE_REST_ADDRESS: 'http://localhost:8080',
 	ZEEBE_CLIENT_ID: 'zeebe',
 	ZEEBE_CLIENT_SECRET: 'zecret',
@@ -265,7 +265,7 @@ const c8 = new Camunda8({
 Here is a complete configuration example for connection to Camunda SaaS:
 
 ```bash
-export ZEEBE_GRPC_ADDRESS='5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
+export ZEEBE_ADDRESS='5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
 export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO9TmBnP3zx4Xd8Ho6apgeiZTjn6'
 export ZEEBE_CLIENT_SECRET='iJJu-SHgUtuJTTAMnMLdcb8WGF8s2mHfXhXutEwe8eSbLXn98vUpoxtuLk5uG0en'
@@ -291,6 +291,7 @@ export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
 The SDK uses a Winston / Pino compatible logging setup. By default it uses Winston.
 
 When using the default logging library, you can set the logging level of the SDK via the environment variable (or constructor configuration property) `CAMUNDA_LOG_LEVEL`. This defaults to 'info'. Values (in order of priority): `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`.
+
 ### Custom logger
 
 You can supply a custom logger via the constructor. For example, to use the [Pino](https://getpino.io/) logging library:
@@ -305,7 +306,7 @@ const logger = pino({ level }) // Logging level controlled via the logging libra
 
 logger.info('Pino logger created')
 const c8 = new Camunda8({
-    logger,
+	logger,
 })
 c8.log.info('Using pino logger')
 ```
@@ -316,18 +317,18 @@ The SDK uses the [`debug`](https://github.com/debug-js/debug) library to help yo
 
 To enable debugging output, set a value for the `DEBUG` environment variable. The value is a comma-separated list of debugging namespaces. The SDK has the following namespaces:
 
-| Value                  | Component            |
-| ---------------------- | -------------------- |
-| `camunda:adminconsole` | Administration API   |
-| `camunda:modeler`      | Modeler API          |
-| `camunda:operate`      | Operate API          |
-| `camunda:optimize`     | Optimize API         |
-| `camunda:tasklist`     | Tasklist API         |
-| `camunda:oauth`        | OAuth Token Exchange |
-| `camunda:grpc`         | Zeebe gRPC channel   |
-| `camunda:worker`       | Zeebe Worker         |
-| `camunda:worker:verbose`| Zeebe Worker (additional detail) |
-| `camunda:zeebeclient`  | Zeebe Client         |
+| Value                    | Component                        |
+| ------------------------ | -------------------------------- |
+| `camunda:adminconsole`   | Administration API               |
+| `camunda:modeler`        | Modeler API                      |
+| `camunda:operate`        | Operate API                      |
+| `camunda:optimize`       | Optimize API                     |
+| `camunda:tasklist`       | Tasklist API                     |
+| `camunda:oauth`          | OAuth Token Exchange             |
+| `camunda:grpc`           | Zeebe gRPC channel               |
+| `camunda:worker`         | Zeebe Worker                     |
+| `camunda:worker:verbose` | Zeebe Worker (additional detail) |
+| `camunda:zeebeclient`    | Zeebe Client                     |
 
 Here is an example of turning on debugging for the OAuth and Operate components:
 
@@ -452,4 +453,3 @@ When a polling worker encounters an error, including not being authenticated, th
 This means that if you start a worker with invalid credentials, then the polling backoff will look like this, by default (times in seconds): 3, 6, 9, 12, 15, 18, 21, 23, 24, 25, 26, 27, 28, 29, 30, 30, 30...
 
 If the worker is backing off for a reason other than invalid credentials - for example a backpressure signal from the gateway - it will be: 2, 4, 6, 8, 10, 12, 14, 15, 15, 15.....
-

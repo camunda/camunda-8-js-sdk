@@ -39,18 +39,31 @@ export interface CamundaJobWorkerConfig<
 	VariablesDto extends LosslessDto,
 	CustomHeadersDto extends LosslessDto,
 > extends ActivateJobsRequest {
+	/** An optional {@link LosslessDto} class to decode the job variables. This provides both runtime safety for `int64` numbers and design-time type hinting. */
 	inputVariableDto?: Ctor<VariablesDto>
+	/** An optional {@link LosslessDto} class to decode the job custom headers. This provides both runtime safety for `int64` numbers and design-time type hinting. */
 	customHeadersDto?: Ctor<CustomHeadersDto>
-	/** How often the worker will poll for new jobs. Defaults to 300ms */
+	/** How often the worker will poll for new jobs. Defaults to 300ms. */
 	pollIntervalMs?: number
+	/**
+	 * A callback function that is invoked for an activated job. All return paths must return the output from one of the job acknowledgement methods.
+	 * This is done to ensure that job handlers do not have logic paths that neglect to acknowledge the job.
+	 */
 	jobHandler: (
 		job: RestJob<VariablesDto, CustomHeadersDto> &
 			JobCompletionInterfaceRest<IProcessVariables>,
 		log: Logger
 	) => MustReturnJobActionAcknowledgement
+	/** An optional logger instance. */
 	logger?: Logger
 	/** Default: true. Start the worker polling immediately. If set to `false`, call the worker's `start()` method to start polling for work. */
 	autoStart?: boolean
+	/**
+	 * The worker will back off polling for jobs if the poll request fails. This is to prevent overwhelming the broker with requests.
+	 * The backoff time will double with each failed request, up to the maximum backoff time.
+	 * The backoff time will be reset to the initial poll interval when a successful request is made.
+	 * This can be set explicitly here, or it will be set to the value of `CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS` in the environment.
+	 */
 	maxBackoffTimeMs?: number
 }
 

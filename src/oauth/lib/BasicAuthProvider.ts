@@ -11,6 +11,11 @@ import { IOAuthProvider, TokenGrantAudienceType } from './IOAuthProvider'
 
 const trace = debug('camunda:oauth')
 
+/**
+ * The `BasicAuthProvider` class is an implementation of {@link IOAuthProvider}
+ * that uses basic authentication. This class is responsible for providing
+ * the Basic authorization header to the SDK for all requests.
+ */
 export class BasicAuthProvider implements IOAuthProvider {
 	private username: string | undefined
 	private password: string | undefined

@@ -1,17 +1,11 @@
-import {
-	EnvironmentSetup,
-	restoreZeebeLogging,
-	suppressZeebeLogging,
-} from '../../lib'
+import { EnvironmentSetup } from '../../lib'
 import { ZeebeGrpcClient } from '../../zeebe'
 
 beforeAll(() => EnvironmentSetup.storeEnv())
 beforeEach(() => {
 	EnvironmentSetup.wipeEnv()
-	suppressZeebeLogging()
 })
 afterAll(() => {
-	restoreZeebeLogging()
 	EnvironmentSetup.restoreEnv()
 })
 
