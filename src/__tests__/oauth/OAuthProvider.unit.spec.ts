@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { execSync } from 'child_process'
 import fs from 'fs'
 import http from 'http'
@@ -5,25 +6,40 @@ import os from 'os'
 import path from 'path'
 
 import auth from 'basic-auth'
+import debug from 'debug'
 import got from 'got'
 import jwt from 'jsonwebtoken'
 
-import { EnvironmentSetup, constructOAuthProvider } from '../../lib'
-import { OAuthProvider } from '../../oauth'
+const trace = debug('test:oauth')
+
+import {
+	EnvironmentSetup,
+	EnvironmentStorage,
+} from '../../lib/EnvironmentSetup'
 
 jest.setTimeout(10000)
 let server: http.Server
+let storedEnvironment: EnvironmentStorage
 
 beforeAll(() => {
-	EnvironmentSetup.storeEnv()
+	storedEnvironment = EnvironmentSetup.storeEnv()
 	EnvironmentSetup.wipeEnv()
 })
 
-beforeEach(() => EnvironmentSetup.wipeEnv())
+beforeEach(() => {
+	// We reset the modules to ensure a clean state for each test
+	// This is important because the tests modify the environment variables
+	// and the SDK reads the environment variables at runtime when the module is loaded
+	// See: https://github.com/camunda/camunda-8-js-sdk/issues/451
+	jest.resetModules()
+	EnvironmentSetup.wipeEnv()
+})
 
 afterEach(() => server && server.close())
 
-afterAll(() => EnvironmentSetup.restoreEnv())
+afterAll(() => {
+	EnvironmentSetup.restoreEnv(storedEnvironment)
+})
 
 function removeCacheDir(dirpath: string) {
 	if (fs.existsSync(dirpath)) {
@@ -36,6 +52,8 @@ function removeCacheDir(dirpath: string) {
 
 describe('OAuthProvider', () => {
 	it('Throws in the constructor if there in no clientId credentials', () => {
+		const { OAuthProvider } = require('../../oauth')
+
 		let thrown = false
 		let message = ''
 		try {
@@ -54,6 +72,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Throws in the constructor if there in no clientSecret credentials', () => {
+		const { OAuthProvider } = require('../../oauth')
 		let thrown = false
 		let message = ''
 		try {
@@ -75,6 +94,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Throws in the constructor if there are insufficient credentials', () => {
+		const { OAuthProvider } = require('../../oauth')
 		let thrown = false
 		let message = ''
 		try {
@@ -100,6 +120,7 @@ describe('OAuthProvider', () => {
 		removeCacheDir(tokenCacheDir)
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
+		const { OAuthProvider } = require('../../oauth')
 
 		const o = new OAuthProvider({
 			config: {
@@ -120,6 +141,7 @@ describe('OAuthProvider', () => {
 	it('Creates the token cache dir if it does not exist', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
+		const { OAuthProvider } = require('../../oauth')
 		removeCacheDir(tokenCacheDir)
 
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
@@ -143,6 +165,7 @@ describe('OAuthProvider', () => {
 	it('Throws in the constructor if the token cache is not writable', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
+		const { OAuthProvider } = require('../../oauth')
 		removeCacheDir(tokenCacheDir)
 
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
@@ -190,6 +213,7 @@ describe('OAuthProvider', () => {
 	// Updated test for https://github.com/camunda/camunda-8-js-sdk/issues/3
 	// "Remove expiry timer from oAuth token implementation"
 	it('In-memory cache is populated and evicted after expiry', (done) => {
+		const { OAuthProvider } = require('../../oauth')
 		const delay = (timeout: number) =>
 			new Promise((res) => setTimeout(() => res(null), timeout))
 		const serverPort3002 = 3002
@@ -216,13 +240,13 @@ describe('OAuthProvider', () => {
 		server = http
 			.createServer((req, res) => {
 				if (req.method === 'POST') {
-					// let body = ''
 					req.on('data', (/*chunk*/) => {
 						// body += chunk
+						trace('data')
+						// This function does nothing, but if no listener is registered then the server will hang
+						// and not call the end event
 					})
-
 					req.on('end', () => {
-						// console.log(body)
 						res.writeHead(200, { 'Content-Type': 'application/json' })
 						const expiresIn = 2 // seconds
 						const token = requested
@@ -249,6 +273,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Uses form encoding for request', (done) => {
+		const { OAuthProvider } = require('../../oauth')
 		const serverPort3010 = 3010
 		const o = new OAuthProvider({
 			config: {
@@ -286,6 +311,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Uses a custom audience for an Operate token, if one is configured', (done) => {
+		const { OAuthProvider } = require('../../oauth')
 		const serverPort3003 = 3003
 		const o = new OAuthProvider({
 			config: {
@@ -324,6 +350,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Passes scope, if provided', () => {
+		const { OAuthProvider } = require('../../oauth')
 		const serverPort3004 = 3004
 		const o = new OAuthProvider({
 			config: {
@@ -364,6 +391,7 @@ describe('OAuthProvider', () => {
 	it('Can get scope from environment', () => {
 		const serverPort3005 = 3005
 		process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
+		const { OAuthProvider } = require('../../oauth')
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -372,6 +400,7 @@ describe('OAuthProvider', () => {
 				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3005}`,
 			},
 		})
+		process.env.CAMUNDA_TOKEN_SCOPE = ''
 		const secret = 'YOUR_SECRET'
 		const ttl = 5 // 5 seconds
 		const payload = { id: 1 }
@@ -400,9 +429,11 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Creates the token cache dir if it does not exist', () => {
+		const { OAuthProvider } = require('../../oauth')
 		const tokenCache = path.join(__dirname, '.token-cache')
 		if (fs.existsSync(tokenCache)) {
-			fs.rmdirSync(tokenCache)
+			/** force directory removal */
+			fs.rmSync(tokenCache, { recursive: true, force: true })
 		}
 		expect(fs.existsSync(tokenCache)).toBe(false)
 
@@ -427,10 +458,11 @@ describe('OAuthProvider', () => {
 	it('Gets the token cache dir from the environment', () => {
 		const tokenCache = path.join(__dirname, '.token-cache')
 		if (fs.existsSync(tokenCache)) {
-			fs.rmdirSync(tokenCache)
+			fs.rmSync(tokenCache, { recursive: true, force: true })
 		}
 		expect(fs.existsSync(tokenCache)).toBe(false)
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache
+		const { OAuthProvider } = require('../../oauth')
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -458,6 +490,7 @@ describe('OAuthProvider', () => {
 			expect(fs.existsSync(tokenCache)).toBe(false)
 		})
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache1
+		const { OAuthProvider } = require('../../oauth')
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -480,6 +513,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Can set a custom user agent', () => {
+		const { OAuthProvider } = require('../../oauth')
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -495,6 +529,7 @@ describe('OAuthProvider', () => {
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 	it('Passes no audience for Modeler API when self-hosted', (done) => {
+		const { OAuthProvider } = require('../../oauth')
 		const serverPort3006 = 3006
 		const o = new OAuthProvider({
 			config: {
@@ -533,6 +568,7 @@ describe('OAuthProvider', () => {
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 	it('Throws if you try to get a Modeler token from SaaS without console creds', async () => {
+		const { OAuthProvider } = require('../../oauth')
 		let thrown = false
 		const o = new OAuthProvider({
 			config: {
@@ -556,6 +592,7 @@ describe('OAuthProvider', () => {
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 	it('Throws if you try to get a Modeler token from Self-hosted without application creds', async () => {
+		const { OAuthProvider } = require('../../oauth')
 		let thrown = false
 		const o = new OAuthProvider({
 			config: {
@@ -577,6 +614,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Can use Basic Auth as a strategy', async () => {
+		const { constructOAuthProvider } = require('../../lib')
 		const server = http.createServer((req, res) => {
 			const credentials = auth(req)
 
@@ -615,6 +653,7 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Can use Bearer Token Auth as a strategy', async () => {
+		const { constructOAuthProvider } = require('../../lib')
 		const server = http.createServer((req, res) => {
 			const authHeader = req.headers['authorization']
 

@@ -1,11 +1,12 @@
-import { EnvironmentSetup } from '../../lib'
+import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { ModelerApiClient } from '../../modeler/index'
 
+let storage: EnvironmentStorage = {}
 beforeAll(() => {
-	EnvironmentSetup.storeEnv()
+	storage = EnvironmentSetup.storeEnv()
 	EnvironmentSetup.wipeEnv()
 })
-afterAll(() => EnvironmentSetup.restoreEnv())
+afterAll(() => EnvironmentSetup.restoreEnv(storage))
 
 test('Constructor does not throws without base url', () => {
 	const thrown = false

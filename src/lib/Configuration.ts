@@ -1,11 +1,16 @@
+import debug from 'debug'
 import { BeforeRequestHook } from 'got'
 import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 
 import { Logger } from '../c8/lib/C8Logger'
 
+const trace = debug('test:config')
+
 /**
  * We want to get the environment variables from the environment.
+ * Optional keys are not required to have a default, but we set them as undefined in order to populate a dictionary of environment variables.
+ * Keys with no default value and no value in the environment will not appear in the dictionary.
  */
 const mainEnv = createEnv({
 	/** Maximum polling backoff time in milliseconds for Job Workers when an error is encountered. Defaults to 16000 (16 seconds). */
@@ -18,6 +23,7 @@ const mainEnv = createEnv({
 	CAMUNDA_CUSTOM_USER_AGENT_STRING: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Set to true to disable OAuth completely */
 	CAMUNDA_OAUTH_DISABLED: {
@@ -63,36 +69,43 @@ const mainEnv = createEnv({
 	ZEEBE_ADDRESS: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** This is the client ID for the client credentials */
 	ZEEBE_CLIENT_ID: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** This is the client secret for the client credentials */
 	ZEEBE_CLIENT_SECRET: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** The OAuth token exchange endpoint url */
 	CAMUNDA_OAUTH_URL: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** The OAuth token (used for CAMUNDA_AUTH_STRATEGY "BEARER") */
 	CAMUNDA_OAUTH_TOKEN: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Optional scope parameter for OAuth (needed by some OIDC, such as Microsoft Entra) */
 	CAMUNDA_TOKEN_SCOPE: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** The tenant id when multi-tenancy is enabled */
 	CAMUNDA_TENANT_ID: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/**
 	 * The audience parameter for a Zeebe OAuth token request.
@@ -149,6 +162,7 @@ const mainEnv = createEnv({
 	CAMUNDA_TOKEN_CACHE_DIR: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Set to true to disable disk caching of OAuth tokens and use memory caching only */
 	CAMUNDA_TOKEN_DISK_CACHE_DISABLE: {
@@ -196,36 +210,43 @@ const mainEnv = createEnv({
 	CAMUNDA_CUSTOM_ROOT_CERT_PATH: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** In an environment using self-signed certificates, provide the server certificate as a string. Provide this to allow the client to connect to a server secured with this cert. */
 	CAMUNDA_CUSTOM_ROOT_CERT_STRING: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** When using custom or self-signed certificates with mTLS, provide the path to the client certificate chain. Works with Zeebe gRPC. */
 	CAMUNDA_CUSTOM_CERT_CHAIN_PATH: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** When using custom or self-signed certificates with mTLS, provide the path to the client private key. Works with Zeebe gRPC. */
 	CAMUNDA_CUSTOM_PRIVATE_KEY_PATH: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** The base url for the Operate API */
 	CAMUNDA_OPERATE_BASE_URL: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** The base url for the Optimize API */
 	CAMUNDA_OPTIMIZE_BASE_URL: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** The base url for the Tasklist API */
 	CAMUNDA_TASKLIST_BASE_URL: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/**
 	 * The base url for the Modeler API. Defaults to Camunda Saas - https://modeler.camunda.io/api
@@ -241,26 +262,31 @@ const mainEnv = createEnv({
 	CAMUNDA_CONSOLE_BASE_URL: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Credentials id for Admin Console and Modeler API */
 	CAMUNDA_CONSOLE_CLIENT_ID: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Credentials secret for Admin Console and Modeler API */
 	CAMUNDA_CONSOLE_CLIENT_SECRET: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Username for Basic Auth. Set this when using the `BASIC` auth strategy with `CAMUNDA_AUTH_STRATEGY`. */
 	CAMUNDA_BASIC_AUTH_USERNAME: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/** Password for Basic Auth. Set this when using the `BASIC` auth strategy with `CAMUNDA_AUTH_STRATEGY`. */
 	CAMUNDA_BASIC_AUTH_PASSWORD: {
 		type: 'string',
 		optional: true,
+		default: undefined,
 	},
 	/**
 	 * The authentication strategy to use for the Camunda 8 SDK. Defaults to 'OAUTH'.
@@ -495,6 +521,8 @@ function getKeys<T extends object>(obj: T): (keyof T)[] {
 	return Object.keys(obj) as (keyof T)[]
 }
 
+trace('Building environment variable dictionary')
 export const CamundaEnvironmentVariableDictionary = getKeys(
 	CamundaEnvironmentVariables
 )
+trace('Environment variable dictionary', CamundaEnvironmentVariableDictionary)

@@ -1,12 +1,14 @@
-import { EnvironmentSetup } from '../../lib'
+import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { ZeebeGrpcClient } from '../../zeebe'
 
-beforeAll(() => EnvironmentSetup.storeEnv())
+let storage: EnvironmentStorage = {}
+
+beforeAll(() => (storage = EnvironmentSetup.storeEnv()))
 beforeEach(() => {
 	EnvironmentSetup.wipeEnv()
 })
 afterAll(() => {
-	EnvironmentSetup.restoreEnv()
+	EnvironmentSetup.restoreEnv(storage)
 })
 
 jest.setTimeout(13000)

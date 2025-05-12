@@ -1,12 +1,14 @@
-import { EnvironmentSetup } from '../../lib'
+import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { OperateApiClient } from '../../operate'
 import { TestableOperateApiClient } from '../../operate/lib/TestableOperateApiClient'
 
+let storage: EnvironmentStorage = {}
+
 beforeAll(() => {
-	EnvironmentSetup.storeEnv()
+	storage = EnvironmentSetup.storeEnv()
 	EnvironmentSetup.wipeEnv()
 })
-afterAll(() => EnvironmentSetup.restoreEnv())
+afterAll(() => EnvironmentSetup.restoreEnv(storage))
 
 test('Censtructor throws without base url', () => {
 	try {
