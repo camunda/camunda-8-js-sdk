@@ -1,10 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 jest.setTimeout(30000)
-
-beforeAll(() => suppressZeebeLogging())
-afterAll(() => restoreZeebeLogging())
 
 test('Does not call the onReady handler if there is no broker', (done) => {
 	let called = false

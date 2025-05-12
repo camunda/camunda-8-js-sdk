@@ -3,6 +3,13 @@ import { LosslessDto } from '../../lib'
 
 import { RestApiJob } from './C8Dto'
 
+/**
+ * REST Job class factory that creates specialized RestApiJob classes based on input variables and custom headers.
+ * This factory caches the created classes to avoid creating the same class multiple times.
+ * It uses a memoization technique to store the classes in a Map, where the key is a stringified version of the input variables and custom headers.
+ * A Specialized REST Job class is the generic Job Dto specialised with the LosslessDto for the variables and custom headers payload.
+ */
+
 const factory = createMemoizedSpecializedRestApiJobClassFactory()
 
 // Creates a specialized RestApiJob class that is cached based on input variables and custom headers.

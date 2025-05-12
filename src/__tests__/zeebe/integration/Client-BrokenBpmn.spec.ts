@@ -1,12 +1,9 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
-suppressZeebeLogging()
 const zbc = new ZeebeGrpcClient()
 
 afterAll(async () => {
 	await zbc.close() // Makes sure we don't forget to close connection
-	restoreZeebeLogging()
 })
 
 test('does not retry the deployment of a broken BPMN file', async () => {

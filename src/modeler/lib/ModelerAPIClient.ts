@@ -21,6 +21,12 @@ const debug = d('camunda:modeler')
 
 const API_VERSION = 'v1'
 
+/**
+ * Modeler REST API Client.
+ * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+ * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+ * Explicitly set values will override environment variables, which are merged into the configuration.
+ */
 export class ModelerApiClient {
 	private userAgentString: string
 	private oAuthProvider: IOAuthProvider
@@ -520,7 +526,7 @@ export class ModelerApiClient {
 	}
 
 	/**
-	 * @description This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
 	 * @throws {RESTError}
 	 */
 	async deleteProject(projectId: string) {

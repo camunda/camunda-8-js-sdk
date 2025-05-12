@@ -1,11 +1,13 @@
-import { EnvironmentSetup } from '../../lib'
+import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { TasklistApiClient } from '../../tasklist/index'
 
+let storage: EnvironmentStorage = {}
+
 beforeAll(() => {
-	EnvironmentSetup.storeEnv()
+	storage = EnvironmentSetup.storeEnv()
 	EnvironmentSetup.wipeEnv()
 })
-afterAll(() => EnvironmentSetup.restoreEnv())
+afterAll(() => EnvironmentSetup.restoreEnv(storage))
 
 test('Constructor throws without base url', () => {
 	try {

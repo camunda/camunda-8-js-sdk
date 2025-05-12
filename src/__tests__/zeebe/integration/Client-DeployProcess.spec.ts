@@ -1,11 +1,7 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 jest.setTimeout(20000)
-
-beforeAll(() => suppressZeebeLogging())
-afterAll(() => restoreZeebeLogging())
 
 test('deploys a process', async () => {
 	const zbc = new ZeebeGrpcClient()

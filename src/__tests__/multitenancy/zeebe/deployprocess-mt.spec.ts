@@ -1,4 +1,3 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 
 const STORED_ENV = {}
@@ -9,11 +8,9 @@ beforeAll(() => {
 		STORED_ENV[e] = process.env[e]
 		delete process.env[e]
 	})
-	suppressZeebeLogging()
 })
 
 afterAll(() => {
-	restoreZeebeLogging()
 	ENV_VARS_TO_STORE.forEach((e) => {
 		delete process.env[e]
 		if (STORED_ENV[e]) {
