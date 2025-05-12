@@ -1,12 +1,10 @@
 import { ICustomHeaders, IInputVariables, IOutputVariables } from 'zeebe/types'
 
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZBWorker, ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 jest.setTimeout(30000)
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
@@ -49,7 +47,6 @@ afterEach(async () => {
 
 afterAll(async () => {
 	await zbc.close()
-	restoreZeebeLogging()
 	await cancelProcesses(processDefinitionKey1)
 	await cancelProcesses(processDefinitionKey2)
 	await cancelProcesses(processDefinitionKey3)

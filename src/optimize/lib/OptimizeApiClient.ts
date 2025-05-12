@@ -29,8 +29,10 @@ import {
 import { ReportResults } from './ReportResults'
 
 /**
- * @description The high-level API client for Optimize.
- * @throws {RESTError} If the request fails
+ * The high-level API client for Optimize.
+ * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+ * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+ * Explicitly set values will override environment variables, which are merged into the configuration.
  * @example
  * ```
  * const optimize = new OptimizeApiClient()
@@ -67,7 +69,7 @@ export class OptimizeApiClient {
 		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_OPTIMIZE_BASE_URL,
-			'CAMUNDA_OPTIMIZE_BASE_URL'
+			'CAMUNDA_OPTIMIZE_BASE_URL' as const
 		)
 		this.oAuthProvider =
 			options?.oAuthProvider ?? constructOAuthProvider(config)
@@ -112,7 +114,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description This API allows users to enable the sharing functionality for all reports and dashboards in Optimize.
+	 * This API allows users to enable the sharing functionality for all reports and dashboards in Optimize.
 	 *
 	 * Note that this setting will be permanently persisted in memory and will take precedence over any other previous configurations (e.g. configuration files).
 	 *
@@ -136,7 +138,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description This API allows users to disable the sharing functionality for all reports and dashboards in Optimize.
+	 * This API allows users to disable the sharing functionality for all reports and dashboards in Optimize.
 	 *
 	 * Note that this setting will be permanently persisted in memory and will take precedence over any other previous configurations (e.g. configuration files).
 	 *
@@ -161,7 +163,7 @@ export class OptimizeApiClient {
 
 	/**
 	 *
-	 * @description This API allows users to retrieve all dashboard IDs from a given collection.
+	 * This API allows users to retrieve all dashboard IDs from a given collection.
 	 *
 	 * The response contains a list of IDs of the dashboards existing in the collection with the given collection ID.
 	 *
@@ -193,7 +195,7 @@ export class OptimizeApiClient {
 	// }
 
 	/**
-	 * @description This API allows users to export dashboard definitions which can later be imported into another Optimize system.
+	 * This API allows users to export dashboard definitions which can later be imported into another Optimize system.
 	 *
 	 * Note that exporting a dashboard also exports all reports contained within the dashboard. The dashboards to be exported may be within a Collection or private entities, the API has access to both.
 	 *
@@ -223,7 +225,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description This API allows users to retrieve all report IDs from a given collection. The response contains a list of IDs of the reports existing in the collection with the given collection ID.
+	 * This API allows users to retrieve all report IDs from a given collection. The response contains a list of IDs of the reports existing in the collection with the given collection ID.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/get-report-ids/)
 	 * @throws {RESTError} If the request fails
@@ -243,7 +245,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description The report deletion API allows you to delete reports by ID from Optimize.
+	 * The report deletion API allows you to delete reports by ID from Optimize.
 	 *
 	 * [Camunda 8 documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/report/delete-report/)
 	 *	@throws {RESTError} If the request fails
@@ -266,7 +268,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description This API allows users to export report definitions which can later be imported into another Optimize system. The reports to be exported may be within a collection or private entities, the API has access to both.
+	 * This API allows users to export report definitions which can later be imported into another Optimize system. The reports to be exported may be within a collection or private entities, the API has access to both.
 	 *
 	 * The obtained list of entity exports can be imported into other Optimize systems either using the dedicated import API or via UI.
 	 *
@@ -293,7 +295,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description The data export API allows users to export large amounts of data in a machine-readable format (JSON) from Optimize.
+	 * The data export API allows users to export large amounts of data in a machine-readable format (JSON) from Optimize.
 	 * @param reportId
 	 * @param limit
 	 * @param paginationTimeoutSec
@@ -332,7 +334,7 @@ export class OptimizeApiClient {
 	// }
 
 	/**
-	 * @description With the external variable ingestion API, variable data held in external systems can be ingested into Optimize directly, without the need for these variables to be present in your Camunda platform data. This can be useful when external business data, which is relevant for process analysis in Optimize, is to be associated with specific process instances.
+	 * With the external variable ingestion API, variable data held in external systems can be ingested into Optimize directly, without the need for these variables to be present in your Camunda platform data. This can be useful when external business data, which is relevant for process analysis in Optimize, is to be associated with specific process instances.
 	 *
 	 * Especially if this data changes over time, it is advisable to use this REST API to persist external variable updates to Optimize, as otherwise Optimize may not be aware of data changes in the external system.
 	 * @param variables
@@ -373,7 +375,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description The purpose of Health-Readiness REST API is to return information indicating whether Optimize is ready to be used.
+	 * The purpose of Health-Readiness REST API is to return information indicating whether Optimize is ready to be used.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/health-readiness/)
 	 * @throws {RESTError} If the request fails
@@ -397,7 +399,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description This API allows users to import entity definitions such as reports and dashboards into existing collections. These entity definitions may be obtained either using the report or dashboard export API or via the UI.
+	 * This API allows users to import entity definitions such as reports and dashboards into existing collections. These entity definitions may be obtained either using the report or dashboard export API or via the UI.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/import-entities/)
 	 *
@@ -445,7 +447,7 @@ export class OptimizeApiClient {
 	}
 
 	/**
-	 * @description With the variable labeling endpoint, variable labels can be added, updated, and deleted from Optimize.
+	 * With the variable labeling endpoint, variable labels can be added, updated, and deleted from Optimize.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/optimize/apis-clients/optimize-api/variable-labeling/)
 	 *

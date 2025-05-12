@@ -38,7 +38,7 @@ const trace = debug('camunda:tasklist')
 const TASKLIST_API_VERSION = 'v1'
 
 /**
- * @description The high-level client for the Tasklist REST API
+ * The high-level client for the Tasklist REST API
  * @example
  * ```
  *
@@ -50,12 +50,15 @@ export class TasklistApiClient {
 	private rest: Promise<typeof got>
 
 	/**
+	 * Tasklist API Client.
+	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+	 * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+	 * Explicitly set values will override environment variables, which are merged into the configuration.
 	 * @example
 	 * ```
 	 * const tasklist = new TasklistApiClient()
 	 * const tasks = await tasklist.getTasks({ state: TaskState.CREATED })
 	 * ```
-	 * @description
 	 *
 	 */
 	constructor(options?: {
@@ -130,7 +133,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description Query Tasklist for a list of tasks. See the [API documentation](https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/tasks/).
+	 * Query Tasklist for a list of tasks. See the [API documentation](https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/tasks/).
 	 * @throws Status 400 - An error is returned when more than one search parameters among [`searchAfter`, `searchAfterOrEqual`, `searchBefore`, `searchBeforeOrEqual`] are present in request
 	 * @throws {RESTError}
 	 * @example
@@ -170,7 +173,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description Return a task by id, or throw if not found.
+	 * Return a task by id, or throw if not found.
 	 * @throws {RESTError} Will throw if no task of the given taskId exists
 	 * @returns
 	 */
@@ -185,7 +188,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description Get the form details by form id and processDefinitionKey.
+	 * Get the form details by form id and processDefinitionKey.
 	 * @throws {RESTError}
 	 */
 	public async getForm(
@@ -208,7 +211,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description This method returns a list of task variables for the specified taskId and variableNames. If the variableNames parameter is empty, all variables associated with the task will be returned.
+	 * This method returns a list of task variables for the specified taskId and variableNames. If the variableNames parameter is empty, all variables associated with the task will be returned.
 	 * @throws {RESTError}
 	 */
 	public async getVariables({
@@ -234,7 +237,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/variable/
+	 * https://docs.camunda.io/docs/apis-clients/tasklist-api/queries/variable/
 	 * @throws Throws 404 if no variable of the id is found
 	 */
 	public async getVariable(variableId: string): Promise<Variable> {
@@ -248,7 +251,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description Assign a task with taskId to assignee or the active user.
+	 * Assign a task with taskId to assignee or the active user.
 	 * @throws {RESTError}
 	 * @throws Status 400 - An error is returned when the task is not active (not in the CREATED state).
 	 * Status 400 - An error is returned when task was already assigned, except the case when JWT authentication token used and allowOverrideAssignment = true.
@@ -279,7 +282,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description Complete a task with taskId and optional variables
+	 * Complete a task with taskId and optional variables
 	 * @throws {RESTError}
 	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
 	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
@@ -305,7 +308,7 @@ export class TasklistApiClient {
 	}
 
 	/**
-	 * @description Unassign a task with taskId
+	 * Unassign a task with taskId
 	 * @throws Status 400 An error is returned when the task is not active (not in the CREATED state).
 	 * @throws Status 400 An error is returned if the task was not claimed (assigned) before.
 	 * @throws Status 404 An error is returned when the task with the taskId is not found.

@@ -81,7 +81,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Get an array of the current API clients for this cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClients) for more details.
+	 * Get an array of the current API clients for this cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClients) for more details.
 	 * @throws {RESTError}
 	 * @param clusterUuid - The cluster UUID
 	 *
@@ -95,7 +95,7 @@ export class AdminApiClient {
 	}
 
 	/**
-	 * @description Create a new API client for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateClient) for more details.
+	 * Create a new API client for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateClient) for more details.
 	 * @throws {RESTError}
 	 */
 	async createClient(req: {
@@ -117,7 +117,7 @@ export class AdminApiClient {
 	}
 
 	/**
-	 * @description Get the details of an API client. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClient) for more details.
+	 * Get the details of an API client. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClient) for more details.
 	 * @param clusterUuid
 	 * @param clientId
 	 * @throws {RESTError}
@@ -135,7 +135,7 @@ export class AdminApiClient {
 	}
 
 	/**
-	 * @description See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteClient) for more details.
+	 * See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteClient) for more details.
 	 * @param clusterUuid
 	 * @param clientId
 	 * @throws {RESTError}
@@ -152,7 +152,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Return an array of clusters. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClusters) for more details.
+	 * Return an array of clusters. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetClusters) for more details.
 	 * @throws {RESTError}
 	 */
 	async getClusters(): Promise<Dto.Cluster[]> {
@@ -165,7 +165,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Create a new cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateCluster) for more details.
+	 * Create a new cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateCluster) for more details.
 	 * @throws {RESTError}
 	 */
 	async createCluster(
@@ -182,7 +182,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Retrieve the metadata for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetCluster) for more details.
+	 * Retrieve the metadata for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetCluster) for more details.
 	 * @throws {RESTError}
 	 *
 	 */
@@ -196,7 +196,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Delete a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteCluster) for more details.
+	 * Delete a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteCluster) for more details.
 	 * @throws {RESTError}
 	 *
 	 */
@@ -212,7 +212,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Retrieve the available parameters for cluster creation. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetParameters) for more details.
+	 * Retrieve the available parameters for cluster creation. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetParameters) for more details.
 	 * @throws {RESTError}
 	 */
 	async getParameters(): Promise<Dto.Parameters> {
@@ -225,7 +225,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Retrieve the connector secrets. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetSecrets) for more details.
+	 * Retrieve the connector secrets. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetSecrets) for more details.
 	 * @throws {RESTError}
 	 */
 	async getSecrets(clusterUuid: string): Promise<{ [key: string]: string }> {
@@ -238,7 +238,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Create a new connector secret. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateSecret) for more details.
+	 * Create a new connector secret. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateSecret) for more details.
 	 * @throws {RESTError}
 	 */
 	async createSecret({
@@ -261,7 +261,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Delete a connector secret. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteSecret) for more details.
+	 * Delete a connector secret. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteSecret) for more details.
 	 * @throws {RESTError}
 	 */
 	async deleteSecret(clusterUuid: string, secretName: string): Promise<null> {
@@ -276,7 +276,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Add one or more IPs to the whitelist for the cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpdateIpWhitelist) for more details.
+	 * Add one or more IPs to the whitelist for the cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpdateIpWhitelist) for more details.
 	 * @throws {RESTError}
 	 * @param ipwhitelist
 	 * @returns
@@ -304,7 +304,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Retrieve a list of members and pending invites for your organisation. See the [API Documentation]() for more details.
+	 * Retrieve a list of members and pending invites for your organisation. See the [API Documentation]() for more details.
 	 * @throws {RESTError}
 	 */
 	async getUsers(): Promise<Dto.Member[]> {
@@ -319,7 +319,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Add a member. See the [API Documentation]() for more details.
+	 * Add a member. See the [API Documentation]() for more details.
 	 * @throws {RESTError}
 	 *
 	 */
@@ -339,7 +339,7 @@ export class AdminApiClient {
 
 	/**
 	 *
-	 * @description Delete a member from your organization. See the [API Documentation]() for more details.
+	 * Delete a member from your organization. See the [API Documentation]() for more details.
 	 * @throws {RESTError}
 	 *
 	 */

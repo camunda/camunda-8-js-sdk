@@ -96,7 +96,7 @@ class DefaultLosslessDto extends LosslessDto {}
  *
  * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:zeebe-rest`.
  *
- * For production, you can pass in an instance of [winston.Logger](https://github.com/winstonjs/winston) to the constructor as `logger`.
+ * For production, you can pass in an logger compatible with {@link Logger} to the constructor as `logger`.
  *
  * `CAMUNDA_LOG_LEVEL` in the environment or the constructor options can be used to set the log level to one of 'error', 'warn', 'info', 'http', 'verbose', 'debug', or 'silly'.
  *

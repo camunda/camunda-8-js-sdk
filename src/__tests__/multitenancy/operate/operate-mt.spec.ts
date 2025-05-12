@@ -1,11 +1,8 @@
-import { delay, restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
+import { delay } from '../../../lib'
 import { OperateApiClient } from '../../../operate'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 jest.setTimeout(15000)
-suppressZeebeLogging()
-
-afterAll(() => restoreZeebeLogging())
 
 describe('Operate multi-tenancy', () => {
 	test('It can get the process instance from green tenant and not the red tenant', async () => {

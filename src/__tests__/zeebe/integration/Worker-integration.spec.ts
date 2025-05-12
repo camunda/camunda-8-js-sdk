@@ -1,12 +1,10 @@
 import { JOB_ACTION_ACKNOWLEDGEMENT } from 'zeebe/types'
 
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 jest.setTimeout(120000)
-suppressZeebeLogging()
 
 const zbc = new ZeebeGrpcClient()
 let wf: CreateProcessInstanceResponse | undefined
@@ -65,7 +63,6 @@ afterAll(async () => {
 	await cancelProcesses(processDefinitionKey2)
 	await cancelProcesses(processDefinitionKey3)
 	await cancelProcesses(processDefinitionKey4)
-	restoreZeebeLogging()
 })
 
 test('Can service a task', (done) => {

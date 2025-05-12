@@ -5,6 +5,11 @@ import {
 	CamundaEnvironmentConfigurator,
 } from '../../lib'
 
+/**
+ * This is the interface for the logger used in the SDK.
+ * It is based on the Winston logger and provides methods for logging at different levels.
+ * You can use this interface to create your own logger that implements the same methods.
+ */
 export type Logger = {
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	info: (message: string | undefined, ...meta: any[]) => void

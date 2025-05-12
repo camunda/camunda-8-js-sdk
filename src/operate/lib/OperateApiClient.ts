@@ -48,7 +48,10 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 		: { filter: { tenantId: string | undefined } } & T // If T has no filter property, add filter with tenantId
 
 /**
- * @description The high-level client for Operate.
+ * The high-level client for Operate.
+ * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+ * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+ * Explicitly set values will override environment variables, which are merged into the configuration.
  * @example
  * ```
  * const operate = new OperateApiClient()
@@ -153,7 +156,7 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Search and retrieve process definitions.
+	 * Search and retrieve process definitions.
 	 *
 	 * [Camunda 8 Documentation](https://docs.camunda.io/docs/apis-clients/operate-api/#process-definition)
 	 * @throws {RESTError}
@@ -190,7 +193,7 @@ export class OperateApiClient {
 
 	/**
 	 *
-	 * @description Retrieve the metadata for a specific process definition, by key.
+	 * Retrieve the metadata for a specific process definition, by key.
 	 * @throws {RESTError}
 	 * [Camunda 8 Documentation](https://docs.camunda.io/docs/apis-clients/operate-api/#process-definition)
 	 * @example
@@ -290,7 +293,7 @@ export class OperateApiClient {
 		}).json()
 	}
 	/**
-	 * @description Search and retrieve process instances.
+	 * Search and retrieve process instances.
 	 * @throws {RESTError}
 	 * @example
 	 * ```
@@ -333,7 +336,7 @@ export class OperateApiClient {
 
 	/**
 	 *
-	 * @description Retrieve a specific process instance by id.
+	 * Retrieve a specific process instance by id.
 	 * @throws {RESTError}
 	 * @example
 	 * ```
@@ -354,7 +357,7 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Delete a specific process instance by key.
+	 * Delete a specific process instance by key.
 	 * @throws {RESTError}
 	 * @example
 	 * ```
@@ -382,7 +385,7 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Get the statistics for a process instance, grouped by flow nodes
+	 * Get the statistics for a process instance, grouped by flow nodes
 	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceStatistics(
@@ -398,7 +401,7 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Get sequence flows of process instance by key
+	 * Get sequence flows of process instance by key
 	 * @throws {RESTError}
 	 */
 	public async getProcessInstanceSequenceFlows(
@@ -414,7 +417,7 @@ export class OperateApiClient {
 
 	/**
 	 *
-	 * @description Search and retrieve incidents.
+	 * Search and retrieve incidents.
 	 * @throws {RESTError}
 	 * @example
 	 * ```
@@ -452,7 +455,7 @@ export class OperateApiClient {
 
 	/**
 	 *
-	 * @description Retrieve an incident by incident key.
+	 * Retrieve an incident by incident key.
 	 * @throws {RESTError}
 	 * @example
 	 * ```
@@ -525,7 +528,7 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Retrieve the variables for a Process Instance, given its key. Documentation: https://docs.camunda.io/docs/apis-tools/operate-api/specifications/search/
+	 * Retrieve the variables for a Process Instance, given its key. Documentation: https://docs.camunda.io/docs/apis-tools/operate-api/specifications/search/
 	 * @throws {RESTError}
 	 * @param processInstanceKey
 	 * @returns
@@ -558,7 +561,7 @@ export class OperateApiClient {
 	}
 
 	/**
-	 * @description Retrieve the variables for a Process Instance as an object, given its key
+	 * Retrieve the variables for a Process Instance as an object, given its key
 	 * @param processInstanceKey
 	 * @throws {RESTError}
 	 */
@@ -603,7 +606,7 @@ export class OperateApiClient {
 
 	/**
 	 *
-	 * @description Return a variable identified by its variable key
+	 * Return a variable identified by its variable key
 	 * @throws {RESTError}
 	 * @returns
 	 */

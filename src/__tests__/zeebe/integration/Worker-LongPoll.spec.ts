@@ -1,6 +1,5 @@
 import * as uuid from 'uuid'
 
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
@@ -8,15 +7,12 @@ jest.setTimeout(40000)
 
 let processId: string
 
-suppressZeebeLogging()
-
 const zbcLongPoll = new ZeebeGrpcClient({
 	config: { zeebeGrpcSettings: { ZEEBE_GRPC_WORKER_LONGPOLL_SECONDS: 60 } },
 })
 
 afterAll(async () => {
 	await zbcLongPoll.close()
-	restoreZeebeLogging()
 	await cancelProcesses(processId)
 })
 

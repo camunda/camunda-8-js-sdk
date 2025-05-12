@@ -1,11 +1,9 @@
-import { delay, restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
+import { delay } from '../../../lib'
 import { OperateApiClient } from '../../../operate'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
 jest.setTimeout(7000)
-suppressZeebeLogging()
 
-afterAll(() => restoreZeebeLogging())
 test('Multi-tenant Zeebe: Will throw an error if no tenantId is provided when broadcasting a signal to multi-tenant-enabled Zeebe broker', async () => {
 	const zbc = new ZeebeGrpcClient({
 		config: {

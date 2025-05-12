@@ -1,15 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 
 jest.setTimeout(10000)
-
-beforeAll(() => {
-	suppressZeebeLogging()
-})
-
-afterAll(() => {
-	restoreZeebeLogging()
-})
 
 test('A worker can be multi-tenant', async () => {
 	const client = new ZeebeGrpcClient()

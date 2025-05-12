@@ -1,12 +1,14 @@
-import { CamundaEnvironmentVariable } from '../lib'
+import { CamundaEnvironmentVariables } from '../lib'
 
 export function RequireConfiguration<T>(
 	config: T | undefined,
-	key: CamundaEnvironmentVariable
+	key: keyof typeof CamundaEnvironmentVariables
 ): T {
 	if (!config) {
 		throw new Error(
-			`Missing required configuration ${key}. Please supply this value as an environment variable or configuration object field.`
+			`Missing required configuration ${String(
+				key
+			)}. Please supply this value as an environment variable or configuration object field.`
 		)
 	}
 	return config

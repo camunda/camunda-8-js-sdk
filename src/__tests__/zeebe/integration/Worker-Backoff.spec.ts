@@ -1,12 +1,6 @@
-import { restoreZeebeLogging, suppressZeebeLogging } from '../../../lib'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
-suppressZeebeLogging()
-
 jest.setTimeout(30000)
-afterAll(() => {
-	restoreZeebeLogging()
-})
 
 test('gRPC worker will backoff on UNAUTHENTICATED', (done) => {
 	const backoffs: number[] = []

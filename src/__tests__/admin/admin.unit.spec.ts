@@ -1,11 +1,12 @@
 import { AdminApiClient } from '../../admin/index'
-import { EnvironmentSetup } from '../../lib'
+import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 
+let storage: EnvironmentStorage = {}
 beforeAll(() => {
-	EnvironmentSetup.storeEnv()
+	storage = EnvironmentSetup.storeEnv()
 	EnvironmentSetup.wipeEnv()
 })
-afterAll(() => EnvironmentSetup.restoreEnv())
+afterAll(() => EnvironmentSetup.restoreEnv(storage))
 
 test('Censtructor throws without base url', () => {
 	try {

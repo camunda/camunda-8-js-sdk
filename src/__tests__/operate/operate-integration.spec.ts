@@ -1,20 +1,9 @@
 import { LosslessNumber } from 'lossless-json'
 
-import {
-	HTTPError,
-	RestError,
-	restoreZeebeLogging,
-	suppressZeebeLogging,
-} from '../../lib'
+import { HTTPError, RestError } from '../../lib'
 import { OperateApiClient } from '../../operate'
 import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
 import { ZeebeGrpcClient } from '../../zeebe'
-
-suppressZeebeLogging()
-
-afterAll(async () => {
-	restoreZeebeLogging()
-})
 
 jest.setTimeout(20000)
 describe('Operate Integration', () => {
