@@ -1,3 +1,11 @@
+## [8.7.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.6...v8.7.7) (2025-05-12)
+
+
+### Bug Fixes
+
+* expose configuration in documentation. fixes [#451](https://github.com/camunda/camunda-8-js-sdk/issues/451) ([55dc5d5](https://github.com/camunda/camunda-8-js-sdk/commit/55dc5d5885c5c30373b930573e783c13b45609fb))
+* refactor tests for configuration change ([4b33ad4](https://github.com/camunda/camunda-8-js-sdk/commit/4b33ad45f3e5bebf02801b535c5bc38252bf938a))
+
 ## [8.7.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.5...v8.7.6) (2025-05-08)
 
 
