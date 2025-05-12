@@ -50,6 +50,10 @@ export class TasklistApiClient {
 	private rest: Promise<typeof got>
 
 	/**
+	 * Tasklist API Client.
+	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
+	 * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
+	 * Explicitly set values will override environment variables, which are merged into the configuration.
 	 * @example
 	 * ```
 	 * const tasklist = new TasklistApiClient()

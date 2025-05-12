@@ -480,6 +480,9 @@ const zeebeEnv = createEnv({
  * These are the configuration parameters for the Camunda 8 SDK.
  * You can pass these into a constructor to create a new client, and any explicit values you pass in will override the environment variables.
  * Otherwise, any of these values can be set in the environment variables and will be used by the SDK.
+ *
+ * Note that although some values are passed to the constructor in the subkey `zeebeGrpcSettings`, they need no special treatment as environment variables.
+ * Simply use the same name as the key in the `zeebeGrpcSettings` object for the environment variable, and the SDK will pick it up.
  */
 export const CamundaSDKConfiguration = {
 	...mainEnv,
