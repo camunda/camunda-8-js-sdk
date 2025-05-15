@@ -53,24 +53,14 @@ export const gotBeforeErrorHook: BeforeErrorHook = (error) => {
 	error.message += ` (request to ${request?.options.url
 		.href}). ${JSON.stringify(detail)}`
 	/** Log details of errors to the Camunda Support log */
-	try {
-		supportLogger.log(
-			JSON.stringify(
-				{
-					code: error.code,
-					message: error.message,
-					stack: error.stack,
-					requestOptions: error.request?.options,
-					source: (error as any).source,
-				},
-				null,
-				2
-			)
-		)
-	} catch (e) {
-		// If the error is not serializable, we just log the error message
-		supportLogger.log(`Error: ${error.message}`)
-	}
+	supportLogger.log('**ERROR**: Got error during Rest call:')
+	supportLogger.log({
+		code: error.code,
+		message: error.message,
+		stack: error.stack,
+		requestOptions: error.request?.options,
+		source: (error as any).source,
+	})
 
 	return error
 }
