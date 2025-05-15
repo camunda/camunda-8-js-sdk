@@ -15,12 +15,14 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
+import { CamundaSupportLogger } from '../../lib/CamundaSupportLogger'
 import { IOAuthProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
 const debug = d('camunda:grpc')
+const supportLogger = CamundaSupportLogger.getInstance()
 
 export interface GrpcClientExtendedOptions {
 	longPoll?: MaybeTimeDuration
@@ -159,6 +161,18 @@ export class GrpcClient extends EventEmitter {
 	}: GrpcClientCtor) {
 		super()
 		debug('Constructing gRPC client...')
+		supportLogger.log(`Constructing gRPC client`)
+		supportLogger.log({
+			config,
+			connectionTolerance,
+			host,
+			options,
+			packageName,
+			protoPath,
+			service,
+			useTLS,
+			customSSL,
+		})
 		this.config = config
 		this.userAgentString = createUserAgentString(config)
 		this.host = host
@@ -311,6 +325,8 @@ export class GrpcClient extends EventEmitter {
 
 				this[`${methodName}Stream`] = async (data) => {
 					debug(`Calling ${methodName}Stream...`, host)
+					supportLogger.log(`Calling ${methodName}Stream:`)
+					supportLogger.log(data)
 					if (this.closing) {
 						return
 					}
@@ -344,6 +360,9 @@ export class GrpcClient extends EventEmitter {
 						_error = error
 						clearTimeout(clientSideTimeout)
 						debug(`${methodName}Stream error emitted by stream`, error)
+						supportLogger.log(
+							`${methodName}Stream error emitted by stream - ${error.code} - ${error.message} - ${error.details}`
+						)
 						this.emit(MiddlewareSignals.Event.Error)
 						if (error.message.includes('14 UNAVAILABLE')) {
 							this.emit(
@@ -422,6 +441,8 @@ export class GrpcClient extends EventEmitter {
 
 				this[`${methodName}Sync`] = (data) => {
 					debug(`Calling ${methodName}Sync...`, host)
+					supportLogger.log(`Calling ${methodName}Sync:`)
+					supportLogger.log(data)
 
 					if (this.closing) {
 						debug(`Aborting ${methodName}Sync due to client closing.`)
@@ -550,6 +571,8 @@ export class GrpcClient extends EventEmitter {
 				metadata.add(key, value)
 			})
 		}
+		supportLogger.log(`gRPC Client - getAuthToken - metadata:`)
+		supportLogger.log(metadata)
 		return metadata
 	}
 

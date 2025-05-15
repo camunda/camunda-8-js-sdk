@@ -334,6 +334,10 @@ Here is an example of turning on debugging for the OAuth and Operate components:
 DEBUG=camunda:oauth,camunda:operate node app.js
 ```
 
+## Diagnostic Trace file
+
+You can output a diagnostic trace file to use with Camunda technical support by setting the environment variable `CAMUNDA_SUPPORT_LOG_ENABLED` to true. This will output a file `camunda-support.log` containing diagnostic information and tracing calls. This information is useful for debugging. Be aware that this log file will contain secrets such as bearer tokens, as well as exposing urls.
+
 ## Process Variable Typing
 
 Process variables - the `variables` of Zeebe messages, jobs, and process instance creation requests and responses - are stored in the broker as key:value pairs. They are transported as a JSON string. The SDK parses the JSON string into a JavaScript object.

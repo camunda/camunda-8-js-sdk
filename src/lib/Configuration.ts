@@ -303,6 +303,18 @@ const mainEnv = createEnv({
 		choices: ['BASIC', 'OAUTH', 'BEARER', 'COOKIE', 'NONE'],
 		default: 'OAUTH',
 	},
+	/** Set to true to enable an output log file with debugging information and diagnostic traces to assist Camunda Support in technical support. */
+	CAMUNDA_SUPPORT_LOG_ENABLED: {
+		type: 'boolean',
+		optional: true,
+		default: false,
+	},
+	/** Optionally provide a file path for the support log. By default it will be emitted as `camunda-support.log` */
+	CAMUNDA_SUPPORT_LOG_FILE_PATH: {
+		type: 'string',
+		optional: true,
+		default: undefined,
+	},
 })
 const zeebeEnv = createEnv({
 	/**
