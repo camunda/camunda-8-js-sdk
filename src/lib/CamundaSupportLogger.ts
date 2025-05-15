@@ -100,7 +100,11 @@ export class CamundaSupportLogger {
 		const logMessage = addTimestamp
 			? `[${new Date().toISOString()}]: ${_message}\n`
 			: `${_message}\n`
-		fs.appendFileSync(this.filepath, logMessage)
+		fs.appendFile(this.filepath, logMessage, (err) => {
+			if (err) {
+				console.error(`Failed to write log to ${this.filepath}:`, err)
+			}
+		})
 	}
 }
 
