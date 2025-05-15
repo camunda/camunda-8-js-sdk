@@ -1,17 +1,28 @@
-import { HTTPError as GotHTTPError, Method } from 'got'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+	BeforeErrorHook,
+	HTTPError as GotHTTPError,
+	HandlerFunction,
+	Method,
+} from 'got'
 
+import { CamundaSupportLogger } from './CamundaSupportLogger'
 import { HTTPError } from './GotErrors'
+
+const supportLogger = CamundaSupportLogger.getInstance()
 
 /**
  *
  * This function stores the call point from the application of got requests.
  * This enables users to see where the error originated from.
  */
-export const gotErrorHandler = (options, next) => {
+export const gotErrorHandler: HandlerFunction = (options, next) => {
 	if (Object.isFrozen(options.context)) {
 		options.context = { ...options.context, hasRetried: false }
 	}
 	Error.captureStackTrace(options.context)
+	supportLogger.log(`options.context`)
+	supportLogger.log(options)
 
 	return next(options)
 }
@@ -19,8 +30,11 @@ export const gotErrorHandler = (options, next) => {
 /**
  * This function adds the call point to the error stack trace of got errors.
  * This enables users to see where the error originated from.
+ *
+ * It also logs the error to the Camunda Support log.
+ * This is useful for debugging and support purposes.
  */
-export const gotBeforeErrorHook = (error) => {
+export const gotBeforeErrorHook: BeforeErrorHook = (error) => {
 	const { request } = error
 	let detail = ''
 	if (error instanceof GotHTTPError) {
@@ -29,16 +43,35 @@ export const gotBeforeErrorHook = (error) => {
 			const details = JSON.parse(
 				(error.response?.body as string) || '{detail:""}'
 			)
-			error.statusCode = details.status
+			;(error as any).statusCode = details.status
 			detail = details ?? ''
 		} catch (e) {
-			error.statusCode = 0
+			;(error as any).statusCode = 0
 		}
 	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	;(error as any).source = (error as any).options.context.stack.split('\n')
 	error.message += ` (request to ${request?.options.url
 		.href}). ${JSON.stringify(detail)}`
+	/** Log details of errors to the Camunda Support log */
+	try {
+		supportLogger.log(
+			JSON.stringify(
+				{
+					code: error.code,
+					message: error.message,
+					stack: error.stack,
+					requestOptions: error.request?.options,
+					source: (error as any).source,
+				},
+				null,
+				2
+			)
+		)
+	} catch (e) {
+		// If the error is not serializable, we just log the error message
+		supportLogger.log(`Error: ${error.message}`)
+	}
+
 	return error
 }
 
