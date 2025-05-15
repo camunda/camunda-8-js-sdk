@@ -21,7 +21,7 @@ export const gotErrorHandler: HandlerFunction = (options, next) => {
 		options.context = { ...options.context, hasRetried: false }
 	}
 	Error.captureStackTrace(options.context)
-	supportLogger.log(`options.context`)
+	supportLogger.log(`Rest call:`)
 	supportLogger.log(options)
 
 	return next(options)
