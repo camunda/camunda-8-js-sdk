@@ -146,6 +146,7 @@ export class GrpcClient extends EventEmitter {
 	private connectionTolerance: number
 	private userAgentString: string
 	private config: CamundaPlatform8Configuration
+	private useTLS: boolean
 
 	constructor({
 		config,
@@ -186,6 +187,7 @@ export class GrpcClient extends EventEmitter {
 				connectionTolerance
 			)}ms`
 		)
+		this.useTLS = useTLS
 
 		this.on(InternalSignals.Ready, () => this.setReady())
 		this.on(InternalSignals.Error, () => this.setNotReady())
@@ -722,6 +724,17 @@ export class GrpcClient extends EventEmitter {
 									MiddlewareSignals.Log.Debug,
 									'Closing, and error received from server'
 								)
+							}
+							if (
+								callStatus.code === 13 &&
+								callStatus.details.includes('Protocol error')
+							) {
+								const { CAMUNDA_SECURE_CONNECTION } = this.config
+								const { ZEEBE_INSECURE_CONNECTION } =
+									this.config.zeebeGrpcSettings
+								callStatus.details += `. This can be due to a TLS-enablement mismatch between the client and the gateway. The client has TLS ${
+									this.useTLS ? 'enabled' : 'disabled'
+								}. \n\tCheck your configuration: CAMUNDA_SECURE_CONNECTION is set to ${CAMUNDA_SECURE_CONNECTION}. ZEEBE_INSECURE_CONNECTION is set to ${ZEEBE_INSECURE_CONNECTION}.`
 							}
 						}
 						return nxt(callStatus)
