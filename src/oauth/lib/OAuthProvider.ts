@@ -9,13 +9,13 @@ import { jwtDecode } from 'jwt-decode'
 
 import { getLogger, Logger } from '../../c8/lib/C8Logger'
 import {
+	beforeCallHook,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	createUserAgentString,
 	DeepPartial,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
-	gotErrorHandler,
 	GotRetryConfig,
 	RequireConfiguration,
 } from '../../lib'
@@ -128,9 +128,9 @@ export class OAuthProvider implements IOAuthProvider {
 					https: {
 						certificateAuthority,
 					},
-					handlers: [gotErrorHandler],
+					handlers: [beforeCallHook],
 					hooks: {
-						beforeError: [gotBeforeErrorHook],
+						beforeError: [gotBeforeErrorHook(config)],
 					},
 				})
 		)

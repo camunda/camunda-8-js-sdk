@@ -8,10 +8,10 @@ import {
 	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
+	beforeCallHook,
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
-	gotErrorHandler,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IOAuthProvider } from '../../oauth'
@@ -71,14 +71,14 @@ export class ZeebeRestClient {
 					https: {
 						certificateAuthority,
 					},
-					handlers: [gotErrorHandler],
+					handlers: [beforeCallHook],
 					hooks: {
 						beforeRetry: [
 							makeBeforeRetryHandlerFor401TokenRetry(
 								this.getHeaders.bind(this)
 							),
 						],
-						beforeError: [gotBeforeErrorHook],
+						beforeError: [gotBeforeErrorHook(config)],
 					},
 				})
 		)

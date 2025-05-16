@@ -7,6 +7,7 @@ import { parse, stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
 import {
+	beforeCallHook,
 	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -14,7 +15,6 @@ import {
 	createUserAgentString,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
-	gotErrorHandler,
 	GotRetryConfig,
 	LosslessDto,
 	losslessParse,
@@ -146,14 +146,14 @@ export class CamundaRestClient {
 					https: {
 						certificateAuthority,
 					},
-					handlers: [gotErrorHandler],
+					handlers: [beforeCallHook],
 					hooks: {
 						beforeRetry: [
 							makeBeforeRetryHandlerFor401TokenRetry(
 								this.getHeaders.bind(this)
 							),
 						],
-						beforeError: [gotBeforeErrorHook],
+						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: [
 							(options) => {
 								const body = options.body

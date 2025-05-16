@@ -2,12 +2,12 @@ import { debug } from 'debug'
 import got from 'got'
 
 import {
+	beforeCallHook,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
-	gotErrorHandler,
 	GotRetryConfig,
 } from '../../lib'
 import { IOAuthProvider } from '../index'
@@ -49,9 +49,9 @@ export class CookieAuthProvider implements IOAuthProvider {
 					https: {
 						certificateAuthority,
 					},
-					handlers: [gotErrorHandler],
+					handlers: [beforeCallHook],
 					hooks: {
-						beforeError: [gotBeforeErrorHook],
+						beforeError: [gotBeforeErrorHook(config)],
 					},
 				})
 		)

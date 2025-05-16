@@ -142,3 +142,5 @@ dist
 
 docs
 .nx/cache
+
+camunda-support.log*
