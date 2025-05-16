@@ -8,10 +8,10 @@ import {
 	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
+	beforeCallHook,
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
-	gotErrorHandler,
 	losslessParse,
 	losslessStringify,
 	makeBeforeRetryHandlerFor401TokenRetry,
@@ -85,14 +85,14 @@ export class TasklistApiClient {
 					https: {
 						certificateAuthority,
 					},
-					handlers: [gotErrorHandler],
+					handlers: [beforeCallHook],
 					hooks: {
 						beforeRetry: [
 							makeBeforeRetryHandlerFor401TokenRetry(
 								this.getHeaders.bind(this)
 							),
 						],
-						beforeError: [gotBeforeErrorHook],
+						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: config.middleware ?? [],
 					},
 				})
