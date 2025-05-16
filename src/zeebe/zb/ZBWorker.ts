@@ -107,10 +107,10 @@ export class ZBWorker<
 							retryBackOff: 0,
 						})
 						.catch((e) => {
-							console.error(
+							this.logger.logError(
 								'Any error was thrown while failing the job after an unhandled exception in the task handler'
 							)
-							console.error(e.message)
+							this.logger.logError(e.message)
 						})
 				} catch (e: unknown) {
 					this.logger.logDebug(e)

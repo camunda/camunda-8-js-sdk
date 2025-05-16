@@ -52,15 +52,13 @@ const admin = c8.getAdminApiClient()
 
 The configuration for the SDK can be done by any combination of environment variables and explicit configuration passed to the `Camunda8` constructor.
 
-Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment.
+The complete documentation of all configuration parameters can be found [here](https://camunda.github.io/camunda-8-js-sdk/variables/index.CamundaSDKConfiguration.html).
 
-The configuration object fields and the environment variables have exactly the same names. See the file [`src/lib/Configuration.ts`](https://github.com/camunda/camunda-8-js-sdk/blob/main/src/lib/Configuration.ts) for a complete list of configuration parameters that can be set via environment variables or constructor parameters.
+Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment. The configuration object fields and the environment variables have exactly the same names.
 
 ## A note on how int64 is handled in the JavaScript SDK
 
 Entity keys in Camunda 8 are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda/camunda-8-js-sdk/issues/78) for more details.
-
-Some number values - for example: "_total returned results_ " - may be specified as `int64` in the API specifications. Although these numbers will usually not contain unsafe values, they are always serialised to `string`.
 
 For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and to throw an exception if a number value is detected at a runtime that cannot be accurately represented as the JavaScript `number` type (that is, a value greater than 2^53-1).
 
@@ -335,6 +333,10 @@ Here is an example of turning on debugging for the OAuth and Operate components:
 ```bash
 DEBUG=camunda:oauth,camunda:operate node app.js
 ```
+
+## Diagnostic Trace file
+
+You can output a diagnostic trace file to use with Camunda technical support by setting the environment variable `CAMUNDA_SUPPORT_LOG_ENABLED` to true. This will output a file `camunda-support.log` containing diagnostic information and tracing calls. This information is useful for debugging. Be aware that this log file will contain secrets such as bearer tokens, as well as exposing urls.
 
 ## Process Variable Typing
 

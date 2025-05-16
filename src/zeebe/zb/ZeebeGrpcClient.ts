@@ -72,7 +72,7 @@ export function validateTlsSettings(
 		config.CAMUNDA_SECURE_CONNECTION === true &&
 		config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION === true
 	) {
-		console.error(
+		console.warn(
 			'Conflicting TLS configuration detected: CAMUNDA_SECURE_CONNECTION is set to true ' +
 				'while ZEEBE_INSECURE_CONNECTION is also set to true. ' +
 				'This configuration is contradictory. The client will use an insecure connection. ' +
@@ -85,7 +85,7 @@ export function validateTlsSettings(
 		config.CAMUNDA_SECURE_CONNECTION === false &&
 		config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION === false
 	) {
-		console.error(
+		console.warn(
 			'Conflicting TLS configuration detected: CAMUNDA_SECURE_CONNECTION is set to false ' +
 				'while ZEEBE_INSECURE_CONNECTION is also set to false. ' +
 				'This configuration is contradictory. The client will use an insecure connection. ' +
@@ -197,9 +197,14 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRY_TIMEOUT_SECONDS
 		)
 		validateTlsSettings(config)
-		this.useTLS =
-			config.CAMUNDA_SECURE_CONNECTION &&
-			!config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION
+
+		const camundaSecureConnection =
+			config.CAMUNDA_SECURE_CONNECTION ?? undefined
+
+		const zeebeInsecureConnection =
+			config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION ?? undefined
+
+		this.useTLS = camundaSecureConnection ?? !zeebeInsecureConnection
 
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH

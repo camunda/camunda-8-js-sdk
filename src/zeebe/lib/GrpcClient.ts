@@ -15,12 +15,14 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
+import { CamundaSupportLogger } from '../../lib/CamundaSupportLogger'
 import { IOAuthProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
 const debug = d('camunda:grpc')
+const supportLogger = CamundaSupportLogger.getInstance()
 
 export interface GrpcClientExtendedOptions {
 	longPoll?: MaybeTimeDuration
@@ -144,6 +146,7 @@ export class GrpcClient extends EventEmitter {
 	private connectionTolerance: number
 	private userAgentString: string
 	private config: CamundaPlatform8Configuration
+	private useTLS: boolean
 
 	constructor({
 		config,
@@ -159,6 +162,18 @@ export class GrpcClient extends EventEmitter {
 	}: GrpcClientCtor) {
 		super()
 		debug('Constructing gRPC client...')
+		supportLogger.log(`Constructing gRPC client`)
+		supportLogger.log({
+			config,
+			connectionTolerance,
+			host,
+			options,
+			packageName,
+			protoPath,
+			service,
+			useTLS,
+			customSSL,
+		})
 		this.config = config
 		this.userAgentString = createUserAgentString(config)
 		this.host = host
@@ -172,6 +187,7 @@ export class GrpcClient extends EventEmitter {
 				connectionTolerance
 			)}ms`
 		)
+		this.useTLS = useTLS
 
 		this.on(InternalSignals.Ready, () => this.setReady())
 		this.on(InternalSignals.Error, () => this.setNotReady())
@@ -311,6 +327,8 @@ export class GrpcClient extends EventEmitter {
 
 				this[`${methodName}Stream`] = async (data) => {
 					debug(`Calling ${methodName}Stream...`, host)
+					supportLogger.log(`Calling ${methodName}Stream:`)
+					supportLogger.log(data)
 					if (this.closing) {
 						return
 					}
@@ -344,6 +362,9 @@ export class GrpcClient extends EventEmitter {
 						_error = error
 						clearTimeout(clientSideTimeout)
 						debug(`${methodName}Stream error emitted by stream`, error)
+						supportLogger.log(
+							`${methodName}Stream error emitted by stream - ${error.code} - ${error.message} - ${error.details}`
+						)
 						this.emit(MiddlewareSignals.Event.Error)
 						if (error.message.includes('14 UNAVAILABLE')) {
 							this.emit(
@@ -422,6 +443,8 @@ export class GrpcClient extends EventEmitter {
 
 				this[`${methodName}Sync`] = (data) => {
 					debug(`Calling ${methodName}Sync...`, host)
+					supportLogger.log(`Calling ${methodName}Sync:`)
+					supportLogger.log(data)
 
 					if (this.closing) {
 						debug(`Aborting ${methodName}Sync due to client closing.`)
@@ -550,6 +573,8 @@ export class GrpcClient extends EventEmitter {
 				metadata.add(key, value)
 			})
 		}
+		supportLogger.log(`gRPC Client - getAuthToken - metadata:`)
+		supportLogger.log(metadata)
 		return metadata
 	}
 
@@ -699,6 +724,17 @@ export class GrpcClient extends EventEmitter {
 									MiddlewareSignals.Log.Debug,
 									'Closing, and error received from server'
 								)
+							}
+							if (
+								callStatus.code === 13 &&
+								callStatus.details.includes('Protocol error')
+							) {
+								const { CAMUNDA_SECURE_CONNECTION } = this.config
+								const { ZEEBE_INSECURE_CONNECTION } =
+									this.config.zeebeGrpcSettings
+								callStatus.details += `. This can be due to a TLS-enablement mismatch between the client and the gateway. The client has TLS ${
+									this.useTLS ? 'enabled' : 'disabled'
+								}. \n\tCheck your configuration: CAMUNDA_SECURE_CONNECTION is set to ${CAMUNDA_SECURE_CONNECTION}. ZEEBE_INSECURE_CONNECTION is set to ${ZEEBE_INSECURE_CONNECTION}.`
 							}
 						}
 						return nxt(callStatus)

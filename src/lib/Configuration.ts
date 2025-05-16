@@ -174,7 +174,7 @@ const mainEnv = createEnv({
 	 * Control TLS for Zeebe GRPC connections. Defaults to true.
 	 *
 	 * Note: This setting interacts with the `ZEEBE_INSECURE_CONNECTION` setting in `zeebeGrpcSettings`.
-	 * - If `CAMUNDA_SECURE_CONNECTION` is true and `ZEEBE_INSECURE_CONNECTION` is false, a secure TLS connection will be used (recommended).
+	 * - If `CAMUNDA_SECURE_CONNECTION` is true and `ZEEBE_INSECURE_CONNECTION` is false, a secure TLS connection will be used.
 	 * - If `CAMUNDA_SECURE_CONNECTION` is false or `ZEEBE_INSECURE_CONNECTION` is true, an insecure connection will be used.
 	 * - Setting both `CAMUNDA_SECURE_CONNECTION` to true and `ZEEBE_INSECURE_CONNECTION` to true will result in a warning
 	 *   and an insecure connection will be used.
@@ -186,7 +186,7 @@ const mainEnv = createEnv({
 	CAMUNDA_SECURE_CONNECTION: {
 		type: 'boolean',
 		optional: true,
-		default: true,
+		default: undefined,
 	},
 	/** The login endpoint for Cookie authentication (for use with C8Run in 8.7). Defaults to http://localhost:8080/api/login */
 	CAMUNDA_COOKIE_AUTH_URL: {
@@ -303,6 +303,18 @@ const mainEnv = createEnv({
 		choices: ['BASIC', 'OAUTH', 'BEARER', 'COOKIE', 'NONE'],
 		default: 'OAUTH',
 	},
+	/** Set to true to enable an output log file with debugging information and diagnostic traces to assist Camunda Support in technical support. */
+	CAMUNDA_SUPPORT_LOG_ENABLED: {
+		type: 'boolean',
+		optional: true,
+		default: false,
+	},
+	/** Optionally provide a file path for the support log. By default it will be emitted as `camunda-support.log` */
+	CAMUNDA_SUPPORT_LOG_FILE_PATH: {
+		type: 'string',
+		optional: true,
+		default: undefined,
+	},
 })
 const zeebeEnv = createEnv({
 	/**
@@ -321,7 +333,7 @@ const zeebeEnv = createEnv({
 	ZEEBE_INSECURE_CONNECTION: {
 		type: 'boolean',
 		optional: true,
-		default: false,
+		default: undefined,
 	},
 	/** Log level of Zeebe Client and Workers - 'DEBUG' | 'INFO' | 'NONE'. Defaults to 'INFO' */
 	ZEEBE_CLIENT_LOG_LEVEL: {

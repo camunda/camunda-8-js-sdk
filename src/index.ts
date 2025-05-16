@@ -10,12 +10,15 @@ import {
 	LosslessDto,
 	createDtoInstance,
 } from './lib'
+import { CamundaSupportLogger } from './lib/CamundaSupportLogger'
 import * as Modeler from './modeler'
 import * as Auth from './oauth'
 import * as Operate from './operate'
 import * as Optimize from './optimize'
 import * as Tasklist from './tasklist'
 import * as Zeebe from './zeebe'
+
+CamundaSupportLogger.getInstance()
 
 export { CamundaSDKConfiguration } from './lib'
 
