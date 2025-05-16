@@ -100,11 +100,12 @@ export class CamundaSupportLogger {
 		const logMessage = addTimestamp
 			? `[${new Date().toISOString()}]: ${_message}\n`
 			: `${_message}\n`
-		fs.appendFile(this.filepath, logMessage, (err) => {
-			if (err) {
-				console.error(`Failed to write log to ${this.filepath}:`, err)
-			}
-		})
+		try {
+			// If this is async then messages are written out of order, which doesn't help with debugging
+			fs.appendFileSync(this.filepath, logMessage)
+		} catch (err) {
+			console.error(`Failed to write log to ${this.filepath}:`, err)
+		}
 	}
 }
 
