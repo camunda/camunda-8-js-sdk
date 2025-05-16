@@ -1,3 +1,11 @@
+## [8.7.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.7...v8.7.8) (2025-05-16)
+
+
+### Features
+
+* add hinting for Rest errors. fixes [#456](https://github.com/camunda/camunda-8-js-sdk/issues/456) ([cf34f57](https://github.com/camunda/camunda-8-js-sdk/commit/cf34f5747f328be3fceba6f588b2cbc8bb32004a))
+* debug and trace support log infrastructure. fixes [#457](https://github.com/camunda/camunda-8-js-sdk/issues/457) ([a8e3234](https://github.com/camunda/camunda-8-js-sdk/commit/a8e3234760edb6e0fa33c9eec5ddbf54b82ea2dd))
+
 ## [8.7.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.6...v8.7.7) (2025-05-12)
 
 
