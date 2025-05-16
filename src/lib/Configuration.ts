@@ -174,7 +174,7 @@ const mainEnv = createEnv({
 	 * Control TLS for Zeebe GRPC connections. Defaults to true.
 	 *
 	 * Note: This setting interacts with the `ZEEBE_INSECURE_CONNECTION` setting in `zeebeGrpcSettings`.
-	 * - If `CAMUNDA_SECURE_CONNECTION` is true and `ZEEBE_INSECURE_CONNECTION` is false, a secure TLS connection will be used (recommended).
+	 * - If `CAMUNDA_SECURE_CONNECTION` is true and `ZEEBE_INSECURE_CONNECTION` is false, a secure TLS connection will be used.
 	 * - If `CAMUNDA_SECURE_CONNECTION` is false or `ZEEBE_INSECURE_CONNECTION` is true, an insecure connection will be used.
 	 * - Setting both `CAMUNDA_SECURE_CONNECTION` to true and `ZEEBE_INSECURE_CONNECTION` to true will result in a warning
 	 *   and an insecure connection will be used.
@@ -186,7 +186,7 @@ const mainEnv = createEnv({
 	CAMUNDA_SECURE_CONNECTION: {
 		type: 'boolean',
 		optional: true,
-		default: true,
+		default: undefined,
 	},
 	/** The login endpoint for Cookie authentication (for use with C8Run in 8.7). Defaults to http://localhost:8080/api/login */
 	CAMUNDA_COOKIE_AUTH_URL: {
@@ -333,7 +333,7 @@ const zeebeEnv = createEnv({
 	ZEEBE_INSECURE_CONNECTION: {
 		type: 'boolean',
 		optional: true,
-		default: false,
+		default: undefined,
 	},
 	/** Log level of Zeebe Client and Workers - 'DEBUG' | 'INFO' | 'NONE'. Defaults to 'INFO' */
 	ZEEBE_CLIENT_LOG_LEVEL: {
