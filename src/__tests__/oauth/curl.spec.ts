@@ -8,7 +8,7 @@ beforeAll(() => {
 })
 
 test('Can get an Operate token from the environment vars', async () => {
-	const token = await o.getToken('ZEEBE')
+	const token = await o.getHeaders('ZEEBE')
 	expect(typeof token).toBe('object')
 	// Uncomment to generate curl commands for testing API endpoints
 	// 	console.log(`curl -v -L -X POST 'http://localhost:3000/v2/documents' \

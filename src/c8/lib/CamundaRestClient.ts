@@ -22,7 +22,7 @@ import {
 	makeBeforeRetryHandlerFor401TokenRetry,
 	RequireConfiguration,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 import {
 	ActivateJobsRequest,
 	BroadcastSignalReq,
@@ -104,7 +104,7 @@ class DefaultLosslessDto extends LosslessDto {}
  */
 export class CamundaRestClient {
 	private userAgentString: string
-	protected oAuthProvider: IOAuthProvider
+	protected oAuthProvider: IHeadersProvider
 	private rest: Promise<typeof got>
 	private tenantId?: string
 	public log: Logger
@@ -116,7 +116,7 @@ export class CamundaRestClient {
 	 */
 	constructor(options?: {
 		config?: Camunda8ClientConfiguration
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -172,7 +172,7 @@ export class CamundaRestClient {
 	}
 
 	private async getHeaders() {
-		const authorization = await this.oAuthProvider.getToken('ZEEBE')
+		const authorization = await this.oAuthProvider.getHeaders('ZEEBE')
 
 		const headers = {
 			'content-type': 'application/json',

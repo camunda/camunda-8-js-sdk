@@ -6,7 +6,7 @@ import {
 	constructOAuthProvider,
 } from '../lib'
 import { ModelerApiClient } from '../modeler'
-import { IOAuthProvider } from '../oauth'
+import { IHeadersProvider } from '../oauth'
 import { OperateApiClient } from '../operate'
 import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
@@ -43,7 +43,7 @@ export class Camunda8 {
 	private zeebeGrpcApiClient?: ZeebeGrpcClient
 	private zeebeRestClient?: ZeebeRestClient
 	private configuration: CamundaPlatform8Configuration
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private camundaRestClient?: CamundaRestClient
 	public log: Logger
 
@@ -59,11 +59,11 @@ export class Camunda8 {
 		 */
 		config: Camunda8ClientConfiguration & {
 			/**
-			 * An optional {@link IOAuthProvider} implementation. This can be used to add headers to REST requests made by the SDK.
+			 * An optional {@link IHeadersProvider} implementation. This can be used to add headers to REST requests made by the SDK.
 			 * In most cases, you will not need to supply this. You can use `CAMUNDA_AUTH_STRATEGY` and appropriate config values to configure
 			 * a preconfigured auth strategy. This configuration parameter is provided for advanced use-cases.
 			 **/
-			oAuthProvider?: IOAuthProvider
+			oAuthProvider?: IHeadersProvider
 		} = {}
 	) {
 		this.configuration =

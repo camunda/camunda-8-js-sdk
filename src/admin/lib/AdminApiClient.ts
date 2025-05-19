@@ -14,7 +14,7 @@ import {
 	gotBeforeErrorHook,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 
 import * as Dto from './AdminDto'
 
@@ -26,12 +26,12 @@ const debug = d('camunda:adminconsole')
  */
 export class AdminApiClient {
 	private userAgentString: string
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private rest: Promise<typeof got>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -69,7 +69,7 @@ export class AdminApiClient {
 	}
 
 	private async getHeaders() {
-		const authorization = await this.oAuthProvider.getToken('CONSOLE')
+		const authorization = await this.oAuthProvider.getHeaders('CONSOLE')
 		const headers = {
 			'content-type': 'application/json',
 			...authorization,

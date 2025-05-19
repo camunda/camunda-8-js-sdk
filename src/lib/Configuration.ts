@@ -296,7 +296,7 @@ const mainEnv = createEnv({
 	 * - 'COOKIE' - Cookie authentication
 	 * - 'NONE' - No authentication
 	 *
-	 * If you are passing in a custom {@link IOAuthProvider} implementation, you can set this to 'NONE' to disable the default authentication.
+	 * If you are passing in a custom {@link IHeadersProvider} implementation, you can set this to 'NONE' to disable the default authentication.
 	 */
 	CAMUNDA_AUTH_STRATEGY: {
 		type: 'string',

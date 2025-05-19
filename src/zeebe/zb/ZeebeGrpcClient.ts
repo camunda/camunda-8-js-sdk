@@ -18,7 +18,7 @@ import {
 	losslessStringify,
 	RequireConfiguration,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 import {
 	BpmnParser,
 	parseVariables,
@@ -129,7 +129,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private retry: boolean
 	private maxRetries: number
 	private maxRetryTimeout: MaybeTimeDuration
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private useTLS: boolean
 	private stdout: ZBCustomLogger
 	private customSSL?: CustomSSL
@@ -139,7 +139,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		super()
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(

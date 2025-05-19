@@ -7,16 +7,16 @@ import {
 	RequireConfiguration,
 } from '../../lib'
 
-import { IOAuthProvider, TokenGrantAudienceType } from './IOAuthProvider'
+import { IHeadersProvider, TokenGrantAudienceType } from './IHeadersProvider'
 
 const trace = debug('camunda:oauth')
 
 /**
- * The `BasicAuthProvider` class is an implementation of {@link IOAuthProvider}
+ * The `BasicAuthProvider` class is an implementation of {@link IHeadersProvider}
  * that uses basic authentication. This class is responsible for providing
  * the Basic authorization header to the SDK for all requests.
  */
-export class BasicAuthProvider implements IOAuthProvider {
+export class BasicAuthProvider implements IHeadersProvider {
 	private username: string | undefined
 	private password: string | undefined
 	constructor(options?: {
@@ -34,7 +34,7 @@ export class BasicAuthProvider implements IOAuthProvider {
 			'CAMUNDA_BASIC_AUTH_PASSWORD'
 		)
 	}
-	getToken(audience: TokenGrantAudienceType) {
+	getHeaders(audience: TokenGrantAudienceType) {
 		trace(`Requesting token for audience ${audience}`)
 		const token = Buffer.from(`${this.username}:${this.password}`).toString(
 			'base64'

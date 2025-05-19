@@ -10,13 +10,13 @@ import {
 	gotBeforeErrorHook,
 	GotRetryConfig,
 } from '../../lib'
-import { IOAuthProvider } from '../index'
+import { IHeadersProvider } from '../index'
 
-import { TokenGrantAudienceType } from './IOAuthProvider'
+import { TokenGrantAudienceType } from './IHeadersProvider'
 
 const trace = debug('camunda:cookie-auth')
 /**
- * The `CookieAuthProvider` is an implementation of {@link IOAuthProvider} that
+ * The `CookieAuthProvider` is an implementation of {@link IHeadersProvider} that
  * supports the [authentication used in C8run 8.7](https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-authentication/#authentication-via-cookie-c8run-only).
  * It retrieves a cookie from the C8run login endpoint, and passes it in the
  * `cookie` header for subsequent requests.
@@ -24,7 +24,7 @@ const trace = debug('camunda:cookie-auth')
  * It does not handle token expiration or renewal. The cookie may be reset
  * manually by calling the `setToken` method.
  */
-export class CookieAuthProvider implements IOAuthProvider {
+export class CookieAuthProvider implements IHeadersProvider {
 	rest: Promise<typeof got>
 	cookie?: string
 	username: string
@@ -57,7 +57,7 @@ export class CookieAuthProvider implements IOAuthProvider {
 		)
 	}
 
-	public async getToken(audienceType: TokenGrantAudienceType) {
+	public async getHeaders(audienceType: TokenGrantAudienceType) {
 		trace(`Token request for ${audienceType}`)
 		if (!this.cookie) {
 			const rest = await this.rest
