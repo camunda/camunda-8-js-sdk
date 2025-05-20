@@ -334,6 +334,8 @@ Here is an example of turning on debugging for the OAuth and Operate components:
 DEBUG=camunda:oauth,camunda:operate node app.js
 ```
 
+This is intended for development debugging and it should not be enabled in production. The debug trace can include sensitive information such as secrets.
+
 ## Diagnostic Trace file
 
 You can output a diagnostic trace file to use with Camunda technical support by setting the environment variable `CAMUNDA_SUPPORT_LOG_ENABLED` to true. This will output a file `camunda-support.log` containing diagnostic information and tracing calls. This information is useful for debugging. Be aware that this log file will contain secrets such as bearer tokens, as well as exposing urls.

@@ -16,7 +16,7 @@ import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
 import { CamundaSupportLogger } from '../../lib/CamundaSupportLogger'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
 import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
@@ -103,7 +103,7 @@ export interface GrpcClientCtor {
 	connectionTolerance: MaybeTimeDuration
 	host: string
 	loglevel: Loglevel
-	oAuth?: IOAuthProvider
+	oAuth?: IHeadersProvider
 	options: Options & GrpcClientExtendedOptions
 	packageName: string
 	protoPath: string
@@ -140,7 +140,7 @@ export class GrpcClient extends EventEmitter {
 	private packageDefinition: PackageDefinition
 	private listNameMethods: string[]
 	private gRPCRetryCount = 0
-	private oAuth?: IOAuthProvider
+	private oAuth?: IHeadersProvider
 	private readyTimer?: NodeJS.Timeout
 	private failTimer?: NodeJS.Timeout
 	private connectionTolerance: number
@@ -566,7 +566,7 @@ export class GrpcClient extends EventEmitter {
 		const metadata = new Metadata({ waitForReady: false })
 		metadata.add('user-agent', this.userAgentString)
 		if (this.oAuth) {
-			const authProviderHeaders = await this.oAuth.getToken('ZEEBE')
+			const authProviderHeaders = await this.oAuth.getHeaders('ZEEBE')
 			// add arbitraty headers to metadata
 			// See: https://github.com/camunda/camunda-8-js-sdk/issues/448
 			Object.entries(authProviderHeaders).forEach(([key, value]) => {

@@ -16,7 +16,7 @@ import {
 	losslessStringify,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 
 import {
 	ChangeStatus,
@@ -68,7 +68,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
  */
 export class OperateApiClient {
 	private userAgentString: string
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private rest: Promise<typeof got>
 	private tenantId: string | undefined
 
@@ -81,7 +81,7 @@ export class OperateApiClient {
 	 */
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -123,7 +123,7 @@ export class OperateApiClient {
 	}
 
 	private async getHeaders() {
-		const authorization = await this.oAuthProvider.getToken('OPERATE')
+		const authorization = await this.oAuthProvider.getHeaders('OPERATE')
 
 		return {
 			'content-type': 'application/json',

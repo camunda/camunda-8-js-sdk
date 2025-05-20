@@ -4,8 +4,13 @@ import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 
 import { Logger } from '../c8/lib/C8Logger'
+import { IHeadersProvider } from '../oauth'
 
 const trace = debug('test:config')
+
+/** This is a hack to get the IHeadersProvider in scope for documentation generation */
+const h: IHeadersProvider = { getHeaders: async () => ({}) } // Dummy implementation for type safety
+trace('Ignore this message', h)
 
 /**
  * We want to get the environment variables from the environment.
@@ -296,7 +301,7 @@ const mainEnv = createEnv({
 	 * - 'COOKIE' - Cookie authentication
 	 * - 'NONE' - No authentication
 	 *
-	 * If you are passing in a custom {@link IOAuthProvider} implementation, you can set this to 'NONE' to disable the default authentication.
+	 * If you are passing in a custom {@link IHeadersProvider} implementation, you can set this to 'NONE' to disable the default authentication.
 	 */
 	CAMUNDA_AUTH_STRATEGY: {
 		type: 'string',

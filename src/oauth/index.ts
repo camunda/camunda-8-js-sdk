@@ -20,6 +20,6 @@ export interface TokenError {
 export { BasicAuthProvider } from './lib/BasicAuthProvider'
 export { BearerAuthProvider } from './lib/BearerAuthProvider'
 export { CookieAuthProvider } from './lib/CookieAuthProvider'
-export { IOAuthProvider } from './lib/IOAuthProvider'
+export { IHeadersProvider } from './lib/IHeadersProvider'
 export { NullAuthProvider } from './lib/NullAuthProvider'
 export { OAuthProvider } from './lib/OAuthProvider'

@@ -13,8 +13,8 @@ import {
 	gotBeforeErrorHook,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
-import { AuthHeader } from '../../oauth/lib/IOAuthProvider'
+import { IHeadersProvider } from '../../oauth'
+import { AuthHeader } from '../../oauth/lib/IHeadersProvider'
 
 import {
 	DashboardCollection,
@@ -50,7 +50,7 @@ import { ReportResults } from './ReportResults'
 export class OptimizeApiClient {
 	private userAgentString: string
 	private rest: Promise<typeof got>
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 
 	/**
 	 *
@@ -61,7 +61,7 @@ export class OptimizeApiClient {
 	 */
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -99,7 +99,7 @@ export class OptimizeApiClient {
 	}
 
 	private async getHeaders(auth = true) {
-		const authorization = await this.oAuthProvider.getToken('OPTIMIZE')
+		const authorization = await this.oAuthProvider.getHeaders('OPTIMIZE')
 
 		const authHeader: AuthHeader | Record<string, never> = auth
 			? authorization
