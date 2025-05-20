@@ -19,9 +19,9 @@ import {
 	GotRetryConfig,
 	RequireConfiguration,
 } from '../../lib'
-import { IOAuthProvider, Token, TokenError } from '../index'
+import { IHeadersProvider, Token, TokenError } from '../index'
 
-import { HeadersPromise, TokenGrantAudienceType } from './IOAuthProvider'
+import { HeadersPromise, TokenGrantAudienceType } from './IHeadersProvider'
 
 const trace = debug('camunda:oauth')
 
@@ -29,7 +29,7 @@ const homedir = os.homedir()
 const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
 
 /**
- * The `OAuthProvider` class is an implementation of the {@link IOAuthProvider}
+ * The `OAuthProvider` class is an implementation of the {@link IHeadersProvider}
  * interface that uses the OAuth 2.0 client credentials grant to authenticate
  * with the Camunda Platform 8 Identity service. It handles token expiration
  * and renewal, and caches tokens in memory and on disk.
@@ -50,7 +50,7 @@ const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
  * const token = await authProvider.getToken('ZEEBE')
  * ```
  */
-export class OAuthProvider implements IOAuthProvider {
+export class OAuthProvider implements IHeadersProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
 	private cacheDir: string
 	private authServerUrl: string
@@ -184,7 +184,7 @@ export class OAuthProvider implements IOAuthProvider {
 		)
 	}
 
-	public async getToken(audienceType: TokenGrantAudienceType) {
+	public async getHeaders(audienceType: TokenGrantAudienceType) {
 		debug(`Token request for ${audienceType}`)
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.

@@ -14,7 +14,7 @@ import {
 	gotBeforeErrorHook,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 import { TopologyResponse } from '../types'
 
 const trace = debug('camunda:zeebe')
@@ -40,13 +40,13 @@ interface TaskChangeSet {
  */
 export class ZeebeRestClient {
 	private userAgentString: string
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private rest: Promise<typeof got>
 	// private tenantId: string | undefined
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -87,7 +87,7 @@ export class ZeebeRestClient {
 	}
 
 	private async getHeaders() {
-		const authorization = await this.oAuthProvider.getToken('ZEEBE')
+		const authorization = await this.oAuthProvider.getHeaders('ZEEBE')
 
 		const headers = {
 			'content-type': 'application/json',

@@ -4,7 +4,13 @@ import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 
 import { Logger } from '../c8/lib/C8Logger'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - imported for TypeDoc generation, not used in code
+import type { IHeadersProvider } from '../oauth' // eslint-disable-line @typescript-eslint/no-unused-vars
 
+// This creates a type-only reference that gets erased during compilation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// type _UnusedTypes = IHeadersProvider
 const trace = debug('test:config')
 
 /**
@@ -296,7 +302,7 @@ const mainEnv = createEnv({
 	 * - 'COOKIE' - Cookie authentication
 	 * - 'NONE' - No authentication
 	 *
-	 * If you are passing in a custom {@link IOAuthProvider} implementation, you can set this to 'NONE' to disable the default authentication.
+	 * If you are passing in a custom {@link IHeadersProvider} implementation, you can set this to 'NONE' to disable the default authentication.
 	 */
 	CAMUNDA_AUTH_STRATEGY: {
 		type: 'string',

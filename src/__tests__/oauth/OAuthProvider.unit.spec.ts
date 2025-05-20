@@ -259,14 +259,14 @@ describe('OAuthProvider', () => {
 			})
 			.listen(serverPort3002)
 
-		o.getToken('ZEEBE').then(async (token) => {
+		o.getHeaders('ZEEBE').then(async (token) => {
 			const token1 = token
 			expect(token).toStrictEqual(token1)
 			await delay(500)
-			const token2 = await o.getToken('ZEEBE')
+			const token2 = await o.getHeaders('ZEEBE')
 			expect(token2).toStrictEqual(token1)
 			await delay(1600)
-			const token3 = await o.getToken('ZEEBE')
+			const token3 = await o.getHeaders('ZEEBE')
 			expect(token3).not.toStrictEqual(token1)
 			done()
 		})
@@ -307,7 +307,7 @@ describe('OAuthProvider', () => {
 				}
 			})
 			.listen(serverPort3010)
-		o.getToken('OPERATE')
+		o.getHeaders('OPERATE')
 	})
 
 	it('Uses a custom audience for an Operate token, if one is configured', (done) => {
@@ -346,7 +346,7 @@ describe('OAuthProvider', () => {
 				}
 			})
 			.listen(serverPort3003)
-		o.getToken('OPERATE')
+		o.getHeaders('OPERATE')
 	})
 
 	it('Passes scope, if provided', () => {
@@ -385,7 +385,7 @@ describe('OAuthProvider', () => {
 			})
 			.listen(serverPort3004)
 
-		return o.getToken('ZEEBE')
+		return o.getHeaders('ZEEBE')
 	})
 
 	it('Can get scope from environment', () => {
@@ -425,7 +425,7 @@ describe('OAuthProvider', () => {
 			})
 			.listen(serverPort3005)
 
-		return o.getToken('ZEEBE')
+		return o.getHeaders('ZEEBE')
 	})
 
 	it('Creates the token cache dir if it does not exist', () => {
@@ -563,7 +563,7 @@ describe('OAuthProvider', () => {
 				}
 			})
 			.listen(serverPort3006)
-		o.getToken('MODELER')
+		o.getHeaders('MODELER')
 	})
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
@@ -581,7 +581,7 @@ describe('OAuthProvider', () => {
 		})
 
 		await o
-			.getToken('MODELER')
+			.getHeaders('MODELER')
 			.catch(() => {
 				thrown = true
 			})
@@ -604,7 +604,7 @@ describe('OAuthProvider', () => {
 			},
 		})
 		await o
-			.getToken('MODELER')
+			.getHeaders('MODELER')
 			.catch(() => {
 				thrown = true
 			})
@@ -639,7 +639,7 @@ describe('OAuthProvider', () => {
 			CAMUNDA_BASIC_AUTH_USERNAME: 'admin',
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any)
-		const Authorization = await oAuthProvider.getToken('ZEEBE')
+		const Authorization = await oAuthProvider.getHeaders('ZEEBE')
 		await got
 			.get('http://localhost:3033', {
 				headers: {
@@ -673,7 +673,7 @@ describe('OAuthProvider', () => {
 			CAMUNDA_OAUTH_TOKEN: 'mysecrettoken',
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any)
-		const Authorization = await oAuthProvider.getToken('ZEEBE')
+		const Authorization = await oAuthProvider.getHeaders('ZEEBE')
 		await got
 			.get('http://localhost:3033', {
 				headers: {

@@ -3,7 +3,7 @@
  * a specific audience that depends on the API that is being called. For example, the `ZEEBE` audience is used for
  * the Zeebe API, while the `OPTIMIZE` audience is used for the Optimize API.
  *
- * Any implementation of IOAuthProvider will be called with one of these keys for an authorization header,
+ * Any implementation of IHeadersProvider will be called with one of these keys for an authorization header,
  * depending on which API client is requesting the header.
  *
  * See the `OAuthProvider` implementation for an example of how this is used.
@@ -19,7 +19,7 @@ export type TokenGrantAudienceType =
 	| 'MODELER'
 
 /**
- * These are the default auth headers that are used by the {@link IOAuthProvider} implementations in the SDK.
+ * These are the default auth headers that are used by the {@link IHeadersProvider} implementations in the SDK.
  * You can use these headers to set the authentication headers for your API requests.
  * You can also extend this type to add any other headers that are required by your API endpoints.
  */
@@ -43,7 +43,7 @@ export type HeadersPromise = Promise<AuthHeader>
  * provider that meets your specific needs. You could also use this
  * interface to add any other headers that are required by your API endpoints.
  */
-export interface IOAuthProvider<
+export interface IHeadersProvider<
 	T extends { [key: string]: string } = AuthHeader,
 > {
 	/**
@@ -54,7 +54,7 @@ export interface IOAuthProvider<
 	 * @param audience - The audience for which to get the authentication headers.
 	 * @returns A promise that resolves to an object containing the authentication headers.
 	 */
-	getToken(audience: TokenGrantAudienceType): Promise<T>
+	getHeaders(audience: TokenGrantAudienceType): Promise<T>
 
 	/**
 	 * This is an optional method that can be implemented by the provider to

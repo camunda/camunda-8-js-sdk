@@ -16,7 +16,7 @@ import {
 	losslessStringify,
 	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 
 import {
 	DateFilter,
@@ -46,7 +46,7 @@ const TASKLIST_API_VERSION = 'v1'
  */
 export class TasklistApiClient {
 	private userAgentString: string
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private rest: Promise<typeof got>
 
 	/**
@@ -63,7 +63,7 @@ export class TasklistApiClient {
 	 */
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -101,7 +101,7 @@ export class TasklistApiClient {
 	}
 
 	private async getHeaders() {
-		const authorization = await this.oAuthProvider.getToken('TASKLIST')
+		const authorization = await this.oAuthProvider.getHeaders('TASKLIST')
 		return {
 			'content-type': 'application/json',
 			...authorization,

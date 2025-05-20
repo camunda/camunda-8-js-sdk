@@ -170,7 +170,8 @@ export function ChildDto(childClass: any) {
  * These are Java `long` numbers with values that are not supported by JavaScript's `Number` type.
  * The SDK uses the lossless-json library to parse all JSON numbers as `LosslessNumber` type.
  * This allows us to safely parse large numbers without losing precision.
- * Decorate fields with @{@link Int64String} or @{@link BigIntValue} to specify how known `int64` JSON numbers should be parsed.
+ * Decorate fields with `@Int64String` or `@BigIntValue` to specify how known `int64` JSON numbers should be parsed
+ * — either as a string or a bigint.
  *
  * Prior to Camunda 8.7, the REST API returned entity keys as `int64` numbers. From 8.7, the broker returns them as strings. LosslessDtos are
  * used to normalise this difference. It can also be used to parse large numbers in headers and variables, enabling lossless parsing of

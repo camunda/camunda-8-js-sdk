@@ -18,7 +18,7 @@ import {
 	losslessStringify,
 	RequireConfiguration,
 } from '../../lib'
-import { IOAuthProvider } from '../../oauth'
+import { IHeadersProvider } from '../../oauth'
 import {
 	BpmnParser,
 	parseVariables,
@@ -61,11 +61,9 @@ const idColors = [
  * Validates settings consistency and logs warnings for conflicting TLS configuration.
  *
  * @param config The Camunda Platform 8 configuration
- * @param logger The logger instance
  */
 export function validateTlsSettings(
 	config: CamundaPlatform8Configuration
-	// logger: typeof ZBSimpleLogger
 ): void {
 	// Case 1: CAMUNDA_SECURE_CONNECTION is true and ZEEBE_INSECURE_CONNECTION is true
 	if (
@@ -129,7 +127,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private retry: boolean
 	private maxRetries: number
 	private maxRetryTimeout: MaybeTimeDuration
-	private oAuthProvider: IOAuthProvider
+	private oAuthProvider: IHeadersProvider
 	private useTLS: boolean
 	private stdout: ZBCustomLogger
 	private customSSL?: CustomSSL
@@ -139,7 +137,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
-		oAuthProvider?: IOAuthProvider
+		oAuthProvider?: IHeadersProvider
 	}) {
 		super()
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(

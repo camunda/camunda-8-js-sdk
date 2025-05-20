@@ -6,12 +6,12 @@ import {
 	DeepPartial,
 	RequireConfiguration,
 } from '../../lib'
-import { IOAuthProvider } from '../index'
+import { IHeadersProvider } from '../index'
 
-import { TokenGrantAudienceType } from './IOAuthProvider'
+import { TokenGrantAudienceType } from './IHeadersProvider'
 
 /**
- * The `BearerAuthProvider` class is an implementation of {@link IOAuthProvider}
+ * The `BearerAuthProvider` class is an implementation of {@link IHeadersProvider}
  * that uses a bearer token for authentication. This class is
  * responsible for providing the authentication headers to the SDK. Note that it does
  * not handle token expiration or renewal. The token must be set manually using the
@@ -32,7 +32,7 @@ import { TokenGrantAudienceType } from './IOAuthProvider'
  * authProvider.setToken('newTokenValue')
  * ```
  */
-export class BearerAuthProvider implements IOAuthProvider {
+export class BearerAuthProvider implements IHeadersProvider {
 	protected bearerToken: string
 
 	constructor(options?: {
@@ -48,7 +48,7 @@ export class BearerAuthProvider implements IOAuthProvider {
 		)
 	}
 
-	public async getToken(audienceType: TokenGrantAudienceType) {
+	public async getHeaders(audienceType: TokenGrantAudienceType) {
 		debug(`Token request for ${audienceType}`)
 
 		return Promise.resolve({ authorization: `Bearer ${this.bearerToken}` })
