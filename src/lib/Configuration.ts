@@ -4,13 +4,14 @@ import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 
 import { Logger } from '../c8/lib/C8Logger'
-import { IHeadersProvider } from '../oauth'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - imported for TypeDoc generation, not used in code
+import type { IHeadersProvider } from '../oauth' // eslint-disable-line @typescript-eslint/no-unused-vars
 
+// This creates a type-only reference that gets erased during compilation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// type _UnusedTypes = IHeadersProvider
 const trace = debug('test:config')
-
-/** This is a hack to get the IHeadersProvider in scope for documentation generation */
-const h: IHeadersProvider = { getHeaders: async () => ({}) } // Dummy implementation for type safety
-trace('Ignore this message', h)
 
 /**
  * We want to get the environment variables from the environment.
