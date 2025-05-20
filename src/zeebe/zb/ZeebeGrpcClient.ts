@@ -61,11 +61,9 @@ const idColors = [
  * Validates settings consistency and logs warnings for conflicting TLS configuration.
  *
  * @param config The Camunda Platform 8 configuration
- * @param logger The logger instance
  */
 export function validateTlsSettings(
 	config: CamundaPlatform8Configuration
-	// logger: typeof ZBSimpleLogger
 ): void {
 	// Case 1: CAMUNDA_SECURE_CONNECTION is true and ZEEBE_INSECURE_CONNECTION is true
 	if (

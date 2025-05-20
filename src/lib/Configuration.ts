@@ -4,8 +4,13 @@ import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'neon-env'
 
 import { Logger } from '../c8/lib/C8Logger'
+import { IHeadersProvider } from '../oauth'
 
 const trace = debug('test:config')
+
+/** This is a hack to get the IHeadersProvider in scope for documentation generation */
+const h: IHeadersProvider = { getHeaders: async () => ({}) } // Dummy implementation for type safety
+trace('Ignore this message', h)
 
 /**
  * We want to get the environment variables from the environment.
