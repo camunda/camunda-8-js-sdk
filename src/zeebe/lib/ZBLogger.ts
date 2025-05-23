@@ -8,6 +8,7 @@ import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
 interface Msg {
 	timestamp: Date
+	component: string
 	context: string
 	id?: string
 	level: number
@@ -21,7 +22,7 @@ interface Msg {
 
 export class ZBLogger {
 	// tslint:disable-next-line: variable-name
-	public _tag: 'ZBCLIENT' | 'ZBWORKER'
+	public _tag: 'ZBCLIENT' | 'ZBWORKER' | 'GRPCMIDDLEWARE'
 	public loglevel: Loglevel
 	private colorFn: Chalk | (<T extends string>(input: T) => string)
 	private taskType?: string
@@ -58,15 +59,14 @@ export class ZBLogger {
 			: pollInterval
 	}
 
-	public info(message: unknown, ...optionalParameters) {
+	public info(message: string, ...optionalParameters) {
 		if (this.loglevel === 'NONE' || this.loglevel === 'ERROR') {
 			return
 		}
-		const frame = stackTrace.get()[1]
 		const msg =
 			optionalParameters.length > 0
-				? this.makeMessage(frame, 30, message, optionalParameters)
-				: this.makeMessage(frame, 30, message)
+				? this.makeMessage(30, message, optionalParameters)
+				: this.makeMessage(30, message)
 		this.stdout.info(msg)
 	}
 
@@ -74,12 +74,11 @@ export class ZBLogger {
 		if (this.loglevel === 'NONE') {
 			return
 		}
-		const frame = stackTrace.get()[1]
 
 		const msg =
 			optionalParameters.length > 0
-				? this.makeMessage(frame, 50, message, optionalParameters)
-				: this.makeMessage(frame, 50, message)
+				? this.makeMessage(50, message, optionalParameters)
+				: this.makeMessage(50, message)
 		this.stdout.error(msg)
 	}
 
@@ -87,12 +86,11 @@ export class ZBLogger {
 		if (this.loglevel !== 'DEBUG') {
 			return
 		}
-		const frame = stackTrace.get()[1]
 
 		const msg =
 			optionalParameters.length > 0
-				? this.makeMessage(frame, 20, message, optionalParameters)
-				: this.makeMessage(frame, 20, message)
+				? this.makeMessage(20, message, optionalParameters)
+				: this.makeMessage(20, message)
 		if (this.stdout === console) {
 			this.stdout.info(this._colorise(msg))
 		} else {
@@ -104,27 +102,27 @@ export class ZBLogger {
 		if (this.loglevel === 'NONE' || this.loglevel === 'ERROR') {
 			return
 		}
-		const frame = stackTrace.get()[1]
 
 		const msg =
 			optionalParameters.length > 0
-				? this.makeMessage(frame, 30, message, optionalParameters)
-				: this.makeMessage(frame, 30, message)
+				? this.makeMessage(30, message, optionalParameters)
+				: this.makeMessage(30, message)
 		this.stdout.info(msg)
 	}
 
 	private makeMessage(
-		frame: stackTrace.StackFrame,
 		level: number,
-		message,
-		...optionalParameters
+		message: string,
+		...optionalParameters: unknown[]
 	) {
+		const context = makeUsefulStacktrace()
 		const msg: Msg = {
 			timestamp: new Date(),
-			context: `${frame.getFileName()}:${frame.getLineNumber()}`,
+			context, //`${frame.getFileName()}:${frame.getLineNumber()}`,
 			level,
 			message,
 			time: dayjs().format('YYYY MMM-DD HH:mm:ssA'),
+			component: this._tag,
 		}
 
 		if (this.id) {
@@ -156,4 +154,23 @@ export class ZBLogger {
 		}
 		return message
 	}
+}
+
+function makeUsefulStacktrace(): string {
+	const frame = stackTrace.get()
+	return JSON.stringify(
+		frame
+			.filter((callsite) => {
+				const shouldInclude = !(
+					callsite.getFileName().includes('ZBLogger') ||
+					callsite.getFileName().includes('StatefulLogInterceptor')
+				)
+				// console.log(callsite.getFileName(), shouldInclude)
+				return shouldInclude
+			})
+			.map(
+				(callsite) =>
+					`${callsite.getFileName()}:${callsite.getLineNumber()} ${callsite.getFunctionName()}`
+			)
+	)
 }
