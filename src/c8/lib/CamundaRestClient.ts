@@ -68,6 +68,8 @@ import {
 	SearchProcessInstanceRequest,
 	SearchProcessInstanceResponse,
 	SearchTasksRequest,
+	SearchUsersRequest,
+	SearchUsersResponse,
 	SearchUserTasksResponse,
 	SearchVariablesRequest,
 	SearchVariablesResponse,
@@ -483,7 +485,7 @@ export class CamundaRestClient {
 		return this.rest.then((rest) =>
 			rest
 				.post(`users`, {
-					body: JSON.stringify(newUserInfo),
+					body: losslessStringify(newUserInfo),
 					headers,
 				})
 				.json()
@@ -491,12 +493,47 @@ export class CamundaRestClient {
 	}
 
 	/**
-	 * Search for user tasks based on given criteria.
+	 * Search users for tenant.
 	 *
-	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/query-user-tasks-alpha/
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/find-users/
+	 *
 	 * @since 8.8.0
 	 */
-	// public async searchUserTasks() {}
+	public async searchUsers(
+		request: SearchUsersRequest
+	): Promise<SearchUsersResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`users/search`, {
+					body: losslessStringify(request),
+					headers,
+				})
+				.json()
+		)
+	}
+
+	/**
+	 * Search users for tenant.
+	 *
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-users-for-tenant/
+	 *
+	 * @since 8.8.0
+	 */
+	public async searchUsersForTenant(
+		tenantId: string,
+		request: SearchUsersRequest
+	): Promise<SearchUsersResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.post(`tenants/${tenantId}/users/search`, {
+					body: losslessStringify(request),
+					headers,
+				})
+				.json()
+		)
+	}
 
 	/**
 	 * Publish a Message and correlates it to a subscription. If correlation is successful it will return the first process instance key the message correlated with.
@@ -1445,10 +1482,11 @@ export class CamundaRestClient {
 	): JobWithMethods<Variables, CustomHeaders> => {
 		return {
 			...job,
-			cancelWorkflow: () => {
-				return this.cancelProcessInstance({
+			cancelWorkflow: async () => {
+				await this.cancelProcessInstance({
 					processInstanceKey: job.processInstanceKey,
-				}).then(() => JOB_ACTION_ACKNOWLEDGEMENT)
+				})
+				return JOB_ACTION_ACKNOWLEDGEMENT
 			},
 			complete: (variables: IProcessVariables = {}) =>
 				this.completeJob({

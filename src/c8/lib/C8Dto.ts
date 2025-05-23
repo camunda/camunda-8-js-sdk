@@ -60,11 +60,11 @@ export interface JobUpdateChangeset {
 
 export interface NewUserInfo {
 	password: string
-	id: number
+	// id: number
 	username: string
 	name: string
 	email: string
-	enabled: boolean
+	// enabled: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1017,3 +1017,46 @@ export interface RawApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
 export type ApiEndpointRequest<T> =
 	| JsonApiEndpointRequest<T>
 	| RawApiEndpointRequest<T>
+export interface SearchUsersRequest {
+	/** Pagination criteria. */
+	page: SearchPageRequest
+	/** Sort field criteria. */
+	sort: Array<{
+		/** The field to sort by. */
+		field: 'username' | 'name' | 'email'
+		/** The order in which to sort the related field. */
+		order?: 'ASC' | 'DESC'
+	}>
+	/** User search filter. */
+	filter: {
+		/** The username of the user. */
+		username?: string
+		/** The name of the user. */
+		name?: string
+		/** The email of the user. */
+		email?: string
+	}
+}
+
+class UserItem extends LosslessDto {
+	/** The ID of the user. */
+	@Int64String
+	id!: string
+	/** The key of the user. */
+	key!: string
+	/** The username of the user. */
+	username!: string
+	/** The name of the user. */
+	name!: string
+	/** The email of the user. */
+	email!: string
+}
+
+/** The user search result. */
+export class SearchUsersResponse extends LosslessDto {
+	/** Pagination information about the search results. */
+	page!: SearchResponsePagination
+	/** The matching users. */
+	@ChildDto(UserItem)
+	items!: UserItem[]
+}
