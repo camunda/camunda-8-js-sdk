@@ -21,7 +21,7 @@ export class StatefulLogInterceptor {
 		logConfig: ZBLoggerConfig
 	}) {
 		this.characteristics = characteristics
-		this.log = new ZBLogger(logConfig)
+		this.log = new ZBLogger({ ...logConfig, _tag: 'GRPCMIDDLEWARE' })
 		this.initialConnection = false
 		this.blocking =
 			characteristics.startupTime > 0 && this.log.loglevel !== 'DEBUG'

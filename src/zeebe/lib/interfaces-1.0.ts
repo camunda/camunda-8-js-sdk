@@ -281,7 +281,7 @@ export interface ZBLoggerOptions {
 export interface ZBLoggerConfig extends ZBLoggerOptions {
 	id?: string
 	colorise?: boolean
-	_tag: 'ZBCLIENT' | 'ZBWORKER'
+	_tag: 'ZBCLIENT' | 'ZBWORKER' | 'GRPCMIDDLEWARE'
 }
 
 export type ConnectionErrorHandler = (error?: unknown) => void
