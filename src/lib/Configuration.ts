@@ -1,7 +1,7 @@
 import debug from 'debug'
 import { BeforeRequestHook } from 'got'
 import mergeWith from 'lodash.mergewith'
-import { createEnv } from 'neon-env'
+import { createEnv } from 'typed-env'
 
 import { Logger } from '../c8/lib/C8Logger'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
