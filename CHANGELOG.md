@@ -1,3 +1,14 @@
+## [8.7.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.8...v8.7.9) (2025-05-27)
+
+
+### Features
+
+* add searchUsersForTenant ([4438ad0](https://github.com/camunda/camunda-8-js-sdk/commit/4438ad0c36e6f524880eca94256bf1c302c549dd))
+* add searchUsersForTenant ([7d16d12](https://github.com/camunda/camunda-8-js-sdk/commit/7d16d126ace4328ff1e1648e87d3dd8f7b05116e))
+* **camunda:** implement searchUsers. fixes [#338](https://github.com/camunda/camunda-8-js-sdk/issues/338) ([4a981f1](https://github.com/camunda/camunda-8-js-sdk/commit/4a981f1f633e9b735f399f56800bf1d5c2fa270f))
+* **camunda:** implement searchUsers. fixes [#338](https://github.com/camunda/camunda-8-js-sdk/issues/338) ([2f3ea0d](https://github.com/camunda/camunda-8-js-sdk/commit/2f3ea0dcdb28a736b187b31e4c73a5aa5e1e35af))
+* enhance context output for ZeebeGrpcClient log messages. fixes [#467](https://github.com/camunda/camunda-8-js-sdk/issues/467) ([2ababad](https://github.com/camunda/camunda-8-js-sdk/commit/2ababadbe80c82f1f838f87ef83d9711569a6004))
+
 ## [8.7.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.7...v8.7.8) (2025-05-16)
 
 
