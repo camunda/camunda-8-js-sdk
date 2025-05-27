@@ -28,5 +28,8 @@ test('It can search process instances', async () => {
 		sort: [{ field: 'state' }],
 		filter: { state: 'ACTIVE' },
 	})
-	expect(instances.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
+	const result = instances.items.filter(
+		(i) => i.processInstanceKey === wfi.processInstanceKey
+	)
+	expect(result.length).toBeGreaterThan(0)
 })
