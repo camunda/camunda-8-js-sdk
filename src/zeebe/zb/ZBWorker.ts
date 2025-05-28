@@ -20,11 +20,11 @@ export class ZBWorker<
 		super(config)
 	}
 
-	protected handleJobs(
+	protected async handleJobs(
 		jobs: ZB.Job<WorkerInputVariables, CustomHeaderShape>[]
 	) {
 		// Call task handler for each new job
-		jobs.forEach(async (job) => this.handleJob(job))
+		await Promise.all(jobs.map((job) => this.handleJob(job)))
 	}
 
 	protected async handleJob(
@@ -78,9 +78,12 @@ export class ZBWorker<
 				)
 				try {
 					await this.zbClient.cancelProcessInstance(processInstanceKey)
+				} catch (cancelErr) {
+					this.logger.logError(`Cancel failed: ${(cancelErr as Error).message}`)
 				} finally {
 					this.drainOne()
 				}
+				return
 			} else {
 				const message = (e as Error).message
 				// This is *most probably* an error thrown because the job was not found when job.complete() or job.fail() was called.
@@ -99,30 +102,20 @@ export class ZBWorker<
 				this.logger.logInfo(`Failing job ${job.key} due to unhandled exception`)
 				const retries = job.retries - 1
 				try {
-					this.zbClient
-						.failJob({
-							errorMessage: `Unhandled exception in task handler ${e}`,
-							jobKey: job.key,
-							retries,
-							retryBackOff: 0,
-						})
-						.catch((e) => {
-							this.logger.logError(
-								'Any error was thrown while failing the job after an unhandled exception in the task handler'
-							)
-							this.logger.logError(e.message)
-						})
-				} catch (e: unknown) {
-					this.logger.logDebug(e)
+					await this.zbClient.failJob({
+						errorMessage: `Unhandled exception in task handler ${e}`,
+						jobKey: job.key,
+						retries,
+						retryBackOff: 0,
+					})
+					this.logger.logInfo(`Failed job ${job.key}, retries left: ${retries}`)
+				} catch (failErr) {
+					this.logger.logError(
+						`Error calling failJob: ${(failErr as Error).message}`
+					)
 				} finally {
 					this.drainOne()
-					if (retries > 0) {
-						this.logger.logDebug(
-							`The Zeebe engine will handle the retry. Retries left: ${retries}`
-						)
-					} else {
-						this.logger.logDebug('No retries left for this task')
-					}
+					return
 				}
 			}
 		}

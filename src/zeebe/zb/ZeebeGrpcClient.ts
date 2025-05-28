@@ -109,7 +109,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	typeof ConnectionStatusEvent
 > {
 	public connectionTolerance!: MaybeTimeDuration
-	public connected?: boolean = undefined
+	public connected = false
 	public readied = false
 	public gatewayAddress: string
 	public loglevel: Loglevel
@@ -233,9 +233,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 			grpcClient.on(ConnectionStatusEvent.connectionError, (err: Error) => {
 				debug('grpcClient emitted error event to ZeebeGrpcClient, err: ', err)
-				this.readied = false
 
-				if (this.connected !== false) {
+				if (this.connected === true) {
+					this.readied = false
 					this.connected = false
 					this.onConnectionError?.(err)
 					this.emit(ConnectionStatusEvent.connectionError)
@@ -243,12 +243,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			})
 			grpcClient.on(ConnectionStatusEvent.ready, () => {
 				debug('grpcClient emitted ready event to ZeebeGrpcClient')
-				this.connected = true
 				if (!this.readied) {
+					this.connected = true
 					this.onReady?.()
 					this.emit(ConnectionStatusEvent.ready)
+					this.readied = true
 				}
-				this.readied = true
 			})
 			this.logger = log
 			return grpcClient
@@ -302,12 +302,8 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		CustomHeaders = ZB.ICustomHeaders,
 	>(
 		request: Grpc.ActivateJobsRequest & {
-			inputVariableDto?: {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				new (...args: any[]): Readonly<Variables>
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaders> }
+			inputVariableDto?: new (...args: any[]) => Readonly<Variables>
+			customHeadersDto?: new (...args: any[]) => Readonly<CustomHeaders>
 		}
 	): Promise<ZB.Job<Variables, CustomHeaders>[]> {
 		const { inputVariableDto, customHeadersDto, ...req } = request
@@ -330,15 +326,17 @@ export class ZeebeGrpcClient extends TypedEmitter<
 					await this.grpc
 				).activateJobsStream({
 					...req,
-					tenantIds: req.tenantIds ?? this.tenantId ? [this.tenantId!] : [],
+					tenantIds:
+						req.tenantIds !== undefined
+							? req.tenantIds
+							: this.tenantId
+								? [this.tenantId]
+								: [],
 				})
 				if (stream.error) {
 					throw stream.error
 				}
 
-				stream.on('error', (e) => {
-					reject(e)
-				})
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
 					res.jobs.forEach((job) =>
 						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
@@ -347,18 +345,38 @@ export class ZeebeGrpcClient extends TypedEmitter<
 							customHeadersDtoToUse
 						)
 							.then((parsedJob) => jobs.push(parsedJob))
-							.catch((e) =>
-								this.failJob({
-									jobKey: job.key,
-									errorMessage: `Error parsing job variables ${e}`,
-									retries: job.retries - 1,
-									retryBackOff: 0,
-								})
+							.catch(
+								async (e) =>
+									await this.failJob({
+										jobKey: job.key,
+										errorMessage: `Error parsing job variables ${e}`,
+										retries: job.retries - 1,
+										retryBackOff: 0,
+									}).catch((failure) => {
+										this.logger.logError(
+											`Failed to fail job ${job.key} with error: ${failure}`
+										)
+									})
 							)
 					)
 				})
 
+				const cleanupStream = () => {
+					if (stream) {
+						stream.cancel()
+						stream.removeAllListeners('data')
+						stream.removeAllListeners('error')
+						stream.removeAllListeners('end')
+					}
+				}
+
+				stream.on('error', (e) => {
+					cleanupStream()
+					reject(e)
+				})
+
 				stream.on('end', () => {
+					cleanupStream()
 					resolve(jobs)
 				})
 			} catch (e: unknown) {
@@ -1061,8 +1079,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		 * See: https://github.com/zeebe-io/zeebe/issues/1012 and https://github.com/zeebe-io/zeebe/issues/1022
 		 */
 
+		const correlationKey = publishStartMessageRequest.correlationKey ?? uuid()
 		const publishMessageRequest: Grpc.PublishMessageRequest = {
-			correlationKey: uuid(),
+			correlationKey,
 			...publishStartMessageRequest,
 			tenantId: publishStartMessageRequest.tenantId ?? this.tenantId,
 		}
@@ -1538,9 +1557,20 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		retries?: number
 	}): Promise<T> {
 		let connectionErrorCount = 0
-		let authFailures = 0
+		let authFailureCount = 0
+		const handleError = (err: any) => {
+			const msg = err.message as string
+			const code = err.code as number | undefined
+			const isNetwork =
+				(msg.startsWith('14') || msg.includes('Stream removed')) &&
+				!msg.includes('partition')
+			const isBackpressure = msg.startsWith('8') || code === 8
+			const isAuth = msg.startsWith('16')
+			return { isNetwork, isBackpressure, isAuth }
+		}
+
 		return promiseRetry(
-			async (retry, n) => {
+			async (retry, attempt) => {
 				if (this.closing || (await this.grpc).channelClosed) {
 					/**
 					 * Should we reject instead? The idea here is that calling ZBClient.close() will allow the application to cleanly shut down.
@@ -1548,53 +1578,42 @@ export class ZeebeGrpcClient extends TypedEmitter<
 					 */
 					return Promise.resolve(null as unknown as T)
 				}
-				if (n > 1) {
+				if (attempt > 1) {
 					this.logger.logError(
-						`[${operationName}]: Attempt ${n} (max: ${this.maxRetries}).`
+						`[${operationName}]: Attempt ${attempt} (max: ${this.maxRetries}).`
 					)
 				}
-				return operation().catch(async (err) => {
-					// This could be DNS resolution, or the gRPC gateway is not reachable yet, or Backpressure
-					const isNetworkError =
-						(err.message.indexOf('14') === 0 ||
-							err.message.indexOf('Stream removed') !== -1) &&
-						!err.message.includes('partition') // Error 14 can be host unavailable (network) or partition unavailable (not network)
+				try {
+					return await operation()
+				} catch (err: any) {
+					const { isNetwork, isBackpressure, isAuth } = handleError(err)
 
-					const isBackpressure =
-						err.message.indexOf('8') === 0 || err.code === 8
-
-					const isAuthError = err.message.indexOf('16') === 0
-
-					if (isNetworkError) {
-						if (connectionErrorCount < 0) {
-							this._onConnectionError(err)
-						}
+					if (isNetwork) {
 						connectionErrorCount++
+						this._onConnectionError(err)
 					}
 
-					if (isNetworkError || isBackpressure) {
+					if (isNetwork || isBackpressure) {
 						this.logger.logError(`[${operationName}]: ${err.message}`)
-						retry(err)
-					}
-					// We will retry once, and only once for an auth error. This may be due to a token
-					// expiry edge-case.
-					// See https://github.com/camunda/camunda-8-js-sdk/issues/125
-					if (isAuthError && authFailures === 0) {
-						authFailures = 1
-						retry(err)
+						return retry(err)
 					}
 
-					// The gRPC channel will be closed if close has been called
+					if (isAuth && authFailureCount === 0) {
+						authFailureCount++
+						return retry(err)
+					}
+
 					if ((await this.grpc).channelClosed) {
 						return Promise.resolve(null as unknown as T)
 					}
+
 					throw err
-				})
+				}
 			},
 			{
 				forever: retries === -1,
-				maxTimeout: Duration.milliseconds.from(this.maxRetryTimeout),
 				retries: retries === -1 ? undefined : retries,
+				maxTimeout: Duration.milliseconds.from(this.maxRetryTimeout),
 			}
 		)
 	}

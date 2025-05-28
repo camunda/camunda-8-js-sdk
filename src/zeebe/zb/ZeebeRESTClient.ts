@@ -102,15 +102,13 @@ export class ZeebeRestClient {
 	/* Get the topology of the Zeebe cluster. */
 	public async getTopology(): Promise<TopologyResponse> {
 		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.get('topology', { headers })
-				.json()
-				.catch((error) => {
-					trace('error', error)
-					throw error
-				})
-		) as Promise<TopologyResponse>
+		const rest = await this.rest
+		try {
+			return await rest.get('topology', { headers }).json()
+		} catch (err) {
+			trace('getTopology error', err)
+			throw err
+		}
 	}
 
 	/* Completes a user task with the given key. The method either completes the task or throws 400, 404, or 409.
