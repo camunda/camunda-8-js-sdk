@@ -468,7 +468,11 @@ You should call only one job action method in the worker handler. This is a bug 
 	}
 
 	private handleStreamEnd = (id) => {
-		this.jobStream?.removeAllListeners()
+		// We do not delete the stream listeners, as the error event can be emitted asynchronously by a connection error after end
+		// for example - due to broker overload
+		// If the 'error' event has no listener, an uncaught exception that crashes the application will be thrown.
+		// The job stream will be garbage collected, and the listeners will be removed. There is no need to remove them manually.
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/466
 		this.jobStream = undefined
 		this.logger.logDebug(
 			`Deleted job stream [${id}] listeners and job stream reference`
