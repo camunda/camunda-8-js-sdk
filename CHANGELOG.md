@@ -1,3 +1,10 @@
+## [8.7.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.10...v8.7.11) (2025-05-30)
+
+
+### Bug Fixes
+
+* check the existing correlationKey first instead of using uuid() every time ([1cebb44](https://github.com/camunda/camunda-8-js-sdk/commit/1cebb443784105ff73e0e156a9ffa55c7c57a834))
+
 ## [8.7.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.9...v8.7.10) (2025-05-30)
 
 
