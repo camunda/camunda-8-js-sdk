@@ -474,9 +474,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		// The job stream will be garbage collected, and the listeners will be removed. There is no need to remove them manually.
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/466
 		this.jobStream = undefined
-		this.logger.logDebug(
-			`Deleted job stream [${id}] listeners and job stream reference`
-		)
+		this.logger.logDebug(`Deleted job stream [${id}] reference`)
 	}
 
 	private async poll() {
