@@ -1067,8 +1067,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		 * See: https://github.com/zeebe-io/zeebe/issues/1012 and https://github.com/zeebe-io/zeebe/issues/1022
 		 */
 
+		const correlationKey = publishStartMessageRequest.correlationKey ?? uuid()
 		const publishMessageRequest: Grpc.PublishMessageRequest = {
-			correlationKey: uuid(),
+			correlationKey,
 			...publishStartMessageRequest,
 			tenantId: publishStartMessageRequest.tenantId ?? this.tenantId,
 		}
