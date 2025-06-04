@@ -109,6 +109,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	typeof ConnectionStatusEvent
 > {
 	public connectionTolerance!: MaybeTimeDuration
+	/**
+	 * connected is a ternary that indicates the connection status of the client.
+	 * Undefined means "we don't know the connection status"
+	 * False means "we know we are not connected"
+	 * True means "we know we are connected"
+	 */
 	public connected?: boolean = undefined
 	public readied = false
 	public gatewayAddress: string
