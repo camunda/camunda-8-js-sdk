@@ -1,3 +1,10 @@
+## [8.7.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.11...v8.7.12) (2025-06-04)
+
+
+### Bug Fixes
+
+* suppress cancelation error when worker is stopping. FIxes [#432](https://github.com/camunda/camunda-8-js-sdk/issues/432) ([d4f313c](https://github.com/camunda/camunda-8-js-sdk/commit/d4f313c10ae49b510acfa9f402b42d9278a7988d))
+
 ## [8.7.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.10...v8.7.11) (2025-05-30)
 
 
