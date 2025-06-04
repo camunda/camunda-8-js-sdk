@@ -54,6 +54,7 @@ import {
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
+	GetVariableResponse,
 	JobUpdateChangeset,
 	JobWithMethods,
 	JsonApiEndpointRequest,
@@ -1397,6 +1398,28 @@ export class CamundaRestClient {
 			urlPath: `decision-definitions/evaluation`,
 			body: request,
 		})
+	}
+
+	/**
+	 * @description Get the variable by the variable key. Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-variable/
+	 * @since 8.8.0
+	 */
+	public async getVariable(req: {
+		variableKey: string
+	}): Promise<GetVariableResponse> {
+		const headers = await this.getHeaders()
+		return this.rest.then((rest) =>
+			rest
+				.get(`variables/${req.variableKey}`, { headers })
+				.json<GetVariableResponse>()
+				.then((response) => {
+					// We need to parse the response with LosslessNumbers, as the API returns numbers as strings
+					return {
+						...response,
+						value: JSON.parse(response.value),
+					}
+				})
+		) as Promise<GetVariableResponse>
 	}
 
 	/**
