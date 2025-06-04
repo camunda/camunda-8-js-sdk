@@ -228,6 +228,11 @@ export class CamundaJobWorker<
 				this.backoffRetryCount = 0
 			})
 			.catch((e) => {
+				// If the poll was cancelled because the worker is stopping, we don't need to log an error — the canceled promise rejection is expected.
+				// https://github.com/camunda/camunda-8-js-sdk/issues/432
+				if (this.stopping && e.code === 'ERR_CANCELED') {
+					return
+				}
 				// This can throw a 400, 401, or 500 REST Error with the Content-Type application/problem+json
 				// The schema is:
 				// { type: string, title: string, status: number, detail: string, instance: string }
