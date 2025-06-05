@@ -1,3 +1,11 @@
+## [8.7.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.12...v8.7.13) (2025-06-05)
+
+
+### Features
+
+* add getVariable to Rest API client. Fixes [#344](https://github.com/camunda/camunda-8-js-sdk/issues/344) ([ecacfda](https://github.com/camunda/camunda-8-js-sdk/commit/ecacfdac8d94a0cd292c7138b04e7871400bc703))
+* add static method to OAuthProvider to clear file cache ([754bc20](https://github.com/camunda/camunda-8-js-sdk/commit/754bc2000dd42a4055a00dec6cc40138db7a78f6))
+
 ## [8.7.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.11...v8.7.12) (2025-06-04)
 
 
