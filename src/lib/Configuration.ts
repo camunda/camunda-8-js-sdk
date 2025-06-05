@@ -345,7 +345,7 @@ const zeebeEnv = createEnv({
 	ZEEBE_CLIENT_LOG_LEVEL: {
 		type: 'string',
 		optional: true,
-		choices: ['DEBUG', 'INFO', 'NONE'],
+		choices: ['DEBUG', 'INFO', 'ERROR', 'NONE'],
 		default: 'INFO',
 	},
 	/** Immediately connect to the Zeebe Gateway (issues a silent topology request). Defaults to false */
