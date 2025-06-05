@@ -1060,3 +1060,12 @@ export class SearchUsersResponse extends LosslessDto {
 	@ChildDto(UserItem)
 	items!: UserItem[]
 }
+
+export class GetVariableResponse {
+	variableKey!: string
+	scopeKey!: string
+	processInstanceKey!: string
+	name!: string
+	value!: string
+	tenantId!: string
+}

@@ -41,14 +41,14 @@ afterAll(() => {
 	EnvironmentSetup.restoreEnv(storedEnvironment)
 })
 
-function removeCacheDir(dirpath: string) {
-	if (fs.existsSync(dirpath)) {
-		fs.rmSync(dirpath, {
-			recursive: true,
-			force: true,
-		})
-	}
-}
+// function removeCacheDir(dirpath: string) {
+// 	if (fs.existsSync(dirpath)) {
+// 		fs.rmSync(dirpath, {
+// 			recursive: true,
+// 			force: true,
+// 		})
+// 	}
+// }
 
 describe('OAuthProvider', () => {
 	it('Throws in the constructor if there in no clientId credentials', () => {
@@ -117,10 +117,10 @@ describe('OAuthProvider', () => {
 
 	it('Gets the token cache dir from the environment', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
-		removeCacheDir(tokenCacheDir)
-		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
 		const { OAuthProvider } = require('../../oauth')
+		OAuthProvider.clearCacheDir(tokenCacheDir)
+		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 
 		const o = new OAuthProvider({
 			config: {
@@ -133,7 +133,7 @@ describe('OAuthProvider', () => {
 		expect(o).toBeTruthy()
 		const exists = fs.existsSync(tokenCacheDir)
 		expect(exists).toBe(true)
-		removeCacheDir(tokenCacheDir)
+		OAuthProvider.clearCacheDir(tokenCacheDir)
 
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
@@ -142,8 +142,7 @@ describe('OAuthProvider', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
 		const { OAuthProvider } = require('../../oauth')
-		removeCacheDir(tokenCacheDir)
-
+		OAuthProvider.clearCacheDir(tokenCacheDir)
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 
 		const o = new OAuthProvider({
@@ -157,7 +156,7 @@ describe('OAuthProvider', () => {
 
 		expect(o).toBeTruthy()
 		expect(fs.existsSync(tokenCacheDir)).toBe(true)
-		removeCacheDir(tokenCacheDir)
+		OAuthProvider.clearCacheDir(tokenCacheDir)
 
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
@@ -166,7 +165,7 @@ describe('OAuthProvider', () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
 		const { OAuthProvider } = require('../../oauth')
-		removeCacheDir(tokenCacheDir)
+		OAuthProvider.clearCacheDir(tokenCacheDir)
 
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 		if (os.platform() === 'win32') {
@@ -203,7 +202,7 @@ describe('OAuthProvider', () => {
 		if (os.platform() === 'win32') {
 			execSync(`icacls ${tokenCacheDir} /grant Everyone:(OI)(CI)(F)`)
 		}
-		removeCacheDir(tokenCacheDir)
+		OAuthProvider.clearCacheDir(tokenCacheDir)
 		expect(thrown).toBe(true)
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
