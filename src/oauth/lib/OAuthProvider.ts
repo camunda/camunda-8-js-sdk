@@ -74,6 +74,20 @@ export class OAuthProvider implements IHeadersProvider {
 	private rest: Promise<typeof got>
 	private log: Logger
 
+	/**
+	 *
+	 * @param dir Optional directory to clear the cache from. If not provided, the default cache directory is used.
+	 * @description Clears the OAuth token cache directory. This will remove all cached tokens from the specified directory.
+	 */
+	public static clearCacheDir(dir?: string) {
+		const cacheDir = dir ?? OAuthProvider.defaultTokenCache
+		if (fs.existsSync(cacheDir)) {
+			fs.rmSync(cacheDir, {
+				recursive: true,
+				force: true,
+			})
+		}
+	}
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
 	}) {
