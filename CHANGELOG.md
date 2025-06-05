@@ -1,3 +1,10 @@
+## [8.7.14](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.13...v8.7.14) (2025-06-05)
+
+
+### Bug Fixes
+
+* prevent ZBLogger crash when stacktrace is undefined ([d9b757f](https://github.com/camunda/camunda-8-js-sdk/commit/d9b757f734b7daf768e75a03843b4cdb43da0870))
+
 ## [8.7.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.12...v8.7.13) (2025-06-05)
 
 
