@@ -1567,8 +1567,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 							err.message.indexOf('Stream removed') !== -1) &&
 						!err.message.includes('partition') // Error 14 can be host unavailable (network) or partition unavailable (not network)
 
+					// Inability of the gateway to send a request to the broker, or the gateway is responding with backpressure.
+					// Error 4 is DEADLINE_EXCEEDED: Time out between gateway and broker
+					// Error 8 is Backpressure
+					// See: https://github.com/camunda/camunda-8-js-sdk/issues/484
 					const isBackpressure =
-						err.message.indexOf('8') === 0 || err.code === 8
+						err.message.indexOf('8') === 0 || err.code === 8 || err.code === 4 // Error 8 is Backpressure, and error code 4 is DEADLINE_EXCEEDED: Time out between gateway and broker
 
 					const isAuthError = err.message.indexOf('16') === 0
 

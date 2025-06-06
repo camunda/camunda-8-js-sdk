@@ -92,7 +92,6 @@ export class ZBStreamWorker implements IZBJobWorker {
 				this.streams.push(stream)
 				return {
 					close: () => {
-						stream.removeAllListeners()
 						stream.cancel()
 						stream.destroy()
 					},
@@ -102,7 +101,6 @@ export class ZBStreamWorker implements IZBJobWorker {
 
 	close() {
 		this.streams.forEach((s) => {
-			s.removeAllListeners()
 			s.cancel()
 			s.destroy()
 		})

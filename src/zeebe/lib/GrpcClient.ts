@@ -395,7 +395,6 @@ export class GrpcClient extends EventEmitter {
 
 					// Free the stream resources. When it emits 'end', we remove all listeners and destroy it.
 					stream.on('end', () => {
-						stream.removeAllListeners()
 						stream.destroy()
 					})
 
