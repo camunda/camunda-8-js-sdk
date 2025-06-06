@@ -1,3 +1,10 @@
+## [8.7.15](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.14...v8.7.15) (2025-06-06)
+
+
+### Bug Fixes
+
+* destroy streams rather than removing all listeners. Fixes [#466](https://github.com/camunda/camunda-8-js-sdk/issues/466) ([2d12170](https://github.com/camunda/camunda-8-js-sdk/commit/2d12170387c3bc06f1a2ecd3c31fba20132b6ae4))
+
 ## [8.7.14](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.13...v8.7.14) (2025-06-05)
 
 
