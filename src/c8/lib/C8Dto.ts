@@ -1069,3 +1069,20 @@ export class GetVariableResponse {
 	value!: string
 	tenantId!: string
 }
+
+export interface GetProcessDefinitionResponse {
+	/** Name of this process definition. */
+	name: string
+	/** Resource name for this process definition. */
+	resourceName: string
+	/** Version of this process definition. */
+	version: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId: string
+	/** Tenant ID of this process definition. */
+	tenantId: string
+	/** The key for this process definition. */
+	processDefinitionKey: string
+}
