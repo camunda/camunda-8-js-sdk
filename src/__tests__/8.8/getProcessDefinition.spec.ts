@@ -8,5 +8,7 @@ test('It can get the Process Definition', async () => {
 	])
 	const key = res.processes[0].processDefinitionKey
 	const processDefinition = await c8.getProcessDefinition(key)
-	expect(processDefinition).toBeTruthy()
+	expect(processDefinition.processDefinitionId).toBe(
+		'search-process-instances-test'
+	)
 })
