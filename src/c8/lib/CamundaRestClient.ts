@@ -54,6 +54,7 @@ import {
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
+	GetProcessDefinitionResponse,
 	GetVariableResponse,
 	JobUpdateChangeset,
 	JobWithMethods,
@@ -1431,6 +1432,15 @@ export class CamundaRestClient {
 			method: 'GET',
 			json: false,
 			urlPath: `process-definitions/${processDefinitionKey}/xml`,
+		})
+	}
+
+	public async getProcessDefinition(
+		processDefinitionKey: string
+	): Promise<GetProcessDefinitionResponse> {
+		return this.callApiEndpoint<unknown, GetProcessDefinitionResponse>({
+			method: 'GET',
+			urlPath: `process-definitions/${processDefinitionKey}`,
 		})
 	}
 
