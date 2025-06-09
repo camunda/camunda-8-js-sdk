@@ -1407,19 +1407,31 @@ export class CamundaRestClient {
 	public async getVariable(req: {
 		variableKey: string
 	}): Promise<GetVariableResponse> {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.get(`variables/${req.variableKey}`, { headers })
-				.json<GetVariableResponse>()
-				.then((response) => {
-					// We need to parse the response with LosslessNumbers, as the API returns numbers as strings
-					return {
-						...response,
-						value: JSON.parse(response.value),
-					}
-				})
-		) as Promise<GetVariableResponse>
+		return this.callApiEndpoint<unknown, GetVariableResponse>({
+			method: 'GET',
+			urlPath: `variables/${req.variableKey}`,
+		}).then((response) => {
+			// We need to parse the response with LosslessNumbers, as the API returns numbers as strings
+			return {
+				...response,
+				value: JSON.parse(response.value),
+			}
+		})
+	}
+
+	/**
+	 * @description Returns process definition as XML.
+	 * @param processDefinitionKey The assigned key of the process definition, which acts as a unique identifier for this process.
+	 * @returns
+	 */
+	public async getProcessDefinitionXML(
+		processDefinitionKey: string
+	): Promise<string> {
+		return this.callApiEndpoint({
+			method: 'GET',
+			json: false,
+			urlPath: `process-definitions/${processDefinitionKey}/xml`,
+		})
 	}
 
 	/**
@@ -1433,7 +1445,7 @@ export class CamundaRestClient {
 
 	public callApiEndpoint<T>(
 		request: RawApiEndpointRequest<T>
-	): PCancelable<Response<string>>
+	): PCancelable<string>
 
 	public callApiEndpoint<T, V = unknown>(
 		request: ApiEndpointRequest<T>
@@ -1488,7 +1500,7 @@ export class CamundaRestClient {
 				if (request.json ?? true) {
 					return gotRequest.json<V>().then(resolve)
 				}
-				return gotRequest.then(resolve)
+				return gotRequest.then((response) => resolve(response.body as V))
 			} catch (e) {
 				reject(e)
 			}
