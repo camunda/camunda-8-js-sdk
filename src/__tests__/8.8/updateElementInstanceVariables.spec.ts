@@ -1,6 +1,5 @@
-import { CamundaJobWorker, CamundaRestClient, PollingOperation } from '../../..'
-
-import { LosslessDto } from './../../../lib'
+import { CamundaJobWorker, CamundaRestClient, PollingOperation } from '../..'
+import { LosslessDto } from '../../lib'
 
 const c8 = new CamundaRestClient()
 
