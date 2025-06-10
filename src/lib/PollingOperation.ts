@@ -19,11 +19,23 @@ interface PollingOperationOptions<T> {
 	timeout?: number
 }
 
+class PredicateError<T> extends Error {
+	result: T | null
+	constructor(message: string) {
+		super(message)
+		this.name = 'PredicateError'
+		// Ensure the prototype chain is correctly set up
+		Object.setPrototypeOf(this, PredicateError.prototype)
+		this.result = null
+	}
+}
 /**
- * Poll for a result of an operation until it returns a valid result or times out.
- * This is useful for operations that may take some time to complete, such as waiting for a process instance to finish.
+ * Poll for a result of an operation until it returns an awaited result or times out.
+ * This is useful for operations that may take some time to complete, such as waiting for a process instance to finish or data to propagate to query indices.
+ * Takes an optional prediicate function to determine if the result is the awaited one. By default, it checks if the result is not null or undefined and has at least one item in the `items` array.
  * @param options options for the polling operation
- * @returns either the result of the operation or an error if the operation times out
+ * @returns either the result of the operation or an error if the operation times out. If results were returned, but the predicate was not met, a PredicateError is thrown.
+ * Otherwise, the failure is propagated as an error.
  */
 export function PollingOperation<T extends { items: Array<unknown> }>(
 	options: PollingOperationOptions<T>
@@ -39,14 +51,16 @@ export function PollingOperation<T extends { items: Array<unknown> }>(
 			try {
 				const result = await operation()
 				if (!predicate(result)) {
-					throw new Error('No items found in the result')
+					const error = new PredicateError<T>('Predicate did not match')
+					error.result = result
+					throw error
 				}
 				resolve(result)
 			} catch (error) {
 				if (Date.now() - startTime < timeout) {
 					setTimeout(poll, interval)
 				} else {
-					reject(new Error('Polling operation timed out'))
+					reject(error)
 				}
 			}
 		}

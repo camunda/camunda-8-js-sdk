@@ -4,7 +4,7 @@ import { LosslessDto } from './../../../lib'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(10000)
+jest.setTimeout(15000)
 
 test('It can update the variables of an Element Instance', async () => {
 	const res = await c8.deployResourcesFromFiles([
@@ -28,7 +28,7 @@ test('It can update the variables of an Element Instance', async () => {
 				},
 			}),
 		interval: 500,
-		timeout: 5000,
+		timeout: 10000,
 	})
 	expect(elementInstances.items.length).toBe(1)
 	const { elementInstanceKey } = elementInstances.items[0]
