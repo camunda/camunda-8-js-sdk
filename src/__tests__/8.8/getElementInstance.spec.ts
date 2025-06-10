@@ -4,7 +4,7 @@ const c8 = new CamundaRestClient()
 
 jest.setTimeout(10000)
 
-test('It can search Element Instances', async () => {
+test('It can get an Element Instance', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/rest-search-element-instances-test.bpmn',
 	])
@@ -21,6 +21,10 @@ test('It can search Element Instances', async () => {
 		filter: { processDefinitionKey: key },
 	})
 	expect(elementInstances).toBeDefined()
+	const elementInstance = await c8.getElementInstance(
+		elementInstances.items[0].elementInstanceKey
+	)
+	expect(elementInstance.elementId).toBe('StartEvent_1')
 	await c8.cancelProcessInstance({
 		processInstanceKey: processInstance.processInstanceKey,
 	})

@@ -51,6 +51,7 @@ import {
 	DeployResourceResponse,
 	DeployResourceResponseDto,
 	DownloadDocumentRequest,
+	ElementInstanceDetails,
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
@@ -1466,6 +1467,11 @@ export class CamundaRestClient {
 		})
 	}
 
+	/**
+	 * @description Search for element instances based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-element-instances/
+	 * @since 8.8.0
+	 */
 	public async searchElementInstances(
 		request: SearchElementInstancesRequest
 	): Promise<SearchElementInstancesResponse> {
@@ -1476,6 +1482,18 @@ export class CamundaRestClient {
 			method: 'POST',
 			urlPath: `element-instances/search`,
 			body: request,
+		})
+	}
+
+	/**
+	 * @description Returns element instance as JSON.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-element-instance/
+	 * @since 8.8.0
+	 */
+	public async getElementInstance(elementInstanceKey: string) {
+		return this.callApiEndpoint<unknown, ElementInstanceDetails>({
+			method: 'GET',
+			urlPath: `element-instances/${elementInstanceKey}`,
 		})
 	}
 
