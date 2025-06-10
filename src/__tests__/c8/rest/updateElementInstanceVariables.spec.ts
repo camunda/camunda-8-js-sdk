@@ -1,6 +1,4 @@
-import { CamundaJobWorker } from 'c8/lib/CamundaJobWorker'
-
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaJobWorker, CamundaRestClient } from '../../..'
 
 import { LosslessDto } from './../../../lib'
 
@@ -8,7 +6,7 @@ const c8 = new CamundaRestClient()
 
 jest.setTimeout(10000)
 
-test('It can get update the variables of an Element Instance', async () => {
+test('It can update the variables of an Element Instance', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/rest-search-element-instances-test.bpmn',
 	])
