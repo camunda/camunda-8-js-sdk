@@ -110,8 +110,8 @@ test('Can service a task with complete.success', (done) => {
 test('An already completed job will throw NOT_FOUND if another worker invocation tries to complete it', (done) => {
 	let alreadyActivated = false
 	let threw = false
-	const jobTimeout = 30000 // The job is made available for reactivation after this time
-	const jobDuration = 40000 // The job takes this long to complete
+	const jobTimeout = 10000 // The job is made available for reactivation after this time
+	const jobDuration = 15000 // The job takes this long to complete
 	const secondWorkerDuration = jobDuration - jobTimeout + 5000 // The second worker will try to complete the job after this time
 	zbc
 		.createProcessInstance({

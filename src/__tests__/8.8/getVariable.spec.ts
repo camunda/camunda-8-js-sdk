@@ -1,8 +1,10 @@
 import path from 'node:path'
 
+import { PollingOperation } from 'lib/PollingOperation'
+
 import { CamundaJobWorker } from '../../c8/lib/CamundaJobWorker'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
-import { delay, LosslessDto } from '../../lib'
+import { LosslessDto } from '../../lib'
 
 let processDefinitionId: string
 let worker: CamundaJobWorker<LosslessDto, LosslessDto>
@@ -30,13 +32,16 @@ test('Can get a variable', (done) => {
 	worker = restClient.createJobWorker({
 		type: 'get-variable',
 		jobHandler: async (job) => {
-			// We know the process instance exists, we wait for Operate to sync
-			await delay(5000)
 			// query variables to get the variable key
-			const variables = await restClient.searchVariables({
-				filter: {
-					processInstanceKey: job.processInstanceKey,
-				},
+			const variables = await PollingOperation({
+				operation: () =>
+					restClient.searchVariables({
+						filter: {
+							processInstanceKey: job.processInstanceKey,
+						},
+					}),
+				interval: 500,
+				timeout: 5000,
 			})
 
 			const { variableKey } = variables.items[0]

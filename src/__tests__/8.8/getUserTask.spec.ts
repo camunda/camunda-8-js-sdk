@@ -1,5 +1,7 @@
 import { randomUUID } from 'crypto'
 
+import { PollingOperation } from 'lib/PollingOperation'
+
 import { CreateProcessInstanceResponse } from '../../c8/lib/C8Dto'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
@@ -31,21 +33,27 @@ test('It can search user tasks', async () => {
 		},
 	})
 	expect(wfi.processDefinitionKey).toBe(key)
-	await new Promise((r) => setTimeout(r, 7000))
+
 	// Search user tasks
-	const tasks = await c8.searchUserTasks({
-		page: {
-			from: 0,
-			limit: 10,
-		},
-		filter: {
-			state: 'CREATED',
-		},
-		sort: [
-			{
-				field: 'creationDate',
-			},
-		],
+	const tasks = await PollingOperation({
+		operation: () =>
+			c8.searchUserTasks({
+				page: {
+					from: 0,
+					limit: 10,
+				},
+				filter: {
+					state: 'CREATED',
+					processInstanceKey: wfi.processInstanceKey,
+				},
+				sort: [
+					{
+						field: 'creationDate',
+					},
+				],
+			}),
+		interval: 500,
+		timeout: 7000,
 	})
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
 	const task = await c8.getUserTask(tasks.items[0].userTaskKey)

@@ -1,6 +1,7 @@
 import { LosslessNumber } from 'lossless-json'
 
 import { HTTPError, RestError } from '../../lib'
+import { PollingOperation } from '../../lib/PollingOperation'
 import { OperateApiClient } from '../../operate'
 import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
 import { ZeebeGrpcClient } from '../../zeebe'
@@ -49,26 +50,21 @@ test('getJSONVariablesforProcess works', async () => {
 		},
 	})
 
-	// Wait for Operate to catch up.
-	// Make sure that the process instance exists in Operate.
-	// Operate is eventually consistent, so we need to wait a bit.
-	const maxRetries = 15
-	const delay = 1000
-	let process
-
-	for (let i = 0; i < maxRetries; i++) {
-		process = await c.getProcessInstance(p.processInstanceKey).catch(() => null)
-		if (process) break
-		await new Promise((res) => setTimeout(res, delay))
-	}
-	if (!process) {
-		throw new Error('Process instance not found within the timeout period')
-	}
+	const process = await PollingOperation({
+		operation: () => c.getProcessInstance(p.processInstanceKey),
+		predicate: (res) => res.key === p.processInstanceKey,
+		interval: 500,
+		timeout: 15000,
+	})
 
 	expect(process.key).toBe(p.processInstanceKey)
 	// We need to wait further for the variables to be populated in Operate
-	await new Promise((res) => setTimeout(res, 5000))
-	const res = await c.getJSONVariablesforProcess(p.processInstanceKey)
+	const res = await PollingOperation({
+		operation: () => c.getJSONVariablesforProcess(p.processInstanceKey),
+		predicate: (r) => !!r,
+		interval: 500,
+		timeout: 5000,
+	})
 
 	expect(res.foo).toBe('bar')
 })
@@ -99,23 +95,22 @@ test('getVariablesforProcess paging works', async () => {
 	// Wait for Operate to catch up.
 	// Make sure that the process instance exists in Operate.
 	// Operate is eventually consistent, so we need to wait a bit.
-	const maxRetries = 15
-	const delay = 1000
-	let process
-
-	for (let i = 0; i < maxRetries; i++) {
-		process = await c.getProcessInstance(p.processInstanceKey).catch(() => null)
-		if (process) break
-		await new Promise((res) => setTimeout(res, delay))
-	}
-	if (!process) {
-		throw new Error('Process instance not found within the timeout period')
-	}
+	const process = await PollingOperation({
+		operation: () => c.getProcessInstance(p.processInstanceKey),
+		predicate: (res) => res.key === p.processInstanceKey,
+		interval: 500,
+		timeout: 15000,
+	})
 
 	expect(process.key).toBe(p.processInstanceKey)
 	// We need to wait further for the variables to be populated in Operate
-	await new Promise((res) => setTimeout(res, 5000))
-	const res = await c.getVariablesforProcess(p.processInstanceKey, { size: 5 })
+	const res = await PollingOperation({
+		operation: () =>
+			c.getVariablesforProcess(p.processInstanceKey, { size: 5 }),
+		predicate: (r) => r.items.length > 0,
+		interval: 500,
+		timeout: 5000,
+	})
 	expect(res.items[0].name).toBe('foo')
 	const nextPage = await c.getVariablesforProcess(p.processInstanceKey, {
 		size: 5,
@@ -168,5 +163,6 @@ test('test error type', async () => {
 			expect(e instanceof HTTPError).toBe(true)
 			return false
 		})
+	await zeebe.cancelProcessInstance(p.processInstanceKey).catch((e) => e) // Cleanup the process instance, but it should not exist anymore.
 	expect(res).toBe(false)
 })
