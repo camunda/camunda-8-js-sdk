@@ -1,4 +1,4 @@
-import { CamundaJobWorker, CamundaRestClient } from '../../..'
+import { CamundaJobWorker, CamundaRestClient, PollingOperation } from '../../..'
 
 import { LosslessDto } from './../../../lib'
 
@@ -18,13 +18,17 @@ test('It can update the variables of an Element Instance', async () => {
 			variableToUpdate: 'initialValue',
 		},
 	})
-	await new Promise((r) => setTimeout(r, 5000))
-	const elementInstances = await c8.searchElementInstances({
-		sort: [{ field: 'processInstanceKey' }],
-		filter: {
-			processInstanceKey: processInstance.processInstanceKey,
-			type: 'SERVICE_TASK',
-		},
+	const elementInstances = await PollingOperation({
+		operation: () =>
+			c8.searchElementInstances({
+				sort: [{ field: 'processInstanceKey' }],
+				filter: {
+					processInstanceKey: processInstance.processInstanceKey,
+					type: 'SERVICE_TASK',
+				},
+			}),
+		interval: 500,
+		timeout: 5000,
 	})
 	expect(elementInstances.items.length).toBe(1)
 	const { elementInstanceKey } = elementInstances.items[0]
