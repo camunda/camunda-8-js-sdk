@@ -1086,3 +1086,58 @@ export interface GetProcessDefinitionResponse {
 	/** The key for this process definition. */
 	processDefinitionKey: string
 }
+
+export interface SearchProcessDefinitionsRequest {
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort: Array<{
+		field:
+			| 'processDefinitionKey'
+			| 'name'
+			| 'resourceName'
+			| 'version'
+			| 'versionTag'
+			| 'processDefinitionId'
+			| 'tenantId'
+		/** The order in which to sort the related field. Default value: ASC */
+		order?: 'ASC' | 'DESC'
+	}>
+	/** Process definition search filter. */
+	filter: {
+		/** Name of this process definition. */
+		name?: string
+		/** Resource name of this process definition. */
+		resourceName?: string
+		/** Version of this process definition. */
+		version?: number
+		/** Version tag of this process definition. */
+		versionTag?: string
+		/** Process definition ID of this process definition. */
+		processDefinitionId?: string
+		/** Tenant ID of this process definition. */
+		tenantId?: string
+		/** The key for this process definition. */
+		processDefinitionKey?: string
+	}
+}
+
+export interface SearchProcessDefinitionsResponse {
+	page: SearchResponsePagination
+	items: Array<{
+		/** Name of this process definition. */
+		name: string
+		/** Resource name for this process definition. */
+		resourceName: string
+		/** Version of this process definition. */
+		version: number
+		/** Version tag of this process definition. */
+		versionTag?: string
+		/** Process definition ID of this process definition. */
+		processDefinitionId: string
+		/** Tenant ID of this process definition. */
+		tenantId: string
+		/** The key for this process definition. */
+		processDefinitionKey: string
+	}>
+}

@@ -67,6 +67,8 @@ import {
 	PublishMessageResponse,
 	RawApiEndpointRequest,
 	RestJob,
+	SearchProcessDefinitionsRequest,
+	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
 	SearchProcessInstanceResponse,
 	SearchTasksRequest,
@@ -1441,6 +1443,24 @@ export class CamundaRestClient {
 		return this.callApiEndpoint<unknown, GetProcessDefinitionResponse>({
 			method: 'GET',
 			urlPath: `process-definitions/${processDefinitionKey}`,
+		})
+	}
+
+	/**
+	 * @description Search for process definitions based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-process-definitions/
+	 * @since 8.8.0
+	 */
+	public async searchProcessDefinitions(
+		request: SearchProcessDefinitionsRequest
+	): Promise<SearchProcessDefinitionsResponse> {
+		return this.callApiEndpoint<
+			SearchProcessDefinitionsRequest,
+			SearchProcessDefinitionsResponse
+		>({
+			method: 'POST',
+			urlPath: `process-definitions/search`,
+			body: request,
 		})
 	}
 
