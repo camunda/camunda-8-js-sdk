@@ -1159,14 +1159,12 @@ export class CamundaRestClient {
 	public async updateElementInstanceVariables(
 		req: UpdateElementVariableRequest
 	) {
-		const headers = await this.getHeaders()
-		const { elementInstanceKey, ...request } = req
-		return this.rest.then((rest) =>
-			rest.post(`element-instances/${elementInstanceKey}/variables`, {
-				headers,
-				body: stringify(request),
-			})
-		)
+		const { elementInstanceKey, ...body } = req
+		return this.callApiEndpoint({
+			urlPath: `element-instances/${elementInstanceKey}/variables`,
+			method: 'PUT',
+			body,
+		})
 	}
 
 	public getConfig() {

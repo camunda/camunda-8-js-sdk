@@ -18,6 +18,8 @@ import * as Optimize from './optimize'
 import * as Tasklist from './tasklist'
 import * as Zeebe from './zeebe'
 
+export type { CamundaJobWorker } from './c8/lib/CamundaJobWorker'
+
 CamundaSupportLogger.getInstance()
 
 export { CamundaSDKConfiguration } from './lib'
