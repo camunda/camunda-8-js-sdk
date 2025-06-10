@@ -67,6 +67,8 @@ import {
 	PublishMessageResponse,
 	RawApiEndpointRequest,
 	RestJob,
+	SearchElementInstancesRequest,
+	SearchElementInstancesResponse,
 	SearchProcessDefinitionsRequest,
 	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
@@ -1460,6 +1462,19 @@ export class CamundaRestClient {
 		>({
 			method: 'POST',
 			urlPath: `process-definitions/search`,
+			body: request,
+		})
+	}
+
+	public async searchElementInstances(
+		request: SearchElementInstancesRequest
+	): Promise<SearchElementInstancesResponse> {
+		return this.callApiEndpoint<
+			SearchElementInstancesRequest,
+			SearchElementInstancesResponse
+		>({
+			method: 'POST',
+			urlPath: `element-instances/search`,
 			body: request,
 		})
 	}
