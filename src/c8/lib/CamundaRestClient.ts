@@ -51,9 +51,11 @@ import {
 	DeployResourceResponse,
 	DeployResourceResponseDto,
 	DownloadDocumentRequest,
+	ElementInstanceDetails,
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
+	GetProcessDefinitionResponse,
 	GetVariableResponse,
 	JobUpdateChangeset,
 	JobWithMethods,
@@ -66,6 +68,10 @@ import {
 	PublishMessageResponse,
 	RawApiEndpointRequest,
 	RestJob,
+	SearchElementInstancesRequest,
+	SearchElementInstancesResponse,
+	SearchProcessDefinitionsRequest,
+	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
 	SearchProcessInstanceResponse,
 	SearchTasksRequest,
@@ -1153,14 +1159,12 @@ export class CamundaRestClient {
 	public async updateElementInstanceVariables(
 		req: UpdateElementVariableRequest
 	) {
-		const headers = await this.getHeaders()
-		const { elementInstanceKey, ...request } = req
-		return this.rest.then((rest) =>
-			rest.post(`element-instances/${elementInstanceKey}/variables`, {
-				headers,
-				body: stringify(request),
-			})
-		)
+		const { elementInstanceKey, ...body } = req
+		return this.callApiEndpoint({
+			urlPath: `element-instances/${elementInstanceKey}/variables`,
+			method: 'PUT',
+			body,
+		})
 	}
 
 	public getConfig() {
@@ -1407,19 +1411,88 @@ export class CamundaRestClient {
 	public async getVariable(req: {
 		variableKey: string
 	}): Promise<GetVariableResponse> {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.get(`variables/${req.variableKey}`, { headers })
-				.json<GetVariableResponse>()
-				.then((response) => {
-					// We need to parse the response with LosslessNumbers, as the API returns numbers as strings
-					return {
-						...response,
-						value: JSON.parse(response.value),
-					}
-				})
-		) as Promise<GetVariableResponse>
+		return this.callApiEndpoint<unknown, GetVariableResponse>({
+			method: 'GET',
+			urlPath: `variables/${req.variableKey}`,
+		}).then((response) => {
+			// We need to parse the response with LosslessNumbers, as the API returns numbers as strings
+			return {
+				...response,
+				value: JSON.parse(response.value),
+			}
+		})
+	}
+
+	/**
+	 * @description Returns process definition as XML.
+	 * @param processDefinitionKey The assigned key of the process definition, which acts as a unique identifier for this process.
+	 * @returns
+	 */
+	public async getProcessDefinitionXML(
+		processDefinitionKey: string
+	): Promise<string> {
+		return this.callApiEndpoint({
+			method: 'GET',
+			json: false,
+			urlPath: `process-definitions/${processDefinitionKey}/xml`,
+		})
+	}
+
+	public async getProcessDefinition(
+		processDefinitionKey: string
+	): Promise<GetProcessDefinitionResponse> {
+		return this.callApiEndpoint<unknown, GetProcessDefinitionResponse>({
+			method: 'GET',
+			urlPath: `process-definitions/${processDefinitionKey}`,
+		})
+	}
+
+	/**
+	 * @description Search for process definitions based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-process-definitions/
+	 * @since 8.8.0
+	 */
+	public async searchProcessDefinitions(
+		request: SearchProcessDefinitionsRequest
+	): Promise<SearchProcessDefinitionsResponse> {
+		return this.callApiEndpoint<
+			SearchProcessDefinitionsRequest,
+			SearchProcessDefinitionsResponse
+		>({
+			method: 'POST',
+			urlPath: `process-definitions/search`,
+			body: request,
+		})
+	}
+
+	/**
+	 * @description Search for element instances based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-element-instances/
+	 * @since 8.8.0
+	 */
+	public async searchElementInstances(
+		request: SearchElementInstancesRequest
+	): Promise<SearchElementInstancesResponse> {
+		return this.callApiEndpoint<
+			SearchElementInstancesRequest,
+			SearchElementInstancesResponse
+		>({
+			method: 'POST',
+			urlPath: `element-instances/search`,
+			body: request,
+		})
+	}
+
+	/**
+	 * @description Returns element instance as JSON.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/get-element-instance/
+	 * @since 8.8.0
+	 */
+	public async getElementInstance(elementInstanceKey: string) {
+		return this.callApiEndpoint<unknown, ElementInstanceDetails>({
+			method: 'GET',
+			urlPath: `element-instances/${elementInstanceKey}`,
+		})
 	}
 
 	/**
@@ -1433,7 +1506,7 @@ export class CamundaRestClient {
 
 	public callApiEndpoint<T>(
 		request: RawApiEndpointRequest<T>
-	): PCancelable<Response<string>>
+	): PCancelable<string>
 
 	public callApiEndpoint<T, V = unknown>(
 		request: ApiEndpointRequest<T>
@@ -1488,7 +1561,7 @@ export class CamundaRestClient {
 				if (request.json ?? true) {
 					return gotRequest.json<V>().then(resolve)
 				}
-				return gotRequest.then(resolve)
+				return gotRequest.then((response) => resolve(response.body as V))
 			} catch (e) {
 				reject(e)
 			}

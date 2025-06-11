@@ -1069,3 +1069,195 @@ export class GetVariableResponse {
 	value!: string
 	tenantId!: string
 }
+
+export interface GetProcessDefinitionResponse {
+	/** Name of this process definition. */
+	name: string
+	/** Resource name for this process definition. */
+	resourceName: string
+	/** Version of this process definition. */
+	version: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId: string
+	/** Tenant ID of this process definition. */
+	tenantId: string
+	/** The key for this process definition. */
+	processDefinitionKey: string
+}
+
+export interface SearchProcessDefinitionsRequest {
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort: Array<{
+		field:
+			| 'processDefinitionKey'
+			| 'name'
+			| 'resourceName'
+			| 'version'
+			| 'versionTag'
+			| 'processDefinitionId'
+			| 'tenantId'
+		/** The order in which to sort the related field. Default value: ASC */
+		order?: 'ASC' | 'DESC'
+	}>
+	/** Process definition search filter. */
+	filter: {
+		/** Name of this process definition. */
+		name?: string
+		/** Resource name of this process definition. */
+		resourceName?: string
+		/** Version of this process definition. */
+		version?: number
+		/** Version tag of this process definition. */
+		versionTag?: string
+		/** Process definition ID of this process definition. */
+		processDefinitionId?: string
+		/** Tenant ID of this process definition. */
+		tenantId?: string
+		/** The key for this process definition. */
+		processDefinitionKey?: string
+	}
+}
+
+export interface SearchProcessDefinitionsResponse {
+	page: SearchResponsePagination
+	items: Array<{
+		/** Name of this process definition. */
+		name: string
+		/** Resource name for this process definition. */
+		resourceName: string
+		/** Version of this process definition. */
+		version: number
+		/** Version tag of this process definition. */
+		versionTag?: string
+		/** Process definition ID of this process definition. */
+		processDefinitionId: string
+		/** Tenant ID of this process definition. */
+		tenantId: string
+		/** The key for this process definition. */
+		processDefinitionKey: string
+	}>
+}
+
+export interface SearchElementInstancesRequest {
+	page?: SearchPageRequest
+	sort: Array<{
+		/** The field to sort by. */
+		field:
+			| 'elementInstanceKey'
+			| 'processInstanceKey'
+			| 'processDefinitionKey'
+			| 'processDefinitionId'
+			| 'startDate'
+			| 'endDate'
+			| 'elementId'
+			| 'type'
+			| 'state'
+			| 'incidentKey'
+			| 'tenantId'
+		/** Default: ASC */
+		order?: 'ASC' | 'DESC'
+	}>
+	filter: {
+		processDefinitionId?: string
+		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+		type?:
+			| 'UNSPECIFIED'
+			| 'PROCESS'
+			| 'SUB_PROCESS'
+			| 'EVENT_SUB_PROCESS'
+			| 'AD_HOC_SUB_PROCESS'
+			| 'START_EVENT'
+			| 'INTERMEDIATE_CATCH_EVENT'
+			| 'INTERMEDIATE_THROW_EVENT'
+			| 'BOUNDARY_EVENT'
+			| 'END_EVENT'
+			| 'SERVICE_TASK'
+			| 'RECEIVE_TASK'
+			| 'USER_TASK'
+			| 'MANUAL_TASK'
+			| 'TASK'
+			| 'EXCLUSIVE_GATEWAY'
+			| 'INCLUSIVE_GATEWAY'
+			| 'PARALLEL_GATEWAY'
+			| 'EVENT_BASED_GATEWAY'
+			| 'SEQUENCE_FLOW'
+			| 'MULTI_INSTANCE_BODY'
+			| 'CALL_ACTIVITY'
+			| 'BUSINESS_RULE_TASK'
+			| 'SCRIPT_TASK'
+			| 'SEND_TASK'
+			| 'UNKNOWN'
+		elementId?: string
+		elementName?: string
+		hasIncident?: boolean
+		tenantId?: string
+		elementInstanceKey?: string
+		processInstanceKey?: string
+		processDefinitionKey?: string
+		incidentKey?: string
+	}
+}
+
+export interface ElementInstanceDetails {
+	/** The process definition ID associated to this element instance. */
+	processDefinitionId: string
+	/** Date when element instance started. */
+	startDate: string
+	/** Date when element instance finished. */
+	endDate: string
+	/** The element ID for this element instance. */
+	elementId: string
+	/** The element name for this element instance. */
+	elementName: string
+	/** Type of element as defined set of values. */
+	type:
+		| 'UNSPECIFIED'
+		| 'PROCESS'
+		| 'SUB_PROCESS'
+		| 'EVENT_SUB_PROCESS'
+		| 'AD_HOC_SUB_PROCESS'
+		| 'START_EVENT'
+		| 'INTERMEDIATE_CATCH_EVENT'
+		| 'INTERMEDIATE_THROW_EVENT'
+		| 'BOUNDARY_EVENT'
+		| 'END_EVENT'
+		| 'SERVICE_TASK'
+		| 'RECEIVE_TASK'
+		| 'USER_TASK'
+		| 'MANUAL_TASK'
+		| 'TASK'
+		| 'EXCLUSIVE_GATEWAY'
+		| 'INCLUSIVE_GATEWAY'
+		| 'PARALLEL_GATEWAY'
+		| 'EVENT_BASED_GATEWAY'
+		| 'SEQUENCE_FLOW'
+		| 'MULTI_INSTANCE_BODY'
+		| 'CALL_ACTIVITY'
+		| 'BUSINESS_RULE_TASK'
+		| 'SCRIPT_TASK'
+		| 'SEND_TASK'
+		| 'UNKNOWN'
+	/** State of element instance as defined set of values.*/
+	state: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+	/** Shows whether this element instance has an incident. If true also an incidentKey is provided.*/
+	hasIncident: boolean
+	/** The tenant ID of the incident. */
+	tenantId: string
+	/** The assigned key, which acts as a unique identifier for this element instance. */
+	elementInstanceKey: string
+	/** The process instance key associated to this element instance. */
+	processInstanceKey: string
+	/** The process definition key associated to this element instance. */
+	processDefinitionKey: string
+	/** Incident key associated with this element instance. */
+	incidentKey?: string
+}
+
+export interface SearchElementInstancesResponse {
+	page: SearchResponsePagination
+	items: Array<ElementInstanceDetails>
+}
