@@ -1,10 +1,9 @@
 import path from 'node:path'
 
-import { PollingOperation } from 'lib/PollingOperation'
-
 import { CamundaJobWorker } from '../../c8/lib/CamundaJobWorker'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../lib'
+import { PollingOperation } from '../../lib/PollingOperation'
 
 let processDefinitionId: string
 let worker: CamundaJobWorker<LosslessDto, LosslessDto>

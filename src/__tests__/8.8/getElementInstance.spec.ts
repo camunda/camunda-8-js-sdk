@@ -1,6 +1,5 @@
-import { PollingOperation } from 'lib/PollingOperation'
-
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { PollingOperation } from '../../lib/PollingOperation'
 
 const c8 = new CamundaRestClient()
 

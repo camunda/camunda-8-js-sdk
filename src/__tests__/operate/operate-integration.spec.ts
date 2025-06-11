@@ -61,7 +61,7 @@ test('getJSONVariablesforProcess works', async () => {
 	// We need to wait further for the variables to be populated in Operate
 	const res = await PollingOperation({
 		operation: () => c.getJSONVariablesforProcess(p.processInstanceKey),
-		predicate: (r) => !!r,
+		predicate: (r) => !!r.foo,
 		interval: 500,
 		timeout: 5000,
 	})
