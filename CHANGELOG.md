@@ -1,3 +1,20 @@
+## [8.7.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.15...v8.7.16) (2025-06-11)
+
+
+### Bug Fixes
+
+* fix implementation of updateElementInstanceVariables. fixes [#495](https://github.com/camunda/camunda-8-js-sdk/issues/495) ([6d36a8a](https://github.com/camunda/camunda-8-js-sdk/commit/6d36a8a6da29e8569ba6b87e532d1375e8b9b34a))
+
+
+### Features
+
+* implement getElementInstance. fixes [#302](https://github.com/camunda/camunda-8-js-sdk/issues/302) ([abf5635](https://github.com/camunda/camunda-8-js-sdk/commit/abf5635114cb0c1b8d3bb46f317bba08db6244a2))
+* implement getProcessDefinition. Fixes [#316](https://github.com/camunda/camunda-8-js-sdk/issues/316) ([94ddb86](https://github.com/camunda/camunda-8-js-sdk/commit/94ddb86c3d0064630ec007378f01396b55b0e8a0))
+* implement getProcessDefinitionXML. fixes [#317](https://github.com/camunda/camunda-8-js-sdk/issues/317) ([4c03327](https://github.com/camunda/camunda-8-js-sdk/commit/4c0332701af3c5c4243e09dd12eafe74f18d5880))
+* implement PollingOperation. fixes [#497](https://github.com/camunda/camunda-8-js-sdk/issues/497) ([b4e118d](https://github.com/camunda/camunda-8-js-sdk/commit/b4e118d84f559796c2e538ad68132d29211a0060))
+* implement searchElementInstances. fixes [#301](https://github.com/camunda/camunda-8-js-sdk/issues/301) ([c1a1ea5](https://github.com/camunda/camunda-8-js-sdk/commit/c1a1ea5e97fe011711cb4d70c6986f4d67d077f8))
+* implement searchProcessDefinitions. fixes [#315](https://github.com/camunda/camunda-8-js-sdk/issues/315) ([7700be7](https://github.com/camunda/camunda-8-js-sdk/commit/7700be7f2bbf419395e900511af285d43bca0e21))
+
 ## [8.7.15](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.14...v8.7.15) (2025-06-06)
 
 
