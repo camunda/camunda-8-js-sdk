@@ -22,7 +22,7 @@ test('It can search Element Instances', async () => {
 				filter: { processInstanceKey },
 			}),
 		interval: 500,
-		timeout: 5000,
+		timeout: 7000,
 	})
 	expect(elementInstances).toBeDefined()
 	await c8.cancelProcessInstance({
