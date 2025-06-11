@@ -1,9 +1,7 @@
 import path from 'node:path'
 
-import { CamundaJobWorker } from 'c8/lib/CamundaJobWorker'
-import { LosslessDto } from 'lib'
-
-import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { CamundaJobWorker, CamundaRestClient, PollingOperation } from '../../'
+import { LosslessDto } from '../../lib'
 
 jest.setTimeout(10000)
 let processDefinitionId: string
@@ -33,11 +31,15 @@ test('Can query variables', (done) => {
 	w = restClient.createJobWorker({
 		type: 'query-variables',
 		jobHandler: async (job) => {
-			await new Promise((res) => setTimeout(() => res(null), 5000))
-			const variables = await restClient.searchVariables({
-				filter: {
-					processInstanceKey: job.processInstanceKey,
-				},
+			const variables = await PollingOperation({
+				operation: () =>
+					restClient.searchVariables({
+						filter: {
+							processInstanceKey: job.processInstanceKey,
+						},
+					}),
+				interval: 500,
+				timeout: 5000,
 			})
 			expect(variables.items.length).toBe(1)
 			const res = await job.complete()
@@ -48,14 +50,4 @@ test('Can query variables', (done) => {
 		timeout: 10000,
 		maxJobsToActivate: 10,
 	})
-	// .then(() => {
-	// 	restClient
-	// 		.getVariable({
-	// 			variableKey: 'someNumberField',
-	// 		})
-	// 		.then((variable) => {
-	// 			expect(variable).toBe(8)
-	// 			done()
-	// 		})
-	// })
 })
