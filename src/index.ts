@@ -19,6 +19,7 @@ import * as Tasklist from './tasklist'
 import * as Zeebe from './zeebe'
 
 export { PollingOperation } from './lib/PollingOperation'
+export { QuerySubscription } from './lib/QuerySubscription'
 
 export type { CamundaJobWorker } from './c8/lib/CamundaJobWorker'
 

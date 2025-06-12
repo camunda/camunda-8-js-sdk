@@ -113,7 +113,7 @@ Here is an example of specifying a different cache directory via the constructor
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-	CAMUNDA_TOKEN_CACHE_DIR: '/tmp/cache',
+  CAMUNDA_TOKEN_CACHE_DIR: '/tmp/cache',
 })
 ```
 
@@ -174,14 +174,14 @@ You can add arbitrary headers to all requests by implementing `IOAuthProvider`:
 import { Camunda8, Auth } from '@camunda8/sdk'
 
 class MyCustomAuthProvider implements Auth.IOAuthProvider {
-	async getToken(audience: string) {
-		// here we give a static example, but this class may read configuration,
-		// exchange credentials with an endpoint, manage token lifecycles, and so forth...
-		// Return an object which will be merged with the headers on the request
-		return {
-			'x-custom-auth-header': 'someCustomValue',
-		}
-	}
+  async getToken(audience: string) {
+    // here we give a static example, but this class may read configuration,
+    // exchange credentials with an endpoint, manage token lifecycles, and so forth...
+    // Return an object which will be merged with the headers on the request
+  return {
+    'x-custom-auth-header': 'someCustomValue',
+    }
+  }
 }
 
 const customAuthProvider = new MyCustomAuthProvider()
@@ -242,19 +242,19 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-	ZEEBE_ADDRESS: 'localhost:26500',
-	ZEEBE_REST_ADDRESS: 'http://localhost:8080',
-	ZEEBE_CLIENT_ID: 'zeebe',
-	ZEEBE_CLIENT_SECRET: 'zecret',
-	CAMUNDA_OAUTH_STRATEGY: 'OAUTH',
-	CAMUNDA_OAUTH_URL:
-		'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
-	CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
-	CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
-	CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
-	CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
-	CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
-	CAMUNDA_SECURE_CONNECTION: false,
+  ZEEBE_ADDRESS: 'localhost:26500',
+  ZEEBE_REST_ADDRESS: 'http://localhost:8080',
+  ZEEBE_CLIENT_ID: 'zeebe',
+  ZEEBE_CLIENT_SECRET: 'zecret',
+  CAMUNDA_OAUTH_STRATEGY: 'OAUTH',
+  CAMUNDA_OAUTH_URL:
+    'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
+  CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
+  CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
+  CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
+  CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
+  CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
+  CAMUNDA_SECURE_CONNECTION: false,
 })
 ```
 
@@ -304,14 +304,14 @@ const logger = pino({ level }) // Logging level controlled via the logging libra
 
 logger.info('Pino logger created')
 const c8 = new Camunda8({
-	logger,
+  logger,
 })
 c8.log.info('Using pino logger')
 ```
 
 ## Awaiting Asynchronous Query Data
 
-Camunda 8 uses an eventually-consistent data architecture. When you start a process instance, data related to this process instance is not immediately available in the datastore. This leads to data synchronisation issues you need to manage in your application. To aid you with this, the SDK provides a utility: `PollingOperation`. You can pass a query API operation to this utility a polling interval, and a timeout.
+Camunda 8 uses an eventually-consistent data architecture. When you start a process instance, data related to this process instance is not immediately available in the datastore. This leads to data synchronisation issues you need to manage in your application. To aid you with this, the SDK provides a utility: `PollingOperation`. You can pass a query API operation to this utility with a polling interval and a timeout.
 
 The `PollingOperation` will execute the query repeatedly until the expected data is available in the data store, or the timeout is reached.
 
@@ -323,16 +323,16 @@ import { Camunda8, PollingOperation } from '@camunda8/sdk'
 const c8 = new Camunda8()
 
 const elementInstances = await PollingOperation({
-	operation: () =>
-		c8.searchElementInstances({
-			sort: [{ field: 'processInstanceKey' }],
-			filter: {
-				processInstanceKey: processInstance.processInstanceKey,
-				type: 'SERVICE_TASK',
-			},
-		}),
-	interval: 500,
-	timeout: 10000,
+  operation: () =>
+  c8.searchElementInstances({
+    sort: [{ field: 'processInstanceKey' }],
+    filter: {
+      processInstanceKey: processInstance.processInstanceKey,
+      type: 'SERVICE_TASK',
+    },
+  }),
+  interval: 500,
+  timeout: 10000,
 })
 ```
 
@@ -347,11 +347,59 @@ const c8 = new Camunda8()
 const c = c8.getOperateApiClient()
 
 const process = await PollingOperation({
-	operation: () => c.getProcessInstance(p.processInstanceKey),
-	predicate: (res) => res.key === p.processInstanceKey,
-	interval: 500,
-	timeout: 15000,
+  operation: () => c.getProcessInstance(p.processInstanceKey),
+  predicate: (res) => res.key === p.processInstanceKey,
+  interval: 500,
+  timeout: 15000,
 })
+```
+## Subscribing to queries
+
+You can subscribe to queries using a `QuerySubscription`. This is an event emitter that emits a `data` event when new data is available. You pass a predicate function that takes a `previous` and `current` query result set. In this predicate function you can examine the two states to see whether or not to emit a data event, and also perform data-processing — for example, removing items that were emitted in the last update.
+
+Note that this is an experimental feature and may change in future releases. We are looking for feedback on this feature, please report issues in the GitHub repo or via a JIRA ticket if you have an account with Camunda.
+
+Here is an example of using `QuerySubscription`:
+
+```typescript
+import { Camunda8, QuerySubscription } from '@camunda8/sdk'
+
+const c8 = new Camunda8()
+
+const query = () =>
+ c8.searchProcessInstances({
+  filter: {
+    processDefinitionKey: key,
+    state: 'ACTIVE',
+  },
+  sort: [{ field: 'startDate', order: 'ASC' }],
+})
+
+const subscription = new QuerySubscription({
+  query,
+  predicate: (previous, current) => {
+    const previousItemState = previous ? previous : { items: [] }
+    // remove the previous items from the current items
+    const previousItems = previousItemState.items.map(
+      (item) => item.processInstanceKey
+    )
+    const currentItems = current.items.filter(
+      (item) => !previousItems.includes(item.processInstanceKey)
+    )
+    if (currentItems.length > 0) {
+      return { ...current, items: currentItems }
+    }
+    return false // No new items, do not emit
+  },
+  interval: 500,
+})
+
+subscription.on('data', data => {
+    // new process instances
+})
+//...
+subscription.cancel() // close subscription and free resources
+// You can also use subscription.pause() and subscription.resume() to pause and resume the subscription
 ```
 
 ## Debugging
