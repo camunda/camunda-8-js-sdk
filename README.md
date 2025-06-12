@@ -309,6 +309,51 @@ const c8 = new Camunda8({
 c8.log.info('Using pino logger')
 ```
 
+## Awaiting Asynchronous Query Data
+
+Camunda 8 uses an eventually-consistent data architecture. When you start a process instance, data related to this process instance is not immediately available in the datastore. This leads to data synchronisation issues you need to manage in your application. To aid you with this, the SDK provides a utility: `PollingOperation`. You can pass a query API operation to this utility a polling interval, and a timeout.
+
+The `PollingOperation` will execute the query repeatedly until the expected data is available in the data store, or the timeout is reached.
+
+The following example will return the query response for a newly-created process instance as soon as the element instance data is available:
+
+```typescript
+import { Camunda8, PollingOperation } from '@camunda8/sdk'
+
+const c8 = new Camunda8()
+
+const elementInstances = await PollingOperation({
+	operation: () =>
+		c8.searchElementInstances({
+			sort: [{ field: 'processInstanceKey' }],
+			filter: {
+				processInstanceKey: processInstance.processInstanceKey,
+				type: 'SERVICE_TASK',
+			},
+		}),
+	interval: 500,
+	timeout: 10000,
+})
+```
+
+By default, the `PollingOperation` waits for a query response from the Orchestration Cluster API that has one or more results in the `items` array. If you have a more specific predicate, or are using one of the v1 component APIs, you can pass in a custom predicate function.
+
+The following example waits for a process instance to be available to a query over the Operate API:
+
+```typescript
+import { Camunda8, PollingOperation } from '@camunda8/sdk'
+
+const c8 = new Camunda8()
+const c = c8.getOperateApiClient()
+
+const process = await PollingOperation({
+	operation: () => c.getProcessInstance(p.processInstanceKey),
+	predicate: (res) => res.key === p.processInstanceKey,
+	interval: 500,
+	timeout: 15000,
+})
+```
+
 ## Debugging
 
 The SDK uses the [`debug`](https://github.com/debug-js/debug) library to help you debug specific issues. This produces verbose, low-level output from specific components to the console.

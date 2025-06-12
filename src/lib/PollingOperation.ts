@@ -29,16 +29,6 @@ interface PollingOperationOptionsWithoutPredicate<
 	predicate?: (result: T) => boolean
 }
 
-// interface PollingOperationOptions<T> {
-// 	operation: () => Promise<T>
-// 	/** predicate to check if the result is valid */
-// 	predicate?: (result: T) => boolean
-// 	/** how often to poll in ms - defaults to 1000 */
-// 	interval?: number
-// 	/** when to timeout - defaults to 30000 */
-// 	timeout?: number
-// }
-
 class PredicateError<T> extends Error {
 	result: T | null
 	constructor(message: string) {
@@ -56,6 +46,30 @@ class PredicateError<T> extends Error {
  * @param options options for the polling operation
  * @returns either the result of the operation or an error if the operation times out. If results were returned, but the predicate was not met, a PredicateError is thrown.
  * Otherwise, the failure is propagated as an error.
+ * @example
+ * ```ts
+ * // Wait for a process instance to appear in the search results
+ * const elementInstances = await PollingOperation({
+ *   operation: () =>
+ *     c8.searchElementInstances({
+ *	     sort: [{ field: 'processInstanceKey' }],
+ *       filter: {
+ *         processInstanceKey: processInstance.processInstanceKey,
+ *         type: 'SERVICE_TASK',
+ *       },
+ *   }),
+ *   interval: 500,
+ *   timeout: 10000,
+ * })
+ *
+ * // If the operation does not return an object with an `items` array (ie: a v1 API), you need to provide a predicate function to check if the result is the awaited one.
+ * const process = await PollingOperation({
+ *   operation: () => c.getProcessInstance(p.processInstanceKey),
+ *   predicate: (res) => res.key === p.processInstanceKey,
+ *   interval: 500,
+ *   timeout: 15000,
+ * })
+ *```
  */
 export function PollingOperation<T extends { items: Array<unknown> }>(
 	options: PollingOperationOptionsWithoutPredicate<T>
