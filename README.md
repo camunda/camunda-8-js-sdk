@@ -378,6 +378,7 @@ const query = () =>
 const subscription = QuerySubscription({
   query,
   predicate: (previous, current) => {
+    // This is the default predicate, provided here as an example
 	const previousItems = (previous?.items ?? []) as Array<unknown>
 	const currentItems = current.items.filter(
 		(item) =>
