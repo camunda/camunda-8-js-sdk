@@ -18,30 +18,16 @@ test('QuerySubscription retrieves results', async () => {
 			},
 			sort: [{ field: 'startDate', order: 'ASC' }],
 		})
-
-	const subscription = new QuerySubscription({
+	const subscription = QuerySubscription({
 		query,
-		predicate: (previous, current) => {
-			const previousItemState = previous ? previous : { items: [] }
-			// remove the previous items from the current items
-			const previousItems = previousItemState.items.map(
-				(item) => item.processInstanceKey
-			)
-			const currentItems = current.items.filter(
-				(item) => !previousItems.includes(item.processInstanceKey)
-			)
-			if (currentItems.length > 0) {
-				return { ...current, items: currentItems }
-			}
-			return false // No new items, do not emit
-		},
 		interval: 500,
 	})
 
-	expect(subscription).toBeInstanceOf(QuerySubscription)
+	const correlations: string[] = []
 
 	subscription.on('update', (data) => {
 		queryResultCount += data.items.length
+		correlations.push(...data.items.map((item) => item.processInstanceKey))
 	})
 
 	const processInstance = await c8.createProcessInstance({
@@ -65,6 +51,9 @@ test('QuerySubscription retrieves results', async () => {
 
 	await new Promise((resolve) => setTimeout(resolve, 7000)) // Wait for the subscription to pick up the new process instances
 	expect(queryResultCount).toBe(3)
+	expect(correlations.includes(processInstance.processInstanceKey)).toBe(true)
+	expect(correlations.includes(processInstance2.processInstanceKey)).toBe(true)
+	expect(correlations.includes(processInstance3.processInstanceKey)).toBe(true)
 	await c8.cancelProcessInstance({
 		processInstanceKey: processInstance.processInstanceKey,
 	})

@@ -3,6 +3,26 @@ import { isDeepStrictEqual } from 'node:util'
 
 import TypedEmitter from 'typed-emitter'
 
+import { runWithAsyncErrorContext } from './AsyncTrace'
+
+export function QuerySubscription<T>(
+	options: QuerySubscriptionConstructorWithPredicate<T>
+): _QuerySubscription<T>
+export function QuerySubscription<T>(
+	options: QuerySubscriptionConstructorsWithoutPredicate<
+		T & { items: Array<unknown> }
+	>
+): _QuerySubscription<T>
+export function QuerySubscription<T>(
+	options:
+		| QuerySubscriptionConstructorWithPredicate<T>
+		| QuerySubscriptionConstructorsWithoutPredicate<
+				T & { items: Array<unknown> }
+		  >
+): _QuerySubscription<T> {
+	return new _QuerySubscription<T>(options)
+}
+
 type QuerySubscriptionReturnValue<T> =
 	| void
 	| null
@@ -20,9 +40,54 @@ type QuerySubscriptionEvents<T> = {
 }
 
 /**
+ * @description The default predicate function for QuerySubscription.
+ * It checks if the current query result has new items compared to the previous state.
+ * If there are new items, it returns the current state with only the new items and updates the totalItems count.
+ * If there are no new items, it returns false, indicating that no update should be emitted.
+ * @param previous the previous state of the query result
+ * @param current the current state of the query result
+ * @returns - If there are new items, returns the current state with only the new items and updated totalItems count.
+ * - If there are no new items, returns false, indicating that no update should be emitted.
+ */
+function defaultPredicate<
+	T extends { items: Array<unknown>; page: { totalItems: number } },
+>(previous: T | undefined, current: T): QuerySubscriptionReturnValue<T> {
+	const previousItems = (previous?.items ?? []) as Array<unknown>
+	const currentItems = current.items.filter(
+		(item) =>
+			!previousItems.some((prevItem) => isDeepStrictEqual(prevItem, item))
+	)
+	if (currentItems.length > 0) {
+		return {
+			...current,
+			items: currentItems,
+			page: { ...current.page, totalItems: currentItems.length },
+		}
+	}
+	return false // No new items, do not emit
+}
+
+interface QuerySubscriptionConstructorBase<T> {
+	query: () => Promise<T>
+	interval?: number
+}
+
+interface QuerySubscriptionConstructorWithPredicate<T>
+	extends QuerySubscriptionConstructorBase<T> {
+	predicate: QuerySubscriptionPredicate<T>
+}
+
+interface QuerySubscriptionConstructorsWithoutPredicate<
+	T extends { items: Array<unknown> },
+> extends QuerySubscriptionConstructorBase<T> {
+	/** predicate to check if the result is valid - optional when T has items array */
+	predicate?: QuerySubscriptionPredicate<T>
+}
+
+/**
  * @description QuerySubscription is a utility class that allows you to subscribe to a query and receive updates when the query result changes.
  * It is useful for polling operations where you want to receive updates when the result of a query changes, such as when a process instance is created or updated.
- * It uses a predicate function to determine whether to emit an update event.
+ * It uses a predicate function to determine whether to emit an update event. When using the Orchestration Cluster API, the default predicate checks if the result has new items compared to the previous state.
  * The predicate function receives the previous state and the current state of the query result and should return a value that indicates whether to emit an update.
  * If the predicate returns `true`, the current state is emitted. If it returns an object, that object is emitted as the update.
  * If it returns `false`, no update is emitted.
@@ -40,19 +105,20 @@ type QuerySubscriptionEvents<T> = {
  *   sort: [{ field: 'startDate', order: 'ASC' }],
  * })
  *
- * const subscription = new QuerySubscription({
+ * const subscription = QuerySubscription({
  *   query,
- *   predicate: (previous, current) => {
- *     const previousItemState = previous ? previous : { items: [] }
- *     // remove the previous items from the current items
- *     const previousItems = previousItemState.items.map(
- *       (item) => item.processInstanceKey
- *     )
+ *   predicate: (previous, current) => { // This is the default predicate, shown here for clarity
+ *     const previousItems = (previous?.items ?? []) as Array<unknown>
  *     const currentItems = current.items.filter(
- *       (item) => !previousItems.includes(item.processInstanceKey)
+ *       (item) =>
+ *         !previousItems.some((prevItem) => isDeepStrictEqual(prevItem, item))
  *     )
  *     if (currentItems.length > 0) {
- *       return { ...current, items: currentItems }
+ *       return {
+ *         ...current,
+ *         items: currentItems,
+ *         page: { ...current.page, totalItems: currentItems.length },
+ *       }
  *     }
  *     return false // No new items, do not emit
  *   },
@@ -67,7 +133,7 @@ type QuerySubscriptionEvents<T> = {
  * ```
  * @see {@link PollingOperation} for a simpler polling operation that does a single query.
  */
-export class QuerySubscription<T> {
+class _QuerySubscription<T> {
 	private _query: () => Promise<T>
 	/** The current state of the query, used to compare with the next result */
 	private _state: T | undefined = undefined
@@ -113,18 +179,23 @@ export class QuerySubscription<T> {
 	listeners: <E extends 'update'>(event: E) => QuerySubscriptionEvents<T>[E][]
 	private _poll?: Promise<T>
 
-	constructor({
-		query,
-		predicate,
-		interval = 1000,
-	}: {
-		query: () => Promise<T>
-		predicate: QuerySubscriptionPredicate<T>
-		interval?: number
-	}) {
-		this._query = query
-		this._predicate = predicate
-		this._interval = interval
+	constructor(
+		options:
+			| QuerySubscriptionConstructorWithPredicate<T>
+			| QuerySubscriptionConstructorsWithoutPredicate<
+					T & { items: Array<unknown> }
+			  >
+	) {
+		this._query = options.query
+
+		if ('predicate' in options && options.predicate) {
+			this._predicate = options.predicate as QuerySubscriptionPredicate<T>
+		} else {
+			// Use type assertion to handle the default predicate
+			this._predicate = defaultPredicate as QuerySubscriptionPredicate<T>
+		}
+
+		this._interval = options.interval || 1000
 		this.resume()
 		this.emitter = new EventEmitter() as TypedEmitter<
 			QuerySubscriptionEvents<T>
@@ -166,7 +237,10 @@ export class QuerySubscription<T> {
 		if (this._pollHandle) {
 			return
 		}
-		this._pollHandle = setInterval(() => this.poll(), this._interval)
+		this._pollHandle = setInterval(
+			() => runWithAsyncErrorContext(this.poll.bind(this), 'QuerySubscription'),
+			this._interval
+		)
 	}
 
 	async poll() {
@@ -202,6 +276,11 @@ export class QuerySubscription<T> {
 					this.emit('update', diff)
 				}
 			}
+		} catch (error: unknown) {
+			;(error as Error).message = `QuerySubscription: ${
+				(error as Error).message
+			}`
+			throw error
 		} finally {
 			this._predicateLock = false
 			this._pollLock = false

@@ -375,23 +375,24 @@ const query = () =>
   sort: [{ field: 'startDate', order: 'ASC' }],
 })
 
-const subscription = new QuerySubscription({
+const subscription = QuerySubscription({
   query,
   predicate: (previous, current) => {
-    const previousItemState = previous ? previous : { items: [] }
-    // remove the previous items from the current items
-    const previousItems = previousItemState.items.map(
-      (item) => item.processInstanceKey
-    )
-    const currentItems = current.items.filter(
-      (item) => !previousItems.includes(item.processInstanceKey)
-    )
-    if (currentItems.length > 0) {
-      return { ...current, items: currentItems }
-    }
-    return false // No new items, do not emit
+	const previousItems = (previous?.items ?? []) as Array<unknown>
+	const currentItems = current.items.filter(
+		(item) =>
+			!previousItems.some((prevItem) => isDeepStrictEqual(prevItem, item))
+	)
+	if (currentItems.length > 0) {
+		return {
+			...current,
+			items: currentItems,
+			page: { ...current.page, totalItems: currentItems.length },
+		}
+	}
+	return false // No new items, do not emit
   },
-  interval: 500,
+  interval: 5000,
 })
 
 subscription.on('data', data => {
