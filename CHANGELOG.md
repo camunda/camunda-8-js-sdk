@@ -1,3 +1,15 @@
+## [8.7.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.16...v8.7.17) (2025-06-18)
+
+
+### Bug Fixes
+
+* enhance async stack trace. fixes [#506](https://github.com/camunda/camunda-8-js-sdk/issues/506) ([c443ab2](https://github.com/camunda/camunda-8-js-sdk/commit/c443ab20c7aed9a2f4e0b80e0df4ec3e2be8b15c))
+
+
+### Features
+
+* implement QuerySubscription. fixes [#502](https://github.com/camunda/camunda-8-js-sdk/issues/502) ([a4bbd61](https://github.com/camunda/camunda-8-js-sdk/commit/a4bbd612e8c34112e9dfcd19e0b00a81e0c24e81))
+
 ## [8.7.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.15...v8.7.16) (2025-06-11)
 
 
