@@ -4,8 +4,10 @@ import {
 	HTTPError as GotHTTPError,
 	HandlerFunction,
 	Method,
+	RequestError,
 } from 'got'
 
+import { asyncOperationContext } from './AsyncTrace'
 import { CamundaSupportLogger } from './CamundaSupportLogger'
 import { CamundaPlatform8Configuration } from './Configuration'
 import { HTTPError } from './GotErrors'
@@ -13,15 +15,23 @@ import { HTTPError } from './GotErrors'
 const supportLogger = CamundaSupportLogger.getInstance()
 
 /**
- *
+ * Capturing useful async stack traces is challenging with got.
+ * See here: https://github.com/sindresorhus/got/blob/main/documentation/async-stack-traces.md
  * This function stores the call point from the application of got requests.
  * This enables users to see where the error originated from.
  */
+
 export const beforeCallHook: HandlerFunction = (options, next) => {
 	if (Object.isFrozen(options.context)) {
 		options.context = { ...options.context, hasRetried: false }
 	}
-	Error.captureStackTrace(options.context)
+	// If we stored the creation stack in the async context, we can use it to enhance the stack trace of the request.
+	const creationStack = asyncOperationContext.getStore()?.creationStack
+	const obj = {}
+	Error.captureStackTrace(obj, beforeCallHook)
+	options.context.stack = creationStack
+		? `${creationStack}\n${(obj as any).stack as string}`
+		: ((obj as any).stack as string)
 	supportLogger.log(`Rest call:`)
 	supportLogger.log(options)
 	return next(options)
@@ -36,7 +46,11 @@ export const beforeCallHook: HandlerFunction = (options, next) => {
  */
 export const gotBeforeErrorHook =
 	(config: CamundaPlatform8Configuration): BeforeErrorHook =>
-	(error) => {
+	(
+		error: RequestError & { statusCode?: number; source?: string[] } & {
+			options: { context: { stack?: string } }
+		}
+	) => {
 		const { request } = error
 		let detail = ''
 		if (error instanceof GotHTTPError) {
@@ -45,13 +59,15 @@ export const gotBeforeErrorHook =
 				const details = JSON.parse(
 					(error.response?.body as string) || '{detail:""}'
 				)
-				;(error as any).statusCode = details.status
+				error.statusCode = details.status
 				detail = details ?? ''
 			} catch (e) {
-				;(error as any).statusCode = 0
+				error.statusCode = 0
 			}
 		}
-		;(error as any).source = (error as any).options.context.stack.split('\n')
+		error.source = error.options.context.stack?.split('\n') ?? [
+			'No enhanced stack trace available',
+		]
 		error.message += ` (request to ${request?.options.url
 			.href}). ${JSON.stringify(detail)}`
 

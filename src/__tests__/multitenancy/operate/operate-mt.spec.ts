@@ -1,4 +1,4 @@
-import { delay } from '../../../lib'
+import { PollingOperation } from '../../../lib/PollingOperation'
 import { OperateApiClient } from '../../../operate'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
@@ -33,16 +33,15 @@ describe('Operate multi-tenancy', () => {
 			variables: {},
 		})
 
-		await delay(8000)
 		// Get the process instance from Operate green tenant
-
-		const greenprocess = await operateGreen.searchProcessInstances({
-			filter: { key: p.processInstanceKey },
+		const greenprocess = await PollingOperation({
+			operation: () =>
+				operateGreen.searchProcessInstances({
+					filter: { key: p.processInstanceKey },
+				}),
+			interval: 500,
+			timeout: 8000,
 		})
-
-		// getProcessInstance(
-		// 	p.processInstanceKey
-		// )
 
 		expect(greenprocess).toBeDefined()
 		expect(greenprocess.items[0].key.toString()).toBe(p.processInstanceKey)

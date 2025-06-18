@@ -1,4 +1,5 @@
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { PollingOperation } from '../../lib/PollingOperation'
 
 const c8 = new CamundaRestClient()
 
@@ -15,11 +16,16 @@ test('It can get an Element Instance', async () => {
 			queryTag: 'search-element-instances-test',
 		},
 	})
-	await new Promise((r) => setTimeout(r, 5000))
-	const elementInstances = await c8.searchElementInstances({
-		sort: [{ field: 'processDefinitionKey' }],
-		filter: { processDefinitionKey: key },
+	const elementInstances = await PollingOperation({
+		operation: () =>
+			c8.searchElementInstances({
+				sort: [{ field: 'processDefinitionKey' }],
+				filter: { processDefinitionKey: key },
+			}),
+		interval: 500,
+		timeout: 5000,
 	})
+
 	expect(elementInstances).toBeDefined()
 	const elementInstance = await c8.getElementInstance(
 		elementInstances.items[0].elementInstanceKey

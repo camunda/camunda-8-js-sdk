@@ -1,6 +1,7 @@
 // import { randomUUID } from 'crypto'
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { PollingOperation } from '../../lib/PollingOperation'
 
 const c8 = new CamundaRestClient()
 
@@ -15,21 +16,25 @@ test('It can search users', async () => {
 			password: 'password123',
 		})
 		.catch((e) => e) // throws 409 if user already exists
-	await new Promise((r) => setTimeout(r, 5000))
 
-	const users = await c8.searchUsers({
-		page: {
-			from: 0,
-			limit: 10,
-		},
-		filter: {
-			username: 'jdoe',
-		},
-		sort: [
-			{
-				field: 'name',
-			},
-		],
+	const users = await PollingOperation({
+		operation: () =>
+			c8.searchUsers({
+				page: {
+					from: 0,
+					limit: 10,
+				},
+				filter: {
+					username: 'jdoe',
+				},
+				sort: [
+					{
+						field: 'name',
+					},
+				],
+			}),
+		interval: 500,
+		timeout: 5000,
 	})
 	expect(users.items[0].email).toBe('jdoe@gmail.com')
 })

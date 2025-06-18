@@ -15,14 +15,7 @@ import { BpmnParser, ZeebeGrpcClient } from '../../zeebe'
 export const cleanUp = async () => {
 	// Your cleanup process here.
 	console.log('Removing all cached OAuth tokens...')
-	const o = new OAuthProvider({
-		config: {
-			CAMUNDA_OAUTH_URL: 'dummy',
-			ZEEBE_CLIENT_ID: 'dummy',
-			ZEEBE_CLIENT_SECRET: 'dummy',
-		},
-	})
-	o.flushFileCache()
+	OAuthProvider.clearCacheDir()
 	if (process.env.CAMUNDA_UNIT_TEST == 'true') {
 		// We are not running in an integration environment, so we can skip the rest of the cleanup
 		return

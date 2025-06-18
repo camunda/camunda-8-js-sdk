@@ -8,15 +8,25 @@ function defaultPredicate<T extends { items: Array<unknown> }>(
 		result.items.length > 0
 	)
 }
-
-interface PollingOperationOptions<T> {
+interface PollingOperationOptionsBase<T> {
 	operation: () => Promise<T>
-	/** predicate to check if the result is valid */
-	predicate?: (result: T) => boolean
 	/** how often to poll in ms - defaults to 1000 */
 	interval?: number
 	/** when to timeout - defaults to 30000 */
 	timeout?: number
+}
+
+interface PollingOperationOptionsWithPredicate<T>
+	extends PollingOperationOptionsBase<T> {
+	/** predicate to check if the result is valid */
+	predicate: (result: T) => boolean
+}
+
+interface PollingOperationOptionsWithoutPredicate<
+	T extends { items: Array<unknown> },
+> extends PollingOperationOptionsBase<T> {
+	/** predicate to check if the result is valid - optional when T has items array */
+	predicate?: (result: T) => boolean
 }
 
 class PredicateError<T> extends Error {
@@ -36,21 +46,56 @@ class PredicateError<T> extends Error {
  * @param options options for the polling operation
  * @returns either the result of the operation or an error if the operation times out. If results were returned, but the predicate was not met, a PredicateError is thrown.
  * Otherwise, the failure is propagated as an error.
+ * @example
+ * ```ts
+ * // Wait for a process instance to appear in the search results
+ * const elementInstances = await PollingOperation({
+ *   operation: () =>
+ *     c8.searchElementInstances({
+ *	     sort: [{ field: 'processInstanceKey' }],
+ *       filter: {
+ *         processInstanceKey: processInstance.processInstanceKey,
+ *         type: 'SERVICE_TASK',
+ *       },
+ *   }),
+ *   interval: 500,
+ *   timeout: 10000,
+ * })
+ *
+ * // If the operation does not return an object with an `items` array (ie: a v1 API), you need to provide a predicate function to check if the result is the awaited one.
+ * const process = await PollingOperation({
+ *   operation: () => c.getProcessInstance(p.processInstanceKey),
+ *   predicate: (res) => res.key === p.processInstanceKey,
+ *   interval: 500,
+ *   timeout: 15000,
+ * })
+ *```
  */
 export function PollingOperation<T extends { items: Array<unknown> }>(
-	options: PollingOperationOptions<T>
+	options: PollingOperationOptionsWithoutPredicate<T>
+): Promise<T>
+export function PollingOperation<T>(
+	options: PollingOperationOptionsWithPredicate<T>
+): Promise<T>
+export function PollingOperation<T>(
+	options:
+		| PollingOperationOptionsWithPredicate<T>
+		| PollingOperationOptionsWithoutPredicate<T & { items: Array<unknown> }>
 ): Promise<T> {
 	const interval = options.interval || 1000
 	const timeout = options.timeout || 30000
 	const operation = options.operation
-	const predicate = options.predicate || defaultPredicate
+	// Use default predicate if no predicate provided, otherwise use provided predicate
+	const predicate =
+		options.predicate || (defaultPredicate as (result: T) => boolean)
 	return new Promise((resolve, reject) => {
 		const startTime = Date.now()
 
 		const poll = async () => {
 			try {
 				const result = await operation()
-				if (!predicate(result)) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				if (!predicate(result as any)) {
 					const error = new PredicateError<T>('Predicate did not match')
 					error.result = result
 					throw error

@@ -44,7 +44,7 @@ test('Can service a task', (done) => {
 })
 
 // https://github.com/camunda/camunda-8-js-sdk/issues/424
-test('Can cancel a call', async () => {
+test('Can cancel an in-flight REST job activation call', async () => {
 	const res = restClient.activateJobs({
 		maxJobsToActivate: 2,
 		requestTimeout: 5000,
@@ -63,6 +63,7 @@ test('Can cancel a call', async () => {
 			someNumberField: 8,
 		},
 	})
+	// Wait for a couple of seconds to ensure that we do not receive any jobs
 	await delay(3000)
 	await restClient.cancelProcessInstance({
 		processInstanceKey: process.processInstanceKey,
