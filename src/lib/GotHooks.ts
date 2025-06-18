@@ -65,7 +65,9 @@ export const gotBeforeErrorHook =
 				error.statusCode = 0
 			}
 		}
-		error.source = error.options.context.stack?.split('\n')
+		error.source = error.options.context.stack?.split('\n') ?? [
+			'No enhanced stack trace available',
+		]
 		error.message += ` (request to ${request?.options.url
 			.href}). ${JSON.stringify(detail)}`
 
