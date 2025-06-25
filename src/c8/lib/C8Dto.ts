@@ -1261,3 +1261,110 @@ export interface SearchElementInstancesResponse {
 	page: SearchResponsePagination
 	items: Array<ElementInstanceDetails>
 }
+
+export interface SearchIncidentsRequest {
+	page?: SearchPageRequest
+	sort: Array<{
+		/** The field to sort by. */
+		field:
+			| 'incidentKey'
+			| 'processInstanceKey'
+			| 'processDefinitionKey'
+			| 'processDefinitionId'
+			| 'errorType'
+			| 'errorMessage'
+			| 'elementId'
+			| 'elementInstanceKey'
+			| 'creationTime'
+			| 'state'
+			| 'jobKey'
+			| 'tenantId'
+		order?: 'ASC' | 'DESC'
+	}>
+	filter: {
+		/** The process definition ID associated to this incident. */
+		processDefinitionId?: string
+		/** Incident error type with a defined set of values. */
+		errorType?:
+			| 'UNSPECIFIED'
+			| 'UNKNOWN'
+			| 'IO_MAPPING_ERROR'
+			| 'JOB_NO_RETRIES'
+			| 'EXECUTION_LISTENER_NO_RETRIES'
+			| 'TASK_LISTENER_NO_RETRIES'
+			| 'CONDITION_ERROR'
+			| 'EXTRACT_VALUE_ERROR'
+			| 'CALLED_ELEMENT_ERROR'
+			| 'UNHANDLED_ERROR_EVENT'
+			| 'MESSAGE_SIZE_EXCEEDED'
+			| 'CALLED_DECISION_ERROR'
+			| 'DECISION_EVALUATION_ERROR'
+			| 'FORM_NOT_FOUND'
+			| 'RESOURCE_NOT_FOUND'
+		/** Error message which describes the error in more detail. */
+		errorMessage?: string
+		/** The element ID associated to this incident. */
+		elementId?: string
+		/** Date of incident creation. */
+		creationTime?: string
+		/** State of this incident with a defined set of values. */
+		state?: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+		/** The tenant ID of the incident. */
+		tenantId?: string
+		/** The assigned key, which acts as a unique identifier for this incident. */
+		incidentKey?: string
+		/** The process definition key associated to this incident. */
+		processDefinitionKey?: string
+		/** The process instance key associated to this incident. */
+		processInstanceKey?: string
+		/** The element instance key associated to this incident. */
+		elementInstanceKey?: string
+		/** The job key, if exists, associated with this incident. */
+		jobKey?: string
+	}
+}
+
+export interface SearchIncidentsResponse {
+	page: SearchResponsePagination
+	items: Array<{
+		/* The process definition ID associated to this incident. */
+		processDefinitionId: string
+		/* Incident error type with a defined set of values. */
+		errorType:
+			| 'UNSPECIFIED'
+			| 'UNKNOWN'
+			| 'IO_MAPPING_ERROR'
+			| 'JOB_NO_RETRIES'
+			| 'EXECUTION_LISTENER_NO_RETRIES'
+			| 'TASK_LISTENER_NO_RETRIES'
+			| 'CONDITION_ERROR'
+			| 'EXTRACT_VALUE_ERROR'
+			| 'CALLED_ELEMENT_ERROR'
+			| 'UNHANDLED_ERROR_EVENT'
+			| 'MESSAGE_SIZE_EXCEEDED'
+			| 'CALLED_DECISION_ERROR'
+			| 'DECISION_EVALUATION_ERROR'
+			| 'FORM_NOT_FOUND'
+			| 'RESOURCE_NOT_FOUND'
+		/* Error message which describes the error in more detail. */
+		errorMessage: string
+		/* The element ID associated to this incident. */
+		elementId: string
+		/* Date of incident creation. */
+		creationTime: string
+		/* State of this incident with a defined set of values. */
+		state: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+		/* The tenant ID of the incident. */
+		tenantId: string
+		/* The assigned key, which acts as a unique identifier for this incident. */
+		incidentKey: string
+		/* The process definition key associated to this incident. */
+		processDefinitionKey: string
+		/* The process instance key associated to this incident. */
+		processInstanceKey: string
+		/* The element instance key associated to this incident. */
+		elementInstanceKey: string
+		/* The job key, if exists, associated with this incident. */
+		jobKey: string
+	}>
+}

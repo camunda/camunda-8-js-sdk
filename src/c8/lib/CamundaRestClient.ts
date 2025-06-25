@@ -70,6 +70,8 @@ import {
 	RestJob,
 	SearchElementInstancesRequest,
 	SearchElementInstancesResponse,
+	SearchIncidentsRequest,
+	SearchIncidentsResponse,
 	SearchProcessDefinitionsRequest,
 	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
@@ -1492,6 +1494,24 @@ export class CamundaRestClient {
 		return this.callApiEndpoint<unknown, ElementInstanceDetails>({
 			method: 'GET',
 			urlPath: `element-instances/${elementInstanceKey}`,
+		})
+	}
+
+	/**
+	 * @description Search for incidents based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-incidents/
+	 * @since 8.8.0
+	 */
+	public async searchIncidents(
+		request: SearchIncidentsRequest
+	): Promise<SearchIncidentsResponse> {
+		return this.callApiEndpoint<
+			SearchIncidentsRequest,
+			SearchIncidentsResponse
+		>({
+			method: 'POST',
+			urlPath: `incidents/search`,
+			body: request,
 		})
 	}
 
