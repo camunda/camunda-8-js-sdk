@@ -1,11 +1,33 @@
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
-import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(60000)
 
 const c8 = new CamundaRestClient()
 let pid: string
+
+function cancelProcesses(processDefinitionKey: string) {
+	c8.searchProcessInstances({
+		filter: {
+			processDefinitionKey,
+			state: 'ACTIVE',
+		},
+		sort: [{ field: 'processInstanceKey', order: 'DESC' }],
+	}).then((processes) => {
+		return Promise.all(
+			processes.items.map((item) => {
+				return c8
+					.cancelProcessInstance({
+						processInstanceKey: item.processInstanceKey,
+					})
+					.catch((e) => {
+						console.log(`Failed to delete process ${item.processInstanceKey}`)
+						console.log(e)
+					})
+			})
+		)
+	})
+}
 
 beforeAll(async () => {
 	const res = await c8.deployResourcesFromFiles([
