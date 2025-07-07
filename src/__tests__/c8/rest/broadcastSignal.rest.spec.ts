@@ -1,7 +1,6 @@
-import { cancelProcesses as cancelProcessesSMandSaaS } from 'zeebe/lib/cancelProcesses'
-
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
+import { cancelProcesses as cancelProcessesSMandSaaS } from '../../../zeebe/lib/cancelProcesses'
 
 jest.setTimeout(60000)
 
