@@ -1,3 +1,5 @@
+import { cancelProcesses as cancelProcessesSMandSaaS } from 'zeebe/lib/cancelProcesses'
+
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
 
@@ -6,7 +8,7 @@ jest.setTimeout(60000)
 const c8 = new CamundaRestClient()
 let pid: string
 
-function cancelProcesses(processDefinitionKey: string) {
+function cancelProcessesC8Run(processDefinitionKey: string) {
 	c8.searchProcessInstances({
 		filter: {
 			processDefinitionKey,
@@ -28,6 +30,11 @@ function cancelProcesses(processDefinitionKey: string) {
 		)
 	})
 }
+
+const cancelProcesses =
+	process.env.CAMUNDA_AUTH_STRATEGY === 'NONE'
+		? cancelProcessesC8Run
+		: cancelProcessesSMandSaaS
 
 beforeAll(async () => {
 	const res = await c8.deployResourcesFromFiles([
