@@ -70,6 +70,8 @@ import {
 	RestJob,
 	SearchElementInstancesRequest,
 	SearchElementInstancesResponse,
+	SearchIncidentsRequest,
+	SearchIncidentsResponse,
 	SearchProcessDefinitionsRequest,
 	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
@@ -119,6 +121,8 @@ export class CamundaRestClient {
 	public log: Logger
 	private config: CamundaPlatform8Configuration
 	private prefixUrl: string
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private workers: CamundaJobWorker<any, any>[] = []
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
@@ -279,6 +283,20 @@ export class CamundaRestClient {
 				})
 				.json()
 		)
+	}
+
+	/**
+	 * Stop all workers that were created by this client.
+	 */
+	public stopWorkers() {
+		this.workers.forEach((worker) => worker.stop())
+	}
+
+	/**
+	 * Start all workers that were created by this client.
+	 */
+	public startWorkers() {
+		this.workers.forEach((worker) => worker.start())
 	}
 
 	/**
@@ -620,6 +638,7 @@ export class CamundaRestClient {
 		CustomHeaders extends LosslessDto,
 	>(config: CamundaJobWorkerConfig<Variables, CustomHeaders>) {
 		const worker = new CamundaJobWorker(config, this)
+		this.workers.push(worker)
 		return worker
 	}
 	/**
@@ -837,12 +856,15 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async createProcessInstanceWithResult<T extends JSONDoc | LosslessDto>(
+	public async createProcessInstanceWithResult<
+		T extends JSONDoc | LosslessDto,
+		V = unknown,
+	>(
 		request: CreateProcessInstanceReq<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[]
 		}
-	): Promise<CreateProcessInstanceResponse<unknown>>
+	): Promise<CreateProcessInstanceResponse<V>>
 
 	public async createProcessInstanceWithResult<
 		T extends JSONDoc | LosslessDto,
@@ -1492,6 +1514,24 @@ export class CamundaRestClient {
 		return this.callApiEndpoint<unknown, ElementInstanceDetails>({
 			method: 'GET',
 			urlPath: `element-instances/${elementInstanceKey}`,
+		})
+	}
+
+	/**
+	 * @description Search for incidents based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/camunda-api-rest/specifications/search-incidents/
+	 * @since 8.8.0
+	 */
+	public async searchIncidents(
+		request: SearchIncidentsRequest
+	): Promise<SearchIncidentsResponse> {
+		return this.callApiEndpoint<
+			SearchIncidentsRequest,
+			SearchIncidentsResponse
+		>({
+			method: 'POST',
+			urlPath: `incidents/search`,
+			body: request,
 		})
 	}
 

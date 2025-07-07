@@ -42,6 +42,10 @@ class MemoryTransport extends Transport {
 }
 
 test('REST worker will backoff on UNAUTHENTICATED', (done) => {
+	if (process.env.CAMUNDA_AUTH_STRATEGY === 'NONE') {
+		// Skip this test if the auth strategy is NONE (ie: c8run), as it will not backoff
+		return done()
+	}
 	let durations = 0
 	let pollCountBackingOffWorker = 0
 	const backoffs: number[] = []
@@ -85,6 +89,10 @@ test('REST worker will backoff on UNAUTHENTICATED', (done) => {
 })
 
 test('REST worker uses a supplied custom max backoff', (done) => {
+	if (process.env.CAMUNDA_AUTH_STRATEGY === 'NONE') {
+		// Skip this test if the auth strategy is NONE (ie: c8run), as it will not backoff
+		return done()
+	}
 	const backoffs: number[] = []
 	const MAX_BACKOFF = 2000
 	const transport = new MemoryTransport()
