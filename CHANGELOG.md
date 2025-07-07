@@ -1,3 +1,11 @@
+## [8.7.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.17...v8.7.18) (2025-07-07)
+
+
+### Features
+
+* add stopWorkers and startWorkers methods. fixes [#511](https://github.com/camunda/camunda-8-js-sdk/issues/511) ([69612a3](https://github.com/camunda/camunda-8-js-sdk/commit/69612a399e3c26c90ecb3308e25c602870c061bf))
+* implement searchIncidents. fixes  [#310](https://github.com/camunda/camunda-8-js-sdk/issues/310) ([e840d79](https://github.com/camunda/camunda-8-js-sdk/commit/e840d7947ad3ab1ad6ce65b0af92b551fddb12a9))
+
 ## [8.7.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.16...v8.7.17) (2025-06-18)
 
 
