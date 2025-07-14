@@ -8,6 +8,7 @@ import wtf from 'wtfnode'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('tsconfig-paths').register()
 
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 import { OAuthProvider } from '../../oauth'
 import { OperateApiClient } from '../../operate'
 import { BpmnParser, ZeebeGrpcClient } from '../../zeebe'
@@ -50,14 +51,7 @@ export const cleanUp = async () => {
 				? ['<default>', 'red', 'green']
 				: [undefined]
 			for (const tenantId of tenantIds) {
-				const operate = new OperateApiClient({
-					config: {
-						CAMUNDA_TENANT_ID: tenantId,
-					},
-				})
-				const res = await operate.searchProcessInstances({
-					filter: { bpmnProcessId: id, state: 'ACTIVE' },
-				})
+				const res = await getProcesses(id, tenantId)
 				const instancesKeys = res.items.map((instance) => instance.key)
 				if (instancesKeys.length > 0) {
 					console.log(
@@ -80,6 +74,29 @@ export const cleanUp = async () => {
 	}
 	await zeebe.close()
 	wtf.dump()
+}
+
+async function getProcesses(id: string, tenantId?: string) {
+	if (process.env.CAMUNDA_VERSION === '8.7') {
+		const operate = new OperateApiClient({
+			config: {
+				CAMUNDA_TENANT_ID: tenantId,
+			},
+		})
+		return operate.searchProcessInstances({
+			filter: { bpmnProcessId: id, state: 'ACTIVE' },
+		})
+	} else {
+		const c8 = new CamundaRestClient({
+			config: {
+				CAMUNDA_TENANT_ID: tenantId,
+			},
+		})
+		return c8.searchProcessInstances({
+			filter: { processDefinitionId: id, state: 'ACTIVE' },
+			sort: [{ field: 'processInstanceKey', order: 'DESC' }],
+		})
+	}
 }
 let previousLogState: string | undefined
 
