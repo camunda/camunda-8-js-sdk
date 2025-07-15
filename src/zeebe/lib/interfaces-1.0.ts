@@ -1,6 +1,5 @@
 import { ClientReadableStream } from '@grpc/grpc-js'
 import { Chalk } from 'chalk'
-import { Response } from 'got'
 import { LosslessNumber } from 'lossless-json'
 import { MaybeTimeDuration } from 'typed-duration'
 
@@ -241,7 +240,7 @@ export interface JobCompletionInterfaceRest<WorkerOutputVariables> {
 		newTimeoutMs,
 	}: {
 		newTimeoutMs: number
-	}) => Promise<Response<string>>
+	}) => Promise<string>
 }
 
 export interface ZeebeJob<

@@ -41,6 +41,13 @@ import {
 	ApiEndpointRequest,
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
+	CamundaRestSearchElementInstancesResponse,
+	CamundaRestSearchIncidentsResponse,
+	CamundaRestSearchProcessDefinitionsResponse,
+	CamundaRestSearchProcessInstanceResponse,
+	CamundaRestSearchUserTasksResponse,
+	CamundaRestSearchVariablesResponse,
+	CamundaRestUserTaskVariablesResponse,
 	CorrelateMessageResponse,
 	CreateDocumentLinkRequest,
 	CreateProcessInstanceReq,
@@ -69,27 +76,21 @@ import {
 	RawApiEndpointRequest,
 	RestJob,
 	SearchElementInstancesRequest,
-	SearchElementInstancesResponse,
 	SearchIncidentsRequest,
-	SearchIncidentsResponse,
 	SearchProcessDefinitionsRequest,
-	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
-	SearchProcessInstanceResponse,
 	SearchTasksRequest,
 	SearchUsersRequest,
 	SearchUsersResponse,
-	SearchUserTasksResponse,
 	SearchVariablesRequest,
-	SearchVariablesResponse,
 	TaskChangeSet,
+	UnknownRequestBody,
 	UpdateElementVariableRequest,
 	UploadDocumentRequest,
 	UploadDocumentResponse,
 	UploadDocumentsResponse,
 	UserTask,
 	UserTaskVariablesRequest,
-	UserTaskVariablesResponse,
 } from './C8Dto'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
@@ -431,7 +432,7 @@ export class CamundaRestClient {
 	 */
 	public async searchUserTasks(
 		request: SearchTasksRequest
-	): Promise<SearchUserTasksResponse> {
+	): Promise<CamundaRestSearchUserTasksResponse> {
 		const headers = await this.getHeaders()
 		const page = request.page ?? {
 			from: 0,
@@ -444,12 +445,12 @@ export class CamundaRestClient {
 					headers,
 					body: losslessStringify({ ...request, page, sort }),
 				})
-				.json<SearchUserTasksResponse>()
+				.json<CamundaRestSearchUserTasksResponse>()
 		)
 		/**
 		 * The 8.6 and 8.7 API have different key names for the userTaskKey. This code block normalizes the key names.
 		 */
-		return {
+		const normalizedResponse = {
 			...response,
 			items: response.items.map((item) => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -460,6 +461,7 @@ export class CamundaRestClient {
 				return item
 			}),
 		}
+		return normalizedResponse
 	}
 
 	/**
@@ -486,7 +488,7 @@ export class CamundaRestClient {
 	 */
 	public async searchUserTaskVariables(
 		request: UserTaskVariablesRequest
-	): Promise<UserTaskVariablesResponse> {
+	): Promise<CamundaRestUserTaskVariablesResponse> {
 		const { userTaskKey, ...req } = request
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
@@ -495,7 +497,7 @@ export class CamundaRestClient {
 					headers,
 					body: losslessStringify(req),
 				})
-				.json()
+				.json<CamundaRestUserTaskVariablesResponse>()
 		)
 	}
 	/**
@@ -679,7 +681,7 @@ export class CamundaRestClient {
 		)
 
 		const gotRequest = this.callApiEndpoint<
-			unknown,
+			UnknownRequestBody,
 			RestJob<VariablesDto, CustomHeadersDto>[]
 		>({
 			urlPath: 'jobs/activation',
@@ -783,13 +785,12 @@ export class CamundaRestClient {
 		jobChangeset: JobUpdateChangeset & { jobKey: string }
 	) {
 		const { jobKey, ...changeset } = jobChangeset
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest.patch(`jobs/${jobKey}`, {
-				body: JSON.stringify(changeset),
-				headers,
-			})
-		)
+		return this.callApiEndpoint({
+			urlPath: `jobs/${jobKey}`,
+			method: 'PATCH',
+			body: changeset,
+			json: false,
+		})
 	}
 
 	/**
@@ -827,26 +828,22 @@ export class CamundaRestClient {
 			outputVariablesDto?: Ctor<V>
 		}
 	) {
-		const headers = await this.getHeaders()
-
 		const outputVariablesDto: Ctor<V> | Ctor<LosslessDto> =
 			(request.outputVariablesDto as Ctor<V>) ?? DefaultLosslessDto
 
 		const CreateProcessInstanceResponseWithVariablesDto =
 			createSpecializedCreateProcessInstanceResponseClass(outputVariablesDto)
 
-		return this.rest.then((rest) =>
-			rest
-				.post(`process-instances`, {
-					body: losslessStringify(this.addDefaultTenantId(request)),
-					headers,
-					parseJson: (text) =>
-						losslessParse(text, CreateProcessInstanceResponseWithVariablesDto),
-				})
-				.json<
-					InstanceType<typeof CreateProcessInstanceResponseWithVariablesDto>
-				>()
-		)
+		return this.callApiEndpoint<
+			UnknownRequestBody,
+			InstanceType<typeof CreateProcessInstanceResponseWithVariablesDto>
+		>({
+			urlPath: `process-instances`,
+			method: 'POST',
+			body: this.addDefaultTenantId(request),
+			parseJson: (text) =>
+				losslessParse(text, CreateProcessInstanceResponseWithVariablesDto),
+		})
 	}
 
 	/**
@@ -912,13 +909,11 @@ export class CamundaRestClient {
 		processInstanceKey: string
 		operationReference?: number
 	}) {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest.post(`process-instances/${processInstanceKey}/cancellation`, {
-				body: JSON.stringify({ operationReference }),
-				headers,
-			})
-		)
+		return this.callApiEndpoint({
+			urlPath: `process-instances/${processInstanceKey}/cancellation`,
+			method: 'POST',
+			body: { operationReference },
+		})
 	}
 
 	/**
@@ -931,17 +926,15 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async migrateProcessInstance(req: MigrationRequest) {
-		const headers = await this.getHeaders()
 		const { processInstanceKey, ...request } = req
 		this.log.debug(`Migrating process instance ${processInstanceKey}`, {
 			component: 'C8RestClient',
 		})
-		return this.rest.then((rest) =>
-			rest.post(`process-instances/${processInstanceKey}/migration`, {
-				headers,
-				body: losslessStringify(request),
-			})
-		)
+		return this.callApiEndpoint({
+			urlPath: `process-instances/${processInstanceKey}/migration`,
+			method: 'POST',
+			body: request,
+		})
 	}
 
 	/**
@@ -953,20 +946,15 @@ export class CamundaRestClient {
 	 */
 	public async searchProcessInstances(
 		request: SearchProcessInstanceRequest
-	): Promise<SearchProcessInstanceResponse> {
-		const headers = await this.getHeaders()
-		const page = request.page ?? {
-			from: 0,
-			limit: 100,
-		}
-		return this.rest.then((rest) =>
-			rest
-				.post(`process-instances/search`, {
-					headers,
-					body: losslessStringify({ ...request, page }),
-				})
-				.json<SearchProcessInstanceResponse>()
-		)
+	): Promise<CamundaRestSearchProcessInstanceResponse> {
+		return this.callApiEndpoint<
+			SearchProcessInstanceRequest,
+			CamundaRestSearchProcessInstanceResponse
+		>({
+			urlPath: `process-instances/search`,
+			method: 'POST',
+			body: request,
+		})
 	}
 
 	/**
@@ -1147,14 +1135,11 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async pinInternalClock(epochMs: number) {
-		const headers = await this.getHeaders()
-
-		return this.rest.then((rest) =>
-			rest.put(`clock`, {
-				headers,
-				body: JSON.stringify({ timestamp: epochMs }),
-			})
-		)
+		return this.callApiEndpoint({
+			urlPath: `clock`,
+			method: 'PUT',
+			body: { timestamp: epochMs },
+		})
 	}
 
 	/**
@@ -1166,8 +1151,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async resetClock() {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) => rest.post(`clock/reset`, { headers }))
+		return this.callApiEndpoint({ urlPath: `clock/reset`, method: 'POST' })
 	}
 
 	/**
@@ -1201,16 +1185,15 @@ export class CamundaRestClient {
 	 */
 	public async searchVariables(
 		req: SearchVariablesRequest
-	): Promise<SearchVariablesResponse> {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.post(`variables/search`, {
-					headers,
-					body: stringify(req),
-				})
-				.json()
-		)
+	): Promise<CamundaRestSearchVariablesResponse> {
+		return this.callApiEndpoint<
+			SearchVariablesRequest,
+			CamundaRestSearchVariablesResponse
+		>({
+			urlPath: `variables/search`,
+			method: 'POST',
+			body: req,
+		})
 	}
 
 	/**
@@ -1304,15 +1287,13 @@ export class CamundaRestClient {
 		documentId: string
 		storeId?: string
 	}): Promise<void> {
-		const headers = await this.getHeaders()
-		return this.rest.then((rest) =>
-			rest
-				.delete(`documents/${documentId}`, {
-					headers,
-					searchParams: storeId ? { storeId } : undefined,
-				})
-				.json()
-		)
+		return this.callApiEndpoint({
+			method: 'DELETE',
+			urlPath: `documents/${documentId}`,
+			queryParams: {
+				storeId: storeId ? storeId : undefined,
+			},
+		})
 	}
 
 	/**
@@ -1399,7 +1380,7 @@ export class CamundaRestClient {
 		request: ModifyProcessInstanceRequest
 	): Promise<void> {
 		const { processInstanceKey, ...req } = request
-		return this.callApiEndpoint<unknown, void>({
+		return this.callApiEndpoint<UnknownRequestBody, void>({
 			method: 'POST',
 			urlPath: `process-instances/${processInstanceKey}/modification`,
 			body: req,
@@ -1433,7 +1414,7 @@ export class CamundaRestClient {
 	public async getVariable(req: {
 		variableKey: string
 	}): Promise<GetVariableResponse> {
-		return this.callApiEndpoint<unknown, GetVariableResponse>({
+		return this.callApiEndpoint<UnknownRequestBody, GetVariableResponse>({
 			method: 'GET',
 			urlPath: `variables/${req.variableKey}`,
 		}).then((response) => {
@@ -1463,7 +1444,10 @@ export class CamundaRestClient {
 	public async getProcessDefinition(
 		processDefinitionKey: string
 	): Promise<GetProcessDefinitionResponse> {
-		return this.callApiEndpoint<unknown, GetProcessDefinitionResponse>({
+		return this.callApiEndpoint<
+			UnknownRequestBody,
+			GetProcessDefinitionResponse
+		>({
 			method: 'GET',
 			urlPath: `process-definitions/${processDefinitionKey}`,
 		})
@@ -1476,10 +1460,10 @@ export class CamundaRestClient {
 	 */
 	public async searchProcessDefinitions(
 		request: SearchProcessDefinitionsRequest
-	): Promise<SearchProcessDefinitionsResponse> {
+	): Promise<CamundaRestSearchProcessDefinitionsResponse> {
 		return this.callApiEndpoint<
 			SearchProcessDefinitionsRequest,
-			SearchProcessDefinitionsResponse
+			CamundaRestSearchProcessDefinitionsResponse
 		>({
 			method: 'POST',
 			urlPath: `process-definitions/search`,
@@ -1494,10 +1478,10 @@ export class CamundaRestClient {
 	 */
 	public async searchElementInstances(
 		request: SearchElementInstancesRequest
-	): Promise<SearchElementInstancesResponse> {
+	): Promise<CamundaRestSearchElementInstancesResponse> {
 		return this.callApiEndpoint<
 			SearchElementInstancesRequest,
-			SearchElementInstancesResponse
+			CamundaRestSearchElementInstancesResponse
 		>({
 			method: 'POST',
 			urlPath: `element-instances/search`,
@@ -1511,7 +1495,7 @@ export class CamundaRestClient {
 	 * @since 8.8.0
 	 */
 	public async getElementInstance(elementInstanceKey: string) {
-		return this.callApiEndpoint<unknown, ElementInstanceDetails>({
+		return this.callApiEndpoint<UnknownRequestBody, ElementInstanceDetails>({
 			method: 'GET',
 			urlPath: `element-instances/${elementInstanceKey}`,
 		})
@@ -1524,10 +1508,10 @@ export class CamundaRestClient {
 	 */
 	public async searchIncidents(
 		request: SearchIncidentsRequest
-	): Promise<SearchIncidentsResponse> {
+	): Promise<CamundaRestSearchIncidentsResponse> {
 		return this.callApiEndpoint<
 			SearchIncidentsRequest,
-			SearchIncidentsResponse
+			CamundaRestSearchIncidentsResponse
 		>({
 			method: 'POST',
 			urlPath: `incidents/search`,
@@ -1540,17 +1524,19 @@ export class CamundaRestClient {
 	 * TODO: This does not currently support multipart form-data, but it will.
 	 */
 	// Function overloads
-	public callApiEndpoint<T, V = unknown>(
-		request: JsonApiEndpointRequest<T>
-	): PCancelable<V>
+	public callApiEndpoint<
+		T extends UnknownRequestBody = UnknownRequestBody,
+		V = unknown,
+	>(request: JsonApiEndpointRequest<T>): PCancelable<V>
 
-	public callApiEndpoint<T>(
+	public callApiEndpoint<T extends UnknownRequestBody = UnknownRequestBody>(
 		request: RawApiEndpointRequest<T>
 	): PCancelable<string>
 
-	public callApiEndpoint<T, V = unknown>(
-		request: ApiEndpointRequest<T>
-	): PCancelable<V | Response<string>> {
+	public callApiEndpoint<
+		T extends UnknownRequestBody = UnknownRequestBody,
+		V = unknown,
+	>(request: ApiEndpointRequest<T>): PCancelable<V | Response<string>> {
 		// Return a cancelable promise
 		// https://github.com/camunda/camunda-8-js-sdk/issues/424
 		return new PCancelable(async (resolve, reject, onCancel) => {
