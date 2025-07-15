@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 import { AdminApiClient } from '../../admin/index'
 
 jest.setTimeout(10000)
@@ -18,7 +20,7 @@ test('createClient', async () => {
 	const c = new AdminApiClient()
 	const clusters = await c.getClusters()
 	const clusterUuid = clusters[0].uuid
-	const clientName = 'test_generated-delete-me'
+	const clientName = `test_generated-delete-me-${randomUUID()}`
 	c.getClient(clusterUuid, clientName)
 		.then((res) => c.deleteClient(clusterUuid, res.ZEEBE_CLIENT_ID))
 		.catch((e) => e)
