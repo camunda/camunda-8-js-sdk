@@ -1151,7 +1151,7 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async resetClock() {
-		return this.callApiEndpoint({ urlPath: `clock/reset`, method: 'PUT' })
+		return this.callApiEndpoint({ urlPath: `clock/reset`, method: 'POST' })
 	}
 
 	/**
