@@ -69,7 +69,7 @@ export const gotBeforeErrorHook =
 		error.source = enhancedStack ?? ['No enhanced stack trace available']
 		const method = request?.options.method
 		const url = request?.options.url.href
-		error.message += ` (${method} to ${url}). ${JSON.stringify(detail)}`
+		error.message += ` (${method} ${url}). ${JSON.stringify(detail)}`
 		if (enhancedStack) {
 			error.message += `. Enhanced stack trace available as error.source.`
 		}
