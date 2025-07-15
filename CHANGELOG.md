@@ -1,3 +1,15 @@
+## [8.7.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.18...v8.7.19) (2025-07-15)
+
+
+### Bug Fixes
+
+* support new search pagination. fixes [#514](https://github.com/camunda/camunda-8-js-sdk/issues/514) ([84b5047](https://github.com/camunda/camunda-8-js-sdk/commit/84b5047501a3cae7039a5bce3ea977ac52d7e993))
+
+
+### Reverts
+
+* fix resetClock http method ([5c2baad](https://github.com/camunda/camunda-8-js-sdk/commit/5c2baad3c68a8ff0d9ca6b19a7c48c4567039ee4))
+
 ## [8.7.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.17...v8.7.18) (2025-07-07)
 
 
