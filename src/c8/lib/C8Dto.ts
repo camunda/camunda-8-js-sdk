@@ -370,11 +370,10 @@ export type JobWithMethods<VariablesDto, CustomHeadersDto> = RestJob<
 
 interface SearchPageRequestSearchAfter {
 	/** The index of items to start searching from. */
-
 	from: number
 	/** The maximum number of items to return in one request. Defaults to 100. */
 	limit: number
-	// example: [{}]. Pass in the lastSortValues from the previous response.
+	/* Use the `endCursor` value from the previous response to fetch the next page of results. */
 	after?: string
 }
 
@@ -383,7 +382,7 @@ interface SearchPageRequestSearchBefore {
 	from: number
 	/** The maximum number of items to return in one request. Defaults to 100. */
 	limit: number
-	// example: [{}]. Pass in the lastSortValues from the previous response.
+	/* Use the `startCursor` value from the previous response to fetch the previous page of results. */
 	before?: string
 }
 
