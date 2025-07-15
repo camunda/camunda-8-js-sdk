@@ -369,17 +369,22 @@ export type JobWithMethods<VariablesDto, CustomHeadersDto> = RestJob<
 	JobCompletionInterfaceRest<IProcessVariables>
 
 interface SearchPageRequestSearchAfter {
+	/** The index of items to start searching from. */
+
 	from: number
+	/** The maximum number of items to return in one request. Defaults to 100. */
 	limit: number
 	// example: [{}]. Pass in the lastSortValues from the previous response.
-	searchAfter?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+	after?: string
 }
 
 interface SearchPageRequestSearchBefore {
+	/** The index of items to start searching from. */
 	from: number
+	/** The maximum number of items to return in one request. Defaults to 100. */
 	limit: number
 	// example: [{}]. Pass in the lastSortValues from the previous response.
-	searchBefore?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+	before?: string
 }
 
 export type SearchPageRequest =
@@ -451,19 +456,33 @@ export interface SearchResponsePagination {
 	lastSortValues: unknown[]
 }
 
-export interface SearchVariablesResponse {
-	/** Pagination information about the search results. */
-	page: SearchResponsePagination
-	/** The matching variables. */
-	items: Array<{
-		/** The key for this variable. */
-		variableKey: string
-		/** The key of the scope of this variable. */
-		scopeKey: string
-		/** The key of the process instance of this variable. */
-		processInstanceKey: string
-	}>
+export interface CamundaRestSearchResponsePagination {
+	/** Total items matching the criteria. */
+	totalItems: number
+	/** The cursor for the first item in the result set. Use this in the searchBefore field of an ensuing request. */
+	startCursor: string
+	/** The cursor for the last item in the result set. Use this in the searchAfter field of an ensuing request. */
+	endCursor: string
 }
+
+interface PaginatedCamundaRestSearchResponse<T> {
+	/** Pagination information about the search results. */
+	page: CamundaRestSearchResponsePagination
+	/** The matching items. */
+	items: T[]
+}
+
+interface VariableDetails {
+	/** The key for this variable. */
+	variableKey: string
+	/** The key of the scope of this variable. */
+	scopeKey: string
+	/** The key of the process instance of this variable. */
+	processInstanceKey: string
+}
+
+export interface CamundaRestSearchVariablesResponse
+	extends PaginatedCamundaRestSearchResponse<VariableDetails> {}
 
 export type SearchUserTasksSortRequest = Array<{
 	/** The field to sort by. */
@@ -555,21 +574,21 @@ export interface SearchTasksRequest {
 	filter?: SearchUserTasksFilter
 }
 
-export interface SearchUserTasksResponse {
-	page: SearchResponsePagination
-	items: Array<{
-		/** The key of the user task. */
-		userTaskKey: string
-		/** The key of the element instance. */
-		elementInstanceKey: string
-		/** The key of the process definition. */
-		processDefinitionKey: string
-		/** The key of the process instance. */
-		processInstanceKey: string
-		/** The key of the form. */
-		formKey: string
-	}>
+interface UserTaskDetails {
+	/** The key of the user task. */
+	userTaskKey: string
+	/** The key of the element instance. */
+	elementInstanceKey: string
+	/** The key of the process definition. */
+	processDefinitionKey: string
+	/** The key of the process instance. */
+	processInstanceKey: string
+	/** The key of the form. */
+	formKey: string
 }
+
+export interface CamundaRestSearchUserTasksResponse
+	extends PaginatedCamundaRestSearchResponse<UserTaskDetails> {}
 
 export interface UserTask {
 	/** The name for this user task. */
@@ -655,12 +674,9 @@ export interface UserTaskVariablesRequest {
 	}
 }
 
-/** The user task variables search response. */
-export interface UserTaskVariablesResponse {
-	/** Pagination information about the search results. */
-	page: SearchResponsePagination
-	/** The matching variables. */
-	items: Array<{
+/** The user task variables search response for CamundaRestClient. */
+export interface CamundaRestUserTaskVariablesResponse
+	extends PaginatedCamundaRestSearchResponse<{
 		/** The key for this variable. */
 		variableKey: string
 		/** The key of the scope of this variable. */
@@ -671,8 +687,7 @@ export interface UserTaskVariablesResponse {
 		value: string
 		tenantId: string
 		isTruncated: boolean
-	}>
-}
+	}> {}
 
 export interface AdvancedProcessInstanceStateFilter {
 	/** Checks for equality with the provided value. */
@@ -746,35 +761,35 @@ export interface SearchProcessInstanceRequest {
 	}
 }
 
-export interface SearchProcessInstanceResponse {
-	page: SearchResponsePagination
-	items: Array<{
-		/** The key of the process instance. */
-		processInstanceKey: string
-		/** The key of the process definition. */
-		processDefinitionKey: string
-		/** The key of the parent process instance. */
-		parentProcessInstanceKey: string
-		/** The key of the parent flow node instance. */
-		parentFlowNodeInstanceKey: string
-		/** The BPMN process ID of the process definition. */
-		processDefinitionId: string
-		/** The name of the process definition. */
-		processDefinitionName: string
-		/** The version of the process definition. */
-		processDefinitionVersion: string
-		/** The state of the process instance. */
-		state: string
-		/** The start date of the process instance. */
-		startDate: string
-		/** The end date of the process instance. */
-		endDate?: string
-		/** The tenant ID. */
-		tenantId: string
-		/** Has an incident. */
-		hasIncident: boolean
-	}>
+interface ProcessInstanceDetails {
+	/** The key of the process instance. */
+	processInstanceKey: string
+	/** The key of the process definition. */
+	processDefinitionKey: string
+	/** The key of the parent process instance. */
+	parentProcessInstanceKey: string
+	/** The key of the parent flow node instance. */
+	parentFlowNodeInstanceKey: string
+	/** The BPMN process ID of the process definition. */
+	processDefinitionId: string
+	/** The name of the process definition. */
+	processDefinitionName: string
+	/** The version of the process definition. */
+	processDefinitionVersion: string
+	/** The state of the process instance. */
+	state: string
+	/** The start date of the process instance. */
+	startDate: string
+	/** The end date of the process instance. */
+	endDate?: string
+	/** The tenant ID. */
+	tenantId: string
+	/** Has an incident. */
+	hasIncident: boolean
 }
+
+export interface CamundaRestSearchProcessInstanceResponse
+	extends PaginatedCamundaRestSearchResponse<ProcessInstanceDetails> {}
 
 export interface DownloadDocumentRequest {
 	/** The ID of the document to download. */
@@ -984,9 +999,13 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	evaluatedDecisions!: EvaluatedDecision[]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type UnknownRequestBody = Record<string, any>
 // Base interface with common properties
-export interface BaseApiEndpointRequest<T> {
-	method: 'GET' | 'POST' | 'PUT' | 'DELETE'
+export interface BaseApiEndpointRequest<
+	T extends UnknownRequestBody = UnknownRequestBody,
+> {
+	method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 	/** The URL path of the API endpoint. */
 	urlPath: string
 	/** The request body. */
@@ -1002,21 +1021,25 @@ export interface BaseApiEndpointRequest<T> {
 }
 
 // Interface for requests that return JSON (json=true or undefined)
-export interface JsonApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
+export interface JsonApiEndpointRequest<
+	T extends UnknownRequestBody = UnknownRequestBody,
+> extends BaseApiEndpointRequest<T> {
 	/** JSON-parse response? Default: true */
 	json?: true | undefined
 }
 
 // Interface for requests that return raw response (json=false)
-export interface RawApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
+export interface RawApiEndpointRequest<
+	T extends UnknownRequestBody = UnknownRequestBody,
+> extends BaseApiEndpointRequest<T> {
 	/** JSON-parse response? */
 	json: false
 }
 
 // Combined type for use in function signatures
-export type ApiEndpointRequest<T> =
-	| JsonApiEndpointRequest<T>
-	| RawApiEndpointRequest<T>
+export type ApiEndpointRequest<
+	T extends UnknownRequestBody = UnknownRequestBody,
+> = JsonApiEndpointRequest<T> | RawApiEndpointRequest<T>
 export interface SearchUsersRequest {
 	/** Pagination criteria. */
 	page: SearchPageRequest
@@ -1122,25 +1145,25 @@ export interface SearchProcessDefinitionsRequest {
 	}
 }
 
-export interface SearchProcessDefinitionsResponse {
-	page: SearchResponsePagination
-	items: Array<{
-		/** Name of this process definition. */
-		name: string
-		/** Resource name for this process definition. */
-		resourceName: string
-		/** Version of this process definition. */
-		version: number
-		/** Version tag of this process definition. */
-		versionTag?: string
-		/** Process definition ID of this process definition. */
-		processDefinitionId: string
-		/** Tenant ID of this process definition. */
-		tenantId: string
-		/** The key for this process definition. */
-		processDefinitionKey: string
-	}>
+interface DefinitionDetails {
+	/** Name of this process definition. */
+	name: string
+	/** Resource name for this process definition. */
+	resourceName: string
+	/** Version of this process definition. */
+	version: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId: string
+	/** Tenant ID of this process definition. */
+	tenantId: string
+	/** The key for this process definition. */
+	processDefinitionKey: string
 }
+
+export interface CamundaRestSearchProcessDefinitionsResponse
+	extends PaginatedCamundaRestSearchResponse<DefinitionDetails> {}
 
 export interface SearchElementInstancesRequest {
 	page?: SearchPageRequest
@@ -1262,6 +1285,9 @@ export interface SearchElementInstancesResponse {
 	items: Array<ElementInstanceDetails>
 }
 
+export interface CamundaRestSearchElementInstancesResponse
+	extends PaginatedCamundaRestSearchResponse<ElementInstanceDetails> {}
+
 export interface SearchIncidentsRequest {
 	page?: SearchPageRequest
 	sort: Array<{
@@ -1324,47 +1350,47 @@ export interface SearchIncidentsRequest {
 	}
 }
 
-export interface SearchIncidentsResponse {
-	page: SearchResponsePagination
-	items: Array<{
-		/* The process definition ID associated to this incident. */
-		processDefinitionId: string
-		/* Incident error type with a defined set of values. */
-		errorType:
-			| 'UNSPECIFIED'
-			| 'UNKNOWN'
-			| 'IO_MAPPING_ERROR'
-			| 'JOB_NO_RETRIES'
-			| 'EXECUTION_LISTENER_NO_RETRIES'
-			| 'TASK_LISTENER_NO_RETRIES'
-			| 'CONDITION_ERROR'
-			| 'EXTRACT_VALUE_ERROR'
-			| 'CALLED_ELEMENT_ERROR'
-			| 'UNHANDLED_ERROR_EVENT'
-			| 'MESSAGE_SIZE_EXCEEDED'
-			| 'CALLED_DECISION_ERROR'
-			| 'DECISION_EVALUATION_ERROR'
-			| 'FORM_NOT_FOUND'
-			| 'RESOURCE_NOT_FOUND'
-		/* Error message which describes the error in more detail. */
-		errorMessage: string
-		/* The element ID associated to this incident. */
-		elementId: string
-		/* Date of incident creation. */
-		creationTime: string
-		/* State of this incident with a defined set of values. */
-		state: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
-		/* The tenant ID of the incident. */
-		tenantId: string
-		/* The assigned key, which acts as a unique identifier for this incident. */
-		incidentKey: string
-		/* The process definition key associated to this incident. */
-		processDefinitionKey: string
-		/* The process instance key associated to this incident. */
-		processInstanceKey: string
-		/* The element instance key associated to this incident. */
-		elementInstanceKey: string
-		/* The job key, if exists, associated with this incident. */
-		jobKey: string
-	}>
+interface IncidentDetails {
+	/* The process definition ID associated to this incident. */
+	processDefinitionId: string
+	/* Incident error type with a defined set of values. */
+	errorType:
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+		| 'IO_MAPPING_ERROR'
+		| 'JOB_NO_RETRIES'
+		| 'EXECUTION_LISTENER_NO_RETRIES'
+		| 'TASK_LISTENER_NO_RETRIES'
+		| 'CONDITION_ERROR'
+		| 'EXTRACT_VALUE_ERROR'
+		| 'CALLED_ELEMENT_ERROR'
+		| 'UNHANDLED_ERROR_EVENT'
+		| 'MESSAGE_SIZE_EXCEEDED'
+		| 'CALLED_DECISION_ERROR'
+		| 'DECISION_EVALUATION_ERROR'
+		| 'FORM_NOT_FOUND'
+		| 'RESOURCE_NOT_FOUND'
+	/* Error message which describes the error in more detail. */
+	errorMessage: string
+	/* The element ID associated to this incident. */
+	elementId: string
+	/* Date of incident creation. */
+	creationTime: string
+	/* State of this incident with a defined set of values. */
+	state: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+	/* The tenant ID of the incident. */
+	tenantId: string
+	/* The assigned key, which acts as a unique identifier for this incident. */
+	incidentKey: string
+	/* The process definition key associated to this incident. */
+	processDefinitionKey: string
+	/* The process instance key associated to this incident. */
+	processInstanceKey: string
+	/* The element instance key associated to this incident. */
+	elementInstanceKey: string
+	/* The job key, if exists, associated with this incident. */
+	jobKey: string
 }
+
+export interface CamundaRestSearchIncidentsResponse
+	extends PaginatedCamundaRestSearchResponse<IncidentDetails> {}

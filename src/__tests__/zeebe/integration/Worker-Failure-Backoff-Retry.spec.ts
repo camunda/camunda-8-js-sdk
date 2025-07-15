@@ -37,11 +37,11 @@ test('Can specify a retryBackoff with complete.failure()', async () => {
 			conditionVariable: true,
 		},
 	})
-	const wfi = wf.processInstanceKey
-	expect(wfi).toBeTruthy()
+	const { processInstanceKey } = wf
+	expect(processInstanceKey).toBeTruthy()
 
 	await zbc.setVariables({
-		elementInstanceKey: wfi,
+		elementInstanceKey: processInstanceKey,
 		local: false,
 		variables: {
 			conditionVariable: false,
@@ -53,17 +53,18 @@ test('Can specify a retryBackoff with complete.failure()', async () => {
 		const w = zbc.createWorker({
 			taskType: 'wait-worker-failure',
 			taskHandler: async (job) => {
-				// Succeed on the third attempt
+				// Succeed on the successive attempt
 				if (job.retries === 1) {
 					const now = new Date()
 					const res1 = await job.complete()
-					expect(job.processInstanceKey).toBe(wfi)
-					expect(now.getTime() - then.getTime()).toBeGreaterThan(1800)
+					expect(job.processInstanceKey).toBe(processInstanceKey)
+					const elapsedTime = now.getTime() - then.getTime()
+					expect(elapsedTime).toBeGreaterThan(1800) // 1.8
 					wf = undefined
-
-					zbc.cancelProcessInstance(wfi)
+					zbc.cancelProcessInstance(processInstanceKey)
 					resolve(null)
 					await w.close()
+					await zbc.close()
 					return res1
 				}
 				then = new Date()

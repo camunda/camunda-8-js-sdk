@@ -65,11 +65,14 @@ export const gotBeforeErrorHook =
 				error.statusCode = 0
 			}
 		}
-		error.source = error.options.context.stack?.split('\n') ?? [
-			'No enhanced stack trace available',
-		]
-		error.message += ` (request to ${request?.options.url
-			.href}). ${JSON.stringify(detail)}`
+		const enhancedStack = error.options.context.stack?.split('\n')
+		error.source = enhancedStack ?? ['No enhanced stack trace available']
+		const method = request?.options.method
+		const url = request?.options.url.href
+		error.message += ` (${method} to ${url}). ${JSON.stringify(detail)}`
+		if (enhancedStack) {
+			error.message += `. Enhanced stack trace available as error.source.`
+		}
 
 		/** Hinting for error messages. See https://github.com/camunda/camunda-8-js-sdk/issues/456 */
 		/** Here we reason over the error and the configuration to enrich the message with hints */
