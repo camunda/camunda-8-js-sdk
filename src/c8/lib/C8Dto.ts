@@ -431,12 +431,12 @@ export interface VariableSearchFilterRequest {
 	isTruncated?: boolean
 }
 
-export interface SearchSortRequest<T = string>
-	extends Array<{
-		field: T
-		/** The order in which to sort the related field. Default value: ASC */
-		order?: 'ASC' | 'DESC'
-	}> {}
+export type SearchSortRequest<T = string> = Array<{
+	/** The field to sort by. */
+	field: T
+	/** The order in which to sort the related field. Default value: ASC */
+	order?: 'ASC' | 'DESC'
+}>
 
 export interface CamundaRestSearchResponsePagination {
 	/** Total items matching the criteria. */
@@ -489,17 +489,9 @@ export interface SearchVariablesRequest {
 export interface CamundaRestSearchVariablesResponse
 	extends PaginatedCamundaRestSearchResponse<VariableDetails> {}
 
-export type SearchUserTasksSortRequest = Array<{
-	/** The field to sort by. */
-	field:
-		| 'creationDate'
-		| 'completionDate'
-		| 'dueDate'
-		| 'followUpDate'
-		| 'priority'
-	/** The order in which to sort the related field. Default: asc */
-	order?: 'asc' | 'desc'
-}>
+export type SearchUserTasksSortRequest = SearchSortRequest<
+	'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority'
+>
 
 export interface AdvancedDateTimeFilter {
 	/** Checks for equality with the provided value. */
@@ -652,26 +644,19 @@ export interface AssignUserTaskRequest {
 	action?: string
 }
 
-/** Sort field criteria. */
-export interface UserTaskVariablesSortRequest {
-	/** The field to sort by. */
-	field:
+export interface UserTaskVariablesRequest {
+	userTaskKey: string
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort: SearchSortRequest<
 		| 'value'
 		| 'name'
 		| 'tenantId'
 		| 'variableKey'
 		| 'scopeKey'
 		| 'processInstanceKey'
-	/** The order in which to sort the related field. */
-	order: 'ASC' | 'DESC'
-}
-
-export interface UserTaskVariablesRequest {
-	userTaskKey: string
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort: UserTaskVariablesSortRequest[]
+	>
 	/** The user task variable search filters. */
 	filter?: {
 		/** Name of the variable. */
@@ -712,24 +697,21 @@ export interface SearchProcessInstanceRequest {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
-	sort: Array<{
-		field:
-			| 'processInstanceKey'
-			| 'processDefinitionId'
-			| 'processDefinitionName'
-			| 'processDefinitionVersion'
-			| 'processDefinitionVersionTag'
-			| 'processDefinitionKey'
-			| 'parentProcessInstanceKey'
-			| 'parentFlowNodeInstanceKey'
-			| 'state'
-			| 'startDate'
-			| 'endDate'
-			| 'tenantId'
-			| 'hasIncident'
-		/** The order in which to sort the related field. Default value: ASC */
-		order?: 'ASC' | 'DESC'
-	}>
+	sort: SearchSortRequest<
+		| 'processInstanceKey'
+		| 'processDefinitionId'
+		| 'processDefinitionName'
+		| 'processDefinitionVersion'
+		| 'processDefinitionVersionTag'
+		| 'processDefinitionKey'
+		| 'parentProcessInstanceKey'
+		| 'parentFlowNodeInstanceKey'
+		| 'state'
+		| 'startDate'
+		| 'endDate'
+		| 'tenantId'
+		| 'hasIncident'
+	>
 	/** Process instance search filter. */
 	filter: {
 		/** The key of this process instance. */
@@ -1049,12 +1031,7 @@ export interface SearchUsersRequest {
 	/** Pagination criteria. */
 	page: SearchPageRequest
 	/** Sort field criteria. */
-	sort: Array<{
-		/** The field to sort by. */
-		field: 'username' | 'name' | 'email'
-		/** The order in which to sort the related field. */
-		order?: 'ASC' | 'DESC'
-	}>
+	sort: SearchSortRequest<'username' | 'name' | 'email'>
 	/** User search filter. */
 	filter: {
 		/** The username of the user. */
@@ -1119,18 +1096,15 @@ export interface SearchProcessDefinitionsRequest {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
-	sort: Array<{
-		field:
-			| 'processDefinitionKey'
-			| 'name'
-			| 'resourceName'
-			| 'version'
-			| 'versionTag'
-			| 'processDefinitionId'
-			| 'tenantId'
-		/** The order in which to sort the related field. Default value: ASC */
-		order?: 'ASC' | 'DESC'
-	}>
+	sort: SearchSortRequest<
+		| 'processDefinitionKey'
+		| 'name'
+		| 'resourceName'
+		| 'version'
+		| 'versionTag'
+		| 'processDefinitionId'
+		| 'tenantId'
+	>
 	/** Process definition search filter. */
 	filter: {
 		/** Name of this process definition. */
@@ -1172,23 +1146,19 @@ export interface CamundaRestSearchProcessDefinitionsResponse
 
 export interface SearchElementInstancesRequest {
 	page?: SearchPageRequest
-	sort: Array<{
-		/** The field to sort by. */
-		field:
-			| 'elementInstanceKey'
-			| 'processInstanceKey'
-			| 'processDefinitionKey'
-			| 'processDefinitionId'
-			| 'startDate'
-			| 'endDate'
-			| 'elementId'
-			| 'type'
-			| 'state'
-			| 'incidentKey'
-			| 'tenantId'
-		/** Default: ASC */
-		order?: 'ASC' | 'DESC'
-	}>
+	sort: SearchSortRequest<
+		| 'elementInstanceKey'
+		| 'processInstanceKey'
+		| 'processDefinitionKey'
+		| 'processDefinitionId'
+		| 'startDate'
+		| 'endDate'
+		| 'elementId'
+		| 'type'
+		| 'state'
+		| 'incidentKey'
+		| 'tenantId'
+	>
 	filter: {
 		processDefinitionId?: string
 		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
@@ -1295,23 +1265,20 @@ export interface CamundaRestSearchElementInstancesResponse
 
 export interface SearchIncidentsRequest {
 	page?: SearchPageRequest
-	sort: Array<{
-		/** The field to sort by. */
-		field:
-			| 'incidentKey'
-			| 'processInstanceKey'
-			| 'processDefinitionKey'
-			| 'processDefinitionId'
-			| 'errorType'
-			| 'errorMessage'
-			| 'elementId'
-			| 'elementInstanceKey'
-			| 'creationTime'
-			| 'state'
-			| 'jobKey'
-			| 'tenantId'
-		order?: 'ASC' | 'DESC'
-	}>
+	sort: SearchSortRequest<
+		| 'incidentKey'
+		| 'processInstanceKey'
+		| 'processDefinitionKey'
+		| 'processDefinitionId'
+		| 'errorType'
+		| 'errorMessage'
+		| 'elementId'
+		| 'elementInstanceKey'
+		| 'creationTime'
+		| 'state'
+		| 'jobKey'
+		| 'tenantId'
+	>
 	filter: {
 		/** The process definition ID associated to this incident. */
 		processDefinitionId?: string
