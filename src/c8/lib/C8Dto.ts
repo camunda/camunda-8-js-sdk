@@ -431,11 +431,12 @@ export interface VariableSearchFilterRequest {
 	isTruncated?: boolean
 }
 
-export interface SearchSortRequest<T = string> {
-	field: T
-	/** The order in which to sort the related field. Default value: ASC */
-	order?: 'ASC' | 'DESC'
-}
+export interface SearchSortRequest<T = string>
+	extends Array<{
+		field: T
+		/** The order in which to sort the related field. Default value: ASC */
+		order?: 'ASC' | 'DESC'
+	}> {}
 
 export interface CamundaRestSearchResponsePagination {
 	/** Total items matching the criteria. */
