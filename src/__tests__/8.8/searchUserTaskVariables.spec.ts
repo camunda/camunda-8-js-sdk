@@ -48,7 +48,6 @@ test('It can retrieve the variables for a user task', async () => {
 				sort: [
 					{
 						field: 'creationDate',
-						order: 'asc',
 					},
 				],
 			}),
