@@ -1,3 +1,4 @@
+import { PollingOperation } from '../../../'
 import { TasklistApiClient } from '../../../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../../../zeebe'
 
@@ -14,12 +15,16 @@ test('can update a task', async () => {
 		variables: {},
 	})
 	const tasklist = new TasklistApiClient()
-	await new Promise((resolve) => setTimeout(resolve, 10000))
-	const tasks = await tasklist.searchTasks({
-		state: 'CREATED',
+	const tasks = await PollingOperation({
+		operation: () =>
+			tasklist.searchTasks({
+				state: 'CREATED',
+			}),
+		predicate: (tasks) => tasks.length > 0,
+		interval: 100,
+		timeout: 10000,
 	})
 	const zbc = new ZeebeRestClient()
-	await new Promise((resolve) => setTimeout(resolve, 1000))
 	const res = await zbc.completeUserTask({
 		userTaskKey: tasks[0].id,
 	})
