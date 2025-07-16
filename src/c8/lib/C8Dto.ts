@@ -649,7 +649,7 @@ export interface UserTaskVariablesRequest {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
-	sort: SearchSortRequest<
+	sort?: SearchSortRequest<
 		| 'value'
 		| 'name'
 		| 'tenantId'
@@ -697,7 +697,7 @@ export interface SearchProcessInstanceRequest {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
-	sort: SearchSortRequest<
+	sort?: SearchSortRequest<
 		| 'processInstanceKey'
 		| 'processDefinitionId'
 		| 'processDefinitionName'
@@ -1031,7 +1031,7 @@ export interface SearchUsersRequest {
 	/** Pagination criteria. */
 	page: SearchPageRequest
 	/** Sort field criteria. */
-	sort: SearchSortRequest<'username' | 'name' | 'email'>
+	sort?: SearchSortRequest<'username' | 'name' | 'email'>
 	/** User search filter. */
 	filter: {
 		/** The username of the user. */
@@ -1096,7 +1096,7 @@ export interface SearchProcessDefinitionsRequest {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
-	sort: SearchSortRequest<
+	sort?: SearchSortRequest<
 		| 'processDefinitionKey'
 		| 'name'
 		| 'resourceName'
@@ -1146,7 +1146,7 @@ export interface CamundaRestSearchProcessDefinitionsResponse
 
 export interface SearchElementInstancesRequest {
 	page?: SearchPageRequest
-	sort: SearchSortRequest<
+	sort?: SearchSortRequest<
 		| 'elementInstanceKey'
 		| 'processInstanceKey'
 		| 'processDefinitionKey'
@@ -1265,7 +1265,7 @@ export interface CamundaRestSearchElementInstancesResponse
 
 export interface SearchIncidentsRequest {
 	page?: SearchPageRequest
-	sort: SearchSortRequest<
+	sort?: SearchSortRequest<
 		| 'incidentKey'
 		| 'processInstanceKey'
 		| 'processDefinitionKey'
