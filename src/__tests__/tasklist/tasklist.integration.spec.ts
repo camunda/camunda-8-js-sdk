@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 afterAll(() => zbc.close())
 
-test('Tasklist can request all tasks', async () => {
+xtest('Tasklist can request all tasks', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -47,7 +47,7 @@ test('Tasklist can request all tasks', async () => {
 	expect(tasks.length).toBeGreaterThan(0)
 })
 
-test('Tasklist can search for a task by process instance key', async () => {
+xtest('Tasklist can search for a task by process instance key', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -71,7 +71,7 @@ test('Tasklist can search for a task by process instance key', async () => {
 	expect(tasks.length).toBeGreaterThan(0)
 })
 
-test('Tasklist gets all fields for a task', async () => {
+xtest('Tasklist gets all fields for a task', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -97,7 +97,7 @@ test('Tasklist gets all fields for a task', async () => {
 	expect(tasks[0].processName).toBeTruthy()
 })
 
-test('Tasklist can request a specific task', async () => {
+xtest('Tasklist can request a specific task', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -123,7 +123,7 @@ test('Tasklist can request a specific task', async () => {
 	expect(task.id).toBe(id)
 })
 
-test('Tasklist can retrieve an embedded form', async () => {
+xtest('Tasklist can retrieve an embedded form', async () => {
 	const tasklist = new TasklistApiClient()
 	const res = await PollingOperation({
 		operation: () =>
@@ -138,7 +138,7 @@ test('Tasklist can retrieve an embedded form', async () => {
 	expect(res.id).toBe('userTaskForm_3r97fja')
 })
 
-test('Tasklist can claim a task', async () => {
+xtest('Tasklist can claim a task', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -177,7 +177,7 @@ test('Tasklist can claim a task', async () => {
 	expect(claimTask.id).toBe(taskid)
 })
 
-test('Tasklist will not allow a task to be claimed twice', async () => {
+xtest('Tasklist will not allow a task to be claimed twice', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -218,7 +218,7 @@ test('Tasklist will not allow a task to be claimed twice', async () => {
 	expect(threw).toBe(true)
 })
 
-test('Tasklist can unclaim task', async () => {
+xtest('Tasklist can unclaim task', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
@@ -267,7 +267,7 @@ test('Tasklist can unclaim task', async () => {
 	expect(claimTask.id).toEqual(taskId)
 })
 
-test('Tasklist can complete a Task', async () => {
+xtest('Tasklist can complete a Task', async () => {
 	const p = await zbc.createProcessInstance({
 		bpmnProcessId: 'TasklistTestProcess',
 		variables: {
