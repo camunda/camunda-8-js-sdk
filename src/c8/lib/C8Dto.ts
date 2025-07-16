@@ -390,6 +390,29 @@ export type SearchPageRequest =
 	| SearchPageRequestSearchAfter
 	| SearchPageRequestSearchBefore
 
+/** Generic search request interface that can be used for most search operations */
+export interface BaseSearchRequest<TSortFields extends string, TFilter> {
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort?: SearchSortRequest<TSortFields>
+	/** Search filter criteria. */
+	filter: TFilter
+}
+
+/** Generic search request interface with optional filter */
+export interface BaseSearchRequestWithOptionalFilter<
+	TSortFields extends string,
+	TFilter,
+> {
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort?: SearchSortRequest<TSortFields>
+	/** Search filter criteria. */
+	filter?: TFilter
+}
+
 export interface AdvancedStringFilter {
 	/** Checks for equality with the provided value. */
 	$eq?: string
@@ -471,21 +494,16 @@ interface VariableDetails {
 	isTruncated: boolean
 }
 
-export interface SearchVariablesRequest {
-	/** Sort field criteria. */
-	sort?: SearchSortRequest<
+export interface SearchVariablesRequest
+	extends BaseSearchRequest<
 		| 'value'
 		| 'name'
 		| 'tenantId'
 		| 'variableKey'
 		| 'scopeKey'
-		| 'processInstanceKey'
-	>
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Variable filter request. */
-	filter: VariableSearchFilterRequest
-}
+		| 'processInstanceKey',
+		VariableSearchFilterRequest
+	> {}
 export interface CamundaRestSearchVariablesResponse
 	extends PaginatedCamundaRestSearchResponse<VariableDetails> {}
 
@@ -562,14 +580,11 @@ export interface SearchUserTasksFilter {
 	}>
 }
 
-export interface SearchTasksRequest {
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchUserTasksSortRequest
-	/** User task filter request. */
-	filter?: SearchUserTasksFilter
-}
+export interface SearchTasksRequest
+	extends BaseSearchRequestWithOptionalFilter<
+		'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority',
+		SearchUserTasksFilter
+	> {}
 
 interface UserTaskDetails {
 	/** The key of the user task. */
@@ -644,24 +659,20 @@ export interface AssignUserTaskRequest {
 	action?: string
 }
 
-export interface UserTaskVariablesRequest {
-	userTaskKey: string
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchSortRequest<
+export interface UserTaskVariablesRequest
+	extends BaseSearchRequestWithOptionalFilter<
 		| 'value'
 		| 'name'
 		| 'tenantId'
 		| 'variableKey'
 		| 'scopeKey'
-		| 'processInstanceKey'
-	>
-	/** The user task variable search filters. */
-	filter?: {
-		/** Name of the variable. */
-		name: string
-	}
+		| 'processInstanceKey',
+		{
+			/** Name of the variable. */
+			name: string
+		}
+	> {
+	userTaskKey: string
 }
 
 /** The user task variables search response for CamundaRestClient. */
@@ -692,12 +703,43 @@ export interface AdvancedProcessInstanceStateFilter {
 	$like: string
 }
 
+export interface ProcessInstanceSearchFilter {
+	/** The key of this process instance. */
+	processInstanceKey?: string | AdvancedStringFilter
+	/** The process definition ID. */
+	processDefinitionId?: string | AdvancedStringFilter
+	/** The process definition name. */
+	processDefinitionName?: string | AdvancedStringFilter
+	/** The process definition version. */
+	processDefinitionVersion?: string | AdvancedStringFilter
+	/** The process definition version tag. */
+	processDefinitionVersionTag?: string | AdvancedStringFilter
+	/** The process definition key. */
+	processDefinitionKey?: string | AdvancedStringFilter
+	/** The parent process instance key. */
+	parentProcessInstanceKey?: string | AdvancedStringFilter
+	/** The parent flow node instance key. */
+	parentFlowNodeInstanceKey?: string | AdvancedStringFilter
+	/** The process instance state. */
+	state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+	/** The start date. */
+	startDate?: string | AdvancedDateTimeFilter
+	/** The end date. */
+	endDate?: string | AdvancedDateTimeFilter
+	/** The tenant ID. */
+	tenantId?: string | AdvancedStringFilter
+	/** The process instance variables. */
+	variables?: Array<{
+		/** Name of the variable. */
+		name: string
+		/** The value of the variable */
+		value: string
+	}>
+}
+
 /** This is the 8.8 API.  */
-export interface SearchProcessInstanceRequest {
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchSortRequest<
+export interface SearchProcessInstanceRequest
+	extends BaseSearchRequest<
 		| 'processInstanceKey'
 		| 'processDefinitionId'
 		| 'processDefinitionName'
@@ -710,43 +752,9 @@ export interface SearchProcessInstanceRequest {
 		| 'startDate'
 		| 'endDate'
 		| 'tenantId'
-		| 'hasIncident'
-	>
-	/** Process instance search filter. */
-	filter: {
-		/** The key of this process instance. */
-		processInstanceKey?: string | AdvancedStringFilter
-		/** The process definition ID. */
-		processDefinitionId?: string | AdvancedStringFilter
-		/** The process definition name. */
-		processDefinitionName?: string | AdvancedStringFilter
-		/** The process definition version. */
-		processDefinitionVersion?: string | AdvancedStringFilter
-		/** The process definition version tag. */
-		processDefinitionVersionTag?: string | AdvancedStringFilter
-		/** The process definition key. */
-		processDefinitionKey?: string | AdvancedStringFilter
-		/** The parent process instance key. */
-		parentProcessInstanceKey?: string | AdvancedStringFilter
-		/** The parent flow node instance key. */
-		parentFlowNodeInstanceKey?: string | AdvancedStringFilter
-		/** The process instance state. */
-		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
-		/** The start date. */
-		startDate?: string | AdvancedDateTimeFilter
-		/** The end date. */
-		endDate?: string | AdvancedDateTimeFilter
-		/** The tenant ID. */
-		tenantId?: string | AdvancedStringFilter
-		/** The process instance variables. */
-		variables?: Array<{
-			/** Name of the variable. */
-			name: string
-			/** The value of the variable */
-			value: string
-		}>
-	}
-}
+		| 'hasIncident',
+		ProcessInstanceSearchFilter
+	> {}
 
 interface ProcessInstanceDetails {
 	/** The key of the process instance. */
@@ -1092,37 +1100,34 @@ export interface GetProcessDefinitionResponse {
 	processDefinitionKey: string
 }
 
-export interface SearchProcessDefinitionsRequest {
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchSortRequest<
+export interface ProcessDefinitionSearchFilter {
+	/** Name of this process definition. */
+	name?: string
+	/** Resource name of this process definition. */
+	resourceName?: string
+	/** Version of this process definition. */
+	version?: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId?: string
+	/** Tenant ID of this process definition. */
+	tenantId?: string
+	/** The key for this process definition. */
+	processDefinitionKey?: string
+}
+
+export interface SearchProcessDefinitionsRequest
+	extends BaseSearchRequest<
 		| 'processDefinitionKey'
 		| 'name'
 		| 'resourceName'
 		| 'version'
 		| 'versionTag'
 		| 'processDefinitionId'
-		| 'tenantId'
-	>
-	/** Process definition search filter. */
-	filter: {
-		/** Name of this process definition. */
-		name?: string
-		/** Resource name of this process definition. */
-		resourceName?: string
-		/** Version of this process definition. */
-		version?: number
-		/** Version tag of this process definition. */
-		versionTag?: string
-		/** Process definition ID of this process definition. */
-		processDefinitionId?: string
-		/** Tenant ID of this process definition. */
-		tenantId?: string
-		/** The key for this process definition. */
-		processDefinitionKey?: string
-	}
-}
+		| 'tenantId',
+		ProcessDefinitionSearchFilter
+	> {}
 
 interface DefinitionDetails {
 	/** Name of this process definition. */
@@ -1144,9 +1149,48 @@ interface DefinitionDetails {
 export interface CamundaRestSearchProcessDefinitionsResponse
 	extends PaginatedCamundaRestSearchResponse<DefinitionDetails> {}
 
-export interface SearchElementInstancesRequest {
-	page?: SearchPageRequest
-	sort?: SearchSortRequest<
+export interface ElementInstanceSearchFilter {
+	processDefinitionId?: string
+	state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+	type?:
+		| 'UNSPECIFIED'
+		| 'PROCESS'
+		| 'SUB_PROCESS'
+		| 'EVENT_SUB_PROCESS'
+		| 'AD_HOC_SUB_PROCESS'
+		| 'START_EVENT'
+		| 'INTERMEDIATE_CATCH_EVENT'
+		| 'INTERMEDIATE_THROW_EVENT'
+		| 'BOUNDARY_EVENT'
+		| 'END_EVENT'
+		| 'SERVICE_TASK'
+		| 'RECEIVE_TASK'
+		| 'USER_TASK'
+		| 'MANUAL_TASK'
+		| 'TASK'
+		| 'EXCLUSIVE_GATEWAY'
+		| 'INCLUSIVE_GATEWAY'
+		| 'PARALLEL_GATEWAY'
+		| 'EVENT_BASED_GATEWAY'
+		| 'SEQUENCE_FLOW'
+		| 'MULTI_INSTANCE_BODY'
+		| 'CALL_ACTIVITY'
+		| 'BUSINESS_RULE_TASK'
+		| 'SCRIPT_TASK'
+		| 'SEND_TASK'
+		| 'UNKNOWN'
+	elementId?: string
+	elementName?: string
+	hasIncident?: boolean
+	tenantId?: string
+	elementInstanceKey?: string
+	processInstanceKey?: string
+	processDefinitionKey?: string
+	incidentKey?: string
+}
+
+export interface SearchElementInstancesRequest
+	extends BaseSearchRequest<
 		| 'elementInstanceKey'
 		| 'processInstanceKey'
 		| 'processDefinitionKey'
@@ -1157,48 +1201,9 @@ export interface SearchElementInstancesRequest {
 		| 'type'
 		| 'state'
 		| 'incidentKey'
-		| 'tenantId'
-	>
-	filter: {
-		processDefinitionId?: string
-		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
-		type?:
-			| 'UNSPECIFIED'
-			| 'PROCESS'
-			| 'SUB_PROCESS'
-			| 'EVENT_SUB_PROCESS'
-			| 'AD_HOC_SUB_PROCESS'
-			| 'START_EVENT'
-			| 'INTERMEDIATE_CATCH_EVENT'
-			| 'INTERMEDIATE_THROW_EVENT'
-			| 'BOUNDARY_EVENT'
-			| 'END_EVENT'
-			| 'SERVICE_TASK'
-			| 'RECEIVE_TASK'
-			| 'USER_TASK'
-			| 'MANUAL_TASK'
-			| 'TASK'
-			| 'EXCLUSIVE_GATEWAY'
-			| 'INCLUSIVE_GATEWAY'
-			| 'PARALLEL_GATEWAY'
-			| 'EVENT_BASED_GATEWAY'
-			| 'SEQUENCE_FLOW'
-			| 'MULTI_INSTANCE_BODY'
-			| 'CALL_ACTIVITY'
-			| 'BUSINESS_RULE_TASK'
-			| 'SCRIPT_TASK'
-			| 'SEND_TASK'
-			| 'UNKNOWN'
-		elementId?: string
-		elementName?: string
-		hasIncident?: boolean
-		tenantId?: string
-		elementInstanceKey?: string
-		processInstanceKey?: string
-		processDefinitionKey?: string
-		incidentKey?: string
-	}
-}
+		| 'tenantId',
+		ElementInstanceSearchFilter
+	> {}
 
 export interface ElementInstanceDetails {
 	/** The process definition ID associated to this element instance. */
@@ -1263,9 +1268,50 @@ export interface SearchElementInstancesResponse {
 export interface CamundaRestSearchElementInstancesResponse
 	extends PaginatedCamundaRestSearchResponse<ElementInstanceDetails> {}
 
-export interface SearchIncidentsRequest {
-	page?: SearchPageRequest
-	sort?: SearchSortRequest<
+export interface IncidentSearchFilter {
+	/** The process definition ID associated to this incident. */
+	processDefinitionId?: string
+	/** Incident error type with a defined set of values. */
+	errorType?:
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+		| 'IO_MAPPING_ERROR'
+		| 'JOB_NO_RETRIES'
+		| 'EXECUTION_LISTENER_NO_RETRIES'
+		| 'TASK_LISTENER_NO_RETRIES'
+		| 'CONDITION_ERROR'
+		| 'EXTRACT_VALUE_ERROR'
+		| 'CALLED_ELEMENT_ERROR'
+		| 'UNHANDLED_ERROR_EVENT'
+		| 'MESSAGE_SIZE_EXCEEDED'
+		| 'CALLED_DECISION_ERROR'
+		| 'DECISION_EVALUATION_ERROR'
+		| 'FORM_NOT_FOUND'
+		| 'RESOURCE_NOT_FOUND'
+	/** Error message which describes the error in more detail. */
+	errorMessage?: string
+	/** The element ID associated to this incident. */
+	elementId?: string
+	/** Date of incident creation. */
+	creationTime?: string
+	/** State of this incident with a defined set of values. */
+	state?: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+	/** The tenant ID of the incident. */
+	tenantId?: string
+	/** The assigned key, which acts as a unique identifier for this incident. */
+	incidentKey?: string
+	/** The process definition key associated to this incident. */
+	processDefinitionKey?: string
+	/** The process instance key associated to this incident. */
+	processInstanceKey?: string
+	/** The element instance key associated to this incident. */
+	elementInstanceKey?: string
+	/** The job key, if exists, associated with this incident. */
+	jobKey?: string
+}
+
+export interface SearchIncidentsRequest
+	extends BaseSearchRequest<
 		| 'incidentKey'
 		| 'processInstanceKey'
 		| 'processDefinitionKey'
@@ -1277,50 +1323,9 @@ export interface SearchIncidentsRequest {
 		| 'creationTime'
 		| 'state'
 		| 'jobKey'
-		| 'tenantId'
-	>
-	filter: {
-		/** The process definition ID associated to this incident. */
-		processDefinitionId?: string
-		/** Incident error type with a defined set of values. */
-		errorType?:
-			| 'UNSPECIFIED'
-			| 'UNKNOWN'
-			| 'IO_MAPPING_ERROR'
-			| 'JOB_NO_RETRIES'
-			| 'EXECUTION_LISTENER_NO_RETRIES'
-			| 'TASK_LISTENER_NO_RETRIES'
-			| 'CONDITION_ERROR'
-			| 'EXTRACT_VALUE_ERROR'
-			| 'CALLED_ELEMENT_ERROR'
-			| 'UNHANDLED_ERROR_EVENT'
-			| 'MESSAGE_SIZE_EXCEEDED'
-			| 'CALLED_DECISION_ERROR'
-			| 'DECISION_EVALUATION_ERROR'
-			| 'FORM_NOT_FOUND'
-			| 'RESOURCE_NOT_FOUND'
-		/** Error message which describes the error in more detail. */
-		errorMessage?: string
-		/** The element ID associated to this incident. */
-		elementId?: string
-		/** Date of incident creation. */
-		creationTime?: string
-		/** State of this incident with a defined set of values. */
-		state?: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
-		/** The tenant ID of the incident. */
-		tenantId?: string
-		/** The assigned key, which acts as a unique identifier for this incident. */
-		incidentKey?: string
-		/** The process definition key associated to this incident. */
-		processDefinitionKey?: string
-		/** The process instance key associated to this incident. */
-		processInstanceKey?: string
-		/** The element instance key associated to this incident. */
-		elementInstanceKey?: string
-		/** The job key, if exists, associated with this incident. */
-		jobKey?: string
-	}
-}
+		| 'tenantId',
+		IncidentSearchFilter
+	> {}
 
 interface IncidentDetails {
 	/* The process definition ID associated to this incident. */
