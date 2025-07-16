@@ -4,6 +4,7 @@ import {
 	HTTPError as GotHTTPError,
 	HandlerFunction,
 	Method,
+	ParseError,
 	RequestError,
 } from 'got'
 
@@ -76,6 +77,11 @@ export const gotBeforeErrorHook =
 
 		/** Hinting for error messages. See https://github.com/camunda/camunda-8-js-sdk/issues/456 */
 		/** Here we reason over the error and the configuration to enrich the message with hints */
+		if (error instanceof ParseError) {
+			// This is a parse error, which means the response header was not valid JSON.
+			// Debugging for https://github.com/camunda/camunda-8-js-sdk/issues/491
+			error.message += ` (response headers: ${error.response.headers})`
+		}
 		if (error.code === '401') {
 			// the call was unauthorized
 			if (config.CAMUNDA_AUTH_STRATEGY === 'OAUTH') {
