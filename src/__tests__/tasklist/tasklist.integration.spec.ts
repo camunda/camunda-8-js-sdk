@@ -151,14 +151,18 @@ test('Tasklist can claim a task', async () => {
 	expect(p).toBeTruthy()
 	const operate = new OperateApiClient()
 	const res = await PollingOperation({
-		operation: () => operate.getProcessInstance(p!.processInstanceKey),
-		predicate: (result) => result.key === p!.processInstanceKey,
+		operation: () => operate.getProcessInstance(p.processInstanceKey),
+		predicate: (result) => result.key === p.processInstanceKey,
 		interval: 500,
 		timeout: 13000,
 	})
 	expect(res).toBeTruthy()
 	const tasks = await PollingOperation({
-		operation: () => tasklist.searchTasks({ state: 'CREATED' }),
+		operation: () =>
+			tasklist.searchTasks({
+				processDefinitionKey: p.processInstanceKey,
+				state: 'CREATED',
+			}),
 		predicate: (result) => result.length > 0,
 		interval: 500,
 		timeout: 13000,
@@ -194,16 +198,11 @@ test('Tasklist will not allow a task to be claimed twice', async () => {
 		interval: 500,
 		timeout: 13000,
 	})
-	const task = await tasklist
-		.assignTask({
-			taskId: tasks[0].id,
-			assignee: 'jwulf',
-		})
-		.catch((e) => {
-			// This should not happen - but it does sometimes in CI (with a status 500). We log the error to help debug.
-			console.error('Error assigning task:', e)
-			throw e
-		})
+	const task = await tasklist.assignTask({
+		taskId: tasks[0].id,
+		assignee: 'jwulf',
+	})
+
 	expect(task).toBeTruthy()
 	let threw = false
 	try {
