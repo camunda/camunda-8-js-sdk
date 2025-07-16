@@ -37,6 +37,8 @@ test('Can query variables', (done) => {
 						filter: {
 							processInstanceKey: job.processInstanceKey,
 						},
+						sort: [{ field: 'name', order: 'ASC' }],
+						page: { from: 0, limit: 1000 },
 					}),
 				interval: 500,
 				timeout: 5000,

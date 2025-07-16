@@ -194,10 +194,16 @@ test('Tasklist will not allow a task to be claimed twice', async () => {
 		interval: 500,
 		timeout: 13000,
 	})
-	const task = await tasklist.assignTask({
-		taskId: tasks[0].id,
-		assignee: 'jwulf',
-	})
+	const task = await tasklist
+		.assignTask({
+			taskId: tasks[0].id,
+			assignee: 'jwulf',
+		})
+		.catch((e) => {
+			// This should not happen - but it does sometimes in CI (with a status 500). We log the error to help debug.
+			console.error('Error assigning task:', e)
+			throw e
+		})
 	expect(task).toBeTruthy()
 	let threw = false
 	try {
@@ -284,6 +290,7 @@ test('Tasklist can complete a Task', async () => {
 	})
 	const taskid = tasks[0].id
 	expect(tasks.length).toBeGreaterThan(0)
+	await new Promise((resolve) => setTimeout(resolve, 1000)) // wait for task to be ready - this test is flaky without this
 	const completeTask = await tasklist.completeTask(taskid, {
 		outcome: 'approved',
 		fruits: ['apple', 'orange'],

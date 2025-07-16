@@ -19,6 +19,7 @@ test('can update a task', async () => {
 		state: 'CREATED',
 	})
 	const zbc = new ZeebeRestClient()
+	await new Promise((resolve) => setTimeout(resolve, 1000))
 	const res = await zbc.completeUserTask({
 		userTaskKey: tasks[0].id,
 	})
