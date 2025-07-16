@@ -122,5 +122,5 @@ export const makeBeforeRetryHandlerFor401TokenRetry =
 export const GotRetryConfig = {
 	limit: 1,
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as Method[],
-	statusCodes: [401],
+	statusCodes: [401, 429],
 }
