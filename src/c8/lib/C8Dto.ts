@@ -1371,3 +1371,84 @@ interface IncidentDetails {
 
 export interface CamundaRestSearchIncidentsResponse
 	extends PaginatedCamundaRestSearchResponse<IncidentDetails> {}
+
+export interface DecisionInstanceSearchFilter {
+	/** The decision instance key. */
+	decisionInstanceKey?: string | AdvancedStringFilter
+	/** The decision definition ID. */
+	decisionDefinitionId?: string | AdvancedStringFilter
+	/** The decision definition key. */
+	decisionDefinitionKey?: string | AdvancedStringFilter
+	/** The decision definition name. */
+	decisionDefinitionName?: string | AdvancedStringFilter
+	/** The decision definition version. */
+	decisionDefinitionVersion?: number | AdvancedNumberFilter
+	/** The process definition key associated to this decision instance. */
+	processDefinitionKey?: string | AdvancedStringFilter
+	/** The process instance key associated to this decision instance. */
+	processInstanceKey?: string | AdvancedStringFilter
+	/** The state of the decision instance. */
+	state?: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/** The evaluation date. */
+	evaluationDate?: string | AdvancedDateTimeFilter
+	/** The tenant ID. */
+	tenantId?: string | AdvancedStringFilter
+	/** The decision type. */
+	decisionType?:
+		| 'DECISION_TABLE'
+		| 'LITERAL_EXPRESSION'
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+}
+
+export interface CamundaRestSearchDecisionInstancesRequest
+	extends BaseSearchRequest<
+		| 'decisionInstanceKey'
+		| 'decisionDefinitionId'
+		| 'decisionDefinitionKey'
+		| 'decisionDefinitionName'
+		| 'decisionDefinitionVersion'
+		| 'processDefinitionKey'
+		| 'processInstanceKey'
+		| 'state'
+		| 'evaluationDate'
+		| 'tenantId'
+		| 'decisionType',
+		DecisionInstanceSearchFilter
+	> {}
+
+interface DecisionInstanceDetails {
+	/** The decision instance key. */
+	decisionInstanceKey: string
+	/** The decision definition ID. */
+	decisionDefinitionId: string
+	/** The decision definition key. */
+	decisionDefinitionKey: string
+	/** The decision definition name. */
+	decisionDefinitionName: string
+	/** The decision definition version. */
+	decisionDefinitionVersion: number
+	/** The process definition key associated to this decision instance. */
+	processDefinitionKey: string
+	/** The process instance key associated to this decision instance. */
+	processInstanceKey: string
+	/** The state of the decision instance. */
+	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/** The evaluation date. */
+	evaluationDate: string
+	/** The evaluation failure message, if any. */
+	evaluationFailure?: string
+	/** The tenant ID. */
+	tenantId: string
+	/** The decision type. */
+	decisionType:
+		| 'DECISION_TABLE'
+		| 'LITERAL_EXPRESSION'
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+	/** The result of the decision evaluation. */
+	result: string
+}
+
+export interface CamundaRestSearchDecisionInstancesResponse
+	extends PaginatedCamundaRestSearchResponse<DecisionInstanceDetails> {}

@@ -41,6 +41,8 @@ import {
 	ApiEndpointRequest,
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
+	CamundaRestSearchDecisionInstancesRequest,
+	CamundaRestSearchDecisionInstancesResponse,
 	CamundaRestSearchElementInstancesResponse,
 	CamundaRestSearchIncidentsResponse,
 	CamundaRestSearchProcessDefinitionsResponse,
@@ -1515,6 +1517,24 @@ export class CamundaRestClient {
 		>({
 			method: 'POST',
 			urlPath: `incidents/search`,
+			body: request,
+		})
+	}
+
+	/**
+	 * @description Search for decision instances based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/orchestration-cluster-api-rest/specifications/search-decision-instances/
+	 * @since 8.8.0
+	 */
+	public async searchDecisionInstances(
+		request: CamundaRestSearchDecisionInstancesRequest
+	): Promise<CamundaRestSearchDecisionInstancesResponse> {
+		return this.callApiEndpoint<
+			CamundaRestSearchDecisionInstancesRequest,
+			CamundaRestSearchDecisionInstancesResponse
+		>({
+			method: 'POST',
+			urlPath: `decision-instances/search`,
 			body: request,
 		})
 	}
