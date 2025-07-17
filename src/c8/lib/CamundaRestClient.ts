@@ -64,6 +64,7 @@ import {
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
+	GetDecisionInstanceResponse,
 	GetProcessDefinitionResponse,
 	GetVariableResponse,
 	JobUpdateChangeset,
@@ -1011,8 +1012,8 @@ export class CamundaRestClient {
 		deploymentResponse.deployments = []
 		deploymentResponse.processes = []
 		deploymentResponse.decisions = []
-		deploymentResponse.decisionRequirements = []
 		deploymentResponse.forms = []
+		deploymentResponse.decisionRequirements = []
 
 		/**
 		 * Type-guard assertions to correctly type the deployments. The API returns an array with mixed types.
@@ -1051,7 +1052,7 @@ export class CamundaRestClient {
 			}
 			if (isDecisionDeployment(deployment)) {
 				const decisionDeployment = losslessParse(
-					stringify(deployment)!,
+					stringify(deployment.decisionDefinition)!,
 					DecisionDeployment
 				)
 				deploymentResponse.deployments.push({
@@ -1061,7 +1062,7 @@ export class CamundaRestClient {
 			}
 			if (isDecisionRequirementsDeployment(deployment)) {
 				const decisionRequirementsDeployment = losslessParse(
-					stringify(deployment)!,
+					stringify(deployment.decisionRequirements)!,
 					DecisionRequirementsDeployment
 				)
 				deploymentResponse.deployments.push({
@@ -1073,7 +1074,7 @@ export class CamundaRestClient {
 			}
 			if (isFormDeployment(deployment)) {
 				const formDeployment = losslessParse(
-					stringify(deployment)!,
+					stringify(deployment.form)!,
 					FormDeployment
 				)
 				deploymentResponse.deployments.push({ form: formDeployment })
@@ -1536,6 +1537,23 @@ export class CamundaRestClient {
 			method: 'POST',
 			urlPath: `decision-instances/search`,
 			body: request,
+		})
+	}
+
+	/**
+	 * Get a decision instance by key.
+	 * @param decisionInstanceKey The key of the decision instance to get
+	 * @returns Decision instance details
+	 */
+	public async getDecisionInstance(
+		decisionInstanceKey: string
+	): Promise<GetDecisionInstanceResponse> {
+		return this.callApiEndpoint<
+			UnknownRequestBody,
+			GetDecisionInstanceResponse
+		>({
+			method: 'GET',
+			urlPath: `decision-instances/${decisionInstanceKey}`,
 		})
 	}
 
