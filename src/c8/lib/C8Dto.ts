@@ -80,24 +80,25 @@ export class ProcessDeployment extends LosslessDto {
 }
 
 export class DecisionDeployment extends LosslessDto {
-	dmnDecisionId!: string
+	decisionDefinitionId!: string
 	version!: number
 	@Int64String
 	decisionKey!: string
-	dmnDecisionName!: string
+	name!: string
 	tenantId!: string
-	dmnDecisionRequirementsId!: string
+	decisionRequirementsId!: string
 	@Int64String
-	dmnDecisionRequirementsKey!: string
+	decisionRequirementsKey!: string
+	decisionDefinitionKey!: string
 }
 
 export class DecisionRequirementsDeployment extends LosslessDto {
-	dmnDecisionRequirementsId!: string
+	decisionRequirementsId!: string
 	version!: number
-	dmnDecisionRequirementsName!: string
+	decisionRequirementsName!: string
 	tenantId!: string
 	@Int64String
-	dmnDecisionRequirementsKey!: string
+	decisionRequirementsKey!: string
 	resourceName!: string
 }
 export class FormDeployment {
@@ -1448,7 +1449,45 @@ interface DecisionInstanceDetails {
 		| 'UNKNOWN'
 	/** The result of the decision evaluation. */
 	result: string
+	/** The ID of the decision instance. */
+	decisionInstanceId: string
 }
 
 export interface CamundaRestSearchDecisionInstancesResponse
 	extends PaginatedCamundaRestSearchResponse<DecisionInstanceDetails> {}
+
+/**
+ * Response from getting a single decision instance by its key.
+ */
+export interface GetDecisionInstanceResponse {
+	/** The decision instance key. */
+	decisionInstanceKey: string
+	/** The decision definition ID. */
+	decisionDefinitionId: string
+	/** The decision definition key. */
+	decisionDefinitionKey: string
+	/** The decision definition name. */
+	decisionDefinitionName: string
+	/** The decision definition version. */
+	decisionDefinitionVersion: number
+	/** The process definition key associated to this decision instance. */
+	processDefinitionKey: string
+	/** The process instance key associated to this decision instance. */
+	processInstanceKey: string
+	/** The state of the decision instance. */
+	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/** The evaluation date. */
+	evaluationDate: string
+	/** The evaluation failure message, if any. */
+	evaluationFailure?: string
+	/** The tenant ID. */
+	tenantId: string
+	/** The decision type. */
+	decisionDefinitionType:
+		| 'DECISION_TABLE'
+		| 'LITERAL_EXPRESSION'
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+	/** The result of the decision evaluation. */
+	result: string
+}
