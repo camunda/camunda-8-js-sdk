@@ -1,3 +1,10 @@
+## [8.7.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.20...v8.7.21) (2025-07-17)
+
+
+### Features
+
+* backoff retry on 429 "Too many client requests". FIxes [#528](https://github.com/camunda/camunda-8-js-sdk/issues/528) ([63ea9ec](https://github.com/camunda/camunda-8-js-sdk/commit/63ea9ecf6b53b3327ebfb54bca41a3e13f1b01e7))
+
 ## [8.7.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.19...v8.7.20) (2025-07-16)
 
 ## [8.7.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.18...v8.7.19) (2025-07-15)
