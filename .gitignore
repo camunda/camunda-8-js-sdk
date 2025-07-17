@@ -137,7 +137,15 @@ dist
 
 .DS_Store
 
+# Ignore everything in env directory
+env/*
+#Ignore all .env files
 *.env
+
+# But don't ignore these specific files
+!env/c8run.env
+!env/sm-mt.env
+!env/sm.env
 !docker/.env
 
 docs
