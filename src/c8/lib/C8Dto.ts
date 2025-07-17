@@ -1356,7 +1356,7 @@ interface IncidentDetails {
 	/* State of this incident with a defined set of values. */
 	state: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
 	/* The tenant ID of the incident. */
-	tenantId?: string
+	tenantId: string
 	/* The assigned key, which acts as a unique identifier for this incident. */
 	incidentKey: string
 	/* The process definition key associated to this incident. */
