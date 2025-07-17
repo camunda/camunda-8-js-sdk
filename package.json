@@ -10,7 +10,7 @@
 		"docs": "rm -rf ./docs && typedoc",
 		"docs:watch": "rm -rf ./docs && typedoc --watch",
 		"generate:grpc": "grpc_tools_node_protoc --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --js_out=import_style=commonjs,binary:./src/generated --grpc_out=./src/generated --ts_out=./src/generated -I ./src/proto ./src/proto/*.proto",
-		"sm:start": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d && docker/suppress-es-deprecation.sh",
+		"sm:start": ". env/sm-mt.env && docker compose --env-file docker/.env -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d && docker/suppress-es-deprecation.sh",
 		"sm:stop": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down && docker/cleanup-volumes.sh",
 		"sm:stop8.8": "docker compose --env-file docker/8.8/.env -f docker/8.8/docker-compose-multitenancy.yaml down",
 		"sm:start8.8": "docker compose --env-file docker/8.8/.env -f docker/8.8/docker-compose-multitenancy.yaml up -d && docker/suppress-es-deprecation.sh",
