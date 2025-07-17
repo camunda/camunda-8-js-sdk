@@ -1,4 +1,4 @@
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 // Mock the dependencies
 jest.mock('got')

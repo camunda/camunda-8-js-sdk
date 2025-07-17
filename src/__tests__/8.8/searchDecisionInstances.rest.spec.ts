@@ -1,6 +1,6 @@
 import path from 'node:path'
 
-import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
 const restClient = new CamundaRestClient()
 
