@@ -49,7 +49,16 @@ test('Can get a variable', (done) => {
 				variableKey,
 			})
 
+			// Validate all fields in the GetVariableResponse DTO
+			expect(variable.variableKey).toBe(variableKey)
 			expect(variable.value).toBe(8)
+			expect(variable.name).toBe('someVariableField')
+			expect(variable.processInstanceKey).toBe(job.processInstanceKey)
+			expect(variable.scopeKey).toBeDefined()
+			expect(typeof variable.scopeKey).toBe('string')
+			expect(variable.tenantId).toBeDefined()
+			expect(typeof variable.tenantId).toBe('string')
+
 			return job.complete().then((res) => {
 				done()
 				return res

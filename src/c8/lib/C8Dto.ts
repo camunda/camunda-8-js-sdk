@@ -143,7 +143,7 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	/**
 	 * The version of the process; set to -1 to use the latest version
 	 */
-	readonly version!: number
+	readonly processDefinitionVersion!: number
 	@Int64String
 	readonly processInstanceKey!: string
 	/**
@@ -230,7 +230,7 @@ export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	/**
 	 * the version of the process; if not specified it will use the latest version
 	 */
-	version?: number
+	processDefinitionVersion?: number
 	/**
 	 * JSON document that will instantiate the variables for the root variable scope of the
 	 * process instance.
