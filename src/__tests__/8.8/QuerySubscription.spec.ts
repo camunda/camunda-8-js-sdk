@@ -1,8 +1,11 @@
+import { ProcessInstanceDetails } from 'c8/lib/C8Dto'
+
 import { CamundaRestClient, QuerySubscription } from '../../'
 
 jest.setTimeout(10000)
 
 test('QuerySubscription retrieves results', async () => {
+	const queryTag = `query-subscription-test-${Date.now()}`
 	let queryResultCount = 0
 	const c8 = new CamundaRestClient()
 
@@ -10,11 +13,13 @@ test('QuerySubscription retrieves results', async () => {
 		'./src/__tests__/testdata/query-subscription-test.bpmn',
 	])
 	const key = res.processes[0].processDefinitionKey
+
 	const query = () =>
 		c8.searchProcessInstances({
 			filter: {
 				processDefinitionKey: key,
 				state: 'ACTIVE',
+				// variables: [{ name: 'queryTag', value: { $eq: queryTag } }],
 			},
 			sort: [{ field: 'startDate', order: 'ASC' }],
 		})
@@ -23,37 +28,54 @@ test('QuerySubscription retrieves results', async () => {
 		interval: 500,
 	})
 
-	const correlations: string[] = []
+	let correlations: ProcessInstanceDetails[] = []
 
 	subscription.on('update', (data) => {
 		queryResultCount += data.items.length
-		correlations.push(...data.items.map((item) => item.processInstanceKey))
+		correlations = [...correlations, ...data.items]
 	})
 
 	const processInstance = await c8.createProcessInstance({
 		processDefinitionKey: key,
 		variables: {
-			queryTag: 'query-subscription-test',
+			queryTag,
 		},
 	})
 	const processInstance2 = await c8.createProcessInstance({
 		processDefinitionKey: key,
 		variables: {
-			queryTag: 'query-subscription-test',
+			queryTag,
 		},
 	})
 	const processInstance3 = await c8.createProcessInstance({
 		processDefinitionKey: key,
 		variables: {
-			queryTag: 'query-subscription-test',
+			queryTag,
 		},
 	})
 
 	await new Promise((resolve) => setTimeout(resolve, 7000)) // Wait for the subscription to pick up the new process instances
+	// tslint:disable-next-line: no-console
+	// console.log('Correlations:', JSON.stringify(correlations, null, 2)) // @DEBUG
 	expect(queryResultCount).toBe(3)
-	expect(correlations.includes(processInstance.processInstanceKey)).toBe(true)
-	expect(correlations.includes(processInstance2.processInstanceKey)).toBe(true)
-	expect(correlations.includes(processInstance3.processInstanceKey)).toBe(true)
+
+	// Check if process instances are found in the correlations array by their keys
+	expect(
+		correlations.some(
+			(item) => item.processInstanceKey === processInstance.processInstanceKey
+		)
+	).toBe(true)
+	expect(
+		correlations.some(
+			(item) => item.processInstanceKey === processInstance2.processInstanceKey
+		)
+	).toBe(true)
+	expect(
+		correlations.some(
+			(item) => item.processInstanceKey === processInstance3.processInstanceKey
+		)
+	).toBe(true)
+	expect(correlations.length).toBe(3)
 	await c8.cancelProcessInstance({
 		processInstanceKey: processInstance.processInstanceKey,
 	})

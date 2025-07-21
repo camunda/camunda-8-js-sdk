@@ -1,9 +1,12 @@
 import EventEmitter from 'node:events'
 import { isDeepStrictEqual } from 'node:util'
 
+import Debug from 'debug'
 import TypedEmitter from 'typed-emitter'
 
 import { runWithAsyncErrorContext } from './AsyncTrace'
+
+const debug = Debug('camunda:querySubscription')
 
 export function QuerySubscription<T>(
 	options: QuerySubscriptionConstructorWithPredicate<T>
@@ -40,6 +43,73 @@ type QuerySubscriptionEvents<T> = {
 }
 
 /**
+ * @description Detects duplicate items in a dataset.
+ * Throws an error if exact duplicates are found, meaning the same object instance exists more than once.
+ * @param data The data object containing an items array
+ * @throws Error if duplicate items are found
+ */
+function detectDuplicateItems<T extends { items?: unknown[] }>(data: T): void {
+	if (!data) return
+	const items = data.items
+	if (!items || !Array.isArray(items)) return
+
+	// Track items we've seen for exact duplicates
+	const seen = new Set()
+	const stringifiedItems = new Map<string, unknown>()
+	const duplicates: { item: unknown; indices: number[] }[] = []
+
+	items.forEach((item, index) => {
+		// Check for exact duplicate object instances (same reference)
+		if (seen.has(item)) {
+			debug(`Found exact duplicate at index ${index} (same reference)`)
+			throw new Error(
+				`API response contains exact duplicate items (same reference) at index ${index}: ${JSON.stringify(
+					item
+				)}`
+			)
+		}
+		seen.add(item)
+
+		// Check for content duplicates (deep equality)
+		const stringified = JSON.stringify(item)
+		if (stringifiedItems.has(stringified)) {
+			const originalItem = stringifiedItems.get(stringified)
+			const existingDuplicate = duplicates.find((d) => d.item === originalItem)
+
+			if (existingDuplicate) {
+				existingDuplicate.indices.push(index)
+			} else {
+				duplicates.push({
+					item: originalItem,
+					indices: [items.findIndex((i) => i === originalItem), index],
+				})
+			}
+		} else {
+			stringifiedItems.set(stringified, item)
+		}
+	})
+
+	// Report content duplicates
+	if (duplicates.length > 0) {
+		const details = duplicates
+			.map(
+				(d) =>
+					`Item ${JSON.stringify(d.item).substring(
+						0,
+						100
+					)} found at indices ${d.indices.join(', ')}`
+			)
+			.join('\n')
+
+		debug(`Found ${duplicates.length} duplicate items:\n${details}`)
+
+		throw new Error(
+			`API response contains ${duplicates.length} duplicate items:\n${details}`
+		)
+	}
+}
+
+/**
  * @description The default predicate function for QuerySubscription.
  * It checks if the current query result has new items compared to the previous state.
  * If there are new items, it returns the current state with only the new items and updates the totalItems count.
@@ -50,19 +120,31 @@ type QuerySubscriptionEvents<T> = {
  * - If there are no new items, returns false, indicating that no update should be emitted.
  */
 function defaultPredicate<
-	T extends { items: Array<unknown>; page: { totalItems: number } },
+	T extends { items?: Array<unknown>; page?: { totalItems: number } },
 >(previous: T | undefined, current: T): QuerySubscriptionReturnValue<T> {
+	// Check for duplicates in the API response
+	detectDuplicateItems(current)
+
+	// Handle missing items arrays gracefully
+	if (!current || !current.items) return false
+
 	const previousItems = (previous?.items ?? []) as Array<unknown>
 	const currentItems = current.items.filter(
 		(item) =>
 			!previousItems.some((prevItem) => isDeepStrictEqual(prevItem, item))
 	)
 	if (currentItems.length > 0) {
-		return {
+		const result = {
 			...current,
 			items: currentItems,
-			page: { ...current.page, totalItems: currentItems.length },
 		}
+
+		// Update page totalItems if it exists
+		if (current.page) {
+			result.page = { ...current.page, totalItems: currentItems.length }
+		}
+
+		return result
 	}
 	return false // No new items, do not emit
 }
@@ -70,6 +152,12 @@ function defaultPredicate<
 interface QuerySubscriptionConstructorBase<T> {
 	query: () => Promise<T>
 	interval?: number
+	/**
+	 * Number of poll cycles to track emitted items for duplicate prevention. See: https://github.com/camunda/camunda-8-js-sdk/issues/540
+	 * Set to 0 to disable tracking (not recommended).
+	 * Default: 5
+	 */
+	trackingWindow?: number
 }
 
 interface QuerySubscriptionConstructorWithPredicate<T>
@@ -143,6 +231,12 @@ class _QuerySubscription<T> {
 	private _predicateLock: boolean = false
 	/** We prevent further polling while we are processing the current poll */
 	private _pollLock: boolean = false
+	/** Track items we've emitted to prevent duplicates within a limited window of poll cycles */
+	private _recentEmittedItems: Map<number, Set<string>> = new Map()
+	/** Current poll cycle number, used for the rolling window of tracked items */
+	private _currentPollCycle = 0
+	/** Number of poll cycles to track emitted items for duplicate prevention */
+	private _trackingWindow: number
 	private _interval: number
 	private emitter: TypedEmitter<QuerySubscriptionEvents<T>>
 	on: <E extends 'update'>(
@@ -187,12 +281,22 @@ class _QuerySubscription<T> {
 			  >
 	) {
 		this._query = options.query
+		this._trackingWindow =
+			options.trackingWindow !== undefined ? options.trackingWindow : 5
+
+		debug(
+			`Created with interval ${
+				options.interval || 1000
+			}ms and tracking window ${this._trackingWindow} cycles`
+		)
 
 		if ('predicate' in options && options.predicate) {
 			this._predicate = options.predicate as QuerySubscriptionPredicate<T>
+			debug(`Using custom predicate`)
 		} else {
 			// Use type assertion to handle the default predicate
 			this._predicate = defaultPredicate as QuerySubscriptionPredicate<T>
+			debug(`[QuerySubscription] Using default predicate`)
 		}
 
 		this._interval = options.interval || 1000
@@ -230,6 +334,8 @@ class _QuerySubscription<T> {
 		this._poll = undefined
 		this._predicateLock = false
 		this._pollLock = false
+		this._currentPollCycle = 0
+		this._recentEmittedItems.clear()
 		this.removeAllListeners()
 	}
 
@@ -243,38 +349,236 @@ class _QuerySubscription<T> {
 		)
 	}
 
+	/**
+	 * Check if an item has already been emitted within the tracking window to prevent duplicates
+	 */
+	private hasEmittedItem(item: unknown): boolean {
+		// If tracking window is disabled (set to 0), we don't track items
+		if (this._trackingWindow <= 0) return false
+
+		const itemStr = JSON.stringify(item)
+
+		// Check in all recent poll cycles
+		for (let i = 0; i < this._trackingWindow; i++) {
+			// Calculate cycle index with a safe modulo operation
+			const cycleOffset =
+				(this._currentPollCycle - i + this._trackingWindow) %
+				this._trackingWindow
+			const itemSet = this._recentEmittedItems.get(cycleOffset)
+			if (itemSet && itemSet.has(itemStr)) {
+				debug(
+					`Item already emitted within last ${
+						i + 1
+					} poll cycles: ${itemStr.substring(0, 100)}...`
+				)
+				return true
+			}
+		}
+
+		return false
+	}
+
+	/**
+	 * Mark an item as emitted to prevent duplicates within the tracking window
+	 */
+	private markItemAsEmitted(item: unknown): void {
+		// If tracking window is disabled, do nothing
+		if (this._trackingWindow <= 0) return
+
+		const itemStr = JSON.stringify(item)
+		debug(
+			`Marking item as emitted in cycle ${
+				this._currentPollCycle
+			}: ${itemStr.substring(0, 100)}...`
+		)
+
+		// Get or create the Set for the current poll cycle
+		let currentSet = this._recentEmittedItems.get(this._currentPollCycle)
+		if (!currentSet) {
+			currentSet = new Set<string>()
+			this._recentEmittedItems.set(this._currentPollCycle, currentSet)
+		}
+
+		currentSet.add(itemStr)
+	}
+
+	/**
+	 * Safely emit items, preventing duplicates
+	 */
+	private safeEmit(data: T): void {
+		// Handle items array if present
+		if (data && typeof data === 'object' && 'items' in data) {
+			const dataWithItems = data as unknown as { items: unknown[] }
+
+			// Check if we already emitted any of these items
+			const newItems = dataWithItems.items.filter(
+				(item) => !this.hasEmittedItem(item)
+			)
+
+			if (newItems.length === 0) {
+				debug(`All items have already been emitted, skipping update`)
+				return
+			}
+
+			if (newItems.length !== dataWithItems.items.length) {
+				debug(
+					`Filtered out ${
+						dataWithItems.items.length - newItems.length
+					} duplicate items`
+				)
+
+				// Create a new object with only the new items
+				const filteredData = {
+					...data,
+					items: newItems,
+				}
+
+				if ('page' in filteredData && typeof filteredData.page === 'object') {
+					filteredData.page = {
+						...filteredData.page,
+						totalItems: newItems.length,
+					}
+				}
+
+				// Mark all items as emitted
+				newItems.forEach((item) => this.markItemAsEmitted(item))
+
+				// Emit the filtered data
+				this.emit('update', filteredData as T)
+				return
+			}
+
+			// Mark all items as emitted
+			dataWithItems.items.forEach((item) => this.markItemAsEmitted(item))
+		}
+
+		// Emit the data
+		this.emit('update', data)
+	}
+
 	async poll() {
 		if (
 			this._pollLock ||
 			this._predicateLock ||
 			this.listeners('update').length === 0
 		) {
+			debug(
+				`Poll skipped: locks=${this._pollLock},${
+					this._predicateLock
+				}, listeners=${this.listeners('update').length}`
+			)
+
 			return
 		}
 
+		// Prevent concurrent polls by setting both locks immediately
 		this._pollLock = true
+		this._predicateLock = true
+
+		// Advance the poll cycle and clean up old data if tracking is enabled
+		if (this._trackingWindow > 0) {
+			// Increment the poll cycle
+			this._currentPollCycle =
+				(this._currentPollCycle + 1) % this._trackingWindow
+			// Remove old data from the next cycle slot that we'll use in the future
+			this._recentEmittedItems.delete(this._currentPollCycle)
+
+			debug(`Advanced to poll cycle ${this._currentPollCycle}`)
+		}
+
+		debug(`Poll starting, locks acquired`)
+
 		try {
+			// Get the current data
+			debug(`[QuerySubscription] Querying data...`)
 			this._poll = this._query()
 			const current = await this._poll
 
-			if (this._state) {
+			debug(
+				`Query returned data with ${
+					current && typeof current === 'object' && 'items' in current
+						? (current as Record<string, unknown[]>).items.length
+						: 'unknown'
+				} items`
+			)
+
+			// Save a local copy of the state to ensure consistency during this poll cycle
+			const previousState = this._state
+
+			debug(
+				`Previous state: ${
+					previousState
+						? typeof previousState === 'object' && 'items' in previousState
+							? `has ${
+									(previousState as Record<string, unknown[]>).items.length
+								} items`
+							: 'exists but has no items array'
+						: 'undefined'
+				}`
+			)
+
+			if (previousState) {
 				// If we have a previous state, check if it is the same as the current one
-				if (isDeepStrictEqual(this._state, current)) {
+				if (isDeepStrictEqual(previousState, current)) {
 					// If the state is the same, we don't need to emit an update
+
+					debug(`Current state is identical to previous state, not emitting`)
+
 					this._pollLock = false
+					this._predicateLock = false
 					return
 				}
+
+				debug(`State has changed since previous poll`)
+			} else {
+				debug(`First poll, no previous state`)
 			}
 
-			this._predicateLock = true
-			const diff = await this._predicate(this._state, current)
+			// Run the predicate with our safely stored previous state
+			debug(`[QuerySubscription] Running predicate function`)
+			const diff = await this._predicate(previousState, current)
+
+			debug(
+				`Predicate returned: ${
+					diff
+						? diff === true
+							? 'true'
+							: 'custom result object'
+						: 'false/null/undefined'
+				}`
+			)
+
+			// Update state FIRST, before any potential emissions
+			// This ensures race conditions don't cause duplicate emissions
 			this._state = current
+
+			debug(`Updated state BEFORE emission processing`)
+
 			if (diff) {
+				// Emit the appropriate update using our safe emit method
 				if (diff === true) {
-					this.emit('update', current)
+					debug(`Safely emitting full current state with duplicate prevention`)
+					const itemsCount =
+						current && typeof current === 'object' && 'items' in current
+							? (current as Record<string, unknown[]>).items.length
+							: 'N/A'
+					debug(`Attempting to emit ${itemsCount} items`)
+
+					this.safeEmit(current)
 				} else {
-					this.emit('update', diff)
+					debug(
+						`Safely emitting custom result from predicate with duplicate prevention`
+					)
+					const itemsCount =
+						diff && typeof diff === 'object' && 'items' in diff
+							? (diff as { items: unknown[] }).items.length
+							: 'N/A'
+					debug(`Attempting to emit ${itemsCount} items`)
+
+					this.safeEmit(diff)
 				}
+			} else {
+				debug(`No emission needed based on predicate result`)
 			}
 		} catch (error: unknown) {
 			;(error as Error).message = `QuerySubscription: ${

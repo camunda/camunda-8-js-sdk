@@ -422,20 +422,28 @@ export interface AdvancedStringFilter {
 	/** Checks if the current property exists. */
 	$exists?: boolean
 	/** Checks if the property matches any of the provided values. */
-	$in: string[]
+	$in?: string[]
 	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
-	$like: string
+	$like?: string
 }
 
 export interface AdvancedNumberFilter {
+	/** Checks for equality with the provided value. */
 	$eq?: number
+	/** Checks for inequality with the provided value. */
 	$neq?: number
-	$exists: boolean
-	$in: number[]
-	$gt: number
-	$gte: number
-	$lt: number
-	$lte: number
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Checks if the property matches any of the provided values. */
+	$in?: number[]
+	/** Checks if the property is greater than the provided value. */
+	$gt?: number
+	/** Checks if the property is greater than or equal to the provided value. */
+	$gte?: number
+	/** Checks if the property is less than the provided value. */
+	$lt?: number
+	/** Checks if the property is less than or equal to the provided value. */
+	$lte?: number
 }
 
 export interface VariableSearchFilterRequest {
@@ -712,7 +720,7 @@ export interface ProcessInstanceSearchFilter {
 	/** The process definition name. */
 	processDefinitionName?: string | AdvancedStringFilter
 	/** The process definition version. */
-	processDefinitionVersion?: string | AdvancedStringFilter
+	processDefinitionVersion?: number | AdvancedStringFilter
 	/** The process definition version tag. */
 	processDefinitionVersionTag?: string | AdvancedStringFilter
 	/** The process definition key. */
@@ -734,7 +742,7 @@ export interface ProcessInstanceSearchFilter {
 		/** Name of the variable. */
 		name: string
 		/** The value of the variable */
-		value: string
+		value: string | AdvancedStringFilter
 	}>
 }
 
@@ -757,15 +765,15 @@ export interface SearchProcessInstanceRequest
 		ProcessInstanceSearchFilter
 	> {}
 
-interface ProcessInstanceDetails {
+export interface ProcessInstanceDetails {
 	/** The key of the process instance. */
 	processInstanceKey: string
 	/** The key of the process definition. */
 	processDefinitionKey: string
 	/** The key of the parent process instance. */
-	parentProcessInstanceKey: string
+	parentProcessInstanceKey?: string
 	/** The key of the parent flow node instance. */
-	parentFlowNodeInstanceKey: string
+	parentFlowNodeInstanceKey?: string
 	/** The BPMN process ID of the process definition. */
 	processDefinitionId: string
 	/** The name of the process definition. */

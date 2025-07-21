@@ -100,14 +100,14 @@ import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 
-const trace = debug('camunda:zeebe-rest')
+const trace = debug('camunda:rest')
 
 const CAMUNDA_REST_API_VERSION = 'v2'
 
 class DefaultLosslessDto extends LosslessDto {}
 
 /**
- * The client for the unified Camunda 8 REST API.
+ * The client for the unified Camunda 8 Orchestration Cluster REST API.
  *
  * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:zeebe-rest`.
  *
