@@ -15,6 +15,7 @@ import {
 	createUserAgentString,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
+	gotBeforeRetryHook,
 	GotRetryConfig,
 	LosslessDto,
 	losslessParse,
@@ -169,6 +170,7 @@ export class CamundaRestClient {
 							makeBeforeRetryHandlerFor401TokenRetry(
 								this.getHeaders.bind(this)
 							),
+							gotBeforeRetryHook,
 						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: [
