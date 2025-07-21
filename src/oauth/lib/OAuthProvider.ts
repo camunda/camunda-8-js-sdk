@@ -16,6 +16,7 @@ import {
 	DeepPartial,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
+	gotBeforeRetryHook,
 	GotRetryConfig,
 	RequireConfiguration,
 } from '../../lib'
@@ -145,6 +146,7 @@ export class OAuthProvider implements IHeadersProvider {
 					handlers: [beforeCallHook],
 					hooks: {
 						beforeError: [gotBeforeErrorHook(config)],
+						beforeRetry: [gotBeforeRetryHook],
 					},
 				})
 		)

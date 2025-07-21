@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { debug } from 'debug'
 import {
 	BeforeErrorHook,
+	BeforeRetryHook,
 	HTTPError as GotHTTPError,
 	HandlerFunction,
 	Method,
@@ -11,6 +13,8 @@ import { asyncOperationContext } from './AsyncTrace'
 import { CamundaSupportLogger } from './CamundaSupportLogger'
 import { CamundaPlatform8Configuration } from './Configuration'
 import { HTTPError } from './GotErrors'
+
+const trace = debug('camunda:gotHooks')
 
 const supportLogger = CamundaSupportLogger.getInstance()
 
@@ -35,6 +39,29 @@ export const beforeCallHook: HandlerFunction = (options, next) => {
 	supportLogger.log(`Rest call:`)
 	supportLogger.log(options)
 	return next(options)
+}
+
+/**
+ * This function is used to handle 401 errors in got requests.
+ * It will retry the request only once if the error code is 401.
+ * Otherwise, for 429 and 503 errors, it will retry according to the GotRetryConfig.
+ */
+export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
+	trace(
+		'gotBeforeRetryHook called with error:',
+		JSON.stringify(Object.keys(error as unknown as object))
+	)
+	if (error instanceof RequestError) {
+		trace('gotBeforeRetryHook: HTTPError detected:', error.response?.statusCode)
+		// If we have a
+		if (error.response?.statusCode === 401) {
+			// If we get a 401 error, we will retry the request only once.
+			if (retryCount && retryCount > 0) {
+				// If we have already retried, we throw the error to stop retrying.
+				throw error
+			}
+		}
+	}
 }
 
 /**
@@ -119,8 +146,16 @@ export const makeBeforeRetryHandlerFor401TokenRetry =
 		context.headers.authorization = (await getHeadersFn()).authorization
 	}
 
+/**
+ * Retry configuration for got requests.
+ * This configuration is used to retry requests on certain status codes and methods.
+ * We will retry on 429 (Too Many Requests) and 503 (Service Unavailable) status codes.
+ * 503 is used for Camunda 8 to indicate server backpressure. See: https://github.com/camunda/camunda-8-js-sdk/issues/509
+ * 401 (Unauthorized) is used for OAuth token refreshes.
+ * We will retry only once on 401 (see the BeforeRetryHook), because the worker polls continuously, and a worker that is misconfigured with an invalid secret will retry indefinitely.
+ * This is not ideal, but it is the current behaviour. We need to ensure that such a worker does not flood the broker, so we cause a backoff.
+ */
 export const GotRetryConfig = {
-	limit: 1,
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as Method[],
-	statusCodes: [401, 429],
+	statusCodes: [429, 503, 401],
 }
