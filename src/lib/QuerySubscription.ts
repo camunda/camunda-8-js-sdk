@@ -9,6 +9,7 @@ import { runWithAsyncErrorContext } from './AsyncTrace'
 /**
  * Generates a hash code from a string using the djb2 algorithm.
  * This is faster than JSON.stringify for comparison purposes.
+ * We store it as a base 36 string representation to reduce size.
  * @param str String to hash
  * @returns A number hash of the string
  */
