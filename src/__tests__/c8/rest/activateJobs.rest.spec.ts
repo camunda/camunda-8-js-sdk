@@ -19,7 +19,7 @@ beforeAll(async () => {
 	processDefinitionId = res.processes[0].processDefinitionId
 })
 
-test('Can service a task', (done) => {
+test('Can service a job', (done) => {
 	restClient
 		.createProcessInstance({
 			processDefinitionId,
@@ -38,6 +38,34 @@ test('Can service a task', (done) => {
 				})
 				.then((jobs) => {
 					expect(jobs.length).toBe(1)
+
+					// Validate all fields in the RestJob DTO
+					const job = jobs[0]
+
+					// Required properties from RestJob interface
+					expect(job.jobKey).toBeDefined()
+					expect(typeof job.jobKey).toBe('string')
+					expect(job.type).toBe('console-log-complete-rest')
+					expect(job.processInstanceKey).toBeDefined()
+					expect(typeof job.processInstanceKey).toBe('string')
+					expect(job.elementId).toBeDefined()
+					expect(job.elementInstanceKey).toBeDefined()
+					expect(typeof job.elementInstanceKey).toBe('string')
+					expect(job.worker).toBe('test') // Worker name from our request
+					expect(job.retries).toBeGreaterThan(0)
+					expect(job.deadline).toBeDefined()
+					expect(job.variables).toBeDefined()
+					expect(job.variables['someNumberField']).toBe(8)
+					expect(job.customHeaders).toBeDefined()
+					expect(job.tenantId).toBeDefined()
+
+					// Check for methods from JobCompletionInterfaceRest
+					expect(typeof job.complete).toBe('function')
+					expect(typeof job.fail).toBe('function')
+					expect(typeof job.forward).toBe('function')
+					expect(typeof job.cancelWorkflow).toBe('function')
+
+					// Complete the job and finish the test
 					jobs[0].complete().then(() => done())
 				})
 		})

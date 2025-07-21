@@ -100,16 +100,16 @@ import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 
-const trace = debug('camunda:zeebe-rest')
+const trace = debug('camunda:orchestration-rest')
 
 const CAMUNDA_REST_API_VERSION = 'v2'
 
 class DefaultLosslessDto extends LosslessDto {}
 
 /**
- * The client for the unified Camunda 8 REST API.
+ * The client for the unified Camunda 8 Orchestration Cluster REST API.
  *
- * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:zeebe-rest`.
+ * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:orchestration-rest`.
  *
  * For production, you can pass in an logger compatible with {@link Logger} to the constructor as `logger`.
  *
@@ -928,12 +928,15 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async migrateProcessInstance(req: MigrationRequest) {
+	public async migrateProcessInstance(req: MigrationRequest): Promise<''> {
 		const { processInstanceKey, ...request } = req
 		this.log.debug(`Migrating process instance ${processInstanceKey}`, {
 			component: 'C8RestClient',
 		})
-		return this.callApiEndpoint({
+		return this.callApiEndpoint<
+			Omit<MigrationRequest, 'processInstanceKey'>,
+			''
+		>({
 			urlPath: `process-instances/${processInstanceKey}/migration`,
 			method: 'POST',
 			body: request,
@@ -1381,9 +1384,9 @@ export class CamundaRestClient {
 	 */
 	public async modifyProcessInstance(
 		request: ModifyProcessInstanceRequest
-	): Promise<void> {
+	): Promise<''> {
 		const { processInstanceKey, ...req } = request
-		return this.callApiEndpoint<UnknownRequestBody, void>({
+		return this.callApiEndpoint<UnknownRequestBody, ''>({
 			method: 'POST',
 			urlPath: `process-instances/${processInstanceKey}/modification`,
 			body: req,

@@ -7,11 +7,7 @@ jest.setTimeout(17000)
 
 let processDefinitionId: string
 let processDefinitionKey: string
-const restClient = new CamundaRestClient({
-	config: {
-		CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'zeebe-api',
-	},
-})
+const restClient = new CamundaRestClient()
 
 beforeAll(async () => {
 	const res = await restClient.deployResourcesFromFiles([
@@ -33,7 +29,27 @@ test('Can create a process from bpmn id', (done) => {
 			},
 		})
 		.then((res) => {
+			// Validate all fields in the CreateProcessInstanceResponse DTO
 			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
+			expect(typeof res.processDefinitionKey).toBe('string')
+
+			expect(res.processDefinitionId).toBeDefined()
+			expect(res.processDefinitionId).toEqual(processDefinitionId)
+			expect(typeof res.processDefinitionId).toBe('string')
+
+			expect(res.processDefinitionVersion).toBeDefined()
+			expect(typeof res.processDefinitionVersion).toBe('number')
+
+			expect(res.processInstanceKey).toBeDefined()
+			expect(typeof res.processInstanceKey).toBe('string')
+			expect(res.processInstanceKey.length).toBeGreaterThan(0)
+
+			expect(res.tenantId).toBeDefined()
+			expect(typeof res.tenantId).toBe('string')
+
+			// For standard createProcessInstance, variables should be empty
+			expect(res.variables).toEqual({})
+
 			done()
 		})
 })
@@ -73,8 +89,27 @@ test('Can create a process and get the result', (done) => {
 			outputVariablesDto: myVariableDto,
 		})
 		.then((res) => {
+			// Validate all fields in the CreateProcessInstanceResponse DTO with variables
 			expect(res.processDefinitionKey).toEqual(processDefinitionKey)
+			expect(typeof res.processDefinitionKey).toBe('string')
+
+			expect(res.processDefinitionId).toBeDefined()
+			expect(typeof res.processDefinitionId).toBe('string')
+
+			expect(res.processDefinitionVersion).toBeDefined()
+			expect(typeof res.processDefinitionVersion).toBe('number')
+
+			expect(res.processInstanceKey).toBeDefined()
+			expect(typeof res.processInstanceKey).toBe('string')
+			expect(res.processInstanceKey.length).toBeGreaterThan(0)
+
+			expect(res.tenantId).toBeDefined()
+			expect(typeof res.tenantId).toBe('string')
+
+			// For createProcessInstanceWithResult, variables should contain the input values
+			expect(res.variables).toBeDefined()
 			expect(res.variables.someNumberField).toBe(8)
+
 			done()
 		})
 })

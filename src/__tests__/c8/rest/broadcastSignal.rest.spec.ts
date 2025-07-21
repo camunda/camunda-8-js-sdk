@@ -57,7 +57,14 @@ test('Can start a process with a signal', async () => {
 		},
 	})
 
+	// Validate the complete BroadcastSignalResponse DTO
 	expect(res.signalKey).toBeTruthy()
+	expect(typeof res.signalKey).toBe('string')
+	expect(res.signalKey.length).toBeGreaterThan(0)
+
+	// Validate tenantId field
+	expect(res.tenantId).toBeDefined()
+	expect(typeof res.tenantId).toBe('string')
 
 	await new Promise((resolve) => {
 		const w = c8.createJobWorker({

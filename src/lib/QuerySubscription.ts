@@ -1,9 +1,36 @@
 import EventEmitter from 'node:events'
 import { isDeepStrictEqual } from 'node:util'
 
+import Debug from 'debug'
 import TypedEmitter from 'typed-emitter'
 
 import { runWithAsyncErrorContext } from './AsyncTrace'
+
+/**
+ * Generates a hash code from a string using the djb2 algorithm.
+ * This is faster than JSON.stringify for comparison purposes.
+ * We store it as a base 36 string representation to reduce size.
+ * @param str String to hash
+ * @returns A number hash of the string
+ */
+function hashString(str: string): string {
+	let hash = 5381
+	for (let i = 0; i < str.length; i++) {
+		hash = (hash << 5) + hash + str.charCodeAt(i) /* hash * 33 + c */
+	}
+	return hash.toString(36)
+}
+
+/**
+ * Creates a hash of an object by first converting to JSON string and then hashing
+ * @param obj Object to hash
+ * @returns A string hash representing the object
+ */
+function hashObject(obj: unknown): string {
+	return hashString(JSON.stringify(obj))
+}
+
+const debug = Debug('camunda:querySubscription')
 
 export function QuerySubscription<T>(
 	options: QuerySubscriptionConstructorWithPredicate<T>
@@ -52,17 +79,26 @@ type QuerySubscriptionEvents<T> = {
 function defaultPredicate<
 	T extends { items: Array<unknown>; page: { totalItems: number } },
 >(previous: T | undefined, current: T): QuerySubscriptionReturnValue<T> {
+	// Handle missing items arrays gracefully
+	if (!current || !current.items) return false
+
 	const previousItems = (previous?.items ?? []) as Array<unknown>
 	const currentItems = current.items.filter(
 		(item) =>
 			!previousItems.some((prevItem) => isDeepStrictEqual(prevItem, item))
 	)
 	if (currentItems.length > 0) {
-		return {
+		const result = {
 			...current,
 			items: currentItems,
-			page: { ...current.page, totalItems: currentItems.length },
 		}
+
+		// Update page totalItems if it exists
+		if (current.page) {
+			result.page = { ...current.page, totalItems: currentItems.length }
+		}
+
+		return result
 	}
 	return false // No new items, do not emit
 }
@@ -70,6 +106,12 @@ function defaultPredicate<
 interface QuerySubscriptionConstructorBase<T> {
 	query: () => Promise<T>
 	interval?: number
+	/**
+	 * Number of poll cycles to track emitted items for duplicate prevention. See: https://github.com/camunda/camunda-8-js-sdk/issues/540
+	 * Set to 0 to disable tracking (not recommended).
+	 * Default: 5
+	 */
+	trackingWindow?: number
 }
 
 interface QuerySubscriptionConstructorWithPredicate<T>
@@ -143,6 +185,12 @@ class _QuerySubscription<T> {
 	private _predicateLock: boolean = false
 	/** We prevent further polling while we are processing the current poll */
 	private _pollLock: boolean = false
+	/** Track items we've emitted to prevent duplicates within a limited window of poll cycles */
+	private _recentEmittedItems: Map<number, Set<string>> = new Map()
+	/** Current poll cycle number, used for the rolling window of tracked items */
+	private _currentPollCycle = 0
+	/** Number of poll cycles to track emitted items for duplicate prevention */
+	private _trackingWindow: number
 	private _interval: number
 	private emitter: TypedEmitter<QuerySubscriptionEvents<T>>
 	on: <E extends 'update'>(
@@ -187,12 +235,22 @@ class _QuerySubscription<T> {
 			  >
 	) {
 		this._query = options.query
+		this._trackingWindow =
+			options.trackingWindow !== undefined ? options.trackingWindow : 5
+
+		debug(
+			`Created with interval ${
+				options.interval || 1000
+			}ms and tracking window ${this._trackingWindow} cycles`
+		)
 
 		if ('predicate' in options && options.predicate) {
 			this._predicate = options.predicate as QuerySubscriptionPredicate<T>
+			debug(`Using custom predicate`)
 		} else {
 			// Use type assertion to handle the default predicate
 			this._predicate = defaultPredicate as QuerySubscriptionPredicate<T>
+			debug(`Using default predicate`)
 		}
 
 		this._interval = options.interval || 1000
@@ -230,6 +288,8 @@ class _QuerySubscription<T> {
 		this._poll = undefined
 		this._predicateLock = false
 		this._pollLock = false
+		this._currentPollCycle = 0
+		this._recentEmittedItems.clear()
 		this.removeAllListeners()
 	}
 
@@ -243,38 +303,283 @@ class _QuerySubscription<T> {
 		)
 	}
 
+	/**
+	 * Gets the hash for an item, used for tracking across poll cycles
+	 * @param item The item to hash
+	 * @returns The hash string for the item
+	 */
+	private getItemHash(item: unknown): string {
+		return hashObject(item)
+	}
+
+	/**
+	 * Gets the item set for a specific poll cycle
+	 * @param cycleOffset The offset from the current poll cycle
+	 * @returns The set of item hashes for that cycle, or undefined if none exist
+	 */
+	private getCycleItemSet(cycleOffset: number): Set<string> | undefined {
+		// If tracking window is disabled, return undefined
+		if (this._trackingWindow <= 0) return undefined
+
+		// Calculate the actual cycle index with a safe modulo operation
+		const normalizedOffset =
+			(this._currentPollCycle - cycleOffset + this._trackingWindow) %
+			this._trackingWindow
+
+		return this._recentEmittedItems.get(normalizedOffset)
+	}
+
+	/**
+	 * Check if an item has already been emitted within the tracking window to prevent duplicates
+	 */
+	private hasEmittedItem(item: unknown): boolean {
+		// If tracking window is disabled (set to 0), we don't track items
+		if (this._trackingWindow <= 0) return false
+
+		// Generate a hash of the item
+		const itemHash = this.getItemHash(item)
+
+		// Check in all recent poll cycles
+		for (let i = 0; i < this._trackingWindow; i++) {
+			const itemSet = this.getCycleItemSet(i)
+			if (itemSet && itemSet.has(itemHash)) {
+				if (debug.enabled) {
+					// Check if debug is enabled before logging - this impacts performance
+					// For debugging, we'll still include a short preview of the item
+					const itemPreview = JSON.stringify(item).substring(0, 50) + '...'
+					debug(
+						`Item already emitted within last ${
+							i + 1
+						} poll cycles: ${itemPreview}`
+					)
+				}
+				return true
+			}
+		}
+
+		return false
+	}
+
+	/**
+	 * Gets or creates an item set for the current poll cycle
+	 * @returns The set of item hashes for the current cycle
+	 */
+	private getCurrentCycleItemSet(): Set<string> {
+		let currentSet = this._recentEmittedItems.get(this._currentPollCycle)
+		if (!currentSet) {
+			currentSet = new Set<string>()
+			this._recentEmittedItems.set(this._currentPollCycle, currentSet)
+		}
+		return currentSet
+	}
+
+	/**
+	 * Advances the poll cycle and cleans up old data
+	 */
+	private advancePollCycle(): void {
+		// If tracking window is disabled, do nothing
+		if (this._trackingWindow <= 0) return
+
+		// Increment the poll cycle
+		this._currentPollCycle = (this._currentPollCycle + 1) % this._trackingWindow
+
+		// Remove old data from the next cycle slot that we'll use in the future
+		this._recentEmittedItems.delete(this._currentPollCycle)
+
+		debug(`Advanced to poll cycle ${this._currentPollCycle}`)
+	}
+
+	/**
+	 * Mark an item as emitted to prevent duplicates within the tracking window
+	 */
+	private markItemAsEmitted(item: unknown): void {
+		// If tracking window is disabled, do nothing
+		if (this._trackingWindow <= 0) return
+
+		// Generate a hash of the item
+		const itemHash = this.getItemHash(item)
+
+		// For debugging, we'll still include a short preview of the item
+		if (debug.enabled) {
+			const itemPreview = JSON.stringify(item).substring(0, 50) + '...'
+			debug(
+				`Marking item as emitted in cycle ${this._currentPollCycle}: ${itemPreview}`
+			)
+		}
+
+		// Get or create the Set for the current poll cycle and add the item
+		const currentSet = this.getCurrentCycleItemSet()
+		currentSet.add(itemHash)
+	}
+
+	/**
+	 * Safely emit items, preventing duplicates
+	 */
+	private safeEmit(data: T): void {
+		// Handle items array if present
+		if (data && typeof data === 'object' && 'items' in data) {
+			const dataWithItems = data as unknown as { items: unknown[] }
+
+			// Check if we already emitted any of these items
+			const newItems = dataWithItems.items.filter(
+				(item) => !this.hasEmittedItem(item)
+			)
+
+			if (newItems.length === 0) {
+				debug(`All items have already been emitted, skipping update`)
+				return
+			}
+
+			if (newItems.length !== dataWithItems.items.length) {
+				debug(
+					`Filtered out ${
+						dataWithItems.items.length - newItems.length
+					} duplicate items`
+				)
+
+				// Create a new object with only the new items
+				const filteredData = {
+					...data,
+					items: newItems,
+				}
+
+				if ('page' in filteredData && typeof filteredData.page === 'object') {
+					filteredData.page = {
+						...filteredData.page,
+						totalItems: newItems.length,
+					}
+				}
+
+				// Mark all items as emitted
+				newItems.forEach((item) => this.markItemAsEmitted(item))
+
+				// Emit the filtered data
+				this.emit('update', filteredData as T)
+				return
+			}
+
+			// Mark all items as emitted
+			dataWithItems.items.forEach((item) => this.markItemAsEmitted(item))
+		}
+
+		// Emit the data
+		this.emit('update', data)
+	}
+
 	async poll() {
+		// Skip polling if locks are already set or if there are no listeners
 		if (
 			this._pollLock ||
 			this._predicateLock ||
 			this.listeners('update').length === 0
 		) {
+			debug(
+				`Poll skipped: locks=${this._pollLock},${
+					this._predicateLock
+				}, listeners=${this.listeners('update').length}`
+			)
+
 			return
 		}
 
+		// Acquire locks before any async operation
 		this._pollLock = true
+		this._predicateLock = true
+
 		try {
+			// Advance the poll cycle and clean up old data if tracking is enabled
+			this.advancePollCycle()
+
+			debug(`Poll starting, locks acquired`)
 			this._poll = this._query()
 			const current = await this._poll
 
-			if (this._state) {
+			debug(
+				`Query returned data with ${
+					current && typeof current === 'object' && 'items' in current
+						? (current as Record<string, unknown[]>).items.length
+						: 'unknown'
+				} items`
+			)
+
+			// Save a local copy of the state to ensure consistency during this poll cycle
+			const previousState = this._state
+
+			debug(
+				`Previous state: ${
+					previousState
+						? typeof previousState === 'object' && 'items' in previousState
+							? `has ${
+									(previousState as Record<string, unknown[]>).items.length
+								} items`
+							: 'exists but has no items array'
+						: 'undefined'
+				}`
+			)
+
+			if (previousState) {
 				// If we have a previous state, check if it is the same as the current one
-				if (isDeepStrictEqual(this._state, current)) {
+				if (isDeepStrictEqual(previousState, current)) {
 					// If the state is the same, we don't need to emit an update
-					this._pollLock = false
+					debug(`Current state is identical to previous state, not emitting`)
 					return
 				}
+
+				debug(`State has changed since previous poll`)
+			} else {
+				debug(`First poll, no previous state`)
 			}
 
-			this._predicateLock = true
-			const diff = await this._predicate(this._state, current)
+			// Run the predicate with our safely stored previous state
+			debug(`Running predicate function`)
+			const diff = await this._predicate(previousState, current)
+
+			debug(
+				`Predicate returned: ${
+					diff
+						? diff === true
+							? 'true'
+							: 'custom result object'
+						: 'false/null/undefined'
+				}`
+			)
+
+			// Update state FIRST, before any potential emissions
+			// This ensures race conditions don't cause duplicate emissions
 			this._state = current
+
+			debug(`Updated state BEFORE emission processing`)
+
 			if (diff) {
+				// Emit the appropriate update using our safe emit method
 				if (diff === true) {
-					this.emit('update', current)
+					if (debug.enabled) {
+						// Check if debug is enabled before logging - this impacts performance
+						debug(
+							`Safely emitting full current state with duplicate prevention`
+						)
+						const itemsCount =
+							current && typeof current === 'object' && 'items' in current
+								? (current as Record<string, unknown[]>).items.length
+								: 'N/A'
+						debug(`Attempting to emit ${itemsCount} items`)
+					}
+
+					this.safeEmit(current)
 				} else {
-					this.emit('update', diff)
+					debug(
+						`Safely emitting custom result from predicate with duplicate prevention`
+					)
+					const itemsCount =
+						diff && typeof diff === 'object' && 'items' in diff
+							? (diff as { items: unknown[] }).items.length
+							: 'N/A'
+					debug(`Attempting to emit ${itemsCount} items`)
+
+					this.safeEmit(diff)
 				}
+			} else {
+				debug(`No emission needed based on predicate result`)
 			}
 		} catch (error: unknown) {
 			;(error as Error).message = `QuerySubscription: ${
@@ -282,8 +587,10 @@ class _QuerySubscription<T> {
 			}`
 			throw error
 		} finally {
+			// Centralized lock release - ensures locks are always released regardless of execution path
 			this._predicateLock = false
 			this._pollLock = false
+			debug(`Poll completed, locks released`)
 		}
 	}
 }
