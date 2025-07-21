@@ -53,7 +53,7 @@ export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
 	)
 	if (error instanceof RequestError) {
 		trace('gotBeforeRetryHook: HTTPError detected:', error.response?.statusCode)
-		// If we have a
+		// If we have a 401 error, we handle it by retrying the request only once.
 		if (error.response?.statusCode === 401) {
 			// If we get a 401 error, we will retry the request only once.
 			if (retryCount && retryCount > 0) {
