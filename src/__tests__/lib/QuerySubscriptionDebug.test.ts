@@ -1,8 +1,5 @@
 import { QuerySubscription } from '../../lib/QuerySubscription'
 
-// Enable debugging
-process.env.DEBUG_QUERY_SUBSCRIPTION = 'true'
-
 describe('QuerySubscription Debug Test', () => {
 	it('should not emit the same item twice', async () => {
 		// Setup test data

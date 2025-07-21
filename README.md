@@ -444,7 +444,7 @@ To enable debugging output, set a value for the `DEBUG` environment variable. Th
 | `camunda:worker`            | Zeebe Worker                              |
 | `camunda:worker:verbose`    | Zeebe Worker (additional detail)          |
 | `camunda:zeebeclient`       | Zeebe Client                              |
-| `camunda:rest`              | Camunda Orchestration Cluster API Client  |
+| `camunda:orchestration-rest`              | Camunda Orchestration Cluster API Client  |
 
 Here is an example of turning on debugging for the OAuth and Operate components:
 

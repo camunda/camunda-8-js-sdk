@@ -100,7 +100,7 @@ import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 
-const trace = debug('camunda:rest')
+const trace = debug('camunda:orchestration-rest')
 
 const CAMUNDA_REST_API_VERSION = 'v2'
 
@@ -109,7 +109,7 @@ class DefaultLosslessDto extends LosslessDto {}
 /**
  * The client for the unified Camunda 8 Orchestration Cluster REST API.
  *
- * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:zeebe-rest`.
+ * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:orchestration-rest`.
  *
  * For production, you can pass in an logger compatible with {@link Logger} to the constructor as `logger`.
  *

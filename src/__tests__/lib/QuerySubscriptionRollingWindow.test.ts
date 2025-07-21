@@ -1,4 +1,8 @@
+import Debug from 'debug'
+
 import { QuerySubscription } from '../../lib/QuerySubscription'
+
+const debug = Debug('camunda:querySubscriptionWindowTest')
 
 describe('QuerySubscription Rolling Window', () => {
 	it('should properly manage memory by reaping old cycles', async () => {
@@ -40,7 +44,7 @@ describe('QuerySubscription Rolling Window', () => {
 		await new Promise((resolve) => setTimeout(resolve, 20))
 
 		// Debug what we actually got
-		console.log(
+		debug(
 			`First poll - mockQuery called ${mockQuery.mock.calls.length} times, emitted ${emittedItems.length} items`
 		)
 
@@ -54,7 +58,7 @@ describe('QuerySubscription Rolling Window', () => {
 
 		// Wait for second poll
 		await new Promise((resolve) => setTimeout(resolve, 20))
-		console.log(
+		debug(
 			`Second poll - mockQuery called ${mockQuery.mock.calls.length} times, emitted ${emittedItems.length} items`
 		)
 		// Since polling might happen faster than expected, check for at least 2 calls
@@ -67,7 +71,7 @@ describe('QuerySubscription Rolling Window', () => {
 
 		// Wait for third poll - this should start reaping data from first cycle
 		await new Promise((resolve) => setTimeout(resolve, 20))
-		console.log(
+		debug(
 			`Third poll - mockQuery called ${mockQuery.mock.calls.length} times, emitted ${emittedItems.length} items`
 		)
 		// Since polling might happen faster than expected, check for at least 3 calls
@@ -82,7 +86,7 @@ describe('QuerySubscription Rolling Window', () => {
 
 		// Wait for fourth poll - the first item's data should be completely gone
 		await new Promise((resolve) => setTimeout(resolve, 20))
-		console.log(
+		debug(
 			`Fourth poll - mockQuery called ${mockQuery.mock.calls.length} times, emitted ${emittedItems.length} items`
 		)
 
