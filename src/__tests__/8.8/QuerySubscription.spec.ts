@@ -19,7 +19,6 @@ test('QuerySubscription retrieves results and emits exactly once for new items i
 			filter: {
 				processDefinitionKey: key,
 				state: 'ACTIVE',
-				// variables: [{ name: 'queryTag', value: { $eq: queryTag } }],
 			},
 			sort: [{ field: 'startDate', order: 'ASC' }],
 		})

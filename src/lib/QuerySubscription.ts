@@ -76,7 +76,7 @@ type QuerySubscriptionEvents<T> = {
  * - If there are no new items, returns false, indicating that no update should be emitted.
  */
 function defaultPredicate<
-	T extends { items?: Array<unknown>; page?: { totalItems: number } },
+	T extends { items: Array<unknown>; page: { totalItems: number } },
 >(previous: T | undefined, current: T): QuerySubscriptionReturnValue<T> {
 	// Handle missing items arrays gracefully
 	if (!current || !current.items) return false
