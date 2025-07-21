@@ -46,7 +46,7 @@ test('can deploy resources and validate complete response DTO', async () => {
 	// Assert deployments array is present and has correct structure
 	expect(res.deployments).toBeDefined()
 	expect(Array.isArray(res.deployments)).toBe(true)
-	expect(res.deployments.length).toBe(3)
+	expect(res.deployments.length).toBe(4)
 
 	// Assert that the helper arrays are populated correctly
 	expect(Array.isArray(res.processes)).toBe(true)
