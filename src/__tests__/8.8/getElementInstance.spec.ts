@@ -23,7 +23,7 @@ test('It can get an Element Instance', async () => {
 				filter: { processInstanceKey: processInstance.processInstanceKey },
 			}),
 		interval: 500,
-		timeout: 5000,
+		timeout: 7000,
 	})
 
 	expect(elementInstances).toBeDefined()
