@@ -30,7 +30,7 @@ describe('QuerySubscription Rolling Window', () => {
 		const emittedItems: unknown[] = []
 
 		// Expose internal state for testing (normally would use a proper interface)
-		// @ts-expect-error - accessing private property for testing
+		// @ts-expect-error - accessing private property for testing. Note: we are testing implementation details here, not public API --- IGNORE ---
 		const getEmittedItemsMap = () => subscription._recentEmittedItems
 
 		subscription.on('update', (data) => {
