@@ -6,6 +6,29 @@ import TypedEmitter from 'typed-emitter'
 
 import { runWithAsyncErrorContext } from './AsyncTrace'
 
+/**
+ * Generates a hash code from a string using the djb2 algorithm.
+ * This is faster than JSON.stringify for comparison purposes.
+ * @param str String to hash
+ * @returns A number hash of the string
+ */
+function hashString(str: string): string {
+	let hash = 5381
+	for (let i = 0; i < str.length; i++) {
+		hash = (hash << 5) + hash + str.charCodeAt(i) /* hash * 33 + c */
+	}
+	return hash.toString(36)
+}
+
+/**
+ * Creates a hash of an object by first converting to JSON string and then hashing
+ * @param obj Object to hash
+ * @returns A string hash representing the object
+ */
+function hashObject(obj: unknown): string {
+	return hashString(JSON.stringify(obj))
+}
+
 const debug = Debug('camunda:querySubscription')
 
 export function QuerySubscription<T>(
@@ -280,32 +303,89 @@ class _QuerySubscription<T> {
 	}
 
 	/**
+	 * Gets the hash for an item, used for tracking across poll cycles
+	 * @param item The item to hash
+	 * @returns The hash string for the item
+	 */
+	private getItemHash(item: unknown): string {
+		return hashObject(item)
+	}
+
+	/**
+	 * Gets the item set for a specific poll cycle
+	 * @param cycleOffset The offset from the current poll cycle
+	 * @returns The set of item hashes for that cycle, or undefined if none exist
+	 */
+	private getCycleItemSet(cycleOffset: number): Set<string> | undefined {
+		// If tracking window is disabled, return undefined
+		if (this._trackingWindow <= 0) return undefined
+
+		// Calculate the actual cycle index with a safe modulo operation
+		const normalizedOffset =
+			(this._currentPollCycle - cycleOffset + this._trackingWindow) %
+			this._trackingWindow
+
+		return this._recentEmittedItems.get(normalizedOffset)
+	}
+
+	/**
 	 * Check if an item has already been emitted within the tracking window to prevent duplicates
 	 */
 	private hasEmittedItem(item: unknown): boolean {
 		// If tracking window is disabled (set to 0), we don't track items
 		if (this._trackingWindow <= 0) return false
 
-		const itemStr = JSON.stringify(item)
+		// Generate a hash of the item
+		const itemHash = this.getItemHash(item)
 
 		// Check in all recent poll cycles
 		for (let i = 0; i < this._trackingWindow; i++) {
-			// Calculate cycle index with a safe modulo operation
-			const cycleOffset =
-				(this._currentPollCycle - i + this._trackingWindow) %
-				this._trackingWindow
-			const itemSet = this._recentEmittedItems.get(cycleOffset)
-			if (itemSet && itemSet.has(itemStr)) {
-				debug(
-					`Item already emitted within last ${
-						i + 1
-					} poll cycles: ${itemStr.substring(0, 100)}...`
-				)
+			const itemSet = this.getCycleItemSet(i)
+			if (itemSet && itemSet.has(itemHash)) {
+				if (debug.enabled) {
+					// Check if debug is enabled before logging - this impacts performance
+					// For debugging, we'll still include a short preview of the item
+					const itemPreview = JSON.stringify(item).substring(0, 50) + '...'
+					debug(
+						`Item already emitted within last ${
+							i + 1
+						} poll cycles: ${itemPreview}`
+					)
+				}
 				return true
 			}
 		}
 
 		return false
+	}
+
+	/**
+	 * Gets or creates an item set for the current poll cycle
+	 * @returns The set of item hashes for the current cycle
+	 */
+	private getCurrentCycleItemSet(): Set<string> {
+		let currentSet = this._recentEmittedItems.get(this._currentPollCycle)
+		if (!currentSet) {
+			currentSet = new Set<string>()
+			this._recentEmittedItems.set(this._currentPollCycle, currentSet)
+		}
+		return currentSet
+	}
+
+	/**
+	 * Advances the poll cycle and cleans up old data
+	 */
+	private advancePollCycle(): void {
+		// If tracking window is disabled, do nothing
+		if (this._trackingWindow <= 0) return
+
+		// Increment the poll cycle
+		this._currentPollCycle = (this._currentPollCycle + 1) % this._trackingWindow
+
+		// Remove old data from the next cycle slot that we'll use in the future
+		this._recentEmittedItems.delete(this._currentPollCycle)
+
+		debug(`Advanced to poll cycle ${this._currentPollCycle}`)
 	}
 
 	/**
@@ -315,21 +395,20 @@ class _QuerySubscription<T> {
 		// If tracking window is disabled, do nothing
 		if (this._trackingWindow <= 0) return
 
-		const itemStr = JSON.stringify(item)
-		debug(
-			`Marking item as emitted in cycle ${
-				this._currentPollCycle
-			}: ${itemStr.substring(0, 100)}...`
-		)
+		// Generate a hash of the item
+		const itemHash = this.getItemHash(item)
 
-		// Get or create the Set for the current poll cycle
-		let currentSet = this._recentEmittedItems.get(this._currentPollCycle)
-		if (!currentSet) {
-			currentSet = new Set<string>()
-			this._recentEmittedItems.set(this._currentPollCycle, currentSet)
+		// For debugging, we'll still include a short preview of the item
+		if (debug.enabled) {
+			const itemPreview = JSON.stringify(item).substring(0, 50) + '...'
+			debug(
+				`Marking item as emitted in cycle ${this._currentPollCycle}: ${itemPreview}`
+			)
 		}
 
-		currentSet.add(itemStr)
+		// Get or create the Set for the current poll cycle and add the item
+		const currentSet = this.getCurrentCycleItemSet()
+		currentSet.add(itemHash)
 	}
 
 	/**
@@ -408,15 +487,7 @@ class _QuerySubscription<T> {
 
 		try {
 			// Advance the poll cycle and clean up old data if tracking is enabled
-			if (this._trackingWindow > 0) {
-				// Increment the poll cycle
-				this._currentPollCycle =
-					(this._currentPollCycle + 1) % this._trackingWindow
-				// Remove old data from the next cycle slot that we'll use in the future
-				this._recentEmittedItems.delete(this._currentPollCycle)
-
-				debug(`Advanced to poll cycle ${this._currentPollCycle}`)
-			}
+			this.advancePollCycle()
 
 			debug(`Poll starting, locks acquired`)
 			this._poll = this._query()
@@ -481,12 +552,17 @@ class _QuerySubscription<T> {
 			if (diff) {
 				// Emit the appropriate update using our safe emit method
 				if (diff === true) {
-					debug(`Safely emitting full current state with duplicate prevention`)
-					const itemsCount =
-						current && typeof current === 'object' && 'items' in current
-							? (current as Record<string, unknown[]>).items.length
-							: 'N/A'
-					debug(`Attempting to emit ${itemsCount} items`)
+					if (debug.enabled) {
+						// Check if debug is enabled before logging - this impacts performance
+						debug(
+							`Safely emitting full current state with duplicate prevention`
+						)
+						const itemsCount =
+							current && typeof current === 'object' && 'items' in current
+								? (current as Record<string, unknown[]>).items.length
+								: 'N/A'
+						debug(`Attempting to emit ${itemsCount} items`)
+					}
 
 					this.safeEmit(current)
 				} else {

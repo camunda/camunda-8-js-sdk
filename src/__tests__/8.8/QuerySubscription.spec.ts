@@ -4,7 +4,7 @@ import { CamundaRestClient, QuerySubscription } from '../../'
 
 jest.setTimeout(10000)
 
-test('QuerySubscription retrieves results', async () => {
+test('QuerySubscription retrieves results and emits exactly once for new items in the query result', async () => {
 	const queryTag = `query-subscription-test-${Date.now()}`
 	let queryResultCount = 0
 	const c8 = new CamundaRestClient()
