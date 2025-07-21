@@ -1,4 +1,8 @@
+import Debug from 'debug'
+
 import { QuerySubscription } from '../../lib/QuerySubscription'
+
+const debug = Debug('camunda:querySubscriptionDebugTest')
 
 describe('QuerySubscription Debug Test', () => {
 	it('should not emit the same item twice', async () => {
@@ -32,7 +36,7 @@ describe('QuerySubscription Debug Test', () => {
 		const capturedResponses: unknown[] = []
 
 		subscription.on('update', (response) => {
-			console.log('RECEIVED UPDATE:', response)
+			debug('RECEIVED UPDATE:', response)
 			capturedResponses.push(response)
 
 			// Add items to our tracking array
@@ -41,7 +45,7 @@ describe('QuerySubscription Debug Test', () => {
 				emittedItems.push(...items)
 
 				// Log all emitted items for debugging
-				console.log('EMITTED ITEMS NOW:', JSON.stringify(emittedItems))
+				debug('EMITTED ITEMS NOW:', JSON.stringify(emittedItems))
 			}
 		})
 
@@ -58,8 +62,8 @@ describe('QuerySubscription Debug Test', () => {
 
 		// If there are duplicates, the sets will have different sizes
 		expect(uniqueItems.size).toEqual(stringifiedItems.length)
-		console.log('FINAL EMITTED:', JSON.stringify(emittedItems))
-		console.log('RESPONSES:', capturedResponses.length)
+		debug('FINAL EMITTED:', JSON.stringify(emittedItems))
+		debug('RESPONSES:', capturedResponses.length)
 
 		// We should have exactly 3 items emitted (without duplicates)
 		expect(emittedItems.length).toBe(3)
