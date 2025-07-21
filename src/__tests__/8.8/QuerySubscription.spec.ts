@@ -1,8 +1,11 @@
 import { ProcessInstanceDetails } from 'c8/lib/C8Dto'
+import Debug from 'debug'
 
 import { CamundaRestClient, QuerySubscription } from '../../'
 
-jest.setTimeout(10000)
+const debug = Debug('camunda:querySubscriptionTest')
+
+jest.setTimeout(30000) // Increased timeout for longer test duration
 
 test('QuerySubscription retrieves results and emits exactly once for new items in the query result', async () => {
 	const queryTag = `query-subscription-test-${Date.now()}`
@@ -10,7 +13,7 @@ test('QuerySubscription retrieves results and emits exactly once for new items i
 	const c8 = new CamundaRestClient()
 
 	const res = await c8.deployResourcesFromFiles([
-		'./src/__tests__/testdata/query-subscription-test.bpmn',
+		'./src/__tests__/testdata/query-subscription-test-1.bpmn',
 	])
 	const key = res.processes[0].processDefinitionKey
 
@@ -55,7 +58,7 @@ test('QuerySubscription retrieves results and emits exactly once for new items i
 
 	await new Promise((resolve) => setTimeout(resolve, 7000)) // Wait for the subscription to pick up the new process instances
 	// tslint:disable-next-line: no-console
-	// console.log('Correlations:', JSON.stringify(correlations, null, 2)) // @DEBUG
+	// debug('Correlations:', JSON.stringify(correlations, null, 2)) // @DEBUG
 	expect(queryResultCount).toBe(3)
 
 	// Check if process instances are found in the correlations array by their keys
@@ -86,4 +89,97 @@ test('QuerySubscription retrieves results and emits exactly once for new items i
 	})
 
 	subscription.cancel()
+})
+
+test('QuerySubscription correctly tracks and emits all processes started at regular intervals', async () => {
+	const queryTag = `query-subscription-sequential-${Date.now()}`
+	const c8 = new CamundaRestClient()
+
+	const res = await c8.deployResourcesFromFiles([
+		'./src/__tests__/testdata/query-subscription-test.bpmn',
+	])
+	const key = res.processes[0].processDefinitionKey
+
+	const query = () =>
+		c8.searchProcessInstances({
+			filter: {
+				processDefinitionKey: key,
+				state: 'ACTIVE',
+			},
+			sort: [{ field: 'startDate', order: 'ASC' }],
+		})
+
+	const subscription = QuerySubscription({
+		query,
+		interval: 500, // Poll every 500ms
+	})
+
+	let receivedInstances: ProcessInstanceDetails[] = []
+	const createdProcessInstances: { processInstanceKey: string }[] = []
+
+	// Listen for updates
+	subscription.on('update', (data) => {
+		debug(`Received update with ${data.items.length} item(s)`)
+		receivedInstances = [...receivedInstances, ...data.items]
+	})
+
+	// Create one process instance every second for seven seconds
+	debug(`Starting to create 7 process instances...`)
+	for (let i = 0; i < 7; i++) {
+		debug(`Creating process instance ${i + 1}/7`)
+		const instance = await c8.createProcessInstance({
+			processDefinitionKey: key,
+			variables: {
+				queryTag,
+				sequence: i, // Add a sequence number to help with debugging if needed
+			},
+		})
+		debug(`Created instance with key ${instance.processInstanceKey}`)
+		createdProcessInstances.push(instance)
+
+		if (i < 6) {
+			// Don't wait after the last instance
+			debug('Waiting 1 second before creating next instance...')
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+		}
+	}
+	debug(`Created all 7 process instances, waiting for final updates...`)
+
+	// Wait for a total of 10 seconds to ensure all process instances are captured
+	debug(
+		`Waiting 7 more seconds to ensure all process instances are captured...`
+	)
+	await new Promise((resolve) => setTimeout(resolve, 7000))
+
+	// Cancel the subscription
+	debug(`Cancelling subscription...`)
+	subscription.cancel()
+
+	// Verify we have exactly 7 process instances
+	debug(`Received ${receivedInstances.length} instances, expecting 7`)
+	expect(receivedInstances.length).toBe(7)
+
+	// Verify each created instance is in our received list
+	debug(`Verifying all created instances were received...`)
+	for (const instance of createdProcessInstances) {
+		const found = receivedInstances.some(
+			(item) => item.processInstanceKey === instance.processInstanceKey
+		)
+		debug(
+			`Instance ${instance.processInstanceKey}: ${
+				found ? 'FOUND' : 'NOT FOUND'
+			}`
+		)
+		expect(found).toBe(true)
+	}
+
+	// Cancel all the process instances
+	debug(`Cleaning up: cancelling all created process instances...`)
+	for (const instance of createdProcessInstances) {
+		debug(`Cancelling process instance ${instance.processInstanceKey}`)
+		await c8.cancelProcessInstance({
+			processInstanceKey: instance.processInstanceKey,
+		})
+	}
+	debug(`Test completed successfully!`)
 })
