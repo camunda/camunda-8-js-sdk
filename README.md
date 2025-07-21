@@ -405,8 +405,7 @@ subscription.cancel() // close subscription and free resources
 // You can also use subscription.pause() and subscription.resume() to pause and resume the subscription
 ```
 
-**Notes**:
-- The default predicate will throw an exception if it receives a query result that contains duplicate results. This is because duplicate detection is used to emit exactly-once for new items.
+**Note**:
 - `QuerySubscription` uses a rolling window approach to prevent memory leaks when tracking emitted items. By default, it remembers items from the last 5 poll cycles to prevent duplicates. You can adjust this with the `trackingWindow` parameter:
 
 ```typescript

@@ -43,73 +43,6 @@ type QuerySubscriptionEvents<T> = {
 }
 
 /**
- * @description Detects duplicate items in a dataset.
- * Throws an error if exact duplicates are found, meaning the same object instance exists more than once.
- * @param data The data object containing an items array
- * @throws Error if duplicate items are found
- */
-function detectDuplicateItems<T extends { items?: unknown[] }>(data: T): void {
-	if (!data) return
-	const items = data.items
-	if (!items || !Array.isArray(items)) return
-
-	// Track items we've seen for exact duplicates
-	const seen = new Set()
-	const stringifiedItems = new Map<string, unknown>()
-	const duplicates: { item: unknown; indices: number[] }[] = []
-
-	items.forEach((item, index) => {
-		// Check for exact duplicate object instances (same reference)
-		if (seen.has(item)) {
-			debug(`Found exact duplicate at index ${index} (same reference)`)
-			throw new Error(
-				`API response contains exact duplicate items (same reference) at index ${index}: ${JSON.stringify(
-					item
-				)}`
-			)
-		}
-		seen.add(item)
-
-		// Check for content duplicates (deep equality)
-		const stringified = JSON.stringify(item)
-		if (stringifiedItems.has(stringified)) {
-			const originalItem = stringifiedItems.get(stringified)
-			const existingDuplicate = duplicates.find((d) => d.item === originalItem)
-
-			if (existingDuplicate) {
-				existingDuplicate.indices.push(index)
-			} else {
-				duplicates.push({
-					item: originalItem,
-					indices: [items.findIndex((i) => i === originalItem), index],
-				})
-			}
-		} else {
-			stringifiedItems.set(stringified, item)
-		}
-	})
-
-	// Report content duplicates
-	if (duplicates.length > 0) {
-		const details = duplicates
-			.map(
-				(d) =>
-					`Item ${JSON.stringify(d.item).substring(
-						0,
-						100
-					)} found at indices ${d.indices.join(', ')}`
-			)
-			.join('\n')
-
-		debug(`Found ${duplicates.length} duplicate items:\n${details}`)
-
-		throw new Error(
-			`API response contains ${duplicates.length} duplicate items:\n${details}`
-		)
-	}
-}
-
-/**
  * @description The default predicate function for QuerySubscription.
  * It checks if the current query result has new items compared to the previous state.
  * If there are new items, it returns the current state with only the new items and updates the totalItems count.
@@ -122,9 +55,6 @@ function detectDuplicateItems<T extends { items?: unknown[] }>(data: T): void {
 function defaultPredicate<
 	T extends { items?: Array<unknown>; page?: { totalItems: number } },
 >(previous: T | undefined, current: T): QuerySubscriptionReturnValue<T> {
-	// Check for duplicates in the API response
-	detectDuplicateItems(current)
-
 	// Handle missing items arrays gracefully
 	if (!current || !current.items) return false
 
@@ -296,7 +226,7 @@ class _QuerySubscription<T> {
 		} else {
 			// Use type assertion to handle the default predicate
 			this._predicate = defaultPredicate as QuerySubscriptionPredicate<T>
-			debug(`[QuerySubscription] Using default predicate`)
+			debug(`Using default predicate`)
 		}
 
 		this._interval = options.interval || 1000
@@ -457,6 +387,7 @@ class _QuerySubscription<T> {
 	}
 
 	async poll() {
+		// Skip polling if locks are already set or if there are no listeners
 		if (
 			this._pollLock ||
 			this._predicateLock ||
@@ -471,26 +402,23 @@ class _QuerySubscription<T> {
 			return
 		}
 
-		// Prevent concurrent polls by setting both locks immediately
+		// Acquire locks before any async operation
 		this._pollLock = true
 		this._predicateLock = true
 
-		// Advance the poll cycle and clean up old data if tracking is enabled
-		if (this._trackingWindow > 0) {
-			// Increment the poll cycle
-			this._currentPollCycle =
-				(this._currentPollCycle + 1) % this._trackingWindow
-			// Remove old data from the next cycle slot that we'll use in the future
-			this._recentEmittedItems.delete(this._currentPollCycle)
-
-			debug(`Advanced to poll cycle ${this._currentPollCycle}`)
-		}
-
-		debug(`Poll starting, locks acquired`)
-
 		try {
-			// Get the current data
-			debug(`[QuerySubscription] Querying data...`)
+			// Advance the poll cycle and clean up old data if tracking is enabled
+			if (this._trackingWindow > 0) {
+				// Increment the poll cycle
+				this._currentPollCycle =
+					(this._currentPollCycle + 1) % this._trackingWindow
+				// Remove old data from the next cycle slot that we'll use in the future
+				this._recentEmittedItems.delete(this._currentPollCycle)
+
+				debug(`Advanced to poll cycle ${this._currentPollCycle}`)
+			}
+
+			debug(`Poll starting, locks acquired`)
 			this._poll = this._query()
 			const current = await this._poll
 
@@ -521,11 +449,7 @@ class _QuerySubscription<T> {
 				// If we have a previous state, check if it is the same as the current one
 				if (isDeepStrictEqual(previousState, current)) {
 					// If the state is the same, we don't need to emit an update
-
 					debug(`Current state is identical to previous state, not emitting`)
-
-					this._pollLock = false
-					this._predicateLock = false
 					return
 				}
 
@@ -535,7 +459,7 @@ class _QuerySubscription<T> {
 			}
 
 			// Run the predicate with our safely stored previous state
-			debug(`[QuerySubscription] Running predicate function`)
+			debug(`Running predicate function`)
 			const diff = await this._predicate(previousState, current)
 
 			debug(
@@ -586,8 +510,10 @@ class _QuerySubscription<T> {
 			}`
 			throw error
 		} finally {
+			// Centralized lock release - ensures locks are always released regardless of execution path
 			this._predicateLock = false
 			this._pollLock = false
+			debug(`Poll completed, locks released`)
 		}
 	}
 }
