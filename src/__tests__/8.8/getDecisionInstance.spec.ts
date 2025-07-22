@@ -65,13 +65,53 @@ describe('CamundaRestClient.getDecisionInstance', () => {
 		expect(result.decisionDefinitionId).toBe(decisionDefId)
 		expect(result.decisionDefinitionName).toBe('Dish Decision')
 		expect(result.decisionDefinitionVersion).toBeDefined()
-		expect(result.decisionDefinitionType).toBeDefined()
+		expect(result.decisionDefinitionType).toBe('DECISION_TABLE')
 		expect(result.processInstanceKey).toBeDefined() // May be null/undefined if not called from a process
+		expect(result.processDefinitionKey).toBeDefined() // May be -1 if not called from a process
 		expect(result.evaluationDate).toBeDefined()
 		expect(result.state).toBe('EVALUATED')
 		expect(result.result).toBeDefined()
 		expect(JSON.parse(result.result)).toBe('Light Salad and a nice Steak')
-		expect(result.decisionDefinitionType).toBe('DECISION_TABLE')
+
+		// Assertions for evaluatedInputs
+		expect(result.evaluatedInputs).toBeDefined()
+		expect(Array.isArray(result.evaluatedInputs)).toBe(true)
+		expect(result.evaluatedInputs.length).toBeGreaterThan(0)
+
+		// Validate first input (Season)
+		const seasonInput = result.evaluatedInputs.find(
+			(input) => input.inputId === 'Input_1'
+		)
+		expect(seasonInput).toBeDefined()
+		expect(seasonInput?.inputName).toBe('Season')
+		expect(seasonInput?.inputValue).toBe('"Summer"')
+
+		// Validate second input (Guest Count)
+		const guestCountInput = result.evaluatedInputs.find(
+			(input) => input.inputId === 'InputClause_0tymfo2'
+		)
+		expect(guestCountInput).toBeDefined()
+		expect(guestCountInput?.inputName).toBe('Guest Count')
+		expect(guestCountInput?.inputValue).toBe('5')
+
+		// Assertions for matchedRules
+		expect(result.matchedRules).toBeDefined()
+		expect(Array.isArray(result.matchedRules)).toBe(true)
+		expect(result.matchedRules.length).toBeGreaterThan(0)
+
+		// Validate matched rule
+		const matchedRule = result.matchedRules[0]
+		expect(matchedRule.ruleId).toBe('DecisionRule_09z3x97')
+		expect(matchedRule.ruleIndex).toBeDefined()
+		expect(matchedRule.evaluatedOutputs).toBeDefined()
+		expect(Array.isArray(matchedRule.evaluatedOutputs)).toBe(true)
+		expect(matchedRule.evaluatedOutputs.length).toBeGreaterThan(0)
+
+		// Validate output
+		const output = matchedRule.evaluatedOutputs[0]
+		expect(output.outputId).toBe('Output_1')
+		expect(output.outputName).toBe('Dish')
+		expect(output.outputValue).toBe('"Light Salad and a nice Steak"')
 	})
 
 	it('should handle a non-existent decision instance', async () => {
