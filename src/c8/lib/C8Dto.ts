@@ -1468,7 +1468,7 @@ export interface CamundaRestSearchDecisionInstancesResponse
  * Response from getting a single decision instance by its key.
  */
 export interface GetDecisionInstanceResponse {
-	/** The decision instance key. */
+	/** The decision instance key. Note that this is not the unique identifier of the entity itself; the decisionInstanceId serves as the primary identifier. */
 	decisionInstanceKey: string
 	/** The decision definition ID. */
 	decisionDefinitionId: string
@@ -1498,4 +1498,27 @@ export interface GetDecisionInstanceResponse {
 		| 'UNKNOWN'
 	/** The result of the decision evaluation. */
 	result: string
+	/** The evaluated inputs of the decision instance. */
+	evaluatedInputs: Array<{
+		/** The ID of the evaluated decision input. */
+		inputId: string
+		/** The name of the evaluated decision input. */
+		inputName: string
+		/** The value of the evaluated decision input. */
+		inputValue: string
+	}>
+	matchedRules: Array<{
+		/** The ID of the matched rule. */
+		ruleId: string
+		/** The index of the matched rule. */
+		ruleIndex: number
+		evaluatedOutputs: Array<{
+			/** The ID of the evaluated decision output. */
+			outputId: string
+			/** The name of the evaluated decision output. */
+			outputName: string
+			/** The value of the evaluated decision output. */
+			outputValue: string
+		}>
+	}>
 }
