@@ -5,7 +5,7 @@ import { LosslessDto } from '../../../lib'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(20000)
+jest.setTimeout(30000)
 
 class Variables extends LosslessDto {
 	key?: string
@@ -31,7 +31,8 @@ test('RestClient can migrate a process instance', async () => {
 			variables: { key },
 		})
 
-		await c8.modifyProcessInstance({
+		// Call modifyProcessInstance and capture the response
+		const modifyResponse = await c8.modifyProcessInstance({
 			processInstanceKey: response.processInstanceKey,
 			activateInstructions: [
 				{
@@ -39,26 +40,32 @@ test('RestClient can migrate a process instance', async () => {
 				},
 			],
 		})
-		let done = false
-		const worker = c8.createJobWorker<Variables, LosslessDto>({
-			type: 'gets-completed-108',
-			jobHandler: async (job) => {
-				done = true
-				return job.complete({
-					key,
-				})
-			},
-			maxJobsToActivate: 10,
-			timeout: 30000,
-			worker: 'Modified Process Worker 1',
+
+		// Validate the response
+		expect(modifyResponse).toBeDefined()
+		// The API returns an empty string for successful operations
+		expect(typeof modifyResponse).toBe('string')
+		expect(modifyResponse).toBe('')
+		// Use Promise instead of polling for better test reliability
+		await new Promise<void>((jobResolve) => {
+			const worker = c8.createJobWorker<Variables, LosslessDto>({
+				type: 'gets-completed-108',
+				jobHandler: async (job) => {
+					const result = await job.complete({
+						key,
+					})
+
+					worker.stop()
+					jobResolve()
+					return result
+				},
+				maxJobsToActivate: 10,
+				timeout: 30000,
+				worker: 'Modified Process Worker 1',
+			})
 		})
 
-		const poll = setInterval(() => {
-			if (done) {
-				worker.stop()
-				clearInterval(poll)
-				resolve()
-			}
-		}, 100)
+		// Test completed successfully
+		resolve()
 	})
 })

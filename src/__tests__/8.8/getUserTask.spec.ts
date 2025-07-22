@@ -56,5 +56,54 @@ test('It can search user tasks', async () => {
 	})
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
 	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
+
+	// Validate all fields in the UserTask DTO
 	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
+	expect(task.userTaskKey).toBe(tasks.items[0].userTaskKey)
+	expect(task.processDefinitionKey).toBe(key)
+	expect(task.processDefinitionId).toBeDefined()
+	expect(task.processDefinitionVersion).toBeGreaterThan(0)
+	expect(task.elementId).toBeDefined()
+	expect(task.elementInstanceKey).toBeDefined()
+	expect(task.name).toBeDefined()
+	expect(task.state).toBe('CREATED')
+	expect(task.tenantId).toBeDefined()
+	expect(task.creationDate).toBeDefined()
+	expect(typeof task.creationDate).toBe('string')
+	expect(task.priority).toBeGreaterThanOrEqual(0)
+	expect(task.customHeaders).toBeDefined()
+	expect(typeof task.customHeaders).toBe('object')
+
+	// Optional fields - check type if they exist
+	if (task.assignee !== undefined) {
+		expect(typeof task.assignee).toBe('string')
+	}
+
+	if (task.completionDate !== undefined) {
+		expect(typeof task.completionDate).toBe('string')
+	}
+
+	if (task.followUpDate !== undefined) {
+		expect(typeof task.followUpDate).toBe('string')
+	}
+
+	if (task.dueDate !== undefined) {
+		expect(typeof task.dueDate).toBe('string')
+	}
+
+	if (task.candidateGroups !== undefined) {
+		expect(Array.isArray(task.candidateGroups)).toBe(true)
+	}
+
+	if (task.candidateUsers !== undefined) {
+		expect(Array.isArray(task.candidateUsers)).toBe(true)
+	}
+
+	if (task.formKey !== undefined) {
+		expect(typeof task.formKey).toBe('string')
+	}
+
+	if (task.externalFormReference !== undefined) {
+		expect(typeof task.externalFormReference).toBe('string')
+	}
 })

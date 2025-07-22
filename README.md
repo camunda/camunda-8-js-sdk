@@ -394,6 +394,7 @@ const subscription = QuerySubscription({
 	return false // No new items, do not emit
   },
   interval: 5000,
+  trackingWindow: 5, // Remember emitted items from last 5 poll cycles (default)
 })
 
 subscription.on('data', data => {
@@ -404,24 +405,46 @@ subscription.cancel() // close subscription and free resources
 // You can also use subscription.pause() and subscription.resume() to pause and resume the subscription
 ```
 
+**Note**:
+- `QuerySubscription` uses a rolling window approach to prevent memory leaks when tracking emitted items. By default, it remembers items from the last 5 poll cycles to prevent duplicates. You can adjust this with the `trackingWindow` parameter:
+
+```typescript
+const subscription = QuerySubscription({
+  query,
+  predicate: myCustomPredicate,
+  interval: 5000,
+  trackingWindow: 10, // Remember items from the last 10 polling cycles
+})
+```
+
+If you implement a custom predicate, your predicate determines what data should be emitted, and then the rolling window mechanism prevents duplicate emissions across multiple poll cycles.
+
+**Important:** The rolling window mechanism operates by serializing each emitted item to a string and tracking it for the specified number of poll cycles. This means that if an entity changes state and then returns to a previous state within the tracking window timeframe, the second appearance in the original state might not trigger an emission. For example, if a process instance transitions from "READY" to "NOT_READY" and back to "READY" within the tracking window, the second "READY" state might not be emitted. If you need to track all state transitions regardless of previous states, consider:
+
+1. Setting a smaller `trackingWindow` value to reduce the tracking period
+2. Implementing a custom state tracking mechanism in your application
+3. Including a timestamp or version field in your item identification logic
+
 ## Debugging
 
 The SDK uses the [`debug`](https://github.com/debug-js/debug) library to help you debug specific issues. This produces verbose, low-level output from specific components to the console.
 
 To enable debugging output, set a value for the `DEBUG` environment variable. The value is a comma-separated list of debugging namespaces. The SDK has the following namespaces:
 
-| Value                    | Component                        |
-| ------------------------ | -------------------------------- |
-| `camunda:adminconsole`   | Administration API               |
-| `camunda:modeler`        | Modeler API                      |
-| `camunda:operate`        | Operate API                      |
-| `camunda:optimize`       | Optimize API                     |
-| `camunda:tasklist`       | Tasklist API                     |
-| `camunda:oauth`          | OAuth Token Exchange             |
-| `camunda:grpc`           | Zeebe gRPC channel               |
-| `camunda:worker`         | Zeebe Worker                     |
-| `camunda:worker:verbose` | Zeebe Worker (additional detail) |
-| `camunda:zeebeclient`    | Zeebe Client                     |
+| Value                       | Component                                 |
+| --------------------------- | ----------------------------------------- |
+| `camunda:adminconsole`      | Administration API                        |
+| `camunda:modeler`           | Modeler API                               |
+| `camunda:operate`           | Operate API                               |
+| `camunda:optimize`          | Optimize API                              |
+| `camunda:tasklist`          | Tasklist API                              |
+| `camunda:oauth`             | OAuth Token Exchange                      |
+| `camunda:querySubscription` | QuerySubscription debugging               |
+| `camunda:grpc`              | Zeebe gRPC channel                        |
+| `camunda:worker`            | Zeebe Worker                              |
+| `camunda:worker:verbose`    | Zeebe Worker (additional detail)          |
+| `camunda:zeebeclient`       | Zeebe Client                              |
+| `camunda:orchestration-rest`              | Camunda Orchestration Cluster API Client  |
 
 Here is an example of turning on debugging for the OAuth and Operate components:
 

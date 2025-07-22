@@ -15,6 +15,7 @@ import {
 	createUserAgentString,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
+	gotBeforeRetryHook,
 	GotRetryConfig,
 	LosslessDto,
 	losslessParse,
@@ -41,6 +42,8 @@ import {
 	ApiEndpointRequest,
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
+	CamundaRestSearchDecisionInstancesRequest,
+	CamundaRestSearchDecisionInstancesResponse,
 	CamundaRestSearchElementInstancesResponse,
 	CamundaRestSearchIncidentsResponse,
 	CamundaRestSearchProcessDefinitionsResponse,
@@ -62,6 +65,7 @@ import {
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
+	GetDecisionInstanceResponse,
 	GetProcessDefinitionResponse,
 	GetVariableResponse,
 	JobUpdateChangeset,
@@ -97,16 +101,16 @@ import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 
-const trace = debug('camunda:zeebe-rest')
+const trace = debug('camunda:orchestration-rest')
 
 const CAMUNDA_REST_API_VERSION = 'v2'
 
 class DefaultLosslessDto extends LosslessDto {}
 
 /**
- * The client for the unified Camunda 8 REST API.
+ * The client for the unified Camunda 8 Orchestration Cluster REST API.
  *
- * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:zeebe-rest`.
+ * Logging: to enable debug tracing during development, you can set `DEBUG=camunda:orchestration-rest`.
  *
  * For production, you can pass in an logger compatible with {@link Logger} to the constructor as `logger`.
  *
@@ -166,6 +170,7 @@ export class CamundaRestClient {
 							makeBeforeRetryHandlerFor401TokenRetry(
 								this.getHeaders.bind(this)
 							),
+							gotBeforeRetryHook,
 						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: [
@@ -925,12 +930,15 @@ export class CamundaRestClient {
 	 *
 	 * @since 8.6.0
 	 */
-	public async migrateProcessInstance(req: MigrationRequest) {
+	public async migrateProcessInstance(req: MigrationRequest): Promise<''> {
 		const { processInstanceKey, ...request } = req
 		this.log.debug(`Migrating process instance ${processInstanceKey}`, {
 			component: 'C8RestClient',
 		})
-		return this.callApiEndpoint({
+		return this.callApiEndpoint<
+			Omit<MigrationRequest, 'processInstanceKey'>,
+			''
+		>({
 			urlPath: `process-instances/${processInstanceKey}/migration`,
 			method: 'POST',
 			body: request,
@@ -1009,8 +1017,8 @@ export class CamundaRestClient {
 		deploymentResponse.deployments = []
 		deploymentResponse.processes = []
 		deploymentResponse.decisions = []
-		deploymentResponse.decisionRequirements = []
 		deploymentResponse.forms = []
+		deploymentResponse.decisionRequirements = []
 
 		/**
 		 * Type-guard assertions to correctly type the deployments. The API returns an array with mixed types.
@@ -1049,7 +1057,7 @@ export class CamundaRestClient {
 			}
 			if (isDecisionDeployment(deployment)) {
 				const decisionDeployment = losslessParse(
-					stringify(deployment)!,
+					stringify(deployment.decisionDefinition)!,
 					DecisionDeployment
 				)
 				deploymentResponse.deployments.push({
@@ -1059,7 +1067,7 @@ export class CamundaRestClient {
 			}
 			if (isDecisionRequirementsDeployment(deployment)) {
 				const decisionRequirementsDeployment = losslessParse(
-					stringify(deployment)!,
+					stringify(deployment.decisionRequirements)!,
 					DecisionRequirementsDeployment
 				)
 				deploymentResponse.deployments.push({
@@ -1071,7 +1079,7 @@ export class CamundaRestClient {
 			}
 			if (isFormDeployment(deployment)) {
 				const formDeployment = losslessParse(
-					stringify(deployment)!,
+					stringify(deployment.form)!,
 					FormDeployment
 				)
 				deploymentResponse.deployments.push({ form: formDeployment })
@@ -1378,9 +1386,9 @@ export class CamundaRestClient {
 	 */
 	public async modifyProcessInstance(
 		request: ModifyProcessInstanceRequest
-	): Promise<void> {
+	): Promise<''> {
 		const { processInstanceKey, ...req } = request
-		return this.callApiEndpoint<UnknownRequestBody, void>({
+		return this.callApiEndpoint<UnknownRequestBody, ''>({
 			method: 'POST',
 			urlPath: `process-instances/${processInstanceKey}/modification`,
 			body: req,
@@ -1516,6 +1524,41 @@ export class CamundaRestClient {
 			method: 'POST',
 			urlPath: `incidents/search`,
 			body: request,
+		})
+	}
+
+	/**
+	 * @description Search for decision instances based on given criteria.
+	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/orchestration-cluster-api-rest/specifications/search-decision-instances/
+	 * @since 8.8.0
+	 */
+	public async searchDecisionInstances(
+		request: CamundaRestSearchDecisionInstancesRequest
+	): Promise<CamundaRestSearchDecisionInstancesResponse> {
+		return this.callApiEndpoint<
+			CamundaRestSearchDecisionInstancesRequest,
+			CamundaRestSearchDecisionInstancesResponse
+		>({
+			method: 'POST',
+			urlPath: `decision-instances/search`,
+			body: request,
+		})
+	}
+
+	/**
+	 * Get a decision instance by key.
+	 * @param decisionInstanceKey The key of the decision instance to get
+	 * @returns Decision instance details
+	 */
+	public async getDecisionInstance(
+		decisionInstanceKey: string
+	): Promise<GetDecisionInstanceResponse> {
+		return this.callApiEndpoint<
+			UnknownRequestBody,
+			GetDecisionInstanceResponse
+		>({
+			method: 'GET',
+			urlPath: `decision-instances/${decisionInstanceKey}`,
 		})
 	}
 

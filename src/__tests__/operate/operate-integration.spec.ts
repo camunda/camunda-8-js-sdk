@@ -1,6 +1,6 @@
 import { LosslessNumber } from 'lossless-json'
 
-import { HTTPError, RestError } from '../../lib'
+import { HTTPError } from '../../lib'
 import { PollingOperation } from '../../lib/PollingOperation'
 import { OperateApiClient } from '../../operate'
 import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
@@ -107,14 +107,16 @@ test('getVariablesforProcess paging works', async () => {
 	const res = await PollingOperation({
 		operation: () =>
 			c.getVariablesforProcess(p.processInstanceKey, { size: 5 }),
-		predicate: (r) => r.items.length > 0,
 		interval: 500,
 		timeout: 5000,
 	})
 	expect(res.items[0].name).toBe('foo')
-	const nextPage = await c.getVariablesforProcess(p.processInstanceKey, {
-		size: 5,
-		searchAfter: res.sortValues,
+	const nextPage = await PollingOperation({
+		operation: () =>
+			c.getVariablesforProcess(p.processInstanceKey, {
+				size: 5,
+				searchAfter: res.sortValues,
+			}),
 	})
 	expect(nextPage.items[0].name).toBe('foo4')
 })
@@ -134,28 +136,11 @@ test('test error type', async () => {
 	await new Promise((res) => setTimeout(() => res(null), 5000))
 	/**
 	 * Here we request a process instance that doesn't exist.
-	 * Understanding that this is the issue requires a bit of gymnastics by the consumer.
-	 * This call may fail due to lack of permissions, a network error (including misconfiguration), or the process instance not existing.
-	 * To rule out the other issues and focus on the process instance not existing, we need to catch the error and check the response body.
-	 * (e.response?.body as string).includes('404') will return true if the response body contains the string '404'.
-	 * This is a bit of a hack, but it's the best we can do without a more specific error type.
-	 * Do we really want to expose consumers to this?
+	 * This should throw a 404 error.
 	 */
 	const res = await c
 		.getProcessInstance(`${p.processInstanceKey}1`)
-		.catch((e: RestError) => {
-			// console.log(e.code)
-			// `ERR_NON_2XX_3XX_RESPONSE`
-
-			// console.log(e.message)
-			// `Response code 404 (Not Found) (request to http://localhost:8081/v1/process-instances/22517998149629301)`
-			// Note: The request url has been enhanced into the message by a hook.
-
-			// console.log(e.response?.body)
-			// `{"status":404,"message":"No process instances found for key 22517998149629301 ","instance":"76807bf1-d877-4f8e-bd0d-6d953b1799e5","type":"Requested resource not found"}`
-
-			// console.log(typeof e.response?.body)
-			// `string`
+		.catch((e) => {
 			expect((e.response?.body as string).includes('404')).toBe(true)
 			if (e instanceof HTTPError) {
 				expect(e.statusCode).toBe(404)

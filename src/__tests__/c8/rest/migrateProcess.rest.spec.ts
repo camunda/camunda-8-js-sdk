@@ -61,8 +61,7 @@ test('RestClient can migrate a process instance', async () => {
 	])
 
 	// Migrate the process instance to the updated process model
-
-	await c8.migrateProcessInstance({
+	const migrationResponse = await c8.migrateProcessInstance({
 		processInstanceKey: processInstance.processInstanceKey,
 		mappingInstructions: [
 			{
@@ -72,6 +71,13 @@ test('RestClient can migrate a process instance', async () => {
 		],
 		targetProcessDefinitionKey: res1.processes[0].processDefinitionKey,
 	})
+
+	// Validate the migration response - it's an empty string for success
+	expect(migrationResponse).toBeDefined()
+	// The migration response should be a string
+	expect(typeof migrationResponse).toBe('string')
+	// Verify the response is an empty string (successful operation)
+	expect(migrationResponse).toBe('')
 
 	// Complete the job in the process instance
 	await new Promise<CamundaJobWorker<LosslessDto, LosslessDto>>((res) => {

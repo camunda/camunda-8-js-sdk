@@ -80,24 +80,25 @@ export class ProcessDeployment extends LosslessDto {
 }
 
 export class DecisionDeployment extends LosslessDto {
-	dmnDecisionId!: string
+	decisionDefinitionId!: string
 	version!: number
 	@Int64String
 	decisionKey!: string
-	dmnDecisionName!: string
+	name!: string
 	tenantId!: string
-	dmnDecisionRequirementsId!: string
+	decisionRequirementsId!: string
 	@Int64String
-	dmnDecisionRequirementsKey!: string
+	decisionRequirementsKey!: string
+	decisionDefinitionKey!: string
 }
 
 export class DecisionRequirementsDeployment extends LosslessDto {
-	dmnDecisionRequirementsId!: string
+	decisionRequirementsId!: string
 	version!: number
-	dmnDecisionRequirementsName!: string
+	decisionRequirementsName!: string
 	tenantId!: string
 	@Int64String
-	dmnDecisionRequirementsKey!: string
+	decisionRequirementsKey!: string
 	resourceName!: string
 }
 export class FormDeployment {
@@ -142,7 +143,7 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	/**
 	 * The version of the process; set to -1 to use the latest version
 	 */
-	readonly version!: number
+	readonly processDefinitionVersion!: number
 	@Int64String
 	readonly processInstanceKey!: string
 	/**
@@ -229,7 +230,7 @@ export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	/**
 	 * the version of the process; if not specified it will use the latest version
 	 */
-	version?: number
+	processDefinitionVersion?: number
 	/**
 	 * JSON document that will instantiate the variables for the root variable scope of the
 	 * process instance.
@@ -421,20 +422,28 @@ export interface AdvancedStringFilter {
 	/** Checks if the current property exists. */
 	$exists?: boolean
 	/** Checks if the property matches any of the provided values. */
-	$in: string[]
+	$in?: string[]
 	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
-	$like: string
+	$like?: string
 }
 
 export interface AdvancedNumberFilter {
+	/** Checks for equality with the provided value. */
 	$eq?: number
+	/** Checks for inequality with the provided value. */
 	$neq?: number
-	$exists: boolean
-	$in: number[]
-	$gt: number
-	$gte: number
-	$lt: number
-	$lte: number
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Checks if the property matches any of the provided values. */
+	$in?: number[]
+	/** Checks if the property is greater than the provided value. */
+	$gt?: number
+	/** Checks if the property is greater than or equal to the provided value. */
+	$gte?: number
+	/** Checks if the property is less than the provided value. */
+	$lt?: number
+	/** Checks if the property is less than or equal to the provided value. */
+	$lte?: number
 }
 
 export interface VariableSearchFilterRequest {
@@ -711,7 +720,7 @@ export interface ProcessInstanceSearchFilter {
 	/** The process definition name. */
 	processDefinitionName?: string | AdvancedStringFilter
 	/** The process definition version. */
-	processDefinitionVersion?: string | AdvancedStringFilter
+	processDefinitionVersion?: number | AdvancedStringFilter
 	/** The process definition version tag. */
 	processDefinitionVersionTag?: string | AdvancedStringFilter
 	/** The process definition key. */
@@ -733,7 +742,7 @@ export interface ProcessInstanceSearchFilter {
 		/** Name of the variable. */
 		name: string
 		/** The value of the variable */
-		value: string
+		value: string | AdvancedStringFilter
 	}>
 }
 
@@ -756,15 +765,15 @@ export interface SearchProcessInstanceRequest
 		ProcessInstanceSearchFilter
 	> {}
 
-interface ProcessInstanceDetails {
+export interface ProcessInstanceDetails {
 	/** The key of the process instance. */
 	processInstanceKey: string
 	/** The key of the process definition. */
 	processDefinitionKey: string
 	/** The key of the parent process instance. */
-	parentProcessInstanceKey: string
+	parentProcessInstanceKey?: string
 	/** The key of the parent flow node instance. */
-	parentFlowNodeInstanceKey: string
+	parentFlowNodeInstanceKey?: string
 	/** The BPMN process ID of the process definition. */
 	processDefinitionId: string
 	/** The name of the process definition. */
@@ -1371,3 +1380,122 @@ interface IncidentDetails {
 
 export interface CamundaRestSearchIncidentsResponse
 	extends PaginatedCamundaRestSearchResponse<IncidentDetails> {}
+
+export interface DecisionInstanceSearchFilter {
+	/** The decision instance key. */
+	decisionInstanceKey?: string | AdvancedStringFilter
+	/** The decision definition ID. */
+	decisionDefinitionId?: string | AdvancedStringFilter
+	/** The decision definition key. */
+	decisionDefinitionKey?: string | AdvancedStringFilter
+	/** The decision definition name. */
+	decisionDefinitionName?: string | AdvancedStringFilter
+	/** The decision definition version. */
+	decisionDefinitionVersion?: number | AdvancedNumberFilter
+	/** The process definition key associated to this decision instance. */
+	processDefinitionKey?: string | AdvancedStringFilter
+	/** The process instance key associated to this decision instance. */
+	processInstanceKey?: string | AdvancedStringFilter
+	/** The state of the decision instance. */
+	state?: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/** The evaluation date. */
+	evaluationDate?: string | AdvancedDateTimeFilter
+	/** The tenant ID. */
+	tenantId?: string | AdvancedStringFilter
+	/** The decision type. */
+	decisionType?:
+		| 'DECISION_TABLE'
+		| 'LITERAL_EXPRESSION'
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+}
+
+export interface CamundaRestSearchDecisionInstancesRequest
+	extends BaseSearchRequest<
+		| 'decisionInstanceKey'
+		| 'decisionDefinitionId'
+		| 'decisionDefinitionKey'
+		| 'decisionDefinitionName'
+		| 'decisionDefinitionVersion'
+		| 'processDefinitionKey'
+		| 'processInstanceKey'
+		| 'state'
+		| 'evaluationDate'
+		| 'tenantId'
+		| 'decisionType',
+		DecisionInstanceSearchFilter
+	> {}
+
+interface DecisionInstanceDetails {
+	/** The decision instance key. */
+	decisionInstanceKey: string
+	/** The decision definition ID. */
+	decisionDefinitionId: string
+	/** The decision definition key. */
+	decisionDefinitionKey: string
+	/** The decision definition name. */
+	decisionDefinitionName: string
+	/** The decision definition version. */
+	decisionDefinitionVersion: number
+	/** The process definition key associated to this decision instance. */
+	processDefinitionKey: string
+	/** The process instance key associated to this decision instance. */
+	processInstanceKey: string
+	/** The state of the decision instance. */
+	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/** The evaluation date. */
+	evaluationDate: string
+	/** The evaluation failure message, if any. */
+	evaluationFailure?: string
+	/** The tenant ID. */
+	tenantId: string
+	/** The decision type. */
+	decisionType:
+		| 'DECISION_TABLE'
+		| 'LITERAL_EXPRESSION'
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+	/** The result of the decision evaluation. */
+	result: string
+	/** The ID of the decision instance. */
+	decisionInstanceId: string
+}
+
+export interface CamundaRestSearchDecisionInstancesResponse
+	extends PaginatedCamundaRestSearchResponse<DecisionInstanceDetails> {}
+
+/**
+ * Response from getting a single decision instance by its key.
+ */
+export interface GetDecisionInstanceResponse {
+	/** The decision instance key. */
+	decisionInstanceKey: string
+	/** The decision definition ID. */
+	decisionDefinitionId: string
+	/** The decision definition key. */
+	decisionDefinitionKey: string
+	/** The decision definition name. */
+	decisionDefinitionName: string
+	/** The decision definition version. */
+	decisionDefinitionVersion: number
+	/** The process definition key associated to this decision instance. */
+	processDefinitionKey: string
+	/** The process instance key associated to this decision instance. */
+	processInstanceKey: string
+	/** The state of the decision instance. */
+	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/** The evaluation date. */
+	evaluationDate: string
+	/** The evaluation failure message, if any. */
+	evaluationFailure?: string
+	/** The tenant ID. */
+	tenantId: string
+	/** The decision type. */
+	decisionDefinitionType:
+		| 'DECISION_TABLE'
+		| 'LITERAL_EXPRESSION'
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+	/** The result of the decision evaluation. */
+	result: string
+}
