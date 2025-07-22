@@ -1,3 +1,23 @@
+## [8.7.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.21...v8.7.22) (2025-07-22)
+
+
+### Bug Fixes
+
+* fix QuerySubscription duplicate item emission. fixes [#540](https://github.com/camunda/camunda-8-js-sdk/issues/540) ([8d61bcb](https://github.com/camunda/camunda-8-js-sdk/commit/8d61bcb7a191b7bf561c1ed65dccb53e8d0fa22e))
+
+
+### Features
+
+* correctly handle backpressure 503 response. fixes [#509](https://github.com/camunda/camunda-8-js-sdk/issues/509) ([7994b5f](https://github.com/camunda/camunda-8-js-sdk/commit/7994b5fbef0852eb49a19b37089070d3225a7f89))
+* enable debugging for Camunda Rest Client ([cba989f](https://github.com/camunda/camunda-8-js-sdk/commit/cba989f72ed446e40eb9dcd8dfd0b898bf1a90a8))
+* implement getDecisionInstance. fixes [#293](https://github.com/camunda/camunda-8-js-sdk/issues/293) ([eea159d](https://github.com/camunda/camunda-8-js-sdk/commit/eea159d11cc411144c6472f1dfe364380d856592))
+* implement searchDecisionInstances. fixes [#292](https://github.com/camunda/camunda-8-js-sdk/issues/292) ([83a7d7b](https://github.com/camunda/camunda-8-js-sdk/commit/83a7d7b0abd163abeb3311588305c7c0b9db8caa))
+
+
+### Reverts
+
+* remove logging for [#491](https://github.com/camunda/camunda-8-js-sdk/issues/491) ([ae69149](https://github.com/camunda/camunda-8-js-sdk/commit/ae69149bd2e10d143fd1186a721fa02cd8ccbabb))
+
 ## [8.7.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.20...v8.7.21) (2025-07-17)
 
 
