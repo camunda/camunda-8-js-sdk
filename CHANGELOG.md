@@ -1,3 +1,10 @@
+## [8.7.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.22...v8.7.23) (2025-07-22)
+
+
+### Bug Fixes
+
+* add missing fields to getDecisionInstance Response Dto. fixes [#545](https://github.com/camunda/camunda-8-js-sdk/issues/545) ([2378d6b](https://github.com/camunda/camunda-8-js-sdk/commit/2378d6bbfd653bf6fe0d6d415084e998fa0b55d2))
+
 ## [8.7.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.21...v8.7.22) (2025-07-22)
 
 
