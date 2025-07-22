@@ -91,11 +91,6 @@ jobs:
           CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8083
           CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
 
-      - name: Emit error if the test fails
-        run: |
-          if [ -f error.log ]; then
-            cat error.log
-          fi
       - name: Cleanup
         if: always()
         run: docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml down
@@ -143,12 +138,6 @@ jobs:
           CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
           # Needed for Multi-Tenancy
           CAMUNDA_TENANT_ID: <default>
-
-      - name: Emit error if the test fails
-        run: |
-          if [ -f error.log ]; then
-            cat error.log
-          fi
 
       - name: Cleanup
         if: always()
