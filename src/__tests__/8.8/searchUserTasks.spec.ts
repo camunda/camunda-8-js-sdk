@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 
-import { PollingOperation } from '../../'
+import { PollingOperation } from '../..'
 import { CreateProcessInstanceResponse } from '../../c8/lib/C8Dto'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 

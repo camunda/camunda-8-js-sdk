@@ -71,8 +71,10 @@ export interface NewUserInfo {
 export type Ctor<T> = new (obj: any) => T
 
 export class ProcessDeployment extends LosslessDto {
+	/** This is the ID of the process definition. It is a human-readable string defined in the process model */
 	processDefinitionId!: string
 	processDefinitionVersion!: number
+	/** This is the key of the process definition. It is a unique identifier for the process definition, assigned by the server on deployment. */
 	@Int64String
 	processDefinitionKey!: string
 	resourceName!: string
