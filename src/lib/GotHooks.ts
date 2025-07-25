@@ -52,15 +52,29 @@ export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
 		JSON.stringify(Object.keys(error as unknown as object))
 	)
 	if (error instanceof RequestError) {
+		const is401 = error.response?.statusCode === 401
+		const is404 = error.response?.statusCode === 404
+		const hasRetried = retryCount && retryCount > 0
+		const isStrictApiMode = process.env.CAMUNDA_STRICT_API_MODE === 'true'
 		trace('gotBeforeRetryHook: HTTPError detected:', error.response?.statusCode)
 		// If we have a 401 error, we handle it by retrying the request only once.
-		if (error.response?.statusCode === 401) {
+		if (is401 || error.code === '401') {
 			// If we get a 401 error, we will retry the request only once.
-			if (retryCount && retryCount > 0) {
+			if (hasRetried) {
 				// If we have already retried, we throw the error to stop retrying.
 				throw error
 			}
 		}
+		// There seems to be an intermittent race condition where a 404 error is thrown when the resource is returned by a search query.
+		// But the resource is not found by the fetch request. We will retry the request once in this case.
+		// This is a workaround for the issue, and we should investigate further.
+		// See https://github.com/camunda/camunda-8-js-sdk/issues/560
+		if (is404) {
+			if (isStrictApiMode || hasRetried)
+				// If we have a 404 error and strict API mode is enabled, or we retried once, we throw the error to stop retrying.
+				throw error
+		}
+		trace('Retrying on 404:', error.request?.options.url.href)
 	}
 }
 
