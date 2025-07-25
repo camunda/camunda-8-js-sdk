@@ -20,9 +20,9 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 
 		it('should use ZEEBE_GRPC_ADDRESS when explicitly set', () => {
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
-				ZEEBE_GRPC_ADDRESS: 'localhost:26500',
+				ZEEBE_GRPC_ADDRESS: 'grpc://localhost:26500',
 			})
-			expect(config.ZEEBE_GRPC_ADDRESS).toBe('localhost:26500')
+			expect(config.ZEEBE_GRPC_ADDRESS).toBe('grpc://localhost:26500')
 		})
 
 		it('should handle both ZEEBE_ADDRESS and ZEEBE_GRPC_ADDRESS when explicitly set', () => {
