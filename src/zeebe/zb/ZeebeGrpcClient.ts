@@ -18,6 +18,7 @@ import {
 	losslessStringify,
 	RequireConfiguration,
 } from '../../lib'
+import { parseZeebeGrpcAddress } from '../../lib/ZeebeGrpcAddressUtils'
 import { IHeadersProvider } from '../../oauth'
 import {
 	BpmnParser,
@@ -179,8 +180,35 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 		this.tenantId = this.options.tenantId
 
+		// Handle ZEEBE_GRPC_ADDRESS with protocol-based configuration
+		let effectiveAddress: string
+		let protocolBasedTLS: boolean | undefined
+
+		if (
+			config.ZEEBE_GRPC_ADDRESS &&
+			config.ZEEBE_GRPC_ADDRESS.includes('://')
+		) {
+			// Use ZEEBE_GRPC_ADDRESS with protocol
+			try {
+				const addressInfo = parseZeebeGrpcAddress(config.ZEEBE_GRPC_ADDRESS)
+				effectiveAddress = addressInfo.hostPort
+				protocolBasedTLS = addressInfo.isSecure
+			} catch (error) {
+				// If parsing fails, fall back to legacy behavior but log a warning
+				console.warn(
+					`Invalid ZEEBE_GRPC_ADDRESS format: ${config.ZEEBE_GRPC_ADDRESS}. Falling back to legacy address resolution.`
+				)
+				effectiveAddress =
+					config.ZEEBE_GRPC_ADDRESS || config.ZEEBE_ADDRESS || 'localhost:26500'
+			}
+		} else {
+			// Legacy behavior: prioritize ZEEBE_ADDRESS over ZEEBE_GRPC_ADDRESS
+			effectiveAddress =
+				config.ZEEBE_ADDRESS || config.ZEEBE_GRPC_ADDRESS || 'localhost:26500'
+		}
+
 		this.gatewayAddress = RequireConfiguration(
-			config.ZEEBE_ADDRESS || config.ZEEBE_GRPC_ADDRESS,
+			effectiveAddress,
 			'ZEEBE_GRPC_ADDRESS'
 		)
 
@@ -208,7 +236,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const zeebeInsecureConnection =
 			config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION ?? undefined
 
-		this.useTLS = camundaSecureConnection ?? !zeebeInsecureConnection
+		// If ZEEBE_GRPC_ADDRESS with protocol is used, use protocol-based TLS
+		// Otherwise, fall back to legacy TLS configuration
+		if (protocolBasedTLS !== undefined) {
+			this.useTLS = protocolBasedTLS
+		} else {
+			this.useTLS = camundaSecureConnection ?? !zeebeInsecureConnection
+		}
 
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
