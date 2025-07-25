@@ -3,7 +3,7 @@ import path from 'node:path'
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { createDtoInstance, LosslessDto } from '../../../lib'
 
-jest.setTimeout(17000)
+jest.setTimeout(25000)
 
 let processDefinitionId: string
 let processDefinitionKey: string

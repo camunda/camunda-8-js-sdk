@@ -5,7 +5,9 @@ jest.setTimeout(30000)
 test('Does not call the onReady handler if there is no broker', (done) => {
 	let called = false
 	const zbc2 = new ZeebeGrpcClient({
-		config: { ZEEBE_ADDRESS: 'localtoast: 267890' },
+		config: {
+			ZEEBE_GRPC_ADDRESS: 'grpcs://localtoast:267890',
+		},
 	}).on('ready', () => {
 		called = true
 	}) // Broker doesn't exist!!!

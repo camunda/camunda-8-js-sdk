@@ -35,8 +35,8 @@ test('Does set connected: true if there is a broker and eagerConnection: true', 
 test('Sets connected: true if there is a broker and eagerConnection: false', (done) => {
 	const zbc2 = new ZeebeGrpcClient()
 	setTimeout(async () => {
-		expect(zbc2.connected).toBe(true)
 		await zbc2.close()
+		expect(zbc2.connected).toBe(true)
 		done()
 	}, 7000)
 })
@@ -44,7 +44,7 @@ test('Sets connected: true if there is a broker and eagerConnection: false', (do
 test('Does not call the onReady handler if there is no broker', (done) => {
 	let called = 0
 	const zbc2 = new ZeebeGrpcClient({
-		config: { ZEEBE_ADDRESS: 'nobroker' },
+		config: { ZEEBE_GRPC_ADDRESS: 'grpc://nobroker' },
 	})
 	zbc2.createWorker({
 		onReady: () => {
@@ -54,8 +54,8 @@ test('Does not call the onReady handler if there is no broker', (done) => {
 		taskType: 'nonsense-task',
 	})
 	setTimeout(async () => {
-		expect(called).toBe(0)
 		await zbc2.close()
+		expect(called).toBe(0)
 		done()
 	}, 5000)
 })
@@ -63,7 +63,7 @@ test('Does not call the onReady handler if there is no broker', (done) => {
 test('Does not emit the ready event if there is no broker', (done) => {
 	let called = 0
 	const zbc2 = new ZeebeGrpcClient({
-		config: { ZEEBE_ADDRESS: 'nobroker' },
+		config: { ZEEBE_GRPC_ADDRESS: 'grpc://nobroker' },
 	})
 	zbc2
 		.createWorker({
@@ -75,8 +75,8 @@ test('Does not emit the ready event if there is no broker', (done) => {
 			called++
 		})
 	setTimeout(async () => {
-		expect(called).toBe(0)
 		await zbc2.close()
+		expect(called).toBe(0)
 		done()
 	}, 5000)
 })
@@ -92,8 +92,8 @@ test('Worker calls the onReady handler once if there is a broker', (done) => {
 		taskType: 'nonsense-task',
 	})
 	setTimeout(async () => {
-		expect(called).toBe(1)
 		await zbc2.close()
+		expect(called).toBe(1)
 		done()
 	}, 12000)
 })
