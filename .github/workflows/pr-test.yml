@@ -196,7 +196,6 @@ jobs:
         run: |
           npm run test:integration8.8
         env:
-          ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS_8_8 }}
           ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS_8_8 }}
           ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS_8_8 }}
           ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID_8_8 }}
@@ -233,7 +232,6 @@ jobs:
   #     run: |
   #       npm run test:integration
   #     env:
-  #       ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
   #       ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
   #       ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
   #       ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
