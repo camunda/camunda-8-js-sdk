@@ -6,7 +6,6 @@ test('Does not call the onReady handler if there is no broker', (done) => {
 	let called = false
 	const zbc2 = new ZeebeGrpcClient({
 		config: {
-			ZEEBE_ADDRESS: 'localtoast:267890',
 			ZEEBE_GRPC_ADDRESS: 'grpcs://localtoast:267890',
 		},
 	}).on('ready', () => {
