@@ -70,11 +70,12 @@ export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
 		// This is a workaround for the issue, and we should investigate further.
 		// See https://github.com/camunda/camunda-8-js-sdk/issues/560
 		if (is404) {
-			if (isStrictApiMode || hasRetried)
+			if (isStrictApiMode || hasRetried) {
 				// If we have a 404 error and strict API mode is enabled, or we retried once, we throw the error to stop retrying.
 				throw error
+			}
+			trace('Retrying on 404:', error.request?.options.url.href)
 		}
-		trace('Retrying on 404:', error.request?.options.url.href)
 	}
 }
 
