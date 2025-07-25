@@ -1,3 +1,10 @@
+## [8.7.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.23...v8.7.24) (2025-07-25)
+
+
+### Features
+
+* support ZEEBE_GRPC_ADDRESS. fixes [#557](https://github.com/camunda/camunda-8-js-sdk/issues/557) ([2422581](https://github.com/camunda/camunda-8-js-sdk/commit/2422581c2a15f905b2ae7cac5f1dbad819b10108))
+
 ## [8.7.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.22...v8.7.23) (2025-07-22)
 
 
