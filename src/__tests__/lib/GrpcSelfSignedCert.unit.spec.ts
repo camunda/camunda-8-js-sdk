@@ -77,7 +77,7 @@ function createServer(): Promise<{ server: Server; port: number }> {
 		})
 
 		// Start the server
-		server.bindAsync('localhost:50051', credentials, (err, port) => {
+		server.bindAsync('localhost:0', credentials, (err, port) => {
 			if (err) {
 				reject(err)
 			}

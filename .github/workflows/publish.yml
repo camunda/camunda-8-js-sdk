@@ -60,8 +60,7 @@ jobs:
         run: |
           npm run test:local-integration
         env:
-          CAMUNDA_SECURE_CONNECTION: false
-          ZEEBE_ADDRESS: localhost:26500
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           ZEEBE_CLIENT_ID: zeebe
           ZEEBE_CLIENT_SECRET: zecret
           CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
@@ -106,8 +105,7 @@ jobs:
         run: |
           npm run test:multitenancy
         env:
-          CAMUNDA_SECURE_CONNECTION: false
-          ZEEBE_ADDRESS: localhost:26500
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           ZEEBE_CLIENT_ID: zeebe
           ZEEBE_CLIENT_SECRET: zecret
           CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
@@ -141,7 +139,6 @@ jobs:
         run: |
           npm run test:integration
         env:
-          ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS }}
           ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
           ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
           ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
@@ -178,7 +175,6 @@ jobs:
         run: |
           npm run test:integration8.8
         env:
-          ZEEBE_ADDRESS: ${{ secrets.ZEEBE_ADDRESS_8_8 }}
           ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS_8_8 }}
           ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS_8_8 }}
           ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID_8_8 }}

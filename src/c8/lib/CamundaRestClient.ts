@@ -433,7 +433,7 @@ export class CamundaRestClient {
 	 *
 	 * Documentation: https://docs.camunda.io/docs/8.7/apis-tools/camunda-api-rest/specifications/find-user-tasks/
 	 *
-	 * @since 8.8.0 - alpha status in 8.6 and 8.7
+	 * @since 8.8.0
 	 */
 	public async searchUserTasks(
 		request: SearchTasksRequest
