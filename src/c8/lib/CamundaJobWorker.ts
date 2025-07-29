@@ -192,6 +192,11 @@ export class CamundaJobWorker<
 		})
 	}
 
+	/** This is an alias for stop(). Provided for compatibility with the gRPC worker implementation. */
+	public close() {
+		return this.stop()
+	}
+
 	private poll() {
 		if (this.pollLock || this.stopping) {
 			return
