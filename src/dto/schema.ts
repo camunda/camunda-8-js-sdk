@@ -4,11320 +4,11670 @@
  */
 
 export interface paths {
-    "/topology": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get cluster topology
-         * @description Obtains the current topology of the cluster the gateway is part of.
-         */
-        get: operations["getTopology"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/license": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get license status
-         * @description Obtains the status of the current Camunda license.
-         */
-        get: operations["getLicense"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/authentication/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current user
-         * @description Retrieves the current authenticated user.
-         */
-        get: operations["getAuthentication"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/jobs/activation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Activate jobs
-         * @description Iterate through all known partitions and activate jobs up to the requested maximum.
-         *
-         */
-        post: operations["activateJobs"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/jobs/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search jobs
-         * @description Search for jobs based on given criteria.
-         */
-        post: operations["searchJobs"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/jobs/{jobKey}/failure": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Fail job
-         * @description Mark the job as failed
-         *
-         */
-        post: operations["failJob"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/jobs/{jobKey}/error": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Throw error for job
-         * @description Reports a business error (i.e. non-technical) that occurs while processing a job.
-         *
-         */
-        post: operations["throwJobError"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/jobs/{jobKey}/completion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Complete job
-         * @description Complete a job with the given payload, which allows completing the associated service task.
-         *
-         */
-        post: operations["completeJob"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/jobs/{jobKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update job
-         * @description Update a job with the given key.
-         */
-        patch: operations["updateJob"];
-        trace?: never;
-    };
-    "/incidents/{incidentKey}/resolution": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Resolve incident
-         * @description Marks the incident as resolved; most likely a call to Update job will be necessary to reset the job’s retries, followed by this call.
-         *
-         */
-        post: operations["resolveIncident"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create tenant
-         * @description Creates a new tenant.
-         */
-        post: operations["createTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get tenant
-         * @description Retrieves a single tenant by tenant ID.
-         */
-        get: operations["getTenant"];
-        /**
-         * Update tenant
-         * @description Updates an existing tenant.
-         */
-        put: operations["updateTenant"];
-        post?: never;
-        /**
-         * Delete tenant
-         * @description Deletes an existing tenant.
-         */
-        delete: operations["deleteTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/users/{username}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a user to a tenant
-         * @description Assign a single user to a specified tenant.
-         */
-        put: operations["assignUserToTenant"];
-        post?: never;
-        /**
-         * Remove a user from a tenant
-         * @description Removes a single user from a specified tenant without deleting the user.
-         */
-        delete: operations["removeUserFromTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/users/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search users for tenant
-         * @description Retrieves a filtered and sorted list of users for a specified tenant.
-         */
-        post: operations["searchUsersForTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/clients/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search clients for tenant
-         * @description Retrieves a filtered and sorted list of clients for a specified tenant.
-         */
-        post: operations["searchClientsForTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/groups/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search groups for tenant
-         * @description Retrieves a filtered and sorted list of groups for a specified tenant.
-         */
-        post: operations["searchGroupIdsForTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/roles/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search roles for tenant
-         * @description Retrieves a filtered and sorted list of roles for a specified tenant.
-         */
-        post: operations["searchRolesForTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/clients/{clientId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a client to a tenant
-         * @description Assign a client to a specified tenant.
-         */
-        put: operations["assignClientToTenant"];
-        post?: never;
-        /**
-         * Remove a client from a tenant
-         * @description Removes a single client from a specified tenant.
-         */
-        delete: operations["removeClientFromTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/mapping-rules/{mappingRuleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a mapping rule to a tenant
-         * @description Assign a single mapping rule to a specified tenant.
-         */
-        put: operations["assignMappingRuleToTenant"];
-        post?: never;
-        /**
-         * Remove a mapping rule from a tenant
-         * @description Removes a single mapping rule from a specified tenant without deleting the rule.
-         */
-        delete: operations["removeMappingRuleFromTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/mapping-rules/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search mapping rules for tenant
-         * @description Retrieves a filtered and sorted list of MappingRules for a specified tenant.
-         */
-        post: operations["searchMappingsForTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/groups/{groupId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a group to a tenant
-         * @description Assign a single group to a specified tenant.
-         */
-        put: operations["assignGroupToTenant"];
-        post?: never;
-        /**
-         * Remove a group from a tenant
-         * @description Removes a single group from a specified tenant without deleting the group.
-         */
-        delete: operations["removeGroupFromTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/{tenantId}/roles/{roleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a role to a tenant
-         * @description Assign a single role to a specified tenant.
-         */
-        put: operations["assignRoleToTenant"];
-        post?: never;
-        /**
-         * Remove a role from a tenant
-         * @description Removes a single role from a specified tenant without deleting the role.
-         */
-        delete: operations["removeRoleFromTenant"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenants/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search tenants
-         * @description Retrieves a filtered and sorted list of tenants.
-         */
-        post: operations["searchTenants"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/user-tasks/{userTaskKey}/completion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Complete user task
-         * @description Completes a user task with the given key.
-         */
-        post: operations["completeUserTask"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/user-tasks/{userTaskKey}/assignment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Assign user task
-         * @description Assigns a user task with the given key to the given assignee.
-         */
-        post: operations["assignUserTask"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/user-tasks/{userTaskKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get user task
-         * @description Get the user task by the user task key.
-         *
-         */
-        get: operations["getUserTask"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update user task
-         * @description Update a user task with the given key.
-         */
-        patch: operations["updateUserTask"];
-        trace?: never;
-    };
-    "/user-tasks/{userTaskKey}/form": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get user task form
-         * @description Get the form of a user task.
-         *
-         *     Note that this endpoint will only return linked forms. This endpoint does not support embedded forms.
-         *
-         */
-        get: operations["getUserTaskForm"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/user-tasks/{userTaskKey}/assignee": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Unassign user task
-         * @description Removes the assignee of a task with the given key.
-         */
-        delete: operations["unassignUserTask"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/user-tasks/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search user tasks
-         * @description Search for user tasks based on given criteria.
-         *
-         */
-        post: operations["searchUserTasks"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/user-tasks/{userTaskKey}/variables/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search user task variables
-         * @description Search for user task variables based on given criteria.
-         *
-         */
-        post: operations["searchUserTaskVariables"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/variables/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search variables
-         * @description Search for process and local variables based on given criteria.
-         *
-         */
-        post: operations["searchVariables"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/variables/{variableKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get variable
-         * @description Get the variable by the variable key.
-         *
-         */
-        get: operations["getVariable"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/clock": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Pin internal clock (alpha)
-         * @description Set a precise, static time for the Zeebe engine’s internal clock.
-         *     When the clock is pinned, it remains at the specified time and does not advance.
-         *     To change the time, the clock must be pinned again with a new timestamp.
-         *
-         *     This endpoint is an alpha feature and may be subject to change
-         *     in future releases.
-         *
-         */
-        put: operations["pinClock"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/clock/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Reset internal clock (alpha)
-         * @description Resets the Zeebe engine’s internal clock to the current system time, enabling it to tick in real-time.
-         *     This operation is useful for returning the clock to
-         *     normal behavior after it has been pinned to a specific time.
-         *
-         *     This endpoint is an alpha feature and may be subject to change
-         *     in future releases.
-         *
-         */
-        post: operations["resetClock"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-definitions/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search process definitions
-         * @description Search for process definitions based on given criteria.
-         *
-         */
-        post: operations["searchProcessDefinitions"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-definitions/{processDefinitionKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get process definition
-         * @description Returns process definition as JSON.
-         *
-         */
-        get: operations["getProcessDefinition"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-definitions/{processDefinitionKey}/xml": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get process definition XML
-         * @description Returns process definition as XML.
-         *
-         */
-        get: operations["getProcessDefinitionXML"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-definitions/{processDefinitionKey}/form": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get process start form
-         * @description Get the start form of a process.
-         *
-         *     Note that this endpoint will only return linked forms. This endpoint does not support embedded forms.
-         *
-         */
-        get: operations["getStartProcessForm"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-definitions/{processDefinitionKey}/statistics/element-instances": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Get process definition statistics
-         * @description Get statistics about elements in currently running process instances by process definition key and search filter.
-         *
-         */
-        post: operations["getProcessDefinitionStatistics"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create process instance
-         * @description Creates and starts an instance of the specified process.
-         *     The process definition to use to create the instance can be specified either using its unique key
-         *     (as returned by Deploy resources), or using the BPMN process ID and a version.
-         *
-         *     Waits for the completion of the process instance before returning a result
-         *     when awaitCompletion is enabled.
-         *
-         */
-        post: operations["createProcessInstance"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get process instance
-         * @description Get the process instance by the process instance key.
-         *
-         */
-        get: operations["getProcessInstance"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/sequence-flows": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get process instance sequence flows
-         * @description Get sequence flows taken by the process instance.
-         *
-         */
-        get: operations["getProcessInstanceSequenceFlows"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/statistics/element-instances": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get process instance statistics
-         * @description Get statistics about elements by the process instance key.
-         *
-         */
-        get: operations["getProcessInstanceStatistics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search process instances
-         * @description Search for process instances based on given criteria.
-         *
-         */
-        post: operations["searchProcessInstances"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/incidents/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search for incidents associated with a process instance
-         * @description Search for incidents caused by the process instance or any of its called process or decision instances.
-         *
-         */
-        post: operations["searchProcessInstanceIncidents"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/cancellation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancel process instance
-         * @description Cancels a running process instance. As a cancelation includes more than just the removal of the process instance resource, the cancelation resource must be posted.
-         */
-        post: operations["cancelProcessInstance"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/cancellation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a batch operation to cancel process instances
-         * @description Cancels multiple running process instances.
-         *     Since only ACTIVE root instances can be cancelled, any given filters for state and
-         *     parentProcessInstanceKey are ignored and overridden during this batch operation.
-         *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["cancelProcessInstancesBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/incident-resolution": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a batch operation to resolve incidents of process instances
-         * @description Resolves multiple instances of process instances.
-         *     Since only process instances with ACTIVE state can have unresolved incidents, any given
-         *     filters for state are ignored and overridden during this batch operation.
-         *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["resolveIncidentsBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/migration": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a batch operation to migrate process instances
-         * @description Migrate multiple instances of process instances.
-         *     Since only process instances with ACTIVE state can be migrated, any given
-         *     filters for state are ignored and overridden during this batch operation.
-         *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["migrateProcessInstancesBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/modification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a batch operation to modify process instances
-         * @description Modify multiple process instances.
-         *     Since only process instances with ACTIVE state can be modified, any given
-         *     filters for state are ignored and overridden during this batch operation.
-         *     In contrast to single modification operation, it is not possible to add variable instructions or modify by element key.
-         *     It is only possible to use the element id of the source and target.
-         *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["modifyProcessInstancesBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/migration": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Migrate process instance
-         * @description Migrates a process instance to a new process definition.
-         *     This request can contain multiple mapping instructions to define mapping between the active
-         *     process instance's elements and target process definition elements.
-         *
-         *     Use this to upgrade a process instance to a new version of a process or to
-         *     a different process definition, e.g. to keep your running instances up-to-date with the
-         *     latest process improvements.
-         *
-         */
-        post: operations["migrateProcessInstance"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/modification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Modify process instance
-         * @description Modifies a running process instance.
-         *     This request can contain multiple instructions to activate an element of the process or
-         *     to terminate an active instance of an element.
-         *
-         *     Use this to repair a process instance that is stuck on an element or took an unintended path.
-         *     For example, because an external system is not available or doesn't respond as expected.
-         *
-         */
-        post: operations["modifyProcessInstance"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/process-instances/{processInstanceKey}/call-hierarchy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get call hierarchy for process instance
-         * @description Returns the call hierarchy for a given process instance, showing its ancestry up to the root instance.
-         *
-         */
-        get: operations["getProcessInstanceCallHierarchy"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/element-instances/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search element instances
-         * @description Search for element instances based on given criteria.
-         *
-         */
-        post: operations["searchElementInstances"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/element-instances/{elementInstanceKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get element instance
-         * @description Returns element instance as JSON.
-         *
-         */
-        get: operations["getElementInstance"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-definitions/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search decision definitions
-         * @description Search for decision definitions based on given criteria.
-         *
-         */
-        post: operations["searchDecisionDefinitions"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-definitions/{decisionDefinitionKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get decision definition
-         * @description Returns a decision definition by key.
-         *
-         */
-        get: operations["getDecisionDefinition"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-definitions/{decisionDefinitionKey}/xml": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get decision definition XML
-         * @description Returns decision definition as XML.
-         *
-         */
-        get: operations["getDecisionDefinitionXML"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-requirements/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search decision requirements
-         * @description Search for decision requirements based on given criteria.
-         *
-         */
-        post: operations["searchDecisionRequirements"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-requirements/{decisionRequirementsKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get decision requirements
-         * @description Returns Decision Requirements as JSON.
-         *
-         */
-        get: operations["getDecisionRequirements"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-requirements/{decisionRequirementsKey}/xml": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get decision requirements XML
-         * @description Returns decision requirements as XML.
-         *
-         */
-        get: operations["getDecisionRequirementsXML"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-instances/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search decision instances
-         * @description Search for decision instances based on given criteria.
-         *
-         */
-        post: operations["searchDecisionInstances"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-instances/{decisionInstanceId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get decision instance
-         * @description Returns a decision instance.
-         *
-         */
-        get: operations["getDecisionInstance"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/decision-definitions/evaluation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Evaluate decision
-         * @description Evaluates a decision.
-         *     You specify the decision to evaluate either by using its unique key (as returned by
-         *     DeployResource), or using the decision ID. When using the decision ID, the latest deployed
-         *     version of the decision is used.
-         *
-         */
-        post: operations["evaluateDecision"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/authorizations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create authorization
-         * @description Create the authorization.
-         */
-        post: operations["createAuthorization"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/authorizations/{authorizationKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get authorization
-         * @description Get authorization by the given key.
-         */
-        get: operations["getAuthorization"];
-        /**
-         * Update authorization
-         * @description Update the authorization with the given key.
-         */
-        put: operations["updateAuthorization"];
-        post?: never;
-        /**
-         * Delete authorization
-         * @description Deletes the authorization with the given key.
-         */
-        delete: operations["deleteAuthorization"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/authorizations/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search authorizations
-         * @description Search for authorizations based on given criteria.
-         *
-         */
-        post: operations["searchAuthorizations"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create role
-         * @description Create a new role.
-         *
-         */
-        post: operations["createRole"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get role
-         * @description Get a role by its ID.
-         *
-         */
-        get: operations["getRole"];
-        /**
-         * Update role
-         * @description Update a role with the given ID.
-         *
-         */
-        put: operations["updateRole"];
-        post?: never;
-        /**
-         * Delete role
-         * @description Deletes the role with the given ID.
-         *
-         */
-        delete: operations["deleteRole"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/users/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search role users
-         * @description Search users with assigned role.
-         *
-         */
-        post: operations["searchUsersForRole"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/clients/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search role clients
-         * @description Search clients with assigned role.
-         *
-         */
-        post: operations["searchClientsForRole"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/users/{username}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a role to a user
-         * @description Assigns a role to a user.
-         *
-         */
-        put: operations["addRoleToUser"];
-        post?: never;
-        /**
-         * Unassign a user from a role
-         * @description Unassigns a user from a role.
-         *
-         */
-        delete: operations["removeUserFromRole"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/clients/{clientId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a role to a client
-         * @description Assigns a role to a client.
-         *
-         */
-        put: operations["addRoleToClient"];
-        post?: never;
-        /**
-         * Unassign a role from a client
-         * @description Unassigns a role from a client.
-         *
-         */
-        delete: operations["removeRoleFromClient"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search roles
-         * @description Search for roles based on given criteria.
-         *
-         */
-        post: operations["searchRoles"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/groups/{groupId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a role to a group
-         * @description Assigns a role to a group.
-         *
-         */
-        put: operations["addRoleToGroup"];
-        post?: never;
-        /**
-         * Unassign a role from a group
-         * @description Unassigns a role from a group.
-         *
-         */
-        delete: operations["removeRoleFromGroup"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/groups/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search role groups
-         * @description Search groups with assigned role.
-         *
-         */
-        post: operations["searchGroupsForRole"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/mapping-rules/{mappingRuleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a role to a mapping rule
-         * @description Assigns a role to a mapping rule.
-         *
-         */
-        put: operations["addRoleToMappingRule"];
-        post?: never;
-        /**
-         * Unassign a role from a mapping rule
-         * @description Unassigns a role from a mapping rule.
-         *
-         */
-        delete: operations["removeRoleFromMappingRule"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/roles/{roleId}/mapping-rules/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search role mapping rules
-         * @description Search mapping rules with assigned role.
-         *
-         */
-        post: operations["searchMappingRulesForRole"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create group
-         * @description Create a new group.
-         *
-         */
-        post: operations["createGroup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get group
-         * @description Get a group by its ID.
-         *
-         */
-        get: operations["getGroup"];
-        /**
-         * Update group
-         * @description Update a group with the given ID.
-         *
-         */
-        put: operations["updateGroup"];
-        post?: never;
-        /**
-         * Delete group
-         * @description Deletes the group with the given ID.
-         *
-         */
-        delete: operations["deleteGroup"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/users/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search group users
-         * @description Search users assigned to a group.
-         *
-         */
-        post: operations["searchUsersForGroup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/mapping-rules/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search group mapping rules
-         * @description Search mapping rules assigned to a group.
-         *
-         */
-        post: operations["searchMappingRulesForGroup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/roles/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search group roles
-         * @description Search roles assigned to a group.
-         *
-         */
-        post: operations["searchRolesForGroup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/clients/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search group clients
-         * @description Search clients assigned to a group.
-         *
-         */
-        post: operations["searchClientsForGroup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/users/{username}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a user to a group
-         * @description Assigns a user to a group.
-         *
-         */
-        put: operations["addUserToGroup"];
-        post?: never;
-        /**
-         * Unassign a user from a group
-         * @description Unassigns a user from a group.
-         *
-         */
-        delete: operations["unassignUserFromGroup"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/clients/{clientId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a client to a group
-         * @description Assigns a client to a group.
-         *
-         */
-        put: operations["addClientToGroup"];
-        post?: never;
-        /**
-         * Unassign a client from a group
-         * @description Unassigns a client from a group.
-         *
-         */
-        delete: operations["unassignClientFromGroup"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/{groupId}/mapping-rules/{mappingRuleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Assign a mapping rule to a group
-         * @description Assigns a mapping rule to a group.
-         *
-         */
-        put: operations["assignMappingRuleToGroup"];
-        post?: never;
-        /**
-         * Unassign a mapping rule from a group
-         * @description Unassigns a mapping rule from a group.
-         *
-         */
-        delete: operations["unassignMappingRuleFromGroup"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/groups/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search groups
-         * @description Search for groups based on given criteria.
-         *
-         */
-        post: operations["searchGroups"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/mapping-rules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create mapping rule
-         * @description Create a new mapping rule
-         *
-         */
-        post: operations["createMappingRule"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/mapping-rules/{mappingRuleId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a mapping rule
-         * @description Gets the mapping rule with the given ID.
-         *
-         */
-        get: operations["getMappingRule"];
-        /**
-         * Update mapping rule
-         * @description Update a mapping rule.
-         *
-         */
-        put: operations["updateMappingRule"];
-        post?: never;
-        /**
-         * Delete a mapping rule
-         * @description Deletes the mapping rule with the given ID.
-         *
-         */
-        delete: operations["deleteMappingRule"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/mapping-rules/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search mapping rules
-         * @description Search for mapping rules based on given criteria.
-         *
-         */
-        post: operations["searchMappingRule"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/messages/publication": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Publish message
-         * @description Publishes a single message.
-         *     Messages are published to specific partitions computed from their correlation keys.
-         *     Messages can be buffered.
-         *     The endpoint does not wait for a correlation result.
-         *     Use the message correlation endpoint for such use cases.
-         *
-         */
-        post: operations["publishMessage"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/messages/correlation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Correlate message
-         * @description Publishes a message and correlates it to a subscription.
-         *     If correlation is successful it will return the first process instance key the message correlated with.
-         *     The message is not buffered.
-         *     Use the publish message endpoint to send messages that can be buffered.
-         *
-         */
-        post: operations["correlateMessage"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/message-subscriptions/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search message subscriptions
-         * @description Search for message subscriptions based on given criteria.
-         *
-         */
-        post: operations["searchMessageSubscriptions"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/documents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Upload document
-         * @description Upload a document to the Camunda 8 cluster.
-         *
-         *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
-         *
-         */
-        post: operations["createDocument"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/documents/batch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Upload multiple documents
-         * @description Upload multiple documents to the Camunda 8 cluster.
-         *
-         *     The caller must provide a file name for each document, which will be used in case of a multi-status response
-         *     to identify which documents failed to upload. The file name can be provided in the `Content-Disposition` header
-         *     of the file part or in the `fileName` field of the metadata, which can be configured with
-         *     the `X-Document-Metadata` header for each file part. If both are provided, the `fileName` metadata field
-         *     takes precedence. For example, given the following headers for a file:
-         *     ```
-         *     Content-Disposition: form-data; name="files"; filename="bill.pdf"
-         *     X-Document-Metadata: {"fileName": "invoice.pdf", "size": 1234567}
-         *     ```
-         *
-         *     The filename will be `invoice.pdf`, but in the following example:
-         *     ```
-         *     Content-Disposition: form-data; name="files"; filename="bill.pdf"
-         *     X-Document-Metadata: {"size": 1234567}
-         *     ```
-         *
-         *     it would be `bill.pdf`.
-         *
-         *     In case of a multi-status response, the response body will contain a list of `DocumentBatchProblemDetail` objects,
-         *     each of which contains the file name of the document that failed to upload and the reason for the failure.
-         *     The client can choose to retry the whole batch or individual documents based on the response.
-         *
-         *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
-         *
-         */
-        post: operations["createDocuments"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/documents/{documentId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Download document
-         * @description Download a document from the Camunda 8 cluster.
-         *
-         *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
-         *
-         */
-        get: operations["getDocument"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete document
-         * @description Delete a document from the Camunda 8 cluster.
-         *
-         *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
-         *
-         */
-        delete: operations["deleteDocument"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/documents/{documentId}/links": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create document link
-         * @description Create a link to a document in the Camunda 8 cluster.
-         *
-         *     Note that this is currently supported for document stores of type: AWS, GCP
-         *
-         */
-        post: operations["createDocumentLink"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create user
-         * @description Create a new user.
-         */
-        post: operations["createUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search users
-         * @description Search for users based on given criteria.
-         *
-         */
-        post: operations["searchUsers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/{username}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get user
-         * @description Get a user by its username.
-         *
-         */
-        get: operations["getUser"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete user
-         * @description Deletes a user.
-         *
-         */
-        delete: operations["deleteUser"];
-        options?: never;
-        head?: never;
-        /**
-         * Update user
-         * @description Updates a user.
-         *
-         */
-        patch: operations["updateUser"];
-        trace?: never;
-    };
-    "/setup/user": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create admin user
-         * @description Creates a new user and assign the admin role to it.
-         */
-        post: operations["createAdminUser"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/incidents/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search incidents
-         * @description Search for incidents based on given criteria.
-         *
-         */
-        post: operations["searchIncidents"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/incidents/{incidentKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get incident
-         * @description Returns incident as JSON.
-         *
-         */
-        get: operations["getIncident"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/usage-metrics": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get usage metrics
-         * @description Retrieve the usage metrics based on given criteria.
-         */
-        get: operations["getUsageMetrics"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/deployments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Deploy resources
-         * @description Deploys one or more resources (e.g. processes, decision models, or forms).
-         *     This is an atomic call, i.e. either all resources are deployed or none of them are.
-         *
-         */
-        post: operations["createDeployment"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/resources/{resourceKey}/deletion": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Delete resource
-         * @description Deletes a deployed resource.
-         *     This can be a process definition, decision requirements definition, or form definition
-         *     deployed using the deploy resources endpoint. Specify the resource you want to delete in the `resourceKey` parameter.
-         *
-         */
-        post: operations["deleteResource"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/resources/{resourceKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get resource
-         * @description Returns a deployed resource.
-         *     :::info
-         *     Currently, this endpoint only supports RPA resources.
-         *     :::
-         *
-         */
-        get: operations["getResource"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/resources/{resourceKey}/content": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get resource content
-         * @description Returns the content of a deployed resource.
-         *     :::info
-         *     Currently, this endpoint only supports RPA resources.
-         *     :::
-         *
-         */
-        get: operations["getResourceContent"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/element-instances/{elementInstanceKey}/variables": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Update element instance variables
-         * @description Updates all the variables of a particular scope (for example, process instance, element instance) with the given variable data.
-         *     Specify the element instance in the `elementInstanceKey` parameter.
-         *
-         */
-        put: operations["createElementInstanceVariables"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/element-instances/ad-hoc-activities/{adHocSubProcessInstanceKey}/activation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Activate activities within an ad-hoc sub-process
-         * @description Activates selected activities within an ad-hoc sub-process identified by element ID.
-         *     The provided element IDs must exist within the ad-hoc sub-process instance identified by the
-         *     provided adHocSubProcessInstanceKey.
-         *
-         */
-        post: operations["activateAdHocSubProcessActivities"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/signals/broadcast": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Broadcast signal
-         * @description Broadcasts a signal.
-         */
-        post: operations["broadcastSignal"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/batch-operations/{batchOperationKey}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get batch operation
-         * @description Get batch operation by key.
-         */
-        get: operations["getBatchOperation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/batch-operations/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search batch operations
-         * @description Search for batch operations based on given criteria.
-         */
-        post: operations["searchBatchOperations"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/batch-operations/{batchOperationKey}/cancellation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancel Batch operation
-         * @description Cancels a running batch operation.
-         *     This is done asynchronously, the progress can be tracked using the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["cancelBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/batch-operations/{batchOperationKey}/suspension": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Suspend Batch operation
-         * @description Suspends a running batch operation.
-         *     This is done asynchronously, the progress can be tracked using the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["suspendBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/batch-operations/{batchOperationKey}/resumption": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Resume Batch operation
-         * @description Resumes a suspended batch operation.
-         *     This is done asynchronously, the progress can be tracked using the batch operation status endpoint (/batch-operations/{batchOperationKey}).
-         *
-         */
-        post: operations["resumeBatchOperation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/batch-operation-items/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Search batch operation items
-         * @description Search for batch operation items based on given criteria.
-         */
-        post: operations["searchBatchOperationItems"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+	'/topology': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get cluster topology
+		 * @description Obtains the current topology of the cluster the gateway is part of.
+		 */
+		get: operations['getTopology']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/license': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get license status
+		 * @description Obtains the status of the current Camunda license.
+		 */
+		get: operations['getLicense']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/authentication/me': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get current user
+		 * @description Retrieves the current authenticated user.
+		 */
+		get: operations['getAuthentication']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/jobs/activation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Activate jobs
+		 * @description Iterate through all known partitions and activate jobs up to the requested maximum.
+		 *
+		 */
+		post: operations['activateJobs']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/jobs/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search jobs
+		 * @description Search for jobs based on given criteria.
+		 */
+		post: operations['searchJobs']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/jobs/{jobKey}/failure': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Fail job
+		 * @description Mark the job as failed
+		 *
+		 */
+		post: operations['failJob']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/jobs/{jobKey}/error': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Throw error for job
+		 * @description Reports a business error (i.e. non-technical) that occurs while processing a job.
+		 *
+		 */
+		post: operations['throwJobError']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/jobs/{jobKey}/completion': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Complete job
+		 * @description Complete a job with the given payload, which allows completing the associated service task.
+		 *
+		 */
+		post: operations['completeJob']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/jobs/{jobKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		/**
+		 * Update job
+		 * @description Update a job with the given key.
+		 */
+		patch: operations['updateJob']
+		trace?: never
+	}
+	'/incidents/{incidentKey}/resolution': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Resolve incident
+		 * @description Marks the incident as resolved; most likely a call to Update job will be necessary to reset the job’s retries, followed by this call.
+		 *
+		 */
+		post: operations['resolveIncident']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create tenant
+		 * @description Creates a new tenant.
+		 */
+		post: operations['createTenant']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get tenant
+		 * @description Retrieves a single tenant by tenant ID.
+		 */
+		get: operations['getTenant']
+		/**
+		 * Update tenant
+		 * @description Updates an existing tenant.
+		 */
+		put: operations['updateTenant']
+		post?: never
+		/**
+		 * Delete tenant
+		 * @description Deletes an existing tenant.
+		 */
+		delete: operations['deleteTenant']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/users/{username}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a user to a tenant
+		 * @description Assign a single user to a specified tenant.
+		 */
+		put: operations['assignUserToTenant']
+		post?: never
+		/**
+		 * Remove a user from a tenant
+		 * @description Removes a single user from a specified tenant without deleting the user.
+		 */
+		delete: operations['removeUserFromTenant']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/users/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search users for tenant
+		 * @description Retrieves a filtered and sorted list of users for a specified tenant.
+		 */
+		post: operations['searchUsersForTenant']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/clients/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search clients for tenant
+		 * @description Retrieves a filtered and sorted list of clients for a specified tenant.
+		 */
+		post: operations['searchClientsForTenant']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/groups/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search groups for tenant
+		 * @description Retrieves a filtered and sorted list of groups for a specified tenant.
+		 */
+		post: operations['searchGroupIdsForTenant']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/roles/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search roles for tenant
+		 * @description Retrieves a filtered and sorted list of roles for a specified tenant.
+		 */
+		post: operations['searchRolesForTenant']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/clients/{clientId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a client to a tenant
+		 * @description Assign a client to a specified tenant.
+		 */
+		put: operations['assignClientToTenant']
+		post?: never
+		/**
+		 * Remove a client from a tenant
+		 * @description Removes a single client from a specified tenant.
+		 */
+		delete: operations['removeClientFromTenant']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/mapping-rules/{mappingRuleId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a mapping rule to a tenant
+		 * @description Assign a single mapping rule to a specified tenant.
+		 */
+		put: operations['assignMappingRuleToTenant']
+		post?: never
+		/**
+		 * Remove a mapping rule from a tenant
+		 * @description Removes a single mapping rule from a specified tenant without deleting the rule.
+		 */
+		delete: operations['removeMappingRuleFromTenant']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/mapping-rules/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search mapping rules for tenant
+		 * @description Retrieves a filtered and sorted list of MappingRules for a specified tenant.
+		 */
+		post: operations['searchMappingsForTenant']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/groups/{groupId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a group to a tenant
+		 * @description Assign a single group to a specified tenant.
+		 */
+		put: operations['assignGroupToTenant']
+		post?: never
+		/**
+		 * Remove a group from a tenant
+		 * @description Removes a single group from a specified tenant without deleting the group.
+		 */
+		delete: operations['removeGroupFromTenant']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/{tenantId}/roles/{roleId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a role to a tenant
+		 * @description Assign a single role to a specified tenant.
+		 */
+		put: operations['assignRoleToTenant']
+		post?: never
+		/**
+		 * Remove a role from a tenant
+		 * @description Removes a single role from a specified tenant without deleting the role.
+		 */
+		delete: operations['removeRoleFromTenant']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/tenants/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search tenants
+		 * @description Retrieves a filtered and sorted list of tenants.
+		 */
+		post: operations['searchTenants']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/user-tasks/{userTaskKey}/completion': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Complete user task
+		 * @description Completes a user task with the given key.
+		 */
+		post: operations['completeUserTask']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/user-tasks/{userTaskKey}/assignment': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Assign user task
+		 * @description Assigns a user task with the given key to the given assignee.
+		 */
+		post: operations['assignUserTask']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/user-tasks/{userTaskKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get user task
+		 * @description Get the user task by the user task key.
+		 *
+		 */
+		get: operations['getUserTask']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		/**
+		 * Update user task
+		 * @description Update a user task with the given key.
+		 */
+		patch: operations['updateUserTask']
+		trace?: never
+	}
+	'/user-tasks/{userTaskKey}/form': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get user task form
+		 * @description Get the form of a user task.
+		 *
+		 *     Note that this endpoint will only return linked forms. This endpoint does not support embedded forms.
+		 *
+		 */
+		get: operations['getUserTaskForm']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/user-tasks/{userTaskKey}/assignee': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		post?: never
+		/**
+		 * Unassign user task
+		 * @description Removes the assignee of a task with the given key.
+		 */
+		delete: operations['unassignUserTask']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/user-tasks/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search user tasks
+		 * @description Search for user tasks based on given criteria.
+		 *
+		 */
+		post: operations['searchUserTasks']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/user-tasks/{userTaskKey}/variables/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search user task variables
+		 * @description Search for user task variables based on given criteria.
+		 *
+		 */
+		post: operations['searchUserTaskVariables']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/variables/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search variables
+		 * @description Search for process and local variables based on given criteria.
+		 *
+		 */
+		post: operations['searchVariables']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/variables/{variableKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get variable
+		 * @description Get the variable by the variable key.
+		 *
+		 */
+		get: operations['getVariable']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/clock': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Pin internal clock (alpha)
+		 * @description Set a precise, static time for the Zeebe engine’s internal clock.
+		 *     When the clock is pinned, it remains at the specified time and does not advance.
+		 *     To change the time, the clock must be pinned again with a new timestamp.
+		 *
+		 *     This endpoint is an alpha feature and may be subject to change
+		 *     in future releases.
+		 *
+		 */
+		put: operations['pinClock']
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/clock/reset': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Reset internal clock (alpha)
+		 * @description Resets the Zeebe engine’s internal clock to the current system time, enabling it to tick in real-time.
+		 *     This operation is useful for returning the clock to
+		 *     normal behavior after it has been pinned to a specific time.
+		 *
+		 *     This endpoint is an alpha feature and may be subject to change
+		 *     in future releases.
+		 *
+		 */
+		post: operations['resetClock']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-definitions/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search process definitions
+		 * @description Search for process definitions based on given criteria.
+		 *
+		 */
+		post: operations['searchProcessDefinitions']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-definitions/{processDefinitionKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get process definition
+		 * @description Returns process definition as JSON.
+		 *
+		 */
+		get: operations['getProcessDefinition']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-definitions/{processDefinitionKey}/xml': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get process definition XML
+		 * @description Returns process definition as XML.
+		 *
+		 */
+		get: operations['getProcessDefinitionXML']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-definitions/{processDefinitionKey}/form': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get process start form
+		 * @description Get the start form of a process.
+		 *
+		 *     Note that this endpoint will only return linked forms. This endpoint does not support embedded forms.
+		 *
+		 */
+		get: operations['getStartProcessForm']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-definitions/{processDefinitionKey}/statistics/element-instances': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Get process definition statistics
+		 * @description Get statistics about elements in currently running process instances by process definition key and search filter.
+		 *
+		 */
+		post: operations['getProcessDefinitionStatistics']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create process instance
+		 * @description Creates and starts an instance of the specified process.
+		 *     The process definition to use to create the instance can be specified either using its unique key
+		 *     (as returned by Deploy resources), or using the BPMN process ID and a version.
+		 *
+		 *     Waits for the completion of the process instance before returning a result
+		 *     when awaitCompletion is enabled.
+		 *
+		 */
+		post: operations['createProcessInstance']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get process instance
+		 * @description Get the process instance by the process instance key.
+		 *
+		 */
+		get: operations['getProcessInstance']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/sequence-flows': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get process instance sequence flows
+		 * @description Get sequence flows taken by the process instance.
+		 *
+		 */
+		get: operations['getProcessInstanceSequenceFlows']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/statistics/element-instances': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get process instance statistics
+		 * @description Get statistics about elements by the process instance key.
+		 *
+		 */
+		get: operations['getProcessInstanceStatistics']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search process instances
+		 * @description Search for process instances based on given criteria.
+		 *
+		 */
+		post: operations['searchProcessInstances']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/incidents/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search for incidents associated with a process instance
+		 * @description Search for incidents caused by the process instance or any of its called process or decision instances.
+		 *
+		 */
+		post: operations['searchProcessInstanceIncidents']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/cancellation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Cancel process instance
+		 * @description Cancels a running process instance. As a cancelation includes more than just the removal of the process instance resource, the cancelation resource must be posted.
+		 */
+		post: operations['cancelProcessInstance']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/cancellation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create a batch operation to cancel process instances
+		 * @description Cancels multiple running process instances.
+		 *     Since only ACTIVE root instances can be cancelled, any given filters for state and
+		 *     parentProcessInstanceKey are ignored and overridden during this batch operation.
+		 *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['cancelProcessInstancesBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/incident-resolution': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create a batch operation to resolve incidents of process instances
+		 * @description Resolves multiple instances of process instances.
+		 *     Since only process instances with ACTIVE state can have unresolved incidents, any given
+		 *     filters for state are ignored and overridden during this batch operation.
+		 *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['resolveIncidentsBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/migration': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create a batch operation to migrate process instances
+		 * @description Migrate multiple instances of process instances.
+		 *     Since only process instances with ACTIVE state can be migrated, any given
+		 *     filters for state are ignored and overridden during this batch operation.
+		 *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['migrateProcessInstancesBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/modification': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create a batch operation to modify process instances
+		 * @description Modify multiple process instances.
+		 *     Since only process instances with ACTIVE state can be modified, any given
+		 *     filters for state are ignored and overridden during this batch operation.
+		 *     In contrast to single modification operation, it is not possible to add variable instructions or modify by element key.
+		 *     It is only possible to use the element id of the source and target.
+		 *     This is done asynchronously, the progress can be tracked using the batchOperationKey from the response and the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['modifyProcessInstancesBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/migration': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Migrate process instance
+		 * @description Migrates a process instance to a new process definition.
+		 *     This request can contain multiple mapping instructions to define mapping between the active
+		 *     process instance's elements and target process definition elements.
+		 *
+		 *     Use this to upgrade a process instance to a new version of a process or to
+		 *     a different process definition, e.g. to keep your running instances up-to-date with the
+		 *     latest process improvements.
+		 *
+		 */
+		post: operations['migrateProcessInstance']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/modification': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Modify process instance
+		 * @description Modifies a running process instance.
+		 *     This request can contain multiple instructions to activate an element of the process or
+		 *     to terminate an active instance of an element.
+		 *
+		 *     Use this to repair a process instance that is stuck on an element or took an unintended path.
+		 *     For example, because an external system is not available or doesn't respond as expected.
+		 *
+		 */
+		post: operations['modifyProcessInstance']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/process-instances/{processInstanceKey}/call-hierarchy': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get call hierarchy for process instance
+		 * @description Returns the call hierarchy for a given process instance, showing its ancestry up to the root instance.
+		 *
+		 */
+		get: operations['getProcessInstanceCallHierarchy']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/element-instances/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search element instances
+		 * @description Search for element instances based on given criteria.
+		 *
+		 */
+		post: operations['searchElementInstances']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/element-instances/{elementInstanceKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get element instance
+		 * @description Returns element instance as JSON.
+		 *
+		 */
+		get: operations['getElementInstance']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-definitions/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search decision definitions
+		 * @description Search for decision definitions based on given criteria.
+		 *
+		 */
+		post: operations['searchDecisionDefinitions']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-definitions/{decisionDefinitionKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get decision definition
+		 * @description Returns a decision definition by key.
+		 *
+		 */
+		get: operations['getDecisionDefinition']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-definitions/{decisionDefinitionKey}/xml': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get decision definition XML
+		 * @description Returns decision definition as XML.
+		 *
+		 */
+		get: operations['getDecisionDefinitionXML']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-requirements/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search decision requirements
+		 * @description Search for decision requirements based on given criteria.
+		 *
+		 */
+		post: operations['searchDecisionRequirements']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-requirements/{decisionRequirementsKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get decision requirements
+		 * @description Returns Decision Requirements as JSON.
+		 *
+		 */
+		get: operations['getDecisionRequirements']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-requirements/{decisionRequirementsKey}/xml': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get decision requirements XML
+		 * @description Returns decision requirements as XML.
+		 *
+		 */
+		get: operations['getDecisionRequirementsXML']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-instances/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search decision instances
+		 * @description Search for decision instances based on given criteria.
+		 *
+		 */
+		post: operations['searchDecisionInstances']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-instances/{decisionInstanceId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get decision instance
+		 * @description Returns a decision instance.
+		 *
+		 */
+		get: operations['getDecisionInstance']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/decision-definitions/evaluation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Evaluate decision
+		 * @description Evaluates a decision.
+		 *     You specify the decision to evaluate either by using its unique key (as returned by
+		 *     DeployResource), or using the decision ID. When using the decision ID, the latest deployed
+		 *     version of the decision is used.
+		 *
+		 */
+		post: operations['evaluateDecision']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/authorizations': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create authorization
+		 * @description Create the authorization.
+		 */
+		post: operations['createAuthorization']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/authorizations/{authorizationKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get authorization
+		 * @description Get authorization by the given key.
+		 */
+		get: operations['getAuthorization']
+		/**
+		 * Update authorization
+		 * @description Update the authorization with the given key.
+		 */
+		put: operations['updateAuthorization']
+		post?: never
+		/**
+		 * Delete authorization
+		 * @description Deletes the authorization with the given key.
+		 */
+		delete: operations['deleteAuthorization']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/authorizations/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search authorizations
+		 * @description Search for authorizations based on given criteria.
+		 *
+		 */
+		post: operations['searchAuthorizations']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create role
+		 * @description Create a new role.
+		 *
+		 */
+		post: operations['createRole']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get role
+		 * @description Get a role by its ID.
+		 *
+		 */
+		get: operations['getRole']
+		/**
+		 * Update role
+		 * @description Update a role with the given ID.
+		 *
+		 */
+		put: operations['updateRole']
+		post?: never
+		/**
+		 * Delete role
+		 * @description Deletes the role with the given ID.
+		 *
+		 */
+		delete: operations['deleteRole']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/users/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search role users
+		 * @description Search users with assigned role.
+		 *
+		 */
+		post: operations['searchUsersForRole']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/clients/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search role clients
+		 * @description Search clients with assigned role.
+		 *
+		 */
+		post: operations['searchClientsForRole']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/users/{username}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a role to a user
+		 * @description Assigns a role to a user.
+		 *
+		 */
+		put: operations['addRoleToUser']
+		post?: never
+		/**
+		 * Unassign a user from a role
+		 * @description Unassigns a user from a role.
+		 *
+		 */
+		delete: operations['removeUserFromRole']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/clients/{clientId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a role to a client
+		 * @description Assigns a role to a client.
+		 *
+		 */
+		put: operations['addRoleToClient']
+		post?: never
+		/**
+		 * Unassign a role from a client
+		 * @description Unassigns a role from a client.
+		 *
+		 */
+		delete: operations['removeRoleFromClient']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search roles
+		 * @description Search for roles based on given criteria.
+		 *
+		 */
+		post: operations['searchRoles']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/groups/{groupId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a role to a group
+		 * @description Assigns a role to a group.
+		 *
+		 */
+		put: operations['addRoleToGroup']
+		post?: never
+		/**
+		 * Unassign a role from a group
+		 * @description Unassigns a role from a group.
+		 *
+		 */
+		delete: operations['removeRoleFromGroup']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/groups/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search role groups
+		 * @description Search groups with assigned role.
+		 *
+		 */
+		post: operations['searchGroupsForRole']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/mapping-rules/{mappingRuleId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a role to a mapping rule
+		 * @description Assigns a role to a mapping rule.
+		 *
+		 */
+		put: operations['addRoleToMappingRule']
+		post?: never
+		/**
+		 * Unassign a role from a mapping rule
+		 * @description Unassigns a role from a mapping rule.
+		 *
+		 */
+		delete: operations['removeRoleFromMappingRule']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/roles/{roleId}/mapping-rules/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search role mapping rules
+		 * @description Search mapping rules with assigned role.
+		 *
+		 */
+		post: operations['searchMappingRulesForRole']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create group
+		 * @description Create a new group.
+		 *
+		 */
+		post: operations['createGroup']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get group
+		 * @description Get a group by its ID.
+		 *
+		 */
+		get: operations['getGroup']
+		/**
+		 * Update group
+		 * @description Update a group with the given ID.
+		 *
+		 */
+		put: operations['updateGroup']
+		post?: never
+		/**
+		 * Delete group
+		 * @description Deletes the group with the given ID.
+		 *
+		 */
+		delete: operations['deleteGroup']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/users/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search group users
+		 * @description Search users assigned to a group.
+		 *
+		 */
+		post: operations['searchUsersForGroup']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/mapping-rules/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search group mapping rules
+		 * @description Search mapping rules assigned to a group.
+		 *
+		 */
+		post: operations['searchMappingRulesForGroup']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/roles/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search group roles
+		 * @description Search roles assigned to a group.
+		 *
+		 */
+		post: operations['searchRolesForGroup']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/clients/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search group clients
+		 * @description Search clients assigned to a group.
+		 *
+		 */
+		post: operations['searchClientsForGroup']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/users/{username}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a user to a group
+		 * @description Assigns a user to a group.
+		 *
+		 */
+		put: operations['addUserToGroup']
+		post?: never
+		/**
+		 * Unassign a user from a group
+		 * @description Unassigns a user from a group.
+		 *
+		 */
+		delete: operations['unassignUserFromGroup']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/clients/{clientId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a client to a group
+		 * @description Assigns a client to a group.
+		 *
+		 */
+		put: operations['addClientToGroup']
+		post?: never
+		/**
+		 * Unassign a client from a group
+		 * @description Unassigns a client from a group.
+		 *
+		 */
+		delete: operations['unassignClientFromGroup']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/{groupId}/mapping-rules/{mappingRuleId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Assign a mapping rule to a group
+		 * @description Assigns a mapping rule to a group.
+		 *
+		 */
+		put: operations['assignMappingRuleToGroup']
+		post?: never
+		/**
+		 * Unassign a mapping rule from a group
+		 * @description Unassigns a mapping rule from a group.
+		 *
+		 */
+		delete: operations['unassignMappingRuleFromGroup']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/groups/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search groups
+		 * @description Search for groups based on given criteria.
+		 *
+		 */
+		post: operations['searchGroups']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/mapping-rules': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create mapping rule
+		 * @description Create a new mapping rule
+		 *
+		 */
+		post: operations['createMappingRule']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/mapping-rules/{mappingRuleId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get a mapping rule
+		 * @description Gets the mapping rule with the given ID.
+		 *
+		 */
+		get: operations['getMappingRule']
+		/**
+		 * Update mapping rule
+		 * @description Update a mapping rule.
+		 *
+		 */
+		put: operations['updateMappingRule']
+		post?: never
+		/**
+		 * Delete a mapping rule
+		 * @description Deletes the mapping rule with the given ID.
+		 *
+		 */
+		delete: operations['deleteMappingRule']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/mapping-rules/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search mapping rules
+		 * @description Search for mapping rules based on given criteria.
+		 *
+		 */
+		post: operations['searchMappingRule']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/messages/publication': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Publish message
+		 * @description Publishes a single message.
+		 *     Messages are published to specific partitions computed from their correlation keys.
+		 *     Messages can be buffered.
+		 *     The endpoint does not wait for a correlation result.
+		 *     Use the message correlation endpoint for such use cases.
+		 *
+		 */
+		post: operations['publishMessage']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/messages/correlation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Correlate message
+		 * @description Publishes a message and correlates it to a subscription.
+		 *     If correlation is successful it will return the first process instance key the message correlated with.
+		 *     The message is not buffered.
+		 *     Use the publish message endpoint to send messages that can be buffered.
+		 *
+		 */
+		post: operations['correlateMessage']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/message-subscriptions/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search message subscriptions
+		 * @description Search for message subscriptions based on given criteria.
+		 *
+		 */
+		post: operations['searchMessageSubscriptions']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/documents': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Upload document
+		 * @description Upload a document to the Camunda 8 cluster.
+		 *
+		 *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
+		 *
+		 */
+		post: operations['createDocument']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/documents/batch': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Upload multiple documents
+		 * @description Upload multiple documents to the Camunda 8 cluster.
+		 *
+		 *     The caller must provide a file name for each document, which will be used in case of a multi-status response
+		 *     to identify which documents failed to upload. The file name can be provided in the `Content-Disposition` header
+		 *     of the file part or in the `fileName` field of the metadata, which can be configured with
+		 *     the `X-Document-Metadata` header for each file part. If both are provided, the `fileName` metadata field
+		 *     takes precedence. For example, given the following headers for a file:
+		 *     ```
+		 *     Content-Disposition: form-data; name="files"; filename="bill.pdf"
+		 *     X-Document-Metadata: {"fileName": "invoice.pdf", "size": 1234567}
+		 *     ```
+		 *
+		 *     The filename will be `invoice.pdf`, but in the following example:
+		 *     ```
+		 *     Content-Disposition: form-data; name="files"; filename="bill.pdf"
+		 *     X-Document-Metadata: {"size": 1234567}
+		 *     ```
+		 *
+		 *     it would be `bill.pdf`.
+		 *
+		 *     In case of a multi-status response, the response body will contain a list of `DocumentBatchProblemDetail` objects,
+		 *     each of which contains the file name of the document that failed to upload and the reason for the failure.
+		 *     The client can choose to retry the whole batch or individual documents based on the response.
+		 *
+		 *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
+		 *
+		 */
+		post: operations['createDocuments']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/documents/{documentId}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Download document
+		 * @description Download a document from the Camunda 8 cluster.
+		 *
+		 *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
+		 *
+		 */
+		get: operations['getDocument']
+		put?: never
+		post?: never
+		/**
+		 * Delete document
+		 * @description Delete a document from the Camunda 8 cluster.
+		 *
+		 *     Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
+		 *
+		 */
+		delete: operations['deleteDocument']
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/documents/{documentId}/links': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create document link
+		 * @description Create a link to a document in the Camunda 8 cluster.
+		 *
+		 *     Note that this is currently supported for document stores of type: AWS, GCP
+		 *
+		 */
+		post: operations['createDocumentLink']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/users': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create user
+		 * @description Create a new user.
+		 */
+		post: operations['createUser']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/users/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search users
+		 * @description Search for users based on given criteria.
+		 *
+		 */
+		post: operations['searchUsers']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/users/{username}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get user
+		 * @description Get a user by its username.
+		 *
+		 */
+		get: operations['getUser']
+		put?: never
+		post?: never
+		/**
+		 * Delete user
+		 * @description Deletes a user.
+		 *
+		 */
+		delete: operations['deleteUser']
+		options?: never
+		head?: never
+		/**
+		 * Update user
+		 * @description Updates a user.
+		 *
+		 */
+		patch: operations['updateUser']
+		trace?: never
+	}
+	'/setup/user': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Create admin user
+		 * @description Creates a new user and assign the admin role to it.
+		 */
+		post: operations['createAdminUser']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/incidents/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search incidents
+		 * @description Search for incidents based on given criteria.
+		 *
+		 */
+		post: operations['searchIncidents']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/incidents/{incidentKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get incident
+		 * @description Returns incident as JSON.
+		 *
+		 */
+		get: operations['getIncident']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/usage-metrics': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get usage metrics
+		 * @description Retrieve the usage metrics based on given criteria.
+		 */
+		get: operations['getUsageMetrics']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/deployments': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Deploy resources
+		 * @description Deploys one or more resources (e.g. processes, decision models, or forms).
+		 *     This is an atomic call, i.e. either all resources are deployed or none of them are.
+		 *
+		 */
+		post: operations['createDeployment']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/resources/{resourceKey}/deletion': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Delete resource
+		 * @description Deletes a deployed resource.
+		 *     This can be a process definition, decision requirements definition, or form definition
+		 *     deployed using the deploy resources endpoint. Specify the resource you want to delete in the `resourceKey` parameter.
+		 *
+		 */
+		post: operations['deleteResource']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/resources/{resourceKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get resource
+		 * @description Returns a deployed resource.
+		 *     :::info
+		 *     Currently, this endpoint only supports RPA resources.
+		 *     :::
+		 *
+		 */
+		get: operations['getResource']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/resources/{resourceKey}/content': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get resource content
+		 * @description Returns the content of a deployed resource.
+		 *     :::info
+		 *     Currently, this endpoint only supports RPA resources.
+		 *     :::
+		 *
+		 */
+		get: operations['getResourceContent']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/element-instances/{elementInstanceKey}/variables': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		/**
+		 * Update element instance variables
+		 * @description Updates all the variables of a particular scope (for example, process instance, element instance) with the given variable data.
+		 *     Specify the element instance in the `elementInstanceKey` parameter.
+		 *
+		 */
+		put: operations['createElementInstanceVariables']
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/element-instances/ad-hoc-activities/{adHocSubProcessInstanceKey}/activation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Activate activities within an ad-hoc sub-process
+		 * @description Activates selected activities within an ad-hoc sub-process identified by element ID.
+		 *     The provided element IDs must exist within the ad-hoc sub-process instance identified by the
+		 *     provided adHocSubProcessInstanceKey.
+		 *
+		 */
+		post: operations['activateAdHocSubProcessActivities']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/signals/broadcast': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Broadcast signal
+		 * @description Broadcasts a signal.
+		 */
+		post: operations['broadcastSignal']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/batch-operations/{batchOperationKey}': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		/**
+		 * Get batch operation
+		 * @description Get batch operation by key.
+		 */
+		get: operations['getBatchOperation']
+		put?: never
+		post?: never
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/batch-operations/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search batch operations
+		 * @description Search for batch operations based on given criteria.
+		 */
+		post: operations['searchBatchOperations']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/batch-operations/{batchOperationKey}/cancellation': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Cancel Batch operation
+		 * @description Cancels a running batch operation.
+		 *     This is done asynchronously, the progress can be tracked using the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['cancelBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/batch-operations/{batchOperationKey}/suspension': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Suspend Batch operation
+		 * @description Suspends a running batch operation.
+		 *     This is done asynchronously, the progress can be tracked using the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['suspendBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/batch-operations/{batchOperationKey}/resumption': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Resume Batch operation
+		 * @description Resumes a suspended batch operation.
+		 *     This is done asynchronously, the progress can be tracked using the batch operation status endpoint (/batch-operations/{batchOperationKey}).
+		 *
+		 */
+		post: operations['resumeBatchOperation']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
+	'/batch-operation-items/search': {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		get?: never
+		put?: never
+		/**
+		 * Search batch operation items
+		 * @description Search for batch operation items based on given criteria.
+		 */
+		post: operations['searchBatchOperationItems']
+		delete?: never
+		options?: never
+		head?: never
+		patch?: never
+		trace?: never
+	}
 }
-export type webhooks = Record<string, never>;
+export type webhooks = Record<string, never>
 export interface components {
-    schemas: {
-        TenantCreateRequest: {
-            /** @description The unique external tenant ID */
-            tenantId: string;
-            /** @description The name of the tenant. */
-            name: string;
-            /** @description The description of the tenant. */
-            description?: string;
-        };
-        TenantCreateResult: {
-            /** @description The unique system-generated internal tenant ID. */
-            tenantKey?: string;
-            /** @description The unique external tenant ID */
-            tenantId?: string;
-            /** @description The name of the tenant. */
-            name?: string;
-            /** @description The description of the tenant. */
-            description?: string;
-        };
-        TenantUpdateRequest: {
-            /** @description The new name of the tenant. */
-            name: string;
-            /** @description The new description of the tenant. */
-            description: string;
-        };
-        TenantUpdateResult: {
-            /** @description The unique external tenant ID */
-            tenantId?: string;
-            /** @description The name of the tenant. */
-            name?: string;
-            /** @description The description of the tenant. */
-            description?: string;
-            /** @description The unique system-generated internal tenant ID. */
-            tenantKey?: string;
-        };
-        /** @description Tenant search response item. */
-        TenantResult: {
-            /** @description The tenant name. */
-            name?: string;
-            /** @description The unique external tenant ID. */
-            tenantId?: string;
-            /** @description The tenant description. */
-            description?: string;
-            /** @description The unique system-generated internal tenant ID. */
-            tenantKey?: string;
-        };
-        TenantSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "key" | "name" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Tenant search request */
-        TenantSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["TenantSearchQuerySortRequest"][];
-            /** @description The tenant search filters. */
-            filter?: components["schemas"]["TenantFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Tenant filter request */
-        TenantFilter: {
-            /** @description The ID of the tenant. */
-            tenantId?: string;
-            /** @description The name of the tenant. */
-            name?: string;
-        };
-        /** @description Tenant search response. */
-        TenantSearchQueryResult: {
-            /** @description The matching tenants. */
-            items?: components["schemas"]["TenantResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        UserTaskSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "creationDate" | "completionDate" | "followUpDate" | "dueDate" | "priority" | "name";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description User task search query request. */
-        UserTaskSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["UserTaskSearchQuerySortRequest"][];
-            /** @description The user task search filters. */
-            filter?: components["schemas"]["UserTaskFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        UserTaskVariableSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "value" | "name" | "tenantId" | "variableKey" | "scopeKey" | "processInstanceKey";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description User task search query request. */
-        UserTaskVariableSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["UserTaskVariableSearchQuerySortRequest"][];
-            /** @description The user task variable search filters. */
-            filter?: components["schemas"]["UserTaskVariableFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description User task search query response. */
-        UserTaskSearchQueryResult: {
-            /** @description The matching user tasks. */
-            items?: components["schemas"]["UserTaskResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        /** @description User task filter request. */
-        UserTaskFilter: {
-            /** @description The user task state. */
-            state?: components["schemas"]["UserTaskStateFilterProperty"];
-            /** @description The assignee of the user task. */
-            assignee?: components["schemas"]["StringFilterProperty"];
-            /** @description The priority of the user task. */
-            priority?: components["schemas"]["IntegerFilterProperty"];
-            /** @description The element ID of the user task. */
-            elementId?: string;
-            /** @description The task name. This only works for data created with 8.8 and onwards. Instances from prior versions don't contain this data and cannot be found.
-             *      */
-            name?: string;
-            /** @description The candidate group for this user task. */
-            candidateGroup?: components["schemas"]["StringFilterProperty"];
-            /** @description The candidate user for this user task. */
-            candidateUser?: components["schemas"]["StringFilterProperty"];
-            /** @description Tenant ID of this user task. */
-            tenantId?: string;
-            /** @description The ID of the process definition. */
-            processDefinitionId?: string;
-            /** @description The user task creation date. */
-            creationDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The user task completion date. */
-            completionDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The user task follow-up date. */
-            followUpDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The user task due date. */
-            dueDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description Process instance variables associated with the user task. */
-            processInstanceVariables?: components["schemas"]["VariableValueFilterProperty"][];
-            /** @description Local variables associated with the user task. */
-            localVariables?: components["schemas"]["VariableValueFilterProperty"][];
-            /** @description The key for this user task. */
-            userTaskKey?: string;
-            /** @description The key of the process definition. */
-            processDefinitionKey?: string;
-            /** @description The key of the process instance. */
-            processInstanceKey?: string;
-            /** @description The key of the element instance. */
-            elementInstanceKey?: string;
-        };
-        /** @description UserTaskStateEnum property with full advanced search capabilities. */
-        UserTaskStateFilterProperty: (string & components["schemas"]["UserTaskStateEnum"]) | components["schemas"]["AdvancedUserTaskStateFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced UserTaskStateEnum filter.
-         */
-        AdvancedUserTaskStateFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["UserTaskStateEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["UserTaskStateEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["UserTaskStateEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        VariableValueFilterProperty: {
-            /** @description Name of the variable. */
-            name: string;
-            /** @description The value of the variable. */
-            value: components["schemas"]["StringFilterProperty"];
-        };
-        /** @description The user task variable search filters. */
-        UserTaskVariableFilter: {
-            /** @description Name of the variable. */
-            name?: components["schemas"]["StringFilterProperty"];
-        };
-        UserTaskResult: {
-            /** @description The name for this user task. */
-            name?: string;
-            state?: components["schemas"]["UserTaskStateEnum"];
-            /** @description The assignee of the user task. */
-            assignee?: string;
-            /** @description The element ID of the user task. */
-            elementId?: string;
-            /** @description The candidate groups for this user task. */
-            candidateGroups?: string[];
-            /** @description The candidate users for this user task. */
-            candidateUsers?: string[];
-            /** @description The ID of the process definition. */
-            processDefinitionId?: string;
-            /**
-             * Format: date-time
-             * @description The creation date of a user task.
-             */
-            creationDate?: string;
-            /**
-             * Format: date-time
-             * @description The completion date of a user task.
-             */
-            completionDate?: string;
-            /**
-             * Format: date-time
-             * @description The follow date of a user task.
-             */
-            followUpDate?: string;
-            /**
-             * Format: date-time
-             * @description The due date of a user task.
-             */
-            dueDate?: string;
-            /** @description Tenant ID of this user task. */
-            tenantId?: string;
-            /** @description The external form reference. */
-            externalFormReference?: string;
-            /**
-             * Format: int32
-             * @description The version of the process definition.
-             */
-            processDefinitionVersion?: number;
-            /** @description Custom headers for the user task. */
-            customHeaders?: {
-                [key: string]: string;
-            };
-            /**
-             * @description The priority of a user task. The higher the value the higher the priority.
-             * @default 50
-             */
-            priority: number;
-            /** @description The key of the user task. */
-            userTaskKey?: string;
-            /** @description The key of the element instance. */
-            elementInstanceKey?: string;
-            /** @description The key of the process definition. */
-            processDefinitionKey?: string;
-            /** @description The key of the process instance. */
-            processInstanceKey?: string;
-            /** @description The key of the form. */
-            formKey?: string;
-        };
-        /**
-         * @description The state of the user task.
-         * @enum {string}
-         */
-        UserTaskStateEnum: "CREATING" | "CREATED" | "ASSIGNING" | "UPDATING" | "COMPLETING" | "COMPLETED" | "CANCELING" | "CANCELED" | "FAILED";
-        VariableSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "value" | "name" | "tenantId" | "variableKey" | "scopeKey" | "processInstanceKey";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Variable search query request. */
-        VariableSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["VariableSearchQuerySortRequest"][];
-            /** @description The variable search filters. */
-            filter?: components["schemas"]["VariableFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Variable filter request. */
-        VariableFilter: {
-            /** @description Name of the variable. */
-            name?: components["schemas"]["StringFilterProperty"];
-            /** @description The value of the variable. */
-            value?: components["schemas"]["StringFilterProperty"];
-            /** @description Tenant ID of this variable. */
-            tenantId?: string;
-            /** @description Whether the value is truncated or not. */
-            isTruncated?: boolean;
-            /** @description The key for this variable. */
-            variableKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The key of the scope of this variable. */
-            scopeKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The key of the process instance of this variable. */
-            processInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-        };
-        /** @description Variable search query response. */
-        VariableSearchQueryResult: {
-            /** @description The matching variables. */
-            items?: components["schemas"]["VariableSearchResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        /** @description Variable search response item. */
-        VariableSearchResult: {
-            /** @description Value of this variable. Can be truncated. */
-            value?: string;
-            /** @description Whether the value is truncated or not. */
-            isTruncated?: boolean;
-        } & components["schemas"]["VariableResultBase"];
-        /** @description Variable search response item. */
-        VariableResult: {
-            /** @description Full value of this variable. */
-            value?: string;
-        } & components["schemas"]["VariableResultBase"];
-        /** @description Variable response item. */
-        VariableResultBase: {
-            /** @description Name of this variable. */
-            name?: string;
-            /** @description Tenant ID of this variable. */
-            tenantId?: string;
-            /** @description The key for this variable. */
-            variableKey?: string;
-            /** @description The key of the scope of this variable. */
-            scopeKey?: string;
-            /** @description The key of the process instance of this variable. */
-            processInstanceKey?: string;
-        };
-        ProcessDefinitionSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "processDefinitionKey" | "name" | "resourceName" | "version" | "versionTag" | "processDefinitionId" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        ProcessDefinitionSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["ProcessDefinitionSearchQuerySortRequest"][];
-            /** @description The process definition search filters. */
-            filter?: components["schemas"]["ProcessDefinitionFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Process definition search filter. */
-        ProcessDefinitionFilter: {
-            /** @description Name of this process definition. */
-            name?: components["schemas"]["StringFilterProperty"];
-            /** @description Whether to only return the latest version of each process definition. When using this filter, pagination functionality is limited, you can only paginate forward using `after` and `limit`. The response contains no `startCursor` in the `page`, and requests ignore the `from` and `before` in the `page`.
-             *      */
-            isLatestVersion?: boolean;
-            /** @description Resource name of this process definition. */
-            resourceName?: string;
-            /**
-             * Format: int32
-             * @description Version of this process definition.
-             */
-            version?: number;
-            /** @description Version tag of this process definition. */
-            versionTag?: string;
-            /** @description Process definition ID of this process definition. */
-            processDefinitionId?: components["schemas"]["StringFilterProperty"];
-            /** @description Tenant ID of this process definition. */
-            tenantId?: string;
-            /** @description The key for this process definition. */
-            processDefinitionKey?: string;
-            /** @description Indicates whether the start event of the process has an associated Form Key. */
-            hasStartForm?: boolean;
-        };
-        ProcessDefinitionSearchQueryResult: {
-            /** @description The matching process definitions. */
-            items?: components["schemas"]["ProcessDefinitionResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        ProcessDefinitionResult: {
-            /** @description Name of this process definition. */
-            name?: string;
-            /** @description Resource name for this process definition. */
-            resourceName?: string;
-            /**
-             * Format: int32
-             * @description Version of this process definition.
-             */
-            version?: number;
-            /** @description Version tag of this process definition. */
-            versionTag?: string;
-            /** @description Process definition ID of this process definition. */
-            processDefinitionId?: string;
-            /** @description Tenant ID of this process definition. */
-            tenantId?: string;
-            /** @description The key for this process definition. */
-            processDefinitionKey?: string;
-            /** @description Indicates whether the start event of the process has an associated Form Key. */
-            hasStartForm?: boolean;
-        };
-        ProcessInstanceSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "processInstanceKey" | "processDefinitionId" | "processDefinitionName" | "processDefinitionVersion" | "processDefinitionVersionTag" | "processDefinitionKey" | "parentProcessInstanceKey" | "parentElementInstanceKey" | "startDate" | "endDate" | "state" | "hasIncident" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Process instance search request. */
-        ProcessInstanceSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["ProcessInstanceSearchQuerySortRequest"][];
-            /** @description The process instance search filters. */
-            filter?: components["schemas"]["ProcessInstanceFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        ProcessInstanceIncidentSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["IncidentSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        /**
-         * Advanced filter
-         * @description Advanced integer (int32) filter.
-         */
-        AdvancedIntegerFilter: {
-            /**
-             * Format: int32
-             * @description Checks for equality with the provided value.
-             */
-            $eq?: number;
-            /**
-             * Format: int32
-             * @description Checks for inequality with the provided value.
-             */
-            $neq?: number;
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /**
-             * Format: int32
-             * @description Greater than comparison with the provided value.
-             */
-            $gt?: number;
-            /**
-             * Format: int32
-             * @description Greater than or equal comparison with the provided value.
-             */
-            $gte?: number;
-            /**
-             * Format: int32
-             * @description Lower than comparison with the provided value.
-             */
-            $lt?: number;
-            /**
-             * Format: int32
-             * @description Lower than or equal comparison with the provided value.
-             */
-            $lte?: number;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: number[];
-        };
-        /** @description Integer property with advanced search capabilities. */
-        IntegerFilterProperty: number | components["schemas"]["AdvancedIntegerFilter"];
-        /**
-         * Advanced filter
-         * @description Basic advanced string filter.
-         */
-        BasicStringFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: string;
-            /** @description Checks for inequality with the provided value. */
-            $neq?: string;
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: string[];
-            /** @description Checks if the property matches none of the provided values. */
-            $notIn?: string[];
-        };
-        /**
-         * Advanced filter
-         * @description Advanced string filter.
-         */
-        AdvancedStringFilter: components["schemas"]["BasicStringFilter"] & {
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /**
-         * Advanced filter
-         * @description Advanced ProcessInstanceStateEnum filter.
-         */
-        AdvancedProcessInstanceStateFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["ProcessInstanceStateEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["ProcessInstanceStateEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["ProcessInstanceStateEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /**
-         * Advanced filter
-         * @description Advanced ElementInstanceStateEnum filter.
-         */
-        AdvancedElementInstanceStateFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["ElementInstanceStateEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["ElementInstanceStateEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["ElementInstanceStateEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /**
-         * Advanced filter
-         * @description Advanced date-time filter.
-         */
-        AdvancedDateTimeFilter: {
-            /**
-             * Format: date-time
-             * @description Checks for equality with the provided value.
-             */
-            $eq?: string;
-            /**
-             * Format: date-time
-             * @description Checks for inequality with the provided value.
-             */
-            $neq?: string;
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /**
-             * Format: date-time
-             * @description Greater than comparison with the provided value.
-             */
-            $gt?: string;
-            /**
-             * Format: date-time
-             * @description Greater than or equal comparison with the provided value.
-             */
-            $gte?: string;
-            /**
-             * Format: date-time
-             * @description Lower than comparison with the provided value.
-             */
-            $lt?: string;
-            /**
-             * Format: date-time
-             * @description Lower than or equal comparison with the provided value.
-             */
-            $lte?: string;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: string[];
-        };
-        /** @description String property with basic advanced search capabilities. */
-        BasicStringFilterProperty: string | components["schemas"]["BasicStringFilter"];
-        /** @description String property with full advanced search capabilities. */
-        StringFilterProperty: string | components["schemas"]["AdvancedStringFilter"];
-        /** @description Checks if the property matches the provided like value.
-         *
-         *     Supported wildcard characters are:
-         *
-         *     * `*`: matches zero, one, or multiple characters.
-         *     * `?`: matches one, single character.
-         *
-         *     Wildcard characters can be escaped with backslash, for instance: `\*`.
-         *      */
-        LikeFilterProperty: string;
-        /** @description ProcessInstanceStateEnum property with full advanced search capabilities. */
-        ProcessInstanceStateFilterProperty: (string & components["schemas"]["ProcessInstanceStateEnum"]) | components["schemas"]["AdvancedProcessInstanceStateFilter"];
-        /** @description ElementInstanceStateEnum property with full advanced search capabilities. */
-        ElementInstanceStateFilterProperty: (string & components["schemas"]["ElementInstanceStateEnum"]) | components["schemas"]["AdvancedElementInstanceStateFilter"];
-        /** @description Date-time property with full advanced search capabilities. */
-        DateTimeFilterProperty: string | components["schemas"]["AdvancedDateTimeFilter"];
-        /** @description Base process instance search filter. */
-        BaseProcessInstanceFilterFields: {
-            /** @description The start date. */
-            startDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The end date. */
-            endDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The process instance state. */
-            state?: components["schemas"]["ProcessInstanceStateFilterProperty"];
-            /** @description Whether this process instance has a related incident or not. */
-            hasIncident?: boolean;
-            /** @description The tenant ID. */
-            tenantId?: components["schemas"]["StringFilterProperty"];
-            /** @description The process instance variables. */
-            variables?: components["schemas"]["VariableValueFilterProperty"][];
-            /** @description The key of this process instance. */
-            processInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The parent process instance key. */
-            parentProcessInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The parent element instance key. */
-            parentElementInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The batch operation ID. */
-            batchOperationId?: components["schemas"]["StringFilterProperty"];
-            /** @description The error message related to the process. */
-            errorMessage?: components["schemas"]["StringFilterProperty"];
-            /** @description Whether the process has failed jobs with retries left. */
-            hasRetriesLeft?: boolean;
-            /** @description The state of the element instances associated with the process instance. */
-            elementInstanceState?: components["schemas"]["ElementInstanceStateFilterProperty"];
-            /** @description The element ID associated with the process instance. */
-            elementId?: components["schemas"]["StringFilterProperty"];
-            /** @description Whether the element instance has an incident or not. */
-            hasElementInstanceIncident?: boolean;
-            /** @description The incident error hash code, associated with this process. */
-            incidentErrorHashCode?: components["schemas"]["IntegerFilterProperty"];
-        };
-        /** @description Process definition statistics search filter. */
-        ProcessDefinitionStatisticsFilter: components["schemas"]["BaseProcessInstanceFilterFields"] & {
-            /** @description Defines a list of alternative filter groups combined using OR logic. Each object in the array is evaluated independently, and the filter matches if any one of them is satisfied.
-             *
-             *     Top-level fields and the `$or` clause are combined using AND logic — meaning: (top-level filters) AND (any of the `$or` filters) must match.
-             *     <br>
-             *     <em>Example:</em>
-             *
-             *     ```json
-             *     {
-             *       "state": "ACTIVE",
-             *       "tenantId": 123,
-             *       "$or": [
-             *         { "processDefinitionId": "process_v1" },
-             *         { "processDefinitionId": "process_v2", "hasIncident": true }
-             *       ]
-             *     }
-             *     ```
-             *     This matches process instances that:
-             *
-             *     <ul style="padding-left: 20px; margin-left: 20px;">
-             *       <li style="list-style-type: disc;">are in <em>ACTIVE</em> state</li>
-             *       <li style="list-style-type: disc;">have tenant ID equal to <em>123</em></li>
-             *       <li style="list-style-type: disc;">and match either:
-             *         <ul style="padding-left: 20px; margin-left: 20px;">
-             *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v1</em>, or</li>
-             *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v2</em> and <code>hasIncident</code> is <em>true</em></li>
-             *         </ul>
-             *       </li>
-             *     </ul>
-             *     <br>
-             *     <p>Note: Using complex <code>$or</code> conditions may impact performance, use with caution in high-volume environments.
-             *      */
-            $or?: components["schemas"]["BaseProcessInstanceFilterFields"][];
-        };
-        /** @description Process instance search filter. */
-        ProcessInstanceFilterFields: {
-            /** @description The process definition ID. */
-            processDefinitionId?: components["schemas"]["StringFilterProperty"];
-            /** @description The process definition name. */
-            processDefinitionName?: components["schemas"]["StringFilterProperty"];
-            /** @description The process definition version. */
-            processDefinitionVersion?: components["schemas"]["IntegerFilterProperty"];
-            /** @description The process definition version tag. */
-            processDefinitionVersionTag?: components["schemas"]["StringFilterProperty"];
-            /** @description The process definition key. */
-            processDefinitionKey?: components["schemas"]["BasicStringFilterProperty"];
-        } & components["schemas"]["BaseProcessInstanceFilterFields"];
-        /** @description Process instance search filter. */
-        ProcessInstanceFilter: components["schemas"]["ProcessInstanceFilterFields"] & {
-            /** @description Defines a list of alternative filter groups combined using OR logic. Each object in the array is evaluated independently, and the filter matches if any one of them is satisfied.
-             *
-             *     Top-level fields and the `$or` clause are combined using AND logic — meaning: (top-level filters) AND (any of the `$or` filters) must match.
-             *     <br>
-             *     <em>Example:</em>
-             *
-             *     ```json
-             *     {
-             *       "state": "ACTIVE",
-             *       "tenantId": 123,
-             *       "$or": [
-             *         { "processDefinitionId": "process_v1" },
-             *         { "processDefinitionId": "process_v2", "hasIncident": true }
-             *       ]
-             *     }
-             *     ```
-             *     This matches process instances that:
-             *
-             *     <ul style="padding-left: 20px; margin-left: 20px;">
-             *       <li style="list-style-type: disc;">are in <em>ACTIVE</em> state</li>
-             *       <li style="list-style-type: disc;">have tenant ID equal to <em>123</em></li>
-             *       <li style="list-style-type: disc;">and match either:
-             *         <ul style="padding-left: 20px; margin-left: 20px;">
-             *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v1</em>, or</li>
-             *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v2</em> and <code>hasIncident</code> is <em>true</em></li>
-             *         </ul>
-             *       </li>
-             *     </ul>
-             *     <br>
-             *     <p>Note: Using complex <code>$or</code> conditions may impact performance, use with caution in high-volume environments.
-             *      */
-            $or?: components["schemas"]["ProcessInstanceFilterFields"][];
-        };
-        /** @description Process instance search response. */
-        ProcessInstanceSearchQueryResult: {
-            /** @description The matching process instances. */
-            items?: components["schemas"]["ProcessInstanceResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        /** @description Process instance search response item. */
-        ProcessInstanceResult: {
-            /** @description The process definition ID. */
-            processDefinitionId?: string;
-            /** @description The process definition name. */
-            processDefinitionName?: string;
-            /**
-             * Format: int32
-             * @description The process definition version.
-             */
-            processDefinitionVersion?: number;
-            /** @description The process definition version tag. */
-            processDefinitionVersionTag?: string;
-            /**
-             * Format: date-time
-             * @description The start date.
-             */
-            startDate?: string;
-            /**
-             * Format: date-time
-             * @description The end date.
-             */
-            endDate?: string;
-            state?: components["schemas"]["ProcessInstanceStateEnum"];
-            /** @description Whether this process instance has a related incident or not. */
-            hasIncident?: boolean;
-            /** @description The tenant ID. */
-            tenantId?: string;
-            /** @description The key of this process instance. */
-            processInstanceKey?: string;
-            /** @description The process definition key. */
-            processDefinitionKey?: string;
-            /** @description The parent process instance key. */
-            parentProcessInstanceKey?: string;
-            /** @description The parent element instance key. */
-            parentElementInstanceKey?: string;
-        };
-        /**
-         * @description Process instance states
-         * @enum {unknown}
-         */
-        ProcessInstanceStateEnum: "ACTIVE" | "COMPLETED" | "TERMINATED" | "SUSPENDED";
-        /**
-         * @description Element states
-         * @enum {unknown}
-         */
-        ElementInstanceStateEnum: "ACTIVE" | "COMPLETED" | "TERMINATED" | "SUSPENDED";
-        ProcessInstanceCallHierarchyEntry: {
-            /** @description The key of the process instance. */
-            processInstanceKey: string;
-            /** @description The key of the process definition. */
-            processDefinitionKey: string;
-            /** @description The name of the process definition (fall backs to the process definition ID if not available). */
-            processDefinitionName: string;
-        };
-        /** @description Process instance sequence flows query response. */
-        ProcessInstanceSequenceFlowsQueryResult: {
-            /** @description The sequence flows. */
-            items?: components["schemas"]["ProcessInstanceSequenceFlowResult"][];
-        };
-        /** @description Process instance sequence flow result. */
-        ProcessInstanceSequenceFlowResult: {
-            /** @description The sequence flow ID. */
-            sequenceFlowId?: string;
-            /** @description The key of this process instance. */
-            processInstanceKey?: string;
-            /** @description The process definition key. */
-            processDefinitionKey?: string;
-            /** @description The process definition ID. */
-            processDefinitionId?: string;
-            /** @description The element ID for this sequence flow, as provided in the BPMN process. */
-            elementId?: string;
-            /** @description The tenant ID for this sequence flow. */
-            tenantId?: string;
-        };
-        /** @description Process definition element statistics request. */
-        ProcessDefinitionElementStatisticsQuery: {
-            /** @description The process definition statistics search filters. */
-            filter?: components["schemas"]["ProcessDefinitionStatisticsFilter"];
-        };
-        /** @description Process definition element statistics query response. */
-        ProcessDefinitionElementStatisticsQueryResult: {
-            /** @description The element statistics. */
-            items?: components["schemas"]["ProcessElementStatisticsResult"][];
-        };
-        /** @description Process instance element statistics query response. */
-        ProcessInstanceElementStatisticsQueryResult: {
-            /** @description The element statistics. */
-            items?: components["schemas"]["ProcessElementStatisticsResult"][];
-        };
-        /** @description Process element statistics response. */
-        ProcessElementStatisticsResult: {
-            /** @description The element ID for which the results are aggregated. */
-            elementId?: string;
-            /**
-             * Format: int64
-             * @description The total number of active instances of the element.
-             */
-            active?: number;
-            /**
-             * Format: int64
-             * @description The total number of canceled instances of the element.
-             */
-            canceled?: number;
-            /**
-             * Format: int64
-             * @description The total number of incidents for the element.
-             */
-            incidents?: number;
-            /**
-             * Format: int64
-             * @description The total number of completed instances of the element.
-             */
-            completed?: number;
-        };
-        CancelProcessInstanceRequest: {
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation.
-             *     Must be > 0 if provided.
-             *
-             */
-            operationReference?: number;
-        } | null;
-        ElementInstanceSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "elementInstanceKey" | "processInstanceKey" | "processDefinitionKey" | "processDefinitionId" | "startDate" | "endDate" | "elementId" | "elementName" | "type" | "state" | "incidentKey" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Element instance search request. */
-        ElementInstanceSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["ElementInstanceSearchQuerySortRequest"][];
-            /** @description The element instance search filters. */
-            filter?: components["schemas"]["ElementInstanceFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Element instance filter. */
-        ElementInstanceFilter: {
-            /** @description The process definition ID associated to this element instance. */
-            processDefinitionId?: string;
-            /** @description State of element instance as defined set of values. */
-            state?: components["schemas"]["ElementInstanceStateFilterProperty"];
-            /**
-             * @description Type of element as defined set of values.
-             * @enum {string}
-             */
-            type?: "UNSPECIFIED" | "PROCESS" | "SUB_PROCESS" | "EVENT_SUB_PROCESS" | "AD_HOC_SUB_PROCESS" | "START_EVENT" | "INTERMEDIATE_CATCH_EVENT" | "INTERMEDIATE_THROW_EVENT" | "BOUNDARY_EVENT" | "END_EVENT" | "SERVICE_TASK" | "RECEIVE_TASK" | "USER_TASK" | "MANUAL_TASK" | "TASK" | "EXCLUSIVE_GATEWAY" | "INCLUSIVE_GATEWAY" | "PARALLEL_GATEWAY" | "EVENT_BASED_GATEWAY" | "SEQUENCE_FLOW" | "MULTI_INSTANCE_BODY" | "CALL_ACTIVITY" | "BUSINESS_RULE_TASK" | "SCRIPT_TASK" | "SEND_TASK" | "UNKNOWN";
-            /** @description The element ID for this element instance. */
-            elementId?: string;
-            /** @description The element name. This only works for data created with 8.8 and onwards. Instances from prior versions don't contain this data and cannot be found.
-             *      */
-            elementName?: string;
-            /** @description Shows whether this element instance has an incident related to. */
-            hasIncident?: boolean;
-            /** @description The tenant ID. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this element instance. */
-            elementInstanceKey?: string;
-            /** @description The process instance key associated to this element instance. */
-            processInstanceKey?: string;
-            /** @description The process definition key associated to this element instance. */
-            processDefinitionKey?: string;
-            /** @description The key of incident if field incident is true. */
-            incidentKey?: string;
-            /** @description The start date of this element instance. */
-            startDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The end date of this element instance. */
-            endDate?: components["schemas"]["DateTimeFilterProperty"];
-        };
-        ElementInstanceSearchQueryResult: {
-            /** @description The matching element instances. */
-            items?: components["schemas"]["ElementInstanceResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        ElementInstanceResult: {
-            /** @description The process definition ID associated to this element instance. */
-            processDefinitionId?: string;
-            /**
-             * Format: date-time
-             * @description Date when element instance started.
-             */
-            startDate?: string;
-            /**
-             * Format: date-time
-             * @description Date when element instance finished.
-             */
-            endDate?: string;
-            /** @description The element ID for this element instance. */
-            elementId?: string;
-            /** @description The element name for this element instance. */
-            elementName?: string;
-            /**
-             * @description Type of element as defined set of values.
-             * @enum {string}
-             */
-            type?: "UNSPECIFIED" | "PROCESS" | "SUB_PROCESS" | "EVENT_SUB_PROCESS" | "AD_HOC_SUB_PROCESS" | "START_EVENT" | "INTERMEDIATE_CATCH_EVENT" | "INTERMEDIATE_THROW_EVENT" | "BOUNDARY_EVENT" | "END_EVENT" | "SERVICE_TASK" | "RECEIVE_TASK" | "USER_TASK" | "MANUAL_TASK" | "TASK" | "EXCLUSIVE_GATEWAY" | "INCLUSIVE_GATEWAY" | "PARALLEL_GATEWAY" | "EVENT_BASED_GATEWAY" | "SEQUENCE_FLOW" | "MULTI_INSTANCE_BODY" | "CALL_ACTIVITY" | "BUSINESS_RULE_TASK" | "SCRIPT_TASK" | "SEND_TASK" | "UNKNOWN";
-            /** @description State of element instance as defined set of values. */
-            state?: components["schemas"]["ElementInstanceStateEnum"];
-            /** @description Shows whether this element instance has an incident. If true also an incidentKey is provided. */
-            hasIncident?: boolean;
-            /** @description The tenant ID of the incident. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this element instance. */
-            elementInstanceKey?: string;
-            /** @description The process instance key associated to this element instance. */
-            processInstanceKey?: string;
-            /** @description The process definition key associated to this element instance. */
-            processDefinitionKey?: string;
-            /** @description Incident key associated with this element instance. */
-            incidentKey?: string;
-        };
-        AdHocSubProcessActivateActivitiesInstruction: {
-            /** @description Activities to activate. */
-            elements: components["schemas"]["AdHocSubProcessActivateActivityReference"][];
-        };
-        AdHocSubProcessActivateActivityReference: {
-            /** @description The ID of the element that should be activated. */
-            elementId: string;
-        };
-        DecisionDefinitionSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "decisionDefinitionKey" | "decisionDefinitionId" | "name" | "version" | "decisionRequirementsId" | "decisionRequirementsKey" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        DecisionDefinitionSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["DecisionDefinitionSearchQuerySortRequest"][];
-            /** @description The decision definition search filters. */
-            filter?: components["schemas"]["DecisionDefinitionFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Decision definition search filter. */
-        DecisionDefinitionFilter: {
-            /** @description The DMN ID of the decision definition. */
-            decisionDefinitionId?: string;
-            /** @description The DMN name of the decision definition. */
-            name?: string;
-            /**
-             * Format: int32
-             * @description The assigned version of the decision definition.
-             */
-            version?: number;
-            /** @description the DMN ID of the decision requirements graph that the decision definition is part of. */
-            decisionRequirementsId?: string;
-            /** @description The tenant ID of the decision definition. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this decision definition. */
-            decisionDefinitionKey?: string;
-            /** @description The assigned key of the decision requirements graph that the decision definition is part of. */
-            decisionRequirementsKey?: string;
-        };
-        IncidentSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "incidentKey" | "processDefinitionKey" | "processDefinitionId" | "processInstanceKey" | "errorType" | "errorMessage" | "elementId" | "elementInstanceKey" | "creationTime" | "state" | "jobKey" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        IncidentSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["IncidentSearchQuerySortRequest"][];
-            /** @description The incident search filters. */
-            filter?: components["schemas"]["IncidentFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Incident search filter. */
-        IncidentFilter: {
-            /** @description The process definition ID associated to this incident. */
-            processDefinitionId?: string;
-            /**
-             * @description Incident error type with a defined set of values.
-             * @enum {string}
-             */
-            errorType?: "UNSPECIFIED" | "UNKNOWN" | "IO_MAPPING_ERROR" | "JOB_NO_RETRIES" | "EXECUTION_LISTENER_NO_RETRIES" | "TASK_LISTENER_NO_RETRIES" | "CONDITION_ERROR" | "EXTRACT_VALUE_ERROR" | "CALLED_ELEMENT_ERROR" | "UNHANDLED_ERROR_EVENT" | "MESSAGE_SIZE_EXCEEDED" | "CALLED_DECISION_ERROR" | "DECISION_EVALUATION_ERROR" | "FORM_NOT_FOUND" | "RESOURCE_NOT_FOUND";
-            /** @description Error message which describes the error in more detail. */
-            errorMessage?: string;
-            /** @description The element ID associated to this incident. */
-            elementId?: string;
-            /**
-             * Format: date-time
-             * @description Date of incident creation.
-             */
-            creationTime?: string;
-            /**
-             * @description State of this incident with a defined set of values.
-             * @enum {string}
-             */
-            state?: "ACTIVE" | "MIGRATED" | "RESOLVED" | "PENDING";
-            /** @description The tenant ID of the incident. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this incident. */
-            incidentKey?: string;
-            /** @description The process definition key associated to this incident. */
-            processDefinitionKey?: string;
-            /** @description The process instance key associated to this incident. */
-            processInstanceKey?: string;
-            /** @description The element instance key associated to this incident. */
-            elementInstanceKey?: string;
-            /** @description The job key, if exists, associated with this incident. */
-            jobKey?: string;
-        };
-        IncidentSearchQueryResult: {
-            /** @description The matching incidents. */
-            items?: components["schemas"]["IncidentResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        MessageSubscriptionSearchQueryResult: {
-            /** @description The matching message subscriptions. */
-            items?: components["schemas"]["MessageSubscriptionResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        MessageSubscriptionResult: {
-            /** @description The message subscription key associated with this message subscription. */
-            messageSubscriptionKey?: string;
-            /** @description The process definition ID associated with this message subscription. */
-            processDefinitionId?: string;
-            /** @description The process definition key associated with this message subscription. */
-            processDefinitionKey?: string;
-            /** @description The process instance key associated with this message subscription. */
-            processInstanceKey?: string;
-            /** @description The element ID associated with this message subscription. */
-            elementId?: string;
-            /** @description The element instance key associated with this message subscription. */
-            elementInstanceKey?: string;
-            messageSubscriptionType?: components["schemas"]["MessageSubscriptionTypeEnum"];
-            /**
-             * Format: date-time
-             * @description The last updated date of the message subscription.
-             */
-            lastUpdatedDate?: string;
-            /** @description The name of the message associated with the message subscription. */
-            messageName?: string;
-            /** @description The correlation key of the message subscription. */
-            correlationKey?: string;
-            /** @description The unique external tenant ID. */
-            tenantId?: string;
-        };
-        MessageSubscriptionSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "messageSubscriptionKey" | "processDefinitionId" | "processDefinitionKey" | "processInstanceKey" | "elementId" | "elementInstanceKey" | "messageSubscriptionType" | "lastUpdatedDate" | "messageName" | "correlationKey" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        MessageSubscriptionSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["MessageSubscriptionSearchQuerySortRequest"][];
-            /** @description The incident search filters. */
-            filter?: components["schemas"]["MessageSubscriptionFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Message subscription search filter. */
-        MessageSubscriptionFilter: {
-            /** @description The message subscription key associated with this message subscription. */
-            messageSubscriptionKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The process definition ID associated with this message subscription. */
-            processDefinitionId?: components["schemas"]["StringFilterProperty"];
-            /** @description The process definition key associated with this message subscription. */
-            processDefinitionKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The process instance key associated with this message subscription. */
-            processInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The element ID associated with this message subscription. */
-            elementId?: components["schemas"]["StringFilterProperty"];
-            /** @description The element instance key associated with this message subscription. */
-            elementInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The message subscription type. */
-            messageSubscriptionType?: components["schemas"]["MessageSubscriptionTypeFilterProperty"];
-            /** @description The last updated date of the message subscription. */
-            lastUpdatedDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The name of the message associated with the message subscription. */
-            messageName?: components["schemas"]["StringFilterProperty"];
-            /** @description The correlation key of the message subscription. */
-            correlationKey?: components["schemas"]["StringFilterProperty"];
-            /** @description The unique external tenant ID. */
-            tenantId?: components["schemas"]["StringFilterProperty"];
-        };
-        /** @description MessageSubscriptionTypeEnum with full advanced search capabilities. */
-        MessageSubscriptionTypeFilterProperty: (string & components["schemas"]["MessageSubscriptionTypeEnum"]) | components["schemas"]["AdvancedMessageSubscriptionTypeFilter"];
-        /**
-         * @description The type of message subscription.
-         * @enum {string}
-         */
-        MessageSubscriptionTypeEnum: "CREATED" | "MIGRATED" | "CORRELATED";
-        /**
-         * Advanced filter
-         * @description Advanced MessageSubscriptionTypeEnum filter
-         */
-        AdvancedMessageSubscriptionTypeFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["MessageSubscriptionTypeEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["MessageSubscriptionTypeEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["MessageSubscriptionTypeEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        IncidentResult: {
-            /** @description The process definition ID associated to this incident. */
-            processDefinitionId?: string;
-            /**
-             * @description Incident error type with a defined set of values.
-             * @enum {string}
-             */
-            errorType?: "UNSPECIFIED" | "UNKNOWN" | "IO_MAPPING_ERROR" | "JOB_NO_RETRIES" | "EXECUTION_LISTENER_NO_RETRIES" | "TASK_LISTENER_NO_RETRIES" | "CONDITION_ERROR" | "EXTRACT_VALUE_ERROR" | "CALLED_ELEMENT_ERROR" | "UNHANDLED_ERROR_EVENT" | "MESSAGE_SIZE_EXCEEDED" | "CALLED_DECISION_ERROR" | "DECISION_EVALUATION_ERROR" | "FORM_NOT_FOUND" | "RESOURCE_NOT_FOUND";
-            /** @description Error message which describes the error in more detail. */
-            errorMessage?: string;
-            /** @description The element ID associated to this incident. */
-            elementId?: string;
-            /**
-             * Format: date-time
-             * @description Date of incident creation.
-             */
-            creationTime?: string;
-            /**
-             * @description State of this incident with a defined set of values.
-             * @enum {string}
-             */
-            state?: "ACTIVE" | "MIGRATED" | "RESOLVED" | "PENDING";
-            /** @description The tenant ID of the incident. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this incident. */
-            incidentKey?: string;
-            /** @description The process definition key associated to this incident. */
-            processDefinitionKey?: string;
-            /** @description The process instance key associated to this incident. */
-            processInstanceKey?: string;
-            /** @description The element instance key associated to this incident. */
-            elementInstanceKey?: string;
-            /** @description The job key, if exists, associated with this incident. */
-            jobKey?: string;
-        };
-        DecisionDefinitionSearchQueryResult: {
-            /** @description The matching decision definitions. */
-            items?: components["schemas"]["DecisionDefinitionResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        DecisionDefinitionResult: {
-            /** @description The DMN ID of the decision definition. */
-            decisionDefinitionId?: string;
-            /** @description The DMN name of the decision definition. */
-            name?: string;
-            /**
-             * Format: int32
-             * @description The assigned version of the decision definition.
-             */
-            version?: number;
-            /** @description the DMN ID of the decision requirements graph that the decision definition is part of. */
-            decisionRequirementsId?: string;
-            /** @description The tenant ID of the decision definition. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this decision definition. */
-            decisionDefinitionKey?: string;
-            /** @description The assigned key of the decision requirements graph that the decision definition is part of. */
-            decisionRequirementsKey?: string;
-        };
-        UsageMetricsResponse: {
-            /**
-             * Format: int64
-             * @description The amount of active tenants.
-             */
-            activeTenants?: number;
-            /** @description The usage metrics by tenants. Only available if request `withTenants` query parameter was `true`. */
-            tenants?: {
-                [key: string]: components["schemas"]["UsageMetricsResponseItem"];
-            };
-        } & components["schemas"]["UsageMetricsResponseItem"];
-        UsageMetricsResponseItem: {
-            /**
-             * Format: int64
-             * @description The amount of created root process instances.
-             */
-            processInstances?: number;
-            /**
-             * Format: int64
-             * @description The amount of executed decision instances.
-             */
-            decisionInstances?: number;
-            /**
-             * Format: int64
-             * @description The amount of unique active task users.
-             */
-            assignees?: number;
-        };
-        /**
-         * @description Specifies the type of permissions.
-         * @enum {unknown}
-         */
-        PermissionTypeEnum: "ACCESS" | "CREATE" | "CREATE_BATCH_OPERATION_CANCEL_PROCESS_INSTANCE" | "CREATE_BATCH_OPERATION_DELETE_PROCESS_INSTANCE" | "CREATE_BATCH_OPERATION_MIGRATE_PROCESS_INSTANCE" | "CREATE_BATCH_OPERATION_MODIFY_PROCESS_INSTANCE" | "CREATE_BATCH_OPERATION_RESOLVE_INCIDENT" | "CREATE_BATCH_OPERATION_DELETE_DECISION_INSTANCE" | "CREATE_BATCH_OPERATION_DELETE_DECISION_DEFINITION" | "CREATE_BATCH_OPERATION_DELETE_PROCESS_DEFINITION" | "CREATE_PROCESS_INSTANCE" | "CREATE_DECISION_INSTANCE" | "READ" | "READ_PROCESS_INSTANCE" | "READ_USER_TASK" | "READ_DECISION_INSTANCE" | "READ_PROCESS_DEFINITION" | "READ_DECISION_DEFINITION" | "UPDATE" | "UPDATE_PROCESS_INSTANCE" | "UPDATE_USER_TASK" | "DELETE" | "DELETE_PROCESS" | "DELETE_DRD" | "DELETE_FORM" | "DELETE_RESOURCE" | "DELETE_PROCESS_INSTANCE" | "DELETE_DECISION_INSTANCE";
-        /**
-         * @description The type of resource to add/remove permissions to/from.
-         * @enum {unknown}
-         */
-        ResourceTypeEnum: "AUTHORIZATION" | "MAPPING_RULE" | "MESSAGE" | "BATCH" | "BATCH_OPERATION" | "APPLICATION" | "SYSTEM" | "TENANT" | "RESOURCE" | "PROCESS_DEFINITION" | "DECISION_REQUIREMENTS_DEFINITION" | "DECISION_DEFINITION" | "GROUP" | "USER" | "ROLE";
-        /**
-         * @description The type of the owner of permissions.
-         * @enum {unknown}
-         */
-        OwnerTypeEnum: "USER" | "CLIENT" | "ROLE" | "GROUP" | "MAPPING_RULE" | "UNSPECIFIED";
-        AuthorizationRequest: {
-            /** @description The ID of the owner of the permissions. */
-            ownerId: string;
-            /** @description The type of the owner of the permissions. */
-            ownerType: components["schemas"]["OwnerTypeEnum"];
-            /** @description The ID of the resource to add permissions to. */
-            resourceId: string;
-            /** @description The type of resource to add permissions to. */
-            resourceType: components["schemas"]["ResourceTypeEnum"];
-            /** @description The permission types to add. */
-            permissionTypes: (string & components["schemas"]["PermissionTypeEnum"])[];
-        };
-        AuthorizationCreateResult: {
-            /** @description The key of the created authorization. */
-            authorizationKey?: string;
-        };
-        AuthorizationSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "ownerId" | "ownerType" | "resourceId" | "resourceType";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        AuthorizationSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["AuthorizationSearchQuerySortRequest"][];
-            /** @description The authorization search filters. */
-            filter?: components["schemas"]["AuthorizationFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Authorization search filter. */
-        AuthorizationFilter: {
-            /** @description The ID of the owner of permissions. */
-            ownerId?: string;
-            /** @description The type of the owner of permissions. */
-            ownerType?: components["schemas"]["OwnerTypeEnum"];
-            /** @description The IDs of the resource to search permissions for. */
-            resourceIds?: string[];
-            /** @description The type of resource to search permissions for. */
-            resourceType?: components["schemas"]["ResourceTypeEnum"];
-        };
-        AuthorizationResult: {
-            /** @description The ID of the owner of permissions. */
-            ownerId?: string;
-            /** @description The type of the owner of permissions. */
-            ownerType?: components["schemas"]["OwnerTypeEnum"];
-            /** @description The type of resource that owner have permissions. */
-            resourceType?: components["schemas"]["ResourceTypeEnum"];
-            /** @description ID of the resource the permission relates to. */
-            resourceId?: string;
-            /** @description Specifies the types of the permissions. */
-            permissionTypes?: components["schemas"]["PermissionTypeEnum"][];
-            /** @description The key of the authorization. */
-            authorizationKey?: string;
-        };
-        AuthorizationSearchResult: {
-            /** @description The matching authorizations. */
-            items?: components["schemas"]["AuthorizationResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        UserRequest: {
-            /** @description The password of the user. */
-            password?: string;
-            /** @description The username of the user. */
-            username?: string;
-            /** @description The name of the user. */
-            name?: string;
-            /** @description The email of the user. */
-            email?: string;
-        };
-        UserCreateResult: {
-            /** @description The username of the user. */
-            username?: string;
-            /** @description The name of the user. */
-            name?: string;
-            /** @description The email of the user. */
-            email?: string;
-            /** @description The key of the created user */
-            userKey?: string;
-        };
-        UserUpdateResult: {
-            /** @description The username of the user. */
-            username?: string;
-            /** @description The name of the user. */
-            name?: string;
-            /** @description The email of the user. */
-            email?: string;
-        };
-        UserSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "username" | "name" | "email";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        UserSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["UserSearchQuerySortRequest"][];
-            /** @description The user search filters. */
-            filter?: components["schemas"]["UserFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        MappingRuleSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "mappingRuleId" | "claimName" | "claimValue" | "name";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        MappingRuleSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["MappingRuleSearchQuerySortRequest"][];
-            /** @description The mapping search filters. */
-            filter?: components["schemas"]["MappingRuleFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description User search filter. */
-        UserFilter: {
-            /** @description The username of the user. */
-            username?: components["schemas"]["StringFilterProperty"];
-            /** @description The name of the user. */
-            name?: components["schemas"]["StringFilterProperty"];
-            /** @description The email of the user. */
-            email?: components["schemas"]["StringFilterProperty"];
-        };
-        /** @description Mapping rule search filter. */
-        MappingRuleFilter: {
-            /** @description The claim name to match against a token. */
-            claimName?: string;
-            /** @description The value of the claim to match. */
-            claimValue?: string;
-            /** @description The name of the mapping. */
-            name?: string;
-            /** @description The ID of the mapping. */
-            mappingRuleId?: string;
-        };
-        CamundaUserResult: {
-            /** @description The ID of the user. */
-            userId?: string;
-            /** @description The display name of the user. */
-            displayName?: string;
-            /** @description The applications the user is authorized to use. */
-            authorizedApplications?: string[];
-            /** @description The tenants the user is a member of. */
-            tenants?: {
-                /** @description The ID of the tenant. */
-                tenantId?: string;
-                /** @description The name of the tenant. */
-                name?: string;
-            }[];
-            /** @description The groups assigned to the user. */
-            groups?: string[];
-            /** @description The roles assigned to the user. */
-            roles?: string[];
-            /** @description The plan of the user. */
-            salesPlanType?: string;
-            /** @description The links to the components in the C8 stack. */
-            c8Links?: {
-                /** @description The name of the component. */
-                name?: string;
-                /** @description A link to the component. */
-                link?: string;
-            }[];
-            /** @description Flag for understanding if the user is able to perform logout. */
-            canLogout?: boolean;
-            /** @description Flag for understanding if the user is an API user. */
-            apiUser?: boolean;
-            /** @description The system generated key of the user. */
-            userKey?: string;
-        };
-        UserResult: {
-            /** @description The username of the user. */
-            username?: string;
-            /** @description The name of the user. */
-            name?: string;
-            /** @description The email of the user. */
-            email?: string;
-            /** @description The key of the user. */
-            userKey?: string;
-        };
-        UserSearchResult: {
-            /** @description The matching users. */
-            items?: components["schemas"]["UserResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        UserUpdateRequest: {
-            /** @description The password of the user. */
-            password?: string;
-            /** @description The name of the user. */
-            name?: string;
-            /** @description The email of the user. */
-            email?: string;
-        };
-        TenantClientResult: {
-            /** @description The ID of the client. */
-            clientId?: string;
-        };
-        TenantClientSearchResult: {
-            /** @description The matching clients. */
-            items?: components["schemas"]["TenantClientResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        TenantClientSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["TenantClientSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        TenantClientSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "clientId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        TenantUserResult: {
-            /** @description The username of the user. */
-            username?: string;
-        };
-        TenantUserSearchResult: {
-            /** @description The matching users. */
-            items?: components["schemas"]["TenantUserResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        TenantUserSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["TenantUserSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        TenantUserSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "username";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        TenantGroupResult: {
-            /** @description The groupId of the group. */
-            groupId?: string;
-        };
-        TenantGroupSearchResult: {
-            /** @description The matching groups. */
-            items?: components["schemas"]["TenantGroupResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        TenantGroupSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["TenantGroupSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        TenantGroupSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "groupId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        RoleCreateRequest: {
-            /** @description The ID of the new role. */
-            roleId: string;
-            /** @description The display name of the new role. */
-            name: string;
-            /** @description The description of the new role. */
-            description?: string;
-        };
-        RoleCreateResult: {
-            /** @description The ID of the created role. */
-            roleId?: string;
-            /** @description The display name of the created role. */
-            name?: string;
-            /** @description The description of the created role. */
-            description?: string;
-        };
-        RoleUpdateRequest: {
-            /** @description The display name of the new role. */
-            name: string;
-            /** @description The description of the new role. */
-            description: string;
-        };
-        RoleUpdateResult: {
-            /** @description The display name of the updated role. */
-            name?: string;
-            /** @description The description of the updated role. */
-            description?: string;
-            /** @description The ID of the updated role. */
-            roleId?: string;
-        };
-        /** @description Role search response item. */
-        RoleResult: {
-            /** @description The role name. */
-            name?: string;
-            /** @description The role id. */
-            roleId?: string;
-            /** @description The description of the role. */
-            description?: string;
-        };
-        RoleSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "name" | "roleId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Role search request. */
-        RoleSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["RoleSearchQuerySortRequest"][];
-            /** @description The role search filters. */
-            filter?: components["schemas"]["RoleFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Role filter request */
-        RoleFilter: {
-            /** @description The role ID search filters. */
-            roleId?: string;
-            /** @description The role name search filters. */
-            name?: string;
-        };
-        /** @description Role search response. */
-        RoleSearchQueryResult: {
-            /** @description The matching roles. */
-            items?: components["schemas"]["RoleResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        RoleUserResult: {
-            /** @description The username of the user. */
-            username?: string;
-        };
-        RoleUserSearchResult: {
-            /** @description The matching users. */
-            items?: components["schemas"]["RoleUserResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        RoleUserSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["RoleUserSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        RoleUserSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "username";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        RoleClientResult: {
-            /** @description The ID of the client. */
-            clientId?: string;
-        };
-        RoleClientSearchResult: {
-            /** @description The matching clients. */
-            items?: components["schemas"]["RoleClientResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        RoleClientSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["RoleClientSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        RoleClientSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "clientId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        RoleGroupResult: {
-            /** @description The id of the group. */
-            groupId?: string;
-        };
-        RoleGroupSearchResult: {
-            /** @description The matching groups. */
-            items?: components["schemas"]["RoleGroupResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        RoleGroupSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["RoleGroupSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        RoleGroupSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "groupId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        GroupCreateRequest: {
-            /** @description The ID of the new group. */
-            groupId: string;
-            /** @description The display name of the new group. */
-            name: string;
-            /** @description The description of the new group. */
-            description?: string;
-        };
-        GroupCreateResult: {
-            /** @description The ID of the created group. */
-            groupId?: string;
-            /** @description The display name of the created group. */
-            name?: string;
-            /** @description The description of the created group. */
-            description?: string;
-        };
-        GroupUpdateRequest: {
-            /** @description The new name of the group. */
-            name: string;
-            /** @description The new description of the group. */
-            description: string;
-        };
-        GroupUpdateResult: {
-            /** @description The unique external group ID. */
-            groupId?: string;
-            /** @description The name of the group. */
-            name?: string;
-            /** @description The description of the group. */
-            description?: string;
-        };
-        /** @description Group search response item. */
-        GroupResult: {
-            /** @description The group name. */
-            name?: string;
-            /** @description The group ID. */
-            groupId?: string;
-            /** @description The group description. */
-            description?: string;
-        };
-        GroupSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "name" | "groupId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Group search request. */
-        GroupSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["GroupSearchQuerySortRequest"][];
-            /** @description The group search filters. */
-            filter?: components["schemas"]["GroupFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Group filter request */
-        GroupFilter: {
-            /** @description The group ID search filters. */
-            groupId?: components["schemas"]["StringFilterProperty"];
-            /** @description The group name search filters. */
-            name?: string;
-        };
-        /** @description Group search response. */
-        GroupSearchQueryResult: {
-            /** @description The matching groups. */
-            items?: components["schemas"]["GroupResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        GroupUserResult: {
-            /** @description The username of the user. */
-            username?: string;
-        };
-        GroupUserSearchResult: {
-            /** @description The matching members. */
-            items?: components["schemas"]["GroupUserResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        GroupUserSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["GroupUserSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        GroupUserSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "username";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        GroupClientResult: {
-            /** @description The ID of the client. */
-            clientId?: string;
-        };
-        GroupClientSearchResult: {
-            /** @description The matching client IDs. */
-            items?: components["schemas"]["GroupClientResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        GroupClientSearchQueryRequest: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["GroupClientSearchQuerySortRequest"][];
-        } & components["schemas"]["SearchQueryRequest"];
-        GroupClientSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "clientId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        MappingRuleCreateUpdateRequest: {
-            /** @description The name of the claim to map. */
-            claimName: string;
-            /** @description The value of the claim to map. */
-            claimValue: string;
-            /** @description The name of the mapping. */
-            name: string;
-        };
-        MappingRuleCreateRequest: {
-            /** @description The unique ID of the mapping. */
-            mappingRuleId: string;
-        } & components["schemas"]["MappingRuleCreateUpdateRequest"];
-        MappingRuleUpdateRequest: components["schemas"]["MappingRuleCreateUpdateRequest"];
-        MappingRuleCreateUpdateResult: {
-            /** @description The name of the claim to map. */
-            claimName?: string;
-            /** @description The value of the claim to map. */
-            claimValue?: string;
-            /** @description The name of the mapping. */
-            name?: string;
-            /** @description The unique ID of the mapping. */
-            mappingRuleId?: string;
-        };
-        MappingRuleCreateResult: components["schemas"]["MappingRuleCreateUpdateResult"];
-        MappingRuleUpdateResult: components["schemas"]["MappingRuleCreateUpdateResult"];
-        MappingRuleSearchQueryResult: {
-            /** @description The matching mapping rules. */
-            items?: components["schemas"]["MappingRuleResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        MappingRuleResult: {
-            /** @description The name of the claim to map. */
-            claimName?: string;
-            /** @description The value of the claim to map. */
-            claimValue?: string;
-            /** @description The name of the mapping. */
-            name?: string;
-            /** @description The ID of the mapping. */
-            mappingRuleId?: string;
-        };
-        /** @description The response of a topology request. */
-        TopologyResponse: {
-            /** @description A list of brokers that are part of this cluster. */
-            brokers?: components["schemas"]["BrokerInfo"][] | null;
-            /**
-             * Format: int32
-             * @description The number of brokers in the cluster.
-             */
-            clusterSize?: number | null;
-            /**
-             * Format: int32
-             * @description The number of partitions are spread across the cluster.
-             */
-            partitionsCount?: number | null;
-            /**
-             * Format: int32
-             * @description The configured replication factor for this cluster.
-             */
-            replicationFactor?: number | null;
-            /** @description The version of the Zeebe Gateway. */
-            gatewayVersion?: string | null;
-            /** @description ID of the last completed change */
-            lastCompletedChangeId?: string | null;
-        };
-        /** @description The response of a license request. */
-        LicenseResponse: {
-            /** @description True if the Camunda license is valid, false if otherwise */
-            validLicense?: boolean;
-            /** @description Will return the license type property of the Camunda license */
-            licenseType?: string;
-            /** @description Will be false when a license contains a non-commerical=true property */
-            isCommercial?: boolean;
-            /**
-             * Format: date-time
-             * @description The date when the Camunda license expires
-             */
-            expiresAt?: string | null;
-        };
-        /** @description Provides information on a broker node. */
-        BrokerInfo: {
-            /**
-             * Format: int32
-             * @description The unique (within a cluster) node ID for the broker.
-             */
-            nodeId?: number;
-            /** @description The hostname for reaching the broker. */
-            host?: string;
-            /**
-             * Format: int32
-             * @description The port for reaching the broker.
-             */
-            port?: number;
-            /** @description A list of partitions managed or replicated on this broker. */
-            partitions?: components["schemas"]["Partition"][];
-            /** @description The broker version. */
-            version?: string;
-        };
-        /** @description Provides information on a partition within a broker node. */
-        Partition: {
-            /**
-             * Format: int32
-             * @description The unique ID of this partition.
-             */
-            partitionId?: number;
-            /**
-             * @description Describes the Raft role of the broker for a given partition.
-             * @enum {string}
-             */
-            role?: "leader" | "follower" | "inactive";
-            /**
-             * @description Describes the current health of the partition.
-             * @enum {string}
-             */
-            health?: "healthy" | "unhealthy" | "dead";
-        };
-        UserTaskCompletionRequest: {
-            /** @description The variables to complete the user task with. */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-            /** @description A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "complete".
-             *      */
-            action?: string | null;
-        };
-        UserTaskAssignmentRequest: {
-            /** @description The assignee for the user task. The assignee must not be empty or `null`. */
-            assignee?: string;
-            /** @description By default, the task is reassigned if it was already assigned. Set this to `false` to return an error in such cases. The task must then first be unassigned to be assigned again. Use this when you have users picking from group task queues to prevent race conditions.
-             *      */
-            allowOverride?: boolean | null;
-            /** @description A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "assign".
-             *      */
-            action?: string | null;
-        };
-        UserTaskUpdateRequest: {
-            changeset?: components["schemas"]["Changeset"];
-            /** @description A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "update".
-             *      */
-            action?: string | null;
-        };
-        /** @description JSON object with changed task attribute values.
-         *
-         *     The following attributes can be adjusted with this endpoint, additional attributes
-         *     will be ignored:
-         *
-         *     * `candidateGroups` - reset by providing an empty list
-         *     * `candidateUsers` - reset by providing an empty list
-         *     * `dueDate` - reset by providing an empty String
-         *     * `followUpDate` - reset by providing an empty String
-         *     * `priority` - minimum 0, maximum 100, default 50
-         *
-         *     Providing any of those attributes with a `null` value or omitting it preserves
-         *     the persisted attribute's value.
-         *
-         *     The assignee cannot be adjusted with this endpoint, use the Assign task endpoint.
-         *     This ensures correct event emission for assignee changes.
-         *      */
-        Changeset: ({
-            /**
-             * Format: date-time
-             * @description The due date of the task. Reset by providing an empty String.
-             */
-            dueDate?: string | null;
-            /**
-             * Format: date-time
-             * @description The follow-up date of the task. Reset by providing an empty String.
-             */
-            followUpDate?: string | null;
-            /** @description The list of candidate users of the task. Reset by providing an empty list. */
-            candidateUsers?: string[] | null;
-            /** @description The list of candidate groups of the task. Reset by providing an empty list. */
-            candidateGroups?: string[] | null;
-            /**
-             * Format: int32
-             * @description The priority of the task.
-             * @default 50
-             */
-            priority: number | null;
-        } & {
-            [key: string]: unknown;
-        }) | null;
-        ClockPinRequest: {
-            /**
-             * Format: int64
-             * @description The exact time in epoch milliseconds to which the clock should be pinned.
-             */
-            timestamp: number;
-        };
-        JobActivationRequest: {
-            /** @description The job type, as defined in the BPMN process (e.g. <zeebe:taskDefinition type="payment-service" />).
-             *      */
-            type: string;
-            /** @description The name of the worker activating the jobs, mostly used for logging purposes. */
-            worker?: string | null;
-            /**
-             * Format: int64
-             * @description A job returned after this call will not be activated by another call until the timeout (in ms) has been reached.
-             *
-             */
-            timeout: number;
-            /**
-             * Format: int32
-             * @description The maximum jobs to activate by this request.
-             */
-            maxJobsToActivate: number;
-            /** @description A list of variables to fetch as the job variables; if empty, all visible variables at the time of activation for the scope of the job will be returned.
-             *      */
-            fetchVariable?: string[] | null;
-            /**
-             * Format: int64
-             * @description The request will be completed when at least one job is activated or after the requestTimeout (in ms). If the requestTimeout = 0, a default timeout is used. If the requestTimeout < 0, long polling is disabled and the request is completed immediately, even when no job is activated.
-             *
-             * @default 0
-             */
-            requestTimeout: number | null;
-            /** @description A list of IDs of tenants for which to activate jobs. */
-            tenantIds?: string[] | null;
-        };
-        /** @description The list of activated jobs */
-        JobActivationResult: {
-            /** @description The activated jobs. */
-            jobs?: components["schemas"]["ActivatedJobResult"][];
-        };
-        ActivatedJobResult: {
-            /** @description The type of the job (should match what was requested). */
-            type?: string;
-            /** @description The bpmn process ID of the job's process definition. */
-            processDefinitionId?: string;
-            /**
-             * Format: int32
-             * @description The version of the job's process definition.
-             */
-            processDefinitionVersion?: number;
-            /** @description The associated task element ID. */
-            elementId?: string;
-            /** @description A set of custom headers defined during modelling; returned as a serialized JSON document. */
-            customHeaders?: {
-                [key: string]: unknown;
-            };
-            /** @description The name of the worker which activated this job. */
-            worker?: string;
-            /**
-             * Format: int32
-             * @description The amount of retries left to this job (should always be positive).
-             */
-            retries?: number;
-            /**
-             * Format: int64
-             * @description When the job can be activated again, sent as a UNIX epoch timestamp.
-             */
-            deadline?: number;
-            /** @description All variables visible to the task scope, computed at activation time. */
-            variables?: {
-                [key: string]: unknown;
-            };
-            /** @description The ID of the tenant that owns the job. */
-            tenantId?: string;
-            /** @description The key, a unique identifier for the job. */
-            jobKey?: string;
-            /** @description The job's process instance key. */
-            processInstanceKey?: string;
-            /** @description The key of the job's process definition. */
-            processDefinitionKey?: string;
-            /** @description The unique key identifying the associated task, unique within the scope of the process instance.
-             *      */
-            elementInstanceKey?: string;
-            kind?: components["schemas"]["JobKindEnum"];
-            listenerEventType?: components["schemas"]["JobListenerEventTypeEnum"];
-            userTask?: components["schemas"]["UserTaskProperties"];
-        };
-        /** @description Contains properties of a user task. */
-        UserTaskProperties: {
-            /** @description The action performed on the user task. */
-            action?: string;
-            /** @description The user assigned to the task. */
-            assignee?: string | null;
-            /** @description The groups eligible to claim the task. */
-            candidateGroups?: string[];
-            /** @description The users eligible to claim the task. */
-            candidateUsers?: string[];
-            /** @description The attributes that were changed in the task. */
-            changedAttributes?: string[];
-            /**
-             * Format: date-time
-             * @description The due date of the user task in ISO 8601 format.
-             */
-            dueDate?: string | null;
-            /**
-             * Format: date-time
-             * @description The follow-up date of the user task in ISO 8601 format.
-             */
-            followUpDate?: string | null;
-            /** @description The key of the form associated with the user task. */
-            formKey?: string | null;
-            /**
-             * Format: int32
-             * @description The priority of the user task.
-             */
-            priority?: number | null;
-            /** @description The unique key identifying the user task. */
-            userTaskKey?: string | null;
-        };
-        JobFailRequest: {
-            /**
-             * Format: int32
-             * @description The amount of retries the job should have left
-             *
-             * @default 0
-             */
-            retries: number;
-            /** @description An optional message describing why the job failed. This is particularly useful if a job runs out of retries and an incident is raised, as this message can help explain why an incident was raised.
-             *      */
-            errorMessage?: string | null;
-            /**
-             * Format: int64
-             * @description The backoff timeout (in ms) for the next retry.
-             *
-             * @default 0
-             */
-            retryBackOff: number;
-            /** @description JSON object that will instantiate the variables at the local scope of the job's associated task.
-             *      */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        JobErrorRequest: {
-            /** @description The error code that will be matched with an error catch event.
-             *      */
-            errorCode: string;
-            /** @description An error message that provides additional context.
-             *      */
-            errorMessage?: string | null;
-            /** @description JSON object that will instantiate the variables at the local scope of the error catch event that catches the thrown error.
-             *      */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        JobCompletionRequest: {
-            /** @description The variables to complete the job with. */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-            result?: components["schemas"]["JobResult"];
-        };
-        /** @description The result of the completed job as determined by the worker.
-         *      */
-        JobResult: {
-            /**
-             * @description Used to distinguish between different types of job results.
-             * @default userTask
-             * @enum {string}
-             */
-            type: "userTask" | "adHocSubProcess";
-        };
-        JobResultUserTask: (Omit<components["schemas"]["JobResult"], "type"> & {
-            /** @description Indicates whether the worker denies the work, i.e. explicitly doesn't approve it. For example, a user task listener can deny the completion of a task by setting this flag to true. In this example, the completion of a task is represented by a job that the worker can complete as denied. As a result, the completion request is rejected and the task remains active. Defaults to false.
-             *      */
-            denied?: boolean | null;
-            /** @description The reason provided by the user task listener for denying the work. */
-            deniedReason?: string | null;
-            corrections?: components["schemas"]["JobResultCorrections"];
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "userTask";
-        }) | null;
-        /** @description JSON object with attributes that were corrected by the worker.
-         *
-         *     The following attributes can be corrected, additional attributes will be ignored:
-         *
-         *     * `assignee` - clear by providing an empty String
-         *     * `dueDate` - clear by providing an empty String
-         *     * `followUpDate` - clear by providing an empty String
-         *     * `candidateGroups` - clear by providing an empty list
-         *     * `candidateUsers` - clear by providing an empty list
-         *     * `priority` - minimum 0, maximum 100, default 50
-         *
-         *     Providing any of those attributes with a `null` value or omitting it preserves
-         *     the persisted attribute's value.
-         *      */
-        JobResultCorrections: {
-            /** @description Assignee of the task. */
-            assignee?: string | null;
-            /**
-             * Format: date-time
-             * @description The due date of the task.
-             */
-            dueDate?: string | null;
-            /**
-             * Format: date-time
-             * @description The follow-up date of the task.
-             */
-            followUpDate?: string | null;
-            /** @description The list of candidate users of the task. */
-            candidateUsers?: string[] | null;
-            /** @description The list of candidate groups of the task. */
-            candidateGroups?: string[] | null;
-            /**
-             * Format: int32
-             * @description The priority of the task.
-             */
-            priority?: number | null;
-        } | null;
-        JobResultAdHocSubProcess: (Omit<components["schemas"]["JobResult"], "type"> & {
-            /** @description Indicates which elements need to be activated in the ad-hoc subprocess. */
-            activateElements?: components["schemas"]["JobResultActivateElement"][];
-            /**
-             * @description Indicates whether the completion condition of the ad-hoc subprocess is fulfilled.
-             * @default false
-             */
-            isCompletionConditionFulfilled: boolean;
-            /**
-             * @description Indicates whether the remaining instances of the ad-hoc subprocess should be canceled.
-             * @default false
-             */
-            isCancelRemainingInstances: boolean;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "adHocSubProcess";
-        }) | null;
-        JobResultActivateElement: {
-            /** @description The ID of the element to activate. */
-            elementId?: string;
-            /** @description JSON document that will create the variables on the scope of the activated element.
-             *     It must be a JSON object, as variables will be mapped in a key-value fashion.
-             *      */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        JobUpdateRequest: {
-            changeset: components["schemas"]["JobChangeset"];
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation.
-             *     Must be > 0 if provided.
-             *
-             */
-            operationReference?: number;
-        };
-        /** @description JSON object with changed job attribute values.
-         *
-         *     The following attributes can be adjusted with this endpoint, additional attributes
-         *     will be ignored:
-         *
-         *     * `retries` - The new amount of retries for the job; must be a positive number.
-         *     * `timeout` - The duration of the new timeout in ms, starting from the current moment.
-         *
-         *     Providing any of those attributes with a null value or omitting it preserves the persisted attribute’s value.
-         *
-         *     The job cannot be completed or failed with this endpoint, use the complete job or fail job endpoints instead.
-         *      */
-        JobChangeset: {
-            /**
-             * Format: int32
-             * @description The new amount of retries for the job; must be a positive number.
-             */
-            retries?: number | null;
-            /**
-             * Format: int64
-             * @description The duration of the new timeout in ms, starting from the current moment.
-             */
-            timeout?: number | null;
-        };
-        /** @description Job search request. */
-        JobSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["JobSearchQuerySortRequest"][];
-            /** @description The job search filters. */
-            filter?: components["schemas"]["JobFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        JobSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "deadline" | "deniedReason" | "elementId" | "elementInstanceKey" | "endTime" | "errorCode" | "errorMessage" | "hasFailedWithRetriesLeft" | "isDenied" | "jobKey" | "kind" | "listenerEventType" | "processDefinitionId" | "processDefinitionKey" | "processInstanceKey" | "retries" | "state" | "tenantId" | "type" | "worker";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Job search filter. */
-        JobFilter: {
-            /** @description When the job can be activated. */
-            deadline?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The reason provided by the user task listener for denying the work. */
-            deniedReason?: components["schemas"]["StringFilterProperty"];
-            /** @description The element ID associated with the job. */
-            elementId?: components["schemas"]["StringFilterProperty"];
-            /** @description The element instance key associated with the job. */
-            elementInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description When the job ended. */
-            endTime?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The error code provided for the failed job. */
-            errorCode?: components["schemas"]["StringFilterProperty"];
-            /** @description The error message that provides additional context for a failed job. */
-            errorMessage?: components["schemas"]["StringFilterProperty"];
-            /** @description Indicates whether the job has failed with retries left. */
-            hasFailedWithRetriesLeft?: boolean;
-            /** @description Indicates whether the user task listener denies the work. */
-            isDenied?: boolean;
-            /** @description The key, a unique identifier for the job. */
-            jobKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The kind of the job. */
-            kind?: components["schemas"]["JobKindFilterProperty"];
-            /** @description The listener event type of the job. */
-            listenerEventType?: components["schemas"]["JobListenerEventTypeFilterProperty"];
-            /** @description The process definition ID associated with the job. */
-            processDefinitionId?: components["schemas"]["StringFilterProperty"];
-            /** @description The process definition key associated with the job. */
-            processDefinitionKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The process instance key associated with the job. */
-            processInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The number of retries left. */
-            retries?: components["schemas"]["IntegerFilterProperty"];
-            /** @description The state of the job. */
-            state?: components["schemas"]["JobStateFilterProperty"];
-            /** @description The tenant ID. */
-            tenantId?: components["schemas"]["StringFilterProperty"];
-            /** @description The type of the job. */
-            type?: components["schemas"]["StringFilterProperty"];
-            /** @description The name of the worker for this job. */
-            worker?: components["schemas"]["StringFilterProperty"];
-        };
-        /** @description Job search response. */
-        JobSearchQueryResult: {
-            /** @description The matching jobs. */
-            items?: components["schemas"]["JobSearchResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        JobSearchResult: {
-            /** @description A set of custom headers defined during modelling. */
-            customHeaders?: {
-                [key: string]: string;
-            };
-            /**
-             * Format: date-time
-             * @description When the job can be activated.
-             */
-            deadline?: string;
-            /** @description The reason provided by the user task listener for denying the work. */
-            deniedReason?: string | null;
-            /** @description The element ID associated with the job. */
-            elementId?: string;
-            /** @description The element instance key associated with the job. */
-            elementInstanceKey?: string;
-            /**
-             * Format: date-time
-             * @description When the job ended.
-             */
-            endTime?: string;
-            /** @description The error code provided for the failed job. */
-            errorCode?: string | null;
-            /** @description The error message that provides additional context for a failed job. */
-            errorMessage?: string | null;
-            /** @description Indicates whether the job has failed with retries left. */
-            hasFailedWithRetriesLeft?: boolean;
-            /** @description Indicates whether the user task listener denies the work. */
-            isDenied?: boolean | null;
-            /** @description The key, a unique identifier for the job. */
-            jobKey?: string;
-            kind?: components["schemas"]["JobKindEnum"];
-            listenerEventType?: components["schemas"]["JobListenerEventTypeEnum"];
-            /** @description The process definition ID associated with the job. */
-            processDefinitionId?: string;
-            /** @description The process definition key associated with the job. */
-            processDefinitionKey?: string;
-            /** @description The process instance key associated with the job. */
-            processInstanceKey?: string;
-            /**
-             * Format: int32
-             * @description The amount of retries left to this job.
-             */
-            retries?: number;
-            state?: components["schemas"]["JobStateEnum"];
-            /** @description The tenant ID. */
-            tenantId?: string;
-            /** @description The type of the job. */
-            type?: string;
-            /** @description The name of the worker of this job. */
-            worker?: string;
-        };
-        /**
-         * @description The state of the job.
-         * @enum {unknown}
-         */
-        JobStateEnum: "CANCELED" | "COMPLETED" | "CREATED" | "ERROR_THROWN" | "FAILED" | "MIGRATED" | "RETRIES_UPDATED" | "TIMED_OUT";
-        /**
-         * @description The job kind.
-         * @enum {unknown}
-         */
-        JobKindEnum: "BPMN_ELEMENT" | "EXECUTION_LISTENER" | "TASK_LISTENER";
-        /**
-         * @description The listener event type of the job.
-         * @enum {unknown}
-         */
-        JobListenerEventTypeEnum: "ASSIGNING" | "CANCELING" | "COMPLETING" | "CREATING" | "END" | "START" | "UNSPECIFIED" | "UPDATING";
-        /** @description JobStateEnum property with full advanced search capabilities. */
-        JobStateFilterProperty: (string & components["schemas"]["JobStateEnum"]) | components["schemas"]["AdvancedJobStateFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced JobStateEnum filter.
-         */
-        AdvancedJobStateFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["JobStateEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["JobStateEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["JobStateEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /** @description JobKindEnum property with full advanced search capabilities. */
-        JobKindFilterProperty: (string & components["schemas"]["JobKindEnum"]) | components["schemas"]["AdvancedJobKindFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced JobKindEnum filter.
-         */
-        AdvancedJobKindFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["JobKindEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["JobKindEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["JobKindEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /** @description JobListenerEventTypeEnum property with full advanced search capabilities. */
-        JobListenerEventTypeFilterProperty: (string & components["schemas"]["JobListenerEventTypeEnum"]) | components["schemas"]["AdvancedJobListenerEventTypeFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced JobListenerEventTypeEnum filter.
-         */
-        AdvancedJobListenerEventTypeFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["JobListenerEventTypeEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["JobListenerEventTypeEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["JobListenerEventTypeEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /** @description A Problem detail object as described in [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457). There may be additional properties specific to the problem type.
-         *      */
-        ProblemDetail: {
-            /**
-             * Format: uri
-             * @description A URI identifying the problem type.
-             * @default about:blank
-             */
-            type: string;
-            /** @description A summary of the problem type. */
-            title?: string;
-            /**
-             * Format: int32
-             * @description The HTTP status code for this problem.
-             */
-            status?: number;
-            /** @description An explanation of the problem in more detail. */
-            detail?: string;
-            /**
-             * Format: uri
-             * @description A URI identifying the origin of the problem.
-             */
-            instance?: string;
-        };
-        SearchQueryRequest: {
-            /** @description Pagination criteria. */
-            page?: components["schemas"]["SearchQueryPageRequest"];
-        };
-        SearchQueryPageRequest: {
-            /**
-             * Format: int32
-             * @description The index of items to start searching from.
-             */
-            from?: number;
-            /**
-             * Format: int32
-             * @description The maximum number of items to return in one request.
-             * @default 100
-             */
-            limit: number;
-            /** @description Use the `endCursor` value from the previous response to fetch the next page of results. */
-            after?: string;
-            /** @description Use the `startCursor` value from the previous response to fetch the previous page of results. */
-            before?: string;
-        };
-        SearchQueryResponse: {
-            /** @description Pagination information about the search results. */
-            page?: components["schemas"]["SearchQueryPageResponse"];
-        };
-        /** @description Pagination information about the search results. */
-        SearchQueryPageResponse: {
-            /**
-             * Format: int64
-             * @description Total items matching the criteria.
-             */
-            totalItems?: number;
-            /** @description Indicates if more results exist beyond the reported totalItems value. Due to system limitations, the totalItems value can be capped.
-             *      */
-            hasMoreTotalItems?: boolean;
-            /** @description The cursor value for getting the previous page of results. Use this in the `before` field of an ensuing request. */
-            startCursor?: string;
-            /** @description The cursor value for getting the next page of results. Use this in the `after` field of an ensuing request. */
-            endCursor?: string;
-        };
-        DecisionRequirementsSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "decisionRequirementsKey" | "decisionRequirementsName" | "version" | "decisionRequirementsId" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        DecisionRequirementsSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["DecisionRequirementsSearchQuerySortRequest"][];
-            /** @description The decision definition search filters. */
-            filter?: components["schemas"]["DecisionRequirementsFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Decision requirements search filter. */
-        DecisionRequirementsFilter: {
-            /** @description The DMN name of the decision requirements. */
-            decisionRequirementsName?: string;
-            /**
-             * Format: int32
-             * @description The assigned version of the decision requirements.
-             */
-            version?: number;
-            /** @description the DMN ID of the decision requirements. */
-            decisionRequirementsId?: string;
-            /** @description The tenant ID of the decision requirements. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this decision requirements. */
-            decisionRequirementsKey?: string;
-            /** @description The name of the resource from which the decision requirements were parsed. */
-            resourceName?: string;
-        };
-        DecisionRequirementsSearchQueryResult: {
-            /** @description The matching decision requirements. */
-            items?: components["schemas"]["DecisionRequirementsResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        DecisionRequirementsResult: {
-            /** @description The DMN name of the decision requirements. */
-            decisionRequirementsName?: string;
-            /**
-             * Format: int32
-             * @description The assigned version of the decision requirements.
-             */
-            version?: number;
-            /** @description The DMN ID of the decision requirements. */
-            decisionRequirementsId?: string;
-            /** @description The name of the resource from which this decision requirements was parsed. */
-            resourceName?: string;
-            /** @description The tenant ID of the decision requirements. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this decision requirements. */
-            decisionRequirementsKey?: string;
-        };
-        DecisionEvaluationInstruction: {
-            /** @description The ID of the decision to be evaluated.
-             *     Cannot be used together with decisionDefinitionKey. When using the decision ID, the latest
-             *     deployed version of the decision is used.
-             *      */
-            decisionDefinitionId?: string;
-            /** @description The message variables as JSON document. */
-            variables?: {
-                [key: string]: unknown;
-            };
-            /** @description The tenant ID of the decision. */
-            tenantId?: string;
-            /** @description The unique key identifying the decision to be evaluated.
-             *     Cannot be used together with decisionDefinitionId.
-             *      */
-            decisionDefinitionKey?: string;
-        };
-        EvaluateDecisionResult: {
-            /** @description The ID of the decision which was evaluated. */
-            decisionDefinitionId?: string;
-            /** @description The name of the decision which was evaluated. */
-            decisionDefinitionName?: string;
-            /**
-             * Format: int32
-             * @description The version of the decision which was evaluated.
-             */
-            decisionDefinitionVersion?: number;
-            /** @description The ID of the decision requirements graph that the decision which was evaluated is part of. */
-            decisionRequirementsId?: string;
-            /** @description JSON document that will instantiate the result of the decision which was evaluated.
-             *      */
-            output?: string;
-            /** @description The ID of the decision which failed during evaluation. */
-            failedDecisionDefinitionId?: string;
-            /** @description Message describing why the decision which was evaluated failed. */
-            failureMessage?: string;
-            /** @description The tenant ID of the evaluated decision. */
-            tenantId?: string;
-            /** @description The unique key identifying the decision which was evaluated. */
-            decisionDefinitionKey?: string;
-            /** @description The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
-            decisionRequirementsKey?: string;
-            /** @description The unique key identifying this decision evaluation. */
-            decisionInstanceKey?: string;
-            /** @description Decisions that were evaluated within the requested decision evaluation. */
-            evaluatedDecisions?: components["schemas"]["EvaluatedDecisionResult"][];
-        };
-        /** @description A decision that was evaluated. */
-        EvaluatedDecisionResult: {
-            /** @description The ID of the decision which was evaluated. */
-            decisionDefinitionId?: string;
-            /** @description The name of the decision which was evaluated. */
-            decisionDefinitionName?: string;
-            /**
-             * Format: int32
-             * @description The version of the decision which was evaluated.
-             */
-            decisionDefinitionVersion?: number;
-            /** @description The type of the decision which was evaluated. */
-            decisionDefinitionType?: string;
-            /** @description JSON document that will instantiate the result of the decision which was evaluated.
-             *      */
-            output?: string;
-            /** @description The tenant ID of the evaluated decision. */
-            tenantId?: string;
-            /** @description The decision rules that matched within this decision evaluation. */
-            matchedRules?: components["schemas"]["MatchedDecisionRuleItem"][];
-            /** @description The decision inputs that were evaluated within this decision evaluation. */
-            evaluatedInputs?: components["schemas"]["EvaluatedDecisionInputItem"][];
-            /** @description The unique key identifying the decision which was evaluate. */
-            decisionDefinitionKey?: string;
-        };
-        /** @description A decision rule that matched within this decision evaluation. */
-        MatchedDecisionRuleItem: {
-            /** @description The ID of the matched rule. */
-            ruleId?: string;
-            /**
-             * Format: int32
-             * @description The index of the matched rule.
-             */
-            ruleIndex?: number;
-            /** @description The evaluated decision outputs. */
-            evaluatedOutputs?: components["schemas"]["EvaluatedDecisionOutputItem"][];
-        };
-        /** @description A decision input that was evaluated within this decision evaluation. */
-        EvaluatedDecisionInputItem: {
-            /** @description The ID of the evaluated decision input. */
-            inputId?: string;
-            /** @description The name of the evaluated decision input. */
-            inputName?: string;
-            /** @description The value of the evaluated decision input. */
-            inputValue?: string;
-        };
-        /** @description The evaluated decision outputs. */
-        EvaluatedDecisionOutputItem: {
-            /** @description The ID of the evaluated decision output. */
-            outputId?: string;
-            /** @description The name of the evaluated decision output. */
-            outputName?: string;
-            /** @description The value of the evaluated decision output. */
-            outputValue?: string;
-        };
-        DecisionInstanceSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "decisionDefinitionId" | "decisionDefinitionKey" | "decisionDefinitionName" | "decisionDefinitionType" | "decisionDefinitionVersion" | "decisionInstanceId" | "decisionInstanceKey" | "elementInstanceKey" | "evaluationDate" | "evaluationFailure" | "processDefinitionKey" | "processInstanceKey" | "state" | "tenantId";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        DecisionInstanceSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["DecisionInstanceSearchQuerySortRequest"][];
-            /** @description The decision instance search filters. */
-            filter?: components["schemas"]["DecisionInstanceFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Decision instance search filter. */
-        DecisionInstanceFilter: {
-            /** @description The ID of the decision instance. */
-            decisionInstanceId?: string;
-            state?: components["schemas"]["DecisionInstanceStateEnum"];
-            /** @description The evaluation failure of the decision instance. */
-            evaluationFailure?: string;
-            /** @description The evaluation date of the decision instance. */
-            evaluationDate?: components["schemas"]["DateTimeFilterProperty"];
-            /** @description The ID of the DMN decision. */
-            decisionDefinitionId?: string;
-            /** @description The name of the DMN decision. */
-            decisionDefinitionName?: string;
-            /**
-             * Format: int32
-             * @description The version of the decision.
-             */
-            decisionDefinitionVersion?: number;
-            decisionDefinitionType?: components["schemas"]["DecisionDefinitionTypeEnum"];
-            /** @description The tenant ID of the decision instance. */
-            tenantId?: string;
-            /** @description The key of the decision instance. Note that this is not the unique identifier of the entity itself; the `decisionInstanceId` serves as the primary identifier.
-             *      */
-            decisionInstanceKey?: string;
-            /** @description The key of the process definition. */
-            processDefinitionKey?: string;
-            /** @description The key of the process instance. */
-            processInstanceKey?: string;
-            /** @description The key of the decision. */
-            decisionDefinitionKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The key of the element instance this decision instance is linked to. */
-            elementInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-        };
-        DecisionInstanceSearchQueryResult: {
-            /** @description The matching decision instances. */
-            items?: components["schemas"]["DecisionInstanceResult"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        DecisionInstanceResult: {
-            /** @description The ID of the decision instance. */
-            decisionInstanceId?: string;
-            state?: components["schemas"]["DecisionInstanceStateEnum"];
-            /**
-             * Format: date-time
-             * @description The evaluation date of the decision instance.
-             */
-            evaluationDate?: string;
-            /** @description The evaluation failure of the decision instance. */
-            evaluationFailure?: string;
-            /** @description The ID of the DMN decision. */
-            decisionDefinitionId?: string;
-            /** @description The name of the DMN decision. */
-            decisionDefinitionName?: string;
-            /**
-             * Format: int32
-             * @description The version of the decision.
-             */
-            decisionDefinitionVersion?: number;
-            decisionDefinitionType?: components["schemas"]["DecisionDefinitionTypeEnum"];
-            /** @description The result of the decision instance. */
-            result?: string;
-            /** @description The tenant ID of the decision instance. */
-            tenantId?: string;
-            /** @description The key of the decision instance. Note that this is not the unique identifier of the entity itself; the `decisionInstanceId` serves as the primary identifier. */
-            decisionInstanceKey?: string;
-            /** @description The key of the process definition. */
-            processDefinitionKey?: string;
-            /** @description The key of the process instance. */
-            processInstanceKey?: string;
-            /** @description The key of the decision. */
-            decisionDefinitionKey?: string;
-            /** @description The key of the element instance this decision instance is linked to. */
-            elementInstanceKey?: string;
-        };
-        DecisionInstanceGetQueryResult: components["schemas"]["DecisionInstanceResult"] & {
-            /** @description The evaluated inputs of the decision instance.
-             *      */
-            evaluatedInputs?: components["schemas"]["EvaluatedDecisionInputItem"][];
-            /** @description The matched rules of the decision instance.
-             *      */
-            matchedRules?: components["schemas"]["MatchedDecisionRuleItem"][];
-        };
-        /**
-         * @description The type of the decision.
-         * @enum {unknown}
-         */
-        DecisionDefinitionTypeEnum: "DECISION_TABLE" | "LITERAL_EXPRESSION" | "UNSPECIFIED" | "UNKNOWN";
-        /**
-         * @description The state of the decision instance.
-         * @enum {unknown}
-         */
-        DecisionInstanceStateEnum: "EVALUATED" | "FAILED" | "UNSPECIFIED" | "UNKNOWN";
-        /**
-         * @description The order in which to sort the related field.
-         * @default ASC
-         * @enum {string}
-         */
-        SortOrderEnum: "ASC" | "DESC";
-        MessageCorrelationRequest: {
-            /** @description The message name as defined in the BPMN process
-             *      */
-            name?: string;
-            /**
-             * @description The correlation key of the message
-             * @default
-             */
-            correlationKey: string;
-            /** @description The message variables as JSON document */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-            /** @description the tenant for which the message is published */
-            tenantId?: string | null;
-        };
-        /** @description The message key of the correlated message, as well as the first process instance key it
-         *     correlated with.
-         *      */
-        MessageCorrelationResult: {
-            /** @description The tenant ID of the correlated message */
-            tenantId?: string;
-            /** @description The key of the correlated message */
-            messageKey?: string;
-            /** @description The key of the first process instance the message correlated with */
-            processInstanceKey?: string;
-        };
-        MessagePublicationRequest: {
-            /** @description The name of the message. */
-            name: string;
-            /**
-             * @description The correlation key of the message.
-             * @default
-             */
-            correlationKey: string;
-            /**
-             * Format: int64
-             * @description Timespan (in ms) to buffer the message on the broker.
-             * @default 0
-             */
-            timeToLive: number;
-            /** @description The unique ID of the message. Only useful to ensure only one message with the given ID
-             *     will ever be published (during its lifetime).
-             *      */
-            messageId?: string | null;
-            /** @description The message variables as JSON document. */
-            variables?: {
-                [key: string]: unknown;
-            } | null;
-            /** @description The tenant of the message sender. */
-            tenantId?: string | null;
-        };
-        /** @description The message key of the published message. */
-        MessagePublicationResult: {
-            /** @description The tenant ID of the message. */
-            tenantId?: string;
-            /** @description The key of the message */
-            messageKey?: string;
-        };
-        DocumentReference: {
-            /**
-             * @description Document discriminator. Always set to "camunda".
-             * @enum {string}
-             */
-            "camunda.document.type"?: "camunda";
-            /** @description The ID of the document store. */
-            storeId?: string;
-            /** @description The ID of the document. */
-            documentId?: string;
-            /** @description The hash of the document. */
-            contentHash?: string;
-            metadata?: components["schemas"]["DocumentMetadata"];
-        };
-        DocumentCreationFailureDetail: {
-            /** @description The name of the file. */
-            fileName?: string;
-            /** @description The detail of the failure. */
-            detail?: string;
-        };
-        DocumentCreationBatchResponse: {
-            /** @description Documents that were successfully created. */
-            createdDocuments?: components["schemas"]["DocumentReference"][];
-            /** @description Documents that failed creation. */
-            failedDocuments?: components["schemas"]["DocumentCreationFailureDetail"][];
-        };
-        /** @description Information about the document. */
-        DocumentMetadata: {
-            /** @description The content type of the document. */
-            contentType?: string;
-            /** @description The name of the file. */
-            fileName?: string;
-            /**
-             * Format: date-time
-             * @description The date and time when the document expires.
-             */
-            expiresAt?: string;
-            /**
-             * Format: int64
-             * @description The size of the document in bytes.
-             */
-            size?: number;
-            /** @description The ID of the process definition that created the document. */
-            processDefinitionId?: string;
-            /** @description The key of the process instance that created the document. */
-            processInstanceKey?: string;
-            /** @description Custom properties of the document. */
-            customProperties?: {
-                [key: string]: unknown;
-            };
-        };
-        DocumentLinkRequest: {
-            /**
-             * Format: int64
-             * @description The time-to-live of the document link in ms.
-             * @default 3600000
-             */
-            timeToLive: number;
-        };
-        DocumentLink: {
-            /** @description The link to the document. */
-            url?: string;
-            /**
-             * Format: date-time
-             * @description The date and time when the link expires.
-             */
-            expiresAt?: string;
-        };
-        DeploymentResult: {
-            /** @description The tenant ID associated with the deployment. */
-            tenantId?: string;
-            /** @description The unique key identifying the deployment. */
-            deploymentKey?: string;
-            /** @description Items deployed by the request. */
-            deployments?: components["schemas"]["DeploymentMetadataResult"][];
-        };
-        DeploymentMetadataResult: {
-            processDefinition?: components["schemas"]["DeploymentProcessResult"];
-            decisionDefinition?: components["schemas"]["DeploymentDecisionResult"];
-            decisionRequirements?: components["schemas"]["DeploymentDecisionRequirementsResult"];
-            form?: components["schemas"]["DeploymentFormResult"];
-            resource?: components["schemas"]["DeploymentResourceResult"];
-        };
-        /** @description A deployed process. */
-        DeploymentProcessResult: {
-            /** @description The bpmn process ID, as parsed during deployment, together with the version forms a
-             *     unique identifier for a specific process definition.
-             *      */
-            processDefinitionId?: string;
-            /**
-             * Format: int32
-             * @description The assigned process version.
-             */
-            processDefinitionVersion?: number;
-            /** @description The resource name from which this process was parsed. */
-            resourceName?: string;
-            /** @description The tenant ID of the deployed process. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this process. */
-            processDefinitionKey?: string;
-        };
-        /** @description A deployed decision. */
-        DeploymentDecisionResult: {
-            /** @description The dmn decision ID, as parsed during deployment, together with the version forms a
-             *     unique identifier for a specific decision.
-             *      */
-            decisionDefinitionId?: string;
-            /**
-             * Format: int32
-             * @description The assigned decision version.
-             */
-            version?: number;
-            /** @description The DMN name of the decision, as parsed during deployment. */
-            name?: string;
-            /** @description The tenant ID of the deployed decision. */
-            tenantId?: string;
-            /** @description The dmn ID of the decision requirements graph that this decision is part of, as parsed during deployment.
-             *      */
-            decisionRequirementsId?: string;
-            /** @description The assigned decision key, which acts as a unique identifier for this decision.
-             *      */
-            decisionDefinitionKey?: string;
-            /** @description The assigned key of the decision requirements graph that this decision is part of.
-             *      */
-            decisionRequirementsKey?: string;
-        };
-        /** @description Deployed decision requirements. */
-        DeploymentDecisionRequirementsResult: {
-            /** @description The dmn decision requirements ID, as parsed during deployment; together with the versions forms a unique identifier for a specific decision.
-             *      */
-            decisionRequirementsId?: string;
-            /**
-             * Format: int32
-             * @description The assigned decision requirements version.
-             */
-            version?: number;
-            /** @description The DMN name of the decision requirements, as parsed during deployment. */
-            decisionRequirementsName?: string;
-            /** @description The tenant ID of the deployed decision requirements. */
-            tenantId?: string;
-            /** @description The resource name from which this decision requirements was parsed. */
-            resourceName?: string;
-            /** @description The assigned decision requirements key, which acts as a unique identifier for this decision requirements.
-             *      */
-            decisionRequirementsKey?: string;
-        };
-        /** @description A deployed form. */
-        DeploymentFormResult: {
-            /** @description The form ID, as parsed during deployment, together with the version forms a
-             *     unique identifier for a specific form.
-             *      */
-            formId?: string;
-            /**
-             * Format: int32
-             * @description The assigned form version.
-             */
-            version?: number;
-            /** @description The resource name from which this form was parsed. */
-            resourceName?: string;
-            /** @description The tenant ID of the deployed form. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this form. */
-            formKey?: string;
-        };
-        /** @description A deployed Resource. */
-        DeploymentResourceResult: {
-            /** @description The resource ID, as parsed during deployment, together with the version forms a
-             *     unique identifier for a specific form.
-             *      */
-            resourceId?: string;
-            /**
-             * Format: int32
-             * @description The assigned resource version.
-             */
-            version?: number;
-            /** @description The resource name from which this resource was parsed. */
-            resourceName?: string;
-            /** @description The tenant ID of the deployed form. */
-            tenantId?: string;
-            /** @description The assigned key, which acts as a unique identifier for this Resource. */
-            resourceKey?: string;
-        };
-        IncidentResolutionRequest: {
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation.
-             *     Must be >0 if provided.
-             *
-             */
-            operationReference?: number;
-        };
-        ProcessInstanceCreationInstruction: {
-            /** @description The BPMN process ID of the process definition to start an instance of.
-             *     Cannot be used together with processDefinitionKey.
-             *      */
-            processDefinitionId?: string;
-            /**
-             * Format: int32
-             * @description The version of the process. Only considered when a processDefinitionId is provided.
-             *     By default, the latest version of the process is used.
-             *
-             * @default -1
-             */
-            processDefinitionVersion: number;
-            /** @description JSON object that will instantiate the variables for the root variable scope
-             *     of the process instance.
-             *      */
-            variables?: {
-                [key: string]: unknown;
-            };
-            /** @description The tenant ID of the process definition. */
-            tenantId?: string;
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation.
-             *     Must be >0 if provided.
-             *
-             */
-            operationReference?: number;
-            /** @description List of start instructions. By default, the process instance will start at
-             *     the start event. If provided, the process instance will apply start instructions
-             *     after it has been created.
-             *      */
-            startInstructions?: components["schemas"]["ProcessInstanceCreationStartInstruction"][];
-            /** @description Runtime instructions (alpha). List of instructions that affect the runtime behavior of
-             *     the process instance. Refer to specific instruction types for more details.
-             *
-             *     This parameter is an alpha feature and may be subject to change
-             *     in future releases.
-             *      */
-            runtimeInstructions?: components["schemas"]["ProcessInstanceCreationRuntimeInstruction"][];
-            /**
-             * @description Wait for the process instance to complete. If the process instance completion does
-             *     not occur within the requestTimeout, the request will be closed. This can lead to a 504
-             *     response status. Disabled by default.
-             *
-             * @default false
-             */
-            awaitCompletion: boolean;
-            /** @description List of variables by name to be included in the response when awaitCompletion is set to true.
-             *     If empty, all visible variables in the root scope will be returned.
-             *      */
-            fetchVariables?: string[];
-            /**
-             * Format: int64
-             * @description Timeout (in ms) the request waits for the process to complete. By default or
-             *     when set to 0, the generic request timeout configured in the cluster is applied.
-             *
-             */
-            requestTimeout?: number;
-            /** @description The unique key identifying the process definition, for example, returned for a process in the
-             *     deploy resources endpoint. Cannot be used together with processDefinitionId.
-             *      */
-            processDefinitionKey?: string;
-        };
-        ProcessInstanceCreationStartInstruction: {
-            /** @description Future extensions might include:
-             *       - different types of start instructions
-             *       - ability to set local variables for different flow scopes
-             *
-             *     For now, however, the start instruction is implicitly a "startBeforeElement" instruction
-             *      */
-            elementId?: string;
-        };
-        /**
-         * @description The type of the runtime instruction. For now, only SUSPEND_PROCESS_INSTANCE is supported.
-         *
-         *     Caution: process instance suspension is an alpha feature and may be subject to change
-         *     in future releases.
-         *
-         *     Note the following limitations of suspended process instances:
-         *       - Suspended process instances currently cannot be resumed. The only possible state
-         *         transition is to cancel the suspended instance.
-         *       - Suspending a process instance currently means that all jobs, user tasks, incidents, and
-         *         event subscriptions are removed from the runtime state. This means that process instances
-         *         suspended with the current implementation may not be fully recoverable in the future,
-         *         when the resume functionality is implemented.
-         *       - Suspended process instances currently cannot be modified or migrated.
-         *
-         *     It is therefore not recommended to use process instance suspension outside of testing or
-         *     debugging context.
-         *
-         * @enum {string}
-         */
-        RuntimeInstructionType: "SUSPEND_PROCESS_INSTANCE";
-        /** @description Base type for all runtime instructions.
-         *      */
-        ProcessInstanceCreationRuntimeInstruction: {
-            type: components["schemas"]["RuntimeInstructionType"];
-        };
-        ProcessInstanceCreationSuspendInstruction: Omit<components["schemas"]["ProcessInstanceCreationRuntimeInstruction"], "type"> & {
-            /** @description The ID of the element that, once completed, will cause the process to move into suspended state.
-             *      */
-            afterElementId: string;
-        } & {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "SUSPEND_PROCESS_INSTANCE";
-        };
-        CreateProcessInstanceResult: {
-            /** @description The BPMN process ID of the process definition which was used to create the process.
-             *     instance
-             *      */
-            processDefinitionId?: string;
-            /**
-             * Format: int32
-             * @description The version of the process definition which was used to create the process instance.
-             *
-             */
-            processDefinitionVersion?: number;
-            /** @description The tenant ID of the created process instance. */
-            tenantId?: string;
-            /** @description All the variables visible in the root scope. */
-            variables?: {
-                [key: string]: unknown;
-            };
-            /** @description The key of the process definition which was used to create the process instance.
-             *      */
-            processDefinitionKey?: string;
-            /** @description The unique identifier of the created process instance; to be used wherever a request
-             *     needs a process instance key (e.g. CancelProcessInstanceRequest).
-             *      */
-            processInstanceKey?: string;
-        };
-        ProcessInstanceMigrationBatchOperationRequest: {
-            filter: components["schemas"]["ProcessInstanceFilter"];
-            migrationPlan: components["schemas"]["ProcessInstanceMigrationBatchOperationPlan"];
-        };
-        /** @description The migration instructions describe how to migrate a process instance from one process definition to another.
-         *      */
-        ProcessInstanceMigrationBatchOperationPlan: {
-            /** @description Element mappings from the source process instance to the target process instance. */
-            mappingInstructions: components["schemas"]["MigrateProcessInstanceMappingInstruction"][];
-            /** @description The key of process definition to migrate the process instance to. */
-            targetProcessDefinitionKey: string;
-        };
-        /** @description The migration instructions describe how to migrate a process instance from one process definition to another.
-         *      */
-        ProcessInstanceMigrationInstruction: {
-            /** @description Element mappings from the source process instance to the target process instance. */
-            mappingInstructions: components["schemas"]["MigrateProcessInstanceMappingInstruction"][];
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided.
-             *
-             */
-            operationReference?: number;
-            /** @description The key of process definition to migrate the process instance to. */
-            targetProcessDefinitionKey: string;
-        };
-        /** @description The mapping instructions describe how to map elements from the source process definition to the target process definition.
-         *      */
-        MigrateProcessInstanceMappingInstruction: {
-            /** @description The element ID to migrate from. */
-            sourceElementId: string;
-            /** @description The element ID to migrate into. */
-            targetElementId: string;
-        };
-        ProcessInstanceModificationInstruction: {
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided.
-             *
-             */
-            operationReference?: number;
-            /** @description Instructions describing which elements should be activated in which scopes and which variables should be created. */
-            activateInstructions?: components["schemas"]["ProcessInstanceModificationActivateInstruction"][];
-            /** @description Instructions describing which elements should be terminated. */
-            terminateInstructions?: components["schemas"]["ProcessInstanceModificationTerminateInstruction"][];
-        };
-        /** @description Instructions describing an element that should be activated. */
-        ProcessInstanceModificationActivateInstruction: {
-            /** @description The ID of the element that should be activated. */
-            elementId: string;
-            /** @description Instructions describing which variables should be created. */
-            variableInstructions?: components["schemas"]["ModifyProcessInstanceVariableInstruction"][];
-            /**
-             * @description The key of the ancestor scope the element instance should be created in.
-             *     Set to -1 to create the new element instance within an existing element instance of the
-             *     flow scope.
-             *
-             * @default -1
-             */
-            ancestorElementInstanceKey: string;
-        };
-        /** @description Instructions describing which variables should be created. */
-        ModifyProcessInstanceVariableInstruction: {
-            /** @description JSON document that will instantiate the variables for the root variable scope of the process instance.
-             *     It must be a JSON object, as variables will be mapped in a key-value fashion.
-             *      */
-            variables: {
-                [key: string]: unknown;
-            };
-            /**
-             * @description The ID of the element in which scope the variables should be created.
-             *     Leave empty to create the variables in the global scope of the process instance
-             *
-             * @default
-             */
-            scopeId: string;
-        };
-        /** @description Instructions describing which elements should be terminated. */
-        ProcessInstanceModificationTerminateInstruction: {
-            /** @description The ID of the element that should be terminated. */
-            elementInstanceKey: string;
-        };
-        SetVariableRequest: {
-            /** @description JSON object representing the variables to set in the element’s scope. */
-            variables: {
-                [key: string]: unknown;
-            };
-            /**
-             * @description If set to true, the variables are merged strictly into the local scope (as specified by the `elementInstanceKey`).
-             *     Otherwise, the variables are propagated to upper scopes and set at the outermost one.
-             *
-             *     Let’s consider the following example:
-             *
-             *     There are two scopes '1' and '2'.
-             *     Scope '1' is the parent scope of '2'. The effective variables of the scopes are:
-             *     1 => { "foo" : 2 }
-             *     2 => { "bar" : 1 }
-             *
-             *     An update request with elementInstanceKey as '2', variables { "foo" : 5 }, and local set
-             *     to true leaves scope '1' unchanged and adjusts scope '2' to { "bar" : 1, "foo" 5 }.
-             *
-             *     By default, with local set to false, scope '1' will be { "foo": 5 }
-             *     and scope '2' will be { "bar" : 1 }.
-             *
-             * @default false
-             */
-            local: boolean;
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided.
-             *
-             */
-            operationReference?: number;
-        };
-        DeleteResourceRequest: {
-            /**
-             * Format: int64
-             * @description A reference key chosen by the user that will be part of all records resulting from this operation.
-             *     Must be > 0 if provided.
-             *
-             */
-            operationReference?: number;
-        } | null;
-        SignalBroadcastRequest: {
-            /** @description The name of the signal to broadcast. */
-            signalName: string;
-            /** @description The signal variables as a JSON object. */
-            variables?: {
-                [key: string]: unknown;
-            };
-            /** @description The ID of the tenant that owns the signal. */
-            tenantId?: string;
-        };
-        SignalBroadcastResult: {
-            /** @description The tenant ID of the signal that was broadcast. */
-            tenantId?: string;
-            /** @description The unique ID of the signal that was broadcast. */
-            signalKey?: string;
-        };
-        FormResult: {
-            /** @description The tenant ID of the form. */
-            tenantId?: string;
-            /** @description The user-provided identifier of the form. */
-            formId?: string;
-            /** @description The form content. */
-            schema?: Record<string, never>;
-            /**
-             * Format: int64
-             * @description The version of the the deployed form.
-             */
-            version?: number;
-            /** @description The assigned key, which acts as a unique identifier for this form. */
-            formKey?: string;
-        };
-        ResourceResult: {
-            /** @description The resource name from which this resource was parsed. */
-            resourceName?: string;
-            /**
-             * Format: int32
-             * @description The assigned resource version.
-             */
-            version?: number;
-            /** @description The version tag of this resource. */
-            versionTag?: string;
-            /** @description The resource ID of this resource. */
-            resourceId?: string;
-            /** @description The tenant ID of this resource. */
-            tenantId?: string;
-            /** @description The unique key of this resource. */
-            resourceKey?: string;
-        };
-        /**
-         * @description The type of the batch operation.
-         * @enum {string}
-         */
-        BatchOperationTypeEnum: "CANCEL_PROCESS_INSTANCE" | "RESOLVE_INCIDENT" | "MIGRATE_PROCESS_INSTANCE" | "MODIFY_PROCESS_INSTANCE";
-        BatchOperationCreatedResult: {
-            /** @description Key of the batch operation. */
-            batchOperationKey?: string;
-            batchOperationType?: components["schemas"]["BatchOperationTypeEnum"];
-        };
-        BatchOperationSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "batchOperationKey" | "operationType" | "state" | "startDate" | "endDate";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Batch operation search request. */
-        BatchOperationSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["BatchOperationSearchQuerySortRequest"][];
-            /** @description The batch operation search filters. */
-            filter?: components["schemas"]["BatchOperationFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Batch operation filter request. */
-        BatchOperationFilter: {
-            /** @description The key (or operate legacy ID) of the batch operation. */
-            batchOperationKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The type of the batch operation. */
-            operationType?: components["schemas"]["BatchOperationTypeFilterProperty"];
-            /** @description The state of the batch operation. */
-            state?: components["schemas"]["BatchOperationStateFilterProperty"];
-        };
-        /** @description BatchOperationTypeEnum property with full advanced search capabilities. */
-        BatchOperationTypeFilterProperty: (string & components["schemas"]["BatchOperationTypeEnum"]) | components["schemas"]["AdvancedBatchOperationTypeFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced BatchOperationTypeEnum filter.
-         */
-        AdvancedBatchOperationTypeFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["BatchOperationTypeEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["BatchOperationTypeEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["BatchOperationTypeEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /** @description BatchOperationStateEnum property with full advanced search capabilities. */
-        BatchOperationStateFilterProperty: (string & components["schemas"]["BatchOperationStateEnum"]) | components["schemas"]["AdvancedBatchOperationStateFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced BatchOperationStateEnum filter.
-         */
-        AdvancedBatchOperationStateFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["BatchOperationStateEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["BatchOperationStateEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["BatchOperationStateEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /**
-         * @description The state, one of ACTIVE, COMPLETED, TERMINATED.
-         * @enum {unknown}
-         */
-        BatchOperationStateEnum: "CREATED" | "ACTIVE" | "SUSPENDED" | "COMPLETED" | "PARTIALLY_COMPLETED" | "CANCELED" | "INCOMPLETED";
-        BatchOperationItemSearchQuerySortRequest: {
-            /**
-             * @description The field to sort by.
-             * @enum {string}
-             */
-            field: "batchOperationKey" | "itemKey" | "processInstanceKey" | "state";
-            order?: components["schemas"]["SortOrderEnum"];
-        };
-        /** @description Batch operation item search request. */
-        BatchOperationItemSearchQuery: {
-            /** @description Sort field criteria. */
-            sort?: components["schemas"]["BatchOperationItemSearchQuerySortRequest"][];
-            /** @description The batch operation search filters. */
-            filter?: components["schemas"]["BatchOperationItemFilter"];
-        } & components["schemas"]["SearchQueryRequest"];
-        /** @description Batch operation item filter request. */
-        BatchOperationItemFilter: {
-            /** @description The key (or operate legacy ID) of the batch operation. */
-            batchOperationKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The key of the item, e.g. a process instance key. */
-            itemKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The process instance key of the processed item. */
-            processInstanceKey?: components["schemas"]["BasicStringFilterProperty"];
-            /** @description The state of the batch operation. */
-            state?: string & components["schemas"]["BatchOperationItemStateFilterProperty"];
-        };
-        /** @description BatchOperationItemStateEnum property with full advanced search capabilities. */
-        BatchOperationItemStateFilterProperty: (string & components["schemas"]["BatchOperationItemStateEnum"]) | components["schemas"]["AdvancedBatchOperationItemStateFilter"];
-        /**
-         * Advanced filter
-         * @description Advanced BatchOperationItemStateEnum filter.
-         */
-        AdvancedBatchOperationItemStateFilter: {
-            /** @description Checks for equality with the provided value. */
-            $eq?: components["schemas"]["BatchOperationItemStateEnum"];
-            /** @description Checks for inequality with the provided value. */
-            $neq?: components["schemas"]["BatchOperationItemStateEnum"];
-            /** @description Checks if the current property exists. */
-            $exists?: boolean;
-            /** @description Checks if the property matches any of the provided values. */
-            $in?: components["schemas"]["BatchOperationItemStateEnum"][];
-            $like?: components["schemas"]["LikeFilterProperty"];
-        };
-        /**
-         * @description The state, one of ACTIVE, COMPLETED, TERMINATED.
-         * @enum {unknown}
-         */
-        BatchOperationItemStateEnum: "ACTIVE" | "COMPLETED" | "CANCELED" | "FAILED";
-        BatchOperationSearchQueryResult: {
-            /** @description The matching batch operations. */
-            items?: components["schemas"]["BatchOperationResponse"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        BatchOperationResponse: {
-            /** @description Key or (Operate Legacy ID = UUID) of the batch operation. */
-            batchOperationKey?: string;
-            /**
-             * @description The state of the batch operation.
-             * @enum {string}
-             */
-            state?: "CREATED" | "ACTIVE" | "SUSPENDED" | "COMPLETED" | "PARTIALLY_COMPLETED" | "CANCELED" | "INCOMPLETED";
-            batchOperationType?: components["schemas"]["BatchOperationTypeEnum"];
-            /**
-             * Format: date-time
-             * @description The start date of the batch operation.
-             */
-            startDate?: string;
-            /**
-             * Format: date-time
-             * @description The end date of the batch operation.
-             */
-            endDate?: string;
-            /**
-             * Format: int32
-             * @description The total number of items contained in this batch operation.
-             */
-            operationsTotalCount?: number;
-            /**
-             * Format: int32
-             * @description The number of items which failed during execution of the batch operation. (e.g. because they are rejected by the Zeebe engine).
-             */
-            operationsFailedCount?: number;
-            /**
-             * Format: int32
-             * @description The number of successfully completed tasks.
-             */
-            operationsCompletedCount?: number;
-            /** @description The errors that occurred per partition during the batch operation. */
-            errors?: components["schemas"]["BatchOperationError"][];
-        };
-        BatchOperationError: {
-            /**
-             * Format: int32
-             * @description The partition ID where the error occurred.
-             */
-            partitionId?: number;
-            /**
-             * @description The type of the error that occurred during the batch operation.
-             * @enum {string}
-             */
-            type?: "QUERY_FAILED";
-            /** @description The error message that occurred during the batch operation. */
-            message?: string;
-        };
-        BatchOperationItemSearchQueryResult: {
-            /** @description The matching batch operations. */
-            items?: components["schemas"]["BatchOperationItemResponse"][];
-        } & components["schemas"]["SearchQueryResponse"];
-        BatchOperationItemResponse: {
-            /** @description The key (or operate legacy ID) of the batch operation. */
-            batchOperationKey?: string;
-            /** @description Key of the item, e.g. a process instance key. */
-            itemKey?: string;
-            /** @description the process instance key of the processed item. */
-            processInstanceKey?: string;
-            /**
-             * @description State of the item.
-             * @enum {string}
-             */
-            state?: "ACTIVE" | "COMPLETED" | "CANCELED" | "FAILED";
-            /**
-             * Format: date-time
-             * @description the date this item was processed.
-             */
-            processedDate?: string;
-            /** @description the error message from the engine in case of a failed operation. */
-            errorMessage?: string;
-        };
-        /** @description The process instance filter to define on which process instances tokens should be moved,
-         *     as well as mapping instructions which active element instances should be terminated and which
-         *     new element instances should be activated
-         *      */
-        ProcessInstanceModificationBatchOperationRequest: {
-            filter: components["schemas"]["ProcessInstanceFilter"];
-            /** @description Instructions describing which elements should be activated in which scopes and which variables should be created. */
-            moveInstructions: components["schemas"]["ProcessInstanceModificationMoveBatchOperationInstruction"][];
-        };
-        /** @description Instructions describing a move operation. This instruction will terminate all active elementInstance
-         *     at sourceElementId and activate a new element instance for each terminated one at targetElementId. */
-        ProcessInstanceModificationMoveBatchOperationInstruction: {
-            /** @description The ID of the element that should be terminated. */
-            sourceElementId: string;
-            /** @description The ID of the element that should be activated. */
-            targetElementId: string;
-        };
-    };
-    responses: {
-        /** @description An internal error occurred while processing the request.
-         *      */
-        InternalServerError: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description The request lacks valid authentication credentials. */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description Forbidden. The request is not allowed. */
-        Forbidden: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description The provided data is not valid. */
-        InvalidData: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-        /** @description The service is currently unavailable. This may happen only on some requests where the system creates backpressure to prevent the server's compute resources from being exhausted, avoiding more severe failures. Clients are recommended to eventually retry those requests after a backoff period. You can learn more about the backpressure mechanism here: https://docs.camunda.io/docs/components/zeebe/technical-concepts/internal-processing/#handling-backpressure .
-         *      */
-        ServiceUnavailable: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/problem+json": components["schemas"]["ProblemDetail"];
-            };
-        };
-    };
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+	schemas: {
+		TenantCreateRequest: {
+			/** @description The unique external tenant ID */
+			tenantId: string
+			/** @description The name of the tenant. */
+			name: string
+			/** @description The description of the tenant. */
+			description?: string
+		}
+		TenantCreateResult: {
+			/** @description The unique system-generated internal tenant ID. */
+			tenantKey?: string
+			/** @description The unique external tenant ID */
+			tenantId?: string
+			/** @description The name of the tenant. */
+			name?: string
+			/** @description The description of the tenant. */
+			description?: string
+		}
+		TenantUpdateRequest: {
+			/** @description The new name of the tenant. */
+			name: string
+			/** @description The new description of the tenant. */
+			description: string
+		}
+		TenantUpdateResult: {
+			/** @description The unique external tenant ID */
+			tenantId?: string
+			/** @description The name of the tenant. */
+			name?: string
+			/** @description The description of the tenant. */
+			description?: string
+			/** @description The unique system-generated internal tenant ID. */
+			tenantKey?: string
+		}
+		/** @description Tenant search response item. */
+		TenantResult: {
+			/** @description The tenant name. */
+			name?: string
+			/** @description The unique external tenant ID. */
+			tenantId?: string
+			/** @description The tenant description. */
+			description?: string
+			/** @description The unique system-generated internal tenant ID. */
+			tenantKey?: string
+		}
+		TenantSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'key' | 'name' | 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Tenant search request */
+		TenantSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['TenantSearchQuerySortRequest'][]
+			/** @description The tenant search filters. */
+			filter?: components['schemas']['TenantFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Tenant filter request */
+		TenantFilter: {
+			/** @description The ID of the tenant. */
+			tenantId?: string
+			/** @description The name of the tenant. */
+			name?: string
+		}
+		/** @description Tenant search response. */
+		TenantSearchQueryResult: {
+			/** @description The matching tenants. */
+			items?: components['schemas']['TenantResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		UserTaskSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'creationDate'
+				| 'completionDate'
+				| 'followUpDate'
+				| 'dueDate'
+				| 'priority'
+				| 'name'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description User task search query request. */
+		UserTaskSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['UserTaskSearchQuerySortRequest'][]
+			/** @description The user task search filters. */
+			filter?: components['schemas']['UserTaskFilter']
+		} & components['schemas']['SearchQueryRequest']
+		UserTaskVariableSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'value'
+				| 'name'
+				| 'tenantId'
+				| 'variableKey'
+				| 'scopeKey'
+				| 'processInstanceKey'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description User task search query request. */
+		UserTaskVariableSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['UserTaskVariableSearchQuerySortRequest'][]
+			/** @description The user task variable search filters. */
+			filter?: components['schemas']['UserTaskVariableFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description User task search query response. */
+		UserTaskSearchQueryResult: {
+			/** @description The matching user tasks. */
+			items?: components['schemas']['UserTaskResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		/** @description User task filter request. */
+		UserTaskFilter: {
+			/** @description The user task state. */
+			state?: components['schemas']['UserTaskStateFilterProperty']
+			/** @description The assignee of the user task. */
+			assignee?: components['schemas']['StringFilterProperty']
+			/** @description The priority of the user task. */
+			priority?: components['schemas']['IntegerFilterProperty']
+			/** @description The element ID of the user task. */
+			elementId?: string
+			/** @description The task name. This only works for data created with 8.8 and onwards. Instances from prior versions don't contain this data and cannot be found.
+			 *      */
+			name?: string
+			/** @description The candidate group for this user task. */
+			candidateGroup?: components['schemas']['StringFilterProperty']
+			/** @description The candidate user for this user task. */
+			candidateUser?: components['schemas']['StringFilterProperty']
+			/** @description Tenant ID of this user task. */
+			tenantId?: string
+			/** @description The ID of the process definition. */
+			processDefinitionId?: string
+			/** @description The user task creation date. */
+			creationDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The user task completion date. */
+			completionDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The user task follow-up date. */
+			followUpDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The user task due date. */
+			dueDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description Process instance variables associated with the user task. */
+			processInstanceVariables?: components['schemas']['VariableValueFilterProperty'][]
+			/** @description Local variables associated with the user task. */
+			localVariables?: components['schemas']['VariableValueFilterProperty'][]
+			/** @description The key for this user task. */
+			userTaskKey?: string
+			/** @description The key of the process definition. */
+			processDefinitionKey?: string
+			/** @description The key of the process instance. */
+			processInstanceKey?: string
+			/** @description The key of the element instance. */
+			elementInstanceKey?: string
+		}
+		/** @description UserTaskStateEnum property with full advanced search capabilities. */
+		UserTaskStateFilterProperty:
+			| (string & components['schemas']['UserTaskStateEnum'])
+			| components['schemas']['AdvancedUserTaskStateFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced UserTaskStateEnum filter.
+		 */
+		AdvancedUserTaskStateFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['UserTaskStateEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['UserTaskStateEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['UserTaskStateEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		VariableValueFilterProperty: {
+			/** @description Name of the variable. */
+			name: string
+			/** @description The value of the variable. */
+			value: components['schemas']['StringFilterProperty']
+		}
+		/** @description The user task variable search filters. */
+		UserTaskVariableFilter: {
+			/** @description Name of the variable. */
+			name?: components['schemas']['StringFilterProperty']
+		}
+		UserTaskResult: {
+			/** @description The name for this user task. */
+			name?: string
+			state?: components['schemas']['UserTaskStateEnum']
+			/** @description The assignee of the user task. */
+			assignee?: string
+			/** @description The element ID of the user task. */
+			elementId?: string
+			/** @description The candidate groups for this user task. */
+			candidateGroups?: string[]
+			/** @description The candidate users for this user task. */
+			candidateUsers?: string[]
+			/** @description The ID of the process definition. */
+			processDefinitionId?: string
+			/**
+			 * Format: date-time
+			 * @description The creation date of a user task.
+			 */
+			creationDate?: string
+			/**
+			 * Format: date-time
+			 * @description The completion date of a user task.
+			 */
+			completionDate?: string
+			/**
+			 * Format: date-time
+			 * @description The follow date of a user task.
+			 */
+			followUpDate?: string
+			/**
+			 * Format: date-time
+			 * @description The due date of a user task.
+			 */
+			dueDate?: string
+			/** @description Tenant ID of this user task. */
+			tenantId?: string
+			/** @description The external form reference. */
+			externalFormReference?: string
+			/**
+			 * Format: int32
+			 * @description The version of the process definition.
+			 */
+			processDefinitionVersion?: number
+			/** @description Custom headers for the user task. */
+			customHeaders?: {
+				[key: string]: string
+			}
+			/**
+			 * @description The priority of a user task. The higher the value the higher the priority.
+			 * @default 50
+			 */
+			priority: number
+			/** @description The key of the user task. */
+			userTaskKey?: string
+			/** @description The key of the element instance. */
+			elementInstanceKey?: string
+			/** @description The key of the process definition. */
+			processDefinitionKey?: string
+			/** @description The key of the process instance. */
+			processInstanceKey?: string
+			/** @description The key of the form. */
+			formKey?: string
+		}
+		/**
+		 * @description The state of the user task.
+		 * @enum {string}
+		 */
+		UserTaskStateEnum:
+			| 'CREATING'
+			| 'CREATED'
+			| 'ASSIGNING'
+			| 'UPDATING'
+			| 'COMPLETING'
+			| 'COMPLETED'
+			| 'CANCELING'
+			| 'CANCELED'
+			| 'FAILED'
+		VariableSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'value'
+				| 'name'
+				| 'tenantId'
+				| 'variableKey'
+				| 'scopeKey'
+				| 'processInstanceKey'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Variable search query request. */
+		VariableSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['VariableSearchQuerySortRequest'][]
+			/** @description The variable search filters. */
+			filter?: components['schemas']['VariableFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Variable filter request. */
+		VariableFilter: {
+			/** @description Name of the variable. */
+			name?: components['schemas']['StringFilterProperty']
+			/** @description The value of the variable. */
+			value?: components['schemas']['StringFilterProperty']
+			/** @description Tenant ID of this variable. */
+			tenantId?: string
+			/** @description Whether the value is truncated or not. */
+			isTruncated?: boolean
+			/** @description The key for this variable. */
+			variableKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The key of the scope of this variable. */
+			scopeKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The key of the process instance of this variable. */
+			processInstanceKey?: components['schemas']['BasicStringFilterProperty']
+		}
+		/** @description Variable search query response. */
+		VariableSearchQueryResult: {
+			/** @description The matching variables. */
+			items?: components['schemas']['VariableSearchResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		/** @description Variable search response item. */
+		VariableSearchResult: {
+			/** @description Value of this variable. Can be truncated. */
+			value?: string
+			/** @description Whether the value is truncated or not. */
+			isTruncated?: boolean
+		} & components['schemas']['VariableResultBase']
+		/** @description Variable search response item. */
+		VariableResult: {
+			/** @description Full value of this variable. */
+			value?: string
+		} & components['schemas']['VariableResultBase']
+		/** @description Variable response item. */
+		VariableResultBase: {
+			/** @description Name of this variable. */
+			name?: string
+			/** @description Tenant ID of this variable. */
+			tenantId?: string
+			/** @description The key for this variable. */
+			variableKey?: string
+			/** @description The key of the scope of this variable. */
+			scopeKey?: string
+			/** @description The key of the process instance of this variable. */
+			processInstanceKey?: string
+		}
+		ProcessDefinitionSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'processDefinitionKey'
+				| 'name'
+				| 'resourceName'
+				| 'version'
+				| 'versionTag'
+				| 'processDefinitionId'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		ProcessDefinitionSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['ProcessDefinitionSearchQuerySortRequest'][]
+			/** @description The process definition search filters. */
+			filter?: components['schemas']['ProcessDefinitionFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Process definition search filter. */
+		ProcessDefinitionFilter: {
+			/** @description Name of this process definition. */
+			name?: components['schemas']['StringFilterProperty']
+			/** @description Whether to only return the latest version of each process definition. When using this filter, pagination functionality is limited, you can only paginate forward using `after` and `limit`. The response contains no `startCursor` in the `page`, and requests ignore the `from` and `before` in the `page`.
+			 *      */
+			isLatestVersion?: boolean
+			/** @description Resource name of this process definition. */
+			resourceName?: string
+			/**
+			 * Format: int32
+			 * @description Version of this process definition.
+			 */
+			version?: number
+			/** @description Version tag of this process definition. */
+			versionTag?: string
+			/** @description Process definition ID of this process definition. */
+			processDefinitionId?: components['schemas']['StringFilterProperty']
+			/** @description Tenant ID of this process definition. */
+			tenantId?: string
+			/** @description The key for this process definition. */
+			processDefinitionKey?: string
+			/** @description Indicates whether the start event of the process has an associated Form Key. */
+			hasStartForm?: boolean
+		}
+		ProcessDefinitionSearchQueryResult: {
+			/** @description The matching process definitions. */
+			items?: components['schemas']['ProcessDefinitionResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		ProcessDefinitionResult: {
+			/** @description Name of this process definition. */
+			name?: string
+			/** @description Resource name for this process definition. */
+			resourceName?: string
+			/**
+			 * Format: int32
+			 * @description Version of this process definition.
+			 */
+			version?: number
+			/** @description Version tag of this process definition. */
+			versionTag?: string
+			/** @description Process definition ID of this process definition. */
+			processDefinitionId?: string
+			/** @description Tenant ID of this process definition. */
+			tenantId?: string
+			/** @description The key for this process definition. */
+			processDefinitionKey?: string
+			/** @description Indicates whether the start event of the process has an associated Form Key. */
+			hasStartForm?: boolean
+		}
+		ProcessInstanceSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'processInstanceKey'
+				| 'processDefinitionId'
+				| 'processDefinitionName'
+				| 'processDefinitionVersion'
+				| 'processDefinitionVersionTag'
+				| 'processDefinitionKey'
+				| 'parentProcessInstanceKey'
+				| 'parentElementInstanceKey'
+				| 'startDate'
+				| 'endDate'
+				| 'state'
+				| 'hasIncident'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Process instance search request. */
+		ProcessInstanceSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['ProcessInstanceSearchQuerySortRequest'][]
+			/** @description The process instance search filters. */
+			filter?: components['schemas']['ProcessInstanceFilter']
+		} & components['schemas']['SearchQueryRequest']
+		ProcessInstanceIncidentSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['IncidentSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		/**
+		 * Advanced filter
+		 * @description Advanced integer (int32) filter.
+		 */
+		AdvancedIntegerFilter: {
+			/**
+			 * Format: int32
+			 * @description Checks for equality with the provided value.
+			 */
+			$eq?: number
+			/**
+			 * Format: int32
+			 * @description Checks for inequality with the provided value.
+			 */
+			$neq?: number
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/**
+			 * Format: int32
+			 * @description Greater than comparison with the provided value.
+			 */
+			$gt?: number
+			/**
+			 * Format: int32
+			 * @description Greater than or equal comparison with the provided value.
+			 */
+			$gte?: number
+			/**
+			 * Format: int32
+			 * @description Lower than comparison with the provided value.
+			 */
+			$lt?: number
+			/**
+			 * Format: int32
+			 * @description Lower than or equal comparison with the provided value.
+			 */
+			$lte?: number
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: number[]
+		}
+		/** @description Integer property with advanced search capabilities. */
+		IntegerFilterProperty:
+			| number
+			| components['schemas']['AdvancedIntegerFilter']
+		/**
+		 * Advanced filter
+		 * @description Basic advanced string filter.
+		 */
+		BasicStringFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: string
+			/** @description Checks for inequality with the provided value. */
+			$neq?: string
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: string[]
+			/** @description Checks if the property matches none of the provided values. */
+			$notIn?: string[]
+		}
+		/**
+		 * Advanced filter
+		 * @description Advanced string filter.
+		 */
+		AdvancedStringFilter: components['schemas']['BasicStringFilter'] & {
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/**
+		 * Advanced filter
+		 * @description Advanced ProcessInstanceStateEnum filter.
+		 */
+		AdvancedProcessInstanceStateFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['ProcessInstanceStateEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['ProcessInstanceStateEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['ProcessInstanceStateEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/**
+		 * Advanced filter
+		 * @description Advanced ElementInstanceStateEnum filter.
+		 */
+		AdvancedElementInstanceStateFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['ElementInstanceStateEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['ElementInstanceStateEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['ElementInstanceStateEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/**
+		 * Advanced filter
+		 * @description Advanced date-time filter.
+		 */
+		AdvancedDateTimeFilter: {
+			/**
+			 * Format: date-time
+			 * @description Checks for equality with the provided value.
+			 */
+			$eq?: string
+			/**
+			 * Format: date-time
+			 * @description Checks for inequality with the provided value.
+			 */
+			$neq?: string
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/**
+			 * Format: date-time
+			 * @description Greater than comparison with the provided value.
+			 */
+			$gt?: string
+			/**
+			 * Format: date-time
+			 * @description Greater than or equal comparison with the provided value.
+			 */
+			$gte?: string
+			/**
+			 * Format: date-time
+			 * @description Lower than comparison with the provided value.
+			 */
+			$lt?: string
+			/**
+			 * Format: date-time
+			 * @description Lower than or equal comparison with the provided value.
+			 */
+			$lte?: string
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: string[]
+		}
+		/** @description String property with basic advanced search capabilities. */
+		BasicStringFilterProperty:
+			| string
+			| components['schemas']['BasicStringFilter']
+		/** @description String property with full advanced search capabilities. */
+		StringFilterProperty: string | components['schemas']['AdvancedStringFilter']
+		/** @description Checks if the property matches the provided like value.
+		 *
+		 *     Supported wildcard characters are:
+		 *
+		 *     * `*`: matches zero, one, or multiple characters.
+		 *     * `?`: matches one, single character.
+		 *
+		 *     Wildcard characters can be escaped with backslash, for instance: `\*`.
+		 *      */
+		LikeFilterProperty: string
+		/** @description ProcessInstanceStateEnum property with full advanced search capabilities. */
+		ProcessInstanceStateFilterProperty:
+			| (string & components['schemas']['ProcessInstanceStateEnum'])
+			| components['schemas']['AdvancedProcessInstanceStateFilter']
+		/** @description ElementInstanceStateEnum property with full advanced search capabilities. */
+		ElementInstanceStateFilterProperty:
+			| (string & components['schemas']['ElementInstanceStateEnum'])
+			| components['schemas']['AdvancedElementInstanceStateFilter']
+		/** @description Date-time property with full advanced search capabilities. */
+		DateTimeFilterProperty:
+			| string
+			| components['schemas']['AdvancedDateTimeFilter']
+		/** @description Base process instance search filter. */
+		BaseProcessInstanceFilterFields: {
+			/** @description The start date. */
+			startDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The end date. */
+			endDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The process instance state. */
+			state?: components['schemas']['ProcessInstanceStateFilterProperty']
+			/** @description Whether this process instance has a related incident or not. */
+			hasIncident?: boolean
+			/** @description The tenant ID. */
+			tenantId?: components['schemas']['StringFilterProperty']
+			/** @description The process instance variables. */
+			variables?: components['schemas']['VariableValueFilterProperty'][]
+			/** @description The key of this process instance. */
+			processInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The parent process instance key. */
+			parentProcessInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The parent element instance key. */
+			parentElementInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The batch operation ID. */
+			batchOperationId?: components['schemas']['StringFilterProperty']
+			/** @description The error message related to the process. */
+			errorMessage?: components['schemas']['StringFilterProperty']
+			/** @description Whether the process has failed jobs with retries left. */
+			hasRetriesLeft?: boolean
+			/** @description The state of the element instances associated with the process instance. */
+			elementInstanceState?: components['schemas']['ElementInstanceStateFilterProperty']
+			/** @description The element ID associated with the process instance. */
+			elementId?: components['schemas']['StringFilterProperty']
+			/** @description Whether the element instance has an incident or not. */
+			hasElementInstanceIncident?: boolean
+			/** @description The incident error hash code, associated with this process. */
+			incidentErrorHashCode?: components['schemas']['IntegerFilterProperty']
+		}
+		/** @description Process definition statistics search filter. */
+		ProcessDefinitionStatisticsFilter: components['schemas']['BaseProcessInstanceFilterFields'] & {
+			/** @description Defines a list of alternative filter groups combined using OR logic. Each object in the array is evaluated independently, and the filter matches if any one of them is satisfied.
+			 *
+			 *     Top-level fields and the `$or` clause are combined using AND logic — meaning: (top-level filters) AND (any of the `$or` filters) must match.
+			 *     <br>
+			 *     <em>Example:</em>
+			 *
+			 *     ```json
+			 *     {
+			 *       "state": "ACTIVE",
+			 *       "tenantId": 123,
+			 *       "$or": [
+			 *         { "processDefinitionId": "process_v1" },
+			 *         { "processDefinitionId": "process_v2", "hasIncident": true }
+			 *       ]
+			 *     }
+			 *     ```
+			 *     This matches process instances that:
+			 *
+			 *     <ul style="padding-left: 20px; margin-left: 20px;">
+			 *       <li style="list-style-type: disc;">are in <em>ACTIVE</em> state</li>
+			 *       <li style="list-style-type: disc;">have tenant ID equal to <em>123</em></li>
+			 *       <li style="list-style-type: disc;">and match either:
+			 *         <ul style="padding-left: 20px; margin-left: 20px;">
+			 *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v1</em>, or</li>
+			 *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v2</em> and <code>hasIncident</code> is <em>true</em></li>
+			 *         </ul>
+			 *       </li>
+			 *     </ul>
+			 *     <br>
+			 *     <p>Note: Using complex <code>$or</code> conditions may impact performance, use with caution in high-volume environments.
+			 *      */
+			$or?: components['schemas']['BaseProcessInstanceFilterFields'][]
+		}
+		/** @description Process instance search filter. */
+		ProcessInstanceFilterFields: {
+			/** @description The process definition ID. */
+			processDefinitionId?: components['schemas']['StringFilterProperty']
+			/** @description The process definition name. */
+			processDefinitionName?: components['schemas']['StringFilterProperty']
+			/** @description The process definition version. */
+			processDefinitionVersion?: components['schemas']['IntegerFilterProperty']
+			/** @description The process definition version tag. */
+			processDefinitionVersionTag?: components['schemas']['StringFilterProperty']
+			/** @description The process definition key. */
+			processDefinitionKey?: components['schemas']['BasicStringFilterProperty']
+		} & components['schemas']['BaseProcessInstanceFilterFields']
+		/** @description Process instance search filter. */
+		ProcessInstanceFilter: components['schemas']['ProcessInstanceFilterFields'] & {
+			/** @description Defines a list of alternative filter groups combined using OR logic. Each object in the array is evaluated independently, and the filter matches if any one of them is satisfied.
+			 *
+			 *     Top-level fields and the `$or` clause are combined using AND logic — meaning: (top-level filters) AND (any of the `$or` filters) must match.
+			 *     <br>
+			 *     <em>Example:</em>
+			 *
+			 *     ```json
+			 *     {
+			 *       "state": "ACTIVE",
+			 *       "tenantId": 123,
+			 *       "$or": [
+			 *         { "processDefinitionId": "process_v1" },
+			 *         { "processDefinitionId": "process_v2", "hasIncident": true }
+			 *       ]
+			 *     }
+			 *     ```
+			 *     This matches process instances that:
+			 *
+			 *     <ul style="padding-left: 20px; margin-left: 20px;">
+			 *       <li style="list-style-type: disc;">are in <em>ACTIVE</em> state</li>
+			 *       <li style="list-style-type: disc;">have tenant ID equal to <em>123</em></li>
+			 *       <li style="list-style-type: disc;">and match either:
+			 *         <ul style="padding-left: 20px; margin-left: 20px;">
+			 *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v1</em>, or</li>
+			 *           <li style="list-style-type: circle;"><code>processDefinitionId</code> is <em>process_v2</em> and <code>hasIncident</code> is <em>true</em></li>
+			 *         </ul>
+			 *       </li>
+			 *     </ul>
+			 *     <br>
+			 *     <p>Note: Using complex <code>$or</code> conditions may impact performance, use with caution in high-volume environments.
+			 *      */
+			$or?: components['schemas']['ProcessInstanceFilterFields'][]
+		}
+		/** @description Process instance search response. */
+		ProcessInstanceSearchQueryResult: {
+			/** @description The matching process instances. */
+			items?: components['schemas']['ProcessInstanceResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		/** @description Process instance search response item. */
+		ProcessInstanceResult: {
+			/** @description The process definition ID. */
+			processDefinitionId?: string
+			/** @description The process definition name. */
+			processDefinitionName?: string
+			/**
+			 * Format: int32
+			 * @description The process definition version.
+			 */
+			processDefinitionVersion?: number
+			/** @description The process definition version tag. */
+			processDefinitionVersionTag?: string
+			/**
+			 * Format: date-time
+			 * @description The start date.
+			 */
+			startDate?: string
+			/**
+			 * Format: date-time
+			 * @description The end date.
+			 */
+			endDate?: string
+			state?: components['schemas']['ProcessInstanceStateEnum']
+			/** @description Whether this process instance has a related incident or not. */
+			hasIncident?: boolean
+			/** @description The tenant ID. */
+			tenantId?: string
+			/** @description The key of this process instance. */
+			processInstanceKey?: string
+			/** @description The process definition key. */
+			processDefinitionKey?: string
+			/** @description The parent process instance key. */
+			parentProcessInstanceKey?: string
+			/** @description The parent element instance key. */
+			parentElementInstanceKey?: string
+		}
+		/**
+		 * @description Process instance states
+		 * @enum {unknown}
+		 */
+		ProcessInstanceStateEnum:
+			| 'ACTIVE'
+			| 'COMPLETED'
+			| 'TERMINATED'
+			| 'SUSPENDED'
+		/**
+		 * @description Element states
+		 * @enum {unknown}
+		 */
+		ElementInstanceStateEnum:
+			| 'ACTIVE'
+			| 'COMPLETED'
+			| 'TERMINATED'
+			| 'SUSPENDED'
+		ProcessInstanceCallHierarchyEntry: {
+			/** @description The key of the process instance. */
+			processInstanceKey: string
+			/** @description The key of the process definition. */
+			processDefinitionKey: string
+			/** @description The name of the process definition (fall backs to the process definition ID if not available). */
+			processDefinitionName: string
+		}
+		/** @description Process instance sequence flows query response. */
+		ProcessInstanceSequenceFlowsQueryResult: {
+			/** @description The sequence flows. */
+			items?: components['schemas']['ProcessInstanceSequenceFlowResult'][]
+		}
+		/** @description Process instance sequence flow result. */
+		ProcessInstanceSequenceFlowResult: {
+			/** @description The sequence flow ID. */
+			sequenceFlowId?: string
+			/** @description The key of this process instance. */
+			processInstanceKey?: string
+			/** @description The process definition key. */
+			processDefinitionKey?: string
+			/** @description The process definition ID. */
+			processDefinitionId?: string
+			/** @description The element ID for this sequence flow, as provided in the BPMN process. */
+			elementId?: string
+			/** @description The tenant ID for this sequence flow. */
+			tenantId?: string
+		}
+		/** @description Process definition element statistics request. */
+		ProcessDefinitionElementStatisticsQuery: {
+			/** @description The process definition statistics search filters. */
+			filter?: components['schemas']['ProcessDefinitionStatisticsFilter']
+		}
+		/** @description Process definition element statistics query response. */
+		ProcessDefinitionElementStatisticsQueryResult: {
+			/** @description The element statistics. */
+			items?: components['schemas']['ProcessElementStatisticsResult'][]
+		}
+		/** @description Process instance element statistics query response. */
+		ProcessInstanceElementStatisticsQueryResult: {
+			/** @description The element statistics. */
+			items?: components['schemas']['ProcessElementStatisticsResult'][]
+		}
+		/** @description Process element statistics response. */
+		ProcessElementStatisticsResult: {
+			/** @description The element ID for which the results are aggregated. */
+			elementId?: string
+			/**
+			 * Format: int64
+			 * @description The total number of active instances of the element.
+			 */
+			active?: number
+			/**
+			 * Format: int64
+			 * @description The total number of canceled instances of the element.
+			 */
+			canceled?: number
+			/**
+			 * Format: int64
+			 * @description The total number of incidents for the element.
+			 */
+			incidents?: number
+			/**
+			 * Format: int64
+			 * @description The total number of completed instances of the element.
+			 */
+			completed?: number
+		}
+		CancelProcessInstanceRequest: {
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation.
+			 *     Must be > 0 if provided.
+			 *
+			 */
+			operationReference?: number
+		} | null
+		ElementInstanceSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'elementInstanceKey'
+				| 'processInstanceKey'
+				| 'processDefinitionKey'
+				| 'processDefinitionId'
+				| 'startDate'
+				| 'endDate'
+				| 'elementId'
+				| 'elementName'
+				| 'type'
+				| 'state'
+				| 'incidentKey'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Element instance search request. */
+		ElementInstanceSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['ElementInstanceSearchQuerySortRequest'][]
+			/** @description The element instance search filters. */
+			filter?: components['schemas']['ElementInstanceFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Element instance filter. */
+		ElementInstanceFilter: {
+			/** @description The process definition ID associated to this element instance. */
+			processDefinitionId?: string
+			/** @description State of element instance as defined set of values. */
+			state?: components['schemas']['ElementInstanceStateFilterProperty']
+			/**
+			 * @description Type of element as defined set of values.
+			 * @enum {string}
+			 */
+			type?:
+				| 'UNSPECIFIED'
+				| 'PROCESS'
+				| 'SUB_PROCESS'
+				| 'EVENT_SUB_PROCESS'
+				| 'AD_HOC_SUB_PROCESS'
+				| 'START_EVENT'
+				| 'INTERMEDIATE_CATCH_EVENT'
+				| 'INTERMEDIATE_THROW_EVENT'
+				| 'BOUNDARY_EVENT'
+				| 'END_EVENT'
+				| 'SERVICE_TASK'
+				| 'RECEIVE_TASK'
+				| 'USER_TASK'
+				| 'MANUAL_TASK'
+				| 'TASK'
+				| 'EXCLUSIVE_GATEWAY'
+				| 'INCLUSIVE_GATEWAY'
+				| 'PARALLEL_GATEWAY'
+				| 'EVENT_BASED_GATEWAY'
+				| 'SEQUENCE_FLOW'
+				| 'MULTI_INSTANCE_BODY'
+				| 'CALL_ACTIVITY'
+				| 'BUSINESS_RULE_TASK'
+				| 'SCRIPT_TASK'
+				| 'SEND_TASK'
+				| 'UNKNOWN'
+			/** @description The element ID for this element instance. */
+			elementId?: string
+			/** @description The element name. This only works for data created with 8.8 and onwards. Instances from prior versions don't contain this data and cannot be found.
+			 *      */
+			elementName?: string
+			/** @description Shows whether this element instance has an incident related to. */
+			hasIncident?: boolean
+			/** @description The tenant ID. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this element instance. */
+			elementInstanceKey?: string
+			/** @description The process instance key associated to this element instance. */
+			processInstanceKey?: string
+			/** @description The process definition key associated to this element instance. */
+			processDefinitionKey?: string
+			/** @description The key of incident if field incident is true. */
+			incidentKey?: string
+			/** @description The start date of this element instance. */
+			startDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The end date of this element instance. */
+			endDate?: components['schemas']['DateTimeFilterProperty']
+		}
+		ElementInstanceSearchQueryResult: {
+			/** @description The matching element instances. */
+			items?: components['schemas']['ElementInstanceResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		ElementInstanceResult: {
+			/** @description The process definition ID associated to this element instance. */
+			processDefinitionId?: string
+			/**
+			 * Format: date-time
+			 * @description Date when element instance started.
+			 */
+			startDate?: string
+			/**
+			 * Format: date-time
+			 * @description Date when element instance finished.
+			 */
+			endDate?: string
+			/** @description The element ID for this element instance. */
+			elementId?: string
+			/** @description The element name for this element instance. */
+			elementName?: string
+			/**
+			 * @description Type of element as defined set of values.
+			 * @enum {string}
+			 */
+			type?:
+				| 'UNSPECIFIED'
+				| 'PROCESS'
+				| 'SUB_PROCESS'
+				| 'EVENT_SUB_PROCESS'
+				| 'AD_HOC_SUB_PROCESS'
+				| 'START_EVENT'
+				| 'INTERMEDIATE_CATCH_EVENT'
+				| 'INTERMEDIATE_THROW_EVENT'
+				| 'BOUNDARY_EVENT'
+				| 'END_EVENT'
+				| 'SERVICE_TASK'
+				| 'RECEIVE_TASK'
+				| 'USER_TASK'
+				| 'MANUAL_TASK'
+				| 'TASK'
+				| 'EXCLUSIVE_GATEWAY'
+				| 'INCLUSIVE_GATEWAY'
+				| 'PARALLEL_GATEWAY'
+				| 'EVENT_BASED_GATEWAY'
+				| 'SEQUENCE_FLOW'
+				| 'MULTI_INSTANCE_BODY'
+				| 'CALL_ACTIVITY'
+				| 'BUSINESS_RULE_TASK'
+				| 'SCRIPT_TASK'
+				| 'SEND_TASK'
+				| 'UNKNOWN'
+			/** @description State of element instance as defined set of values. */
+			state?: components['schemas']['ElementInstanceStateEnum']
+			/** @description Shows whether this element instance has an incident. If true also an incidentKey is provided. */
+			hasIncident?: boolean
+			/** @description The tenant ID of the incident. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this element instance. */
+			elementInstanceKey?: string
+			/** @description The process instance key associated to this element instance. */
+			processInstanceKey?: string
+			/** @description The process definition key associated to this element instance. */
+			processDefinitionKey?: string
+			/** @description Incident key associated with this element instance. */
+			incidentKey?: string
+		}
+		AdHocSubProcessActivateActivitiesInstruction: {
+			/** @description Activities to activate. */
+			elements: components['schemas']['AdHocSubProcessActivateActivityReference'][]
+		}
+		AdHocSubProcessActivateActivityReference: {
+			/** @description The ID of the element that should be activated. */
+			elementId: string
+		}
+		DecisionDefinitionSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'decisionDefinitionKey'
+				| 'decisionDefinitionId'
+				| 'name'
+				| 'version'
+				| 'decisionRequirementsId'
+				| 'decisionRequirementsKey'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		DecisionDefinitionSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['DecisionDefinitionSearchQuerySortRequest'][]
+			/** @description The decision definition search filters. */
+			filter?: components['schemas']['DecisionDefinitionFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Decision definition search filter. */
+		DecisionDefinitionFilter: {
+			/** @description The DMN ID of the decision definition. */
+			decisionDefinitionId?: string
+			/** @description The DMN name of the decision definition. */
+			name?: string
+			/**
+			 * Format: int32
+			 * @description The assigned version of the decision definition.
+			 */
+			version?: number
+			/** @description the DMN ID of the decision requirements graph that the decision definition is part of. */
+			decisionRequirementsId?: string
+			/** @description The tenant ID of the decision definition. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this decision definition. */
+			decisionDefinitionKey?: string
+			/** @description The assigned key of the decision requirements graph that the decision definition is part of. */
+			decisionRequirementsKey?: string
+		}
+		IncidentSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'incidentKey'
+				| 'processDefinitionKey'
+				| 'processDefinitionId'
+				| 'processInstanceKey'
+				| 'errorType'
+				| 'errorMessage'
+				| 'elementId'
+				| 'elementInstanceKey'
+				| 'creationTime'
+				| 'state'
+				| 'jobKey'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		IncidentSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['IncidentSearchQuerySortRequest'][]
+			/** @description The incident search filters. */
+			filter?: components['schemas']['IncidentFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Incident search filter. */
+		IncidentFilter: {
+			/** @description The process definition ID associated to this incident. */
+			processDefinitionId?: string
+			/**
+			 * @description Incident error type with a defined set of values.
+			 * @enum {string}
+			 */
+			errorType?:
+				| 'UNSPECIFIED'
+				| 'UNKNOWN'
+				| 'IO_MAPPING_ERROR'
+				| 'JOB_NO_RETRIES'
+				| 'EXECUTION_LISTENER_NO_RETRIES'
+				| 'TASK_LISTENER_NO_RETRIES'
+				| 'CONDITION_ERROR'
+				| 'EXTRACT_VALUE_ERROR'
+				| 'CALLED_ELEMENT_ERROR'
+				| 'UNHANDLED_ERROR_EVENT'
+				| 'MESSAGE_SIZE_EXCEEDED'
+				| 'CALLED_DECISION_ERROR'
+				| 'DECISION_EVALUATION_ERROR'
+				| 'FORM_NOT_FOUND'
+				| 'RESOURCE_NOT_FOUND'
+			/** @description Error message which describes the error in more detail. */
+			errorMessage?: string
+			/** @description The element ID associated to this incident. */
+			elementId?: string
+			/**
+			 * Format: date-time
+			 * @description Date of incident creation.
+			 */
+			creationTime?: string
+			/**
+			 * @description State of this incident with a defined set of values.
+			 * @enum {string}
+			 */
+			state?: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+			/** @description The tenant ID of the incident. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this incident. */
+			incidentKey?: string
+			/** @description The process definition key associated to this incident. */
+			processDefinitionKey?: string
+			/** @description The process instance key associated to this incident. */
+			processInstanceKey?: string
+			/** @description The element instance key associated to this incident. */
+			elementInstanceKey?: string
+			/** @description The job key, if exists, associated with this incident. */
+			jobKey?: string
+		}
+		IncidentSearchQueryResult: {
+			/** @description The matching incidents. */
+			items?: components['schemas']['IncidentResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		MessageSubscriptionSearchQueryResult: {
+			/** @description The matching message subscriptions. */
+			items?: components['schemas']['MessageSubscriptionResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		MessageSubscriptionResult: {
+			/** @description The message subscription key associated with this message subscription. */
+			messageSubscriptionKey?: string
+			/** @description The process definition ID associated with this message subscription. */
+			processDefinitionId?: string
+			/** @description The process definition key associated with this message subscription. */
+			processDefinitionKey?: string
+			/** @description The process instance key associated with this message subscription. */
+			processInstanceKey?: string
+			/** @description The element ID associated with this message subscription. */
+			elementId?: string
+			/** @description The element instance key associated with this message subscription. */
+			elementInstanceKey?: string
+			messageSubscriptionType?: components['schemas']['MessageSubscriptionTypeEnum']
+			/**
+			 * Format: date-time
+			 * @description The last updated date of the message subscription.
+			 */
+			lastUpdatedDate?: string
+			/** @description The name of the message associated with the message subscription. */
+			messageName?: string
+			/** @description The correlation key of the message subscription. */
+			correlationKey?: string
+			/** @description The unique external tenant ID. */
+			tenantId?: string
+		}
+		MessageSubscriptionSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'messageSubscriptionKey'
+				| 'processDefinitionId'
+				| 'processDefinitionKey'
+				| 'processInstanceKey'
+				| 'elementId'
+				| 'elementInstanceKey'
+				| 'messageSubscriptionType'
+				| 'lastUpdatedDate'
+				| 'messageName'
+				| 'correlationKey'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		MessageSubscriptionSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['MessageSubscriptionSearchQuerySortRequest'][]
+			/** @description The incident search filters. */
+			filter?: components['schemas']['MessageSubscriptionFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Message subscription search filter. */
+		MessageSubscriptionFilter: {
+			/** @description The message subscription key associated with this message subscription. */
+			messageSubscriptionKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The process definition ID associated with this message subscription. */
+			processDefinitionId?: components['schemas']['StringFilterProperty']
+			/** @description The process definition key associated with this message subscription. */
+			processDefinitionKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The process instance key associated with this message subscription. */
+			processInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The element ID associated with this message subscription. */
+			elementId?: components['schemas']['StringFilterProperty']
+			/** @description The element instance key associated with this message subscription. */
+			elementInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The message subscription type. */
+			messageSubscriptionType?: components['schemas']['MessageSubscriptionTypeFilterProperty']
+			/** @description The last updated date of the message subscription. */
+			lastUpdatedDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The name of the message associated with the message subscription. */
+			messageName?: components['schemas']['StringFilterProperty']
+			/** @description The correlation key of the message subscription. */
+			correlationKey?: components['schemas']['StringFilterProperty']
+			/** @description The unique external tenant ID. */
+			tenantId?: components['schemas']['StringFilterProperty']
+		}
+		/** @description MessageSubscriptionTypeEnum with full advanced search capabilities. */
+		MessageSubscriptionTypeFilterProperty:
+			| (string & components['schemas']['MessageSubscriptionTypeEnum'])
+			| components['schemas']['AdvancedMessageSubscriptionTypeFilter']
+		/**
+		 * @description The type of message subscription.
+		 * @enum {string}
+		 */
+		MessageSubscriptionTypeEnum: 'CREATED' | 'MIGRATED' | 'CORRELATED'
+		/**
+		 * Advanced filter
+		 * @description Advanced MessageSubscriptionTypeEnum filter
+		 */
+		AdvancedMessageSubscriptionTypeFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['MessageSubscriptionTypeEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['MessageSubscriptionTypeEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['MessageSubscriptionTypeEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		IncidentResult: {
+			/** @description The process definition ID associated to this incident. */
+			processDefinitionId?: string
+			/**
+			 * @description Incident error type with a defined set of values.
+			 * @enum {string}
+			 */
+			errorType?:
+				| 'UNSPECIFIED'
+				| 'UNKNOWN'
+				| 'IO_MAPPING_ERROR'
+				| 'JOB_NO_RETRIES'
+				| 'EXECUTION_LISTENER_NO_RETRIES'
+				| 'TASK_LISTENER_NO_RETRIES'
+				| 'CONDITION_ERROR'
+				| 'EXTRACT_VALUE_ERROR'
+				| 'CALLED_ELEMENT_ERROR'
+				| 'UNHANDLED_ERROR_EVENT'
+				| 'MESSAGE_SIZE_EXCEEDED'
+				| 'CALLED_DECISION_ERROR'
+				| 'DECISION_EVALUATION_ERROR'
+				| 'FORM_NOT_FOUND'
+				| 'RESOURCE_NOT_FOUND'
+			/** @description Error message which describes the error in more detail. */
+			errorMessage?: string
+			/** @description The element ID associated to this incident. */
+			elementId?: string
+			/**
+			 * Format: date-time
+			 * @description Date of incident creation.
+			 */
+			creationTime?: string
+			/**
+			 * @description State of this incident with a defined set of values.
+			 * @enum {string}
+			 */
+			state?: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+			/** @description The tenant ID of the incident. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this incident. */
+			incidentKey?: string
+			/** @description The process definition key associated to this incident. */
+			processDefinitionKey?: string
+			/** @description The process instance key associated to this incident. */
+			processInstanceKey?: string
+			/** @description The element instance key associated to this incident. */
+			elementInstanceKey?: string
+			/** @description The job key, if exists, associated with this incident. */
+			jobKey?: string
+		}
+		DecisionDefinitionSearchQueryResult: {
+			/** @description The matching decision definitions. */
+			items?: components['schemas']['DecisionDefinitionResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		DecisionDefinitionResult: {
+			/** @description The DMN ID of the decision definition. */
+			decisionDefinitionId?: string
+			/** @description The DMN name of the decision definition. */
+			name?: string
+			/**
+			 * Format: int32
+			 * @description The assigned version of the decision definition.
+			 */
+			version?: number
+			/** @description the DMN ID of the decision requirements graph that the decision definition is part of. */
+			decisionRequirementsId?: string
+			/** @description The tenant ID of the decision definition. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this decision definition. */
+			decisionDefinitionKey?: string
+			/** @description The assigned key of the decision requirements graph that the decision definition is part of. */
+			decisionRequirementsKey?: string
+		}
+		UsageMetricsResponse: {
+			/**
+			 * Format: int64
+			 * @description The amount of active tenants.
+			 */
+			activeTenants?: number
+			/** @description The usage metrics by tenants. Only available if request `withTenants` query parameter was `true`. */
+			tenants?: {
+				[key: string]: components['schemas']['UsageMetricsResponseItem']
+			}
+		} & components['schemas']['UsageMetricsResponseItem']
+		UsageMetricsResponseItem: {
+			/**
+			 * Format: int64
+			 * @description The amount of created root process instances.
+			 */
+			processInstances?: number
+			/**
+			 * Format: int64
+			 * @description The amount of executed decision instances.
+			 */
+			decisionInstances?: number
+			/**
+			 * Format: int64
+			 * @description The amount of unique active task users.
+			 */
+			assignees?: number
+		}
+		/**
+		 * @description Specifies the type of permissions.
+		 * @enum {unknown}
+		 */
+		PermissionTypeEnum:
+			| 'ACCESS'
+			| 'CREATE'
+			| 'CREATE_BATCH_OPERATION_CANCEL_PROCESS_INSTANCE'
+			| 'CREATE_BATCH_OPERATION_DELETE_PROCESS_INSTANCE'
+			| 'CREATE_BATCH_OPERATION_MIGRATE_PROCESS_INSTANCE'
+			| 'CREATE_BATCH_OPERATION_MODIFY_PROCESS_INSTANCE'
+			| 'CREATE_BATCH_OPERATION_RESOLVE_INCIDENT'
+			| 'CREATE_BATCH_OPERATION_DELETE_DECISION_INSTANCE'
+			| 'CREATE_BATCH_OPERATION_DELETE_DECISION_DEFINITION'
+			| 'CREATE_BATCH_OPERATION_DELETE_PROCESS_DEFINITION'
+			| 'CREATE_PROCESS_INSTANCE'
+			| 'CREATE_DECISION_INSTANCE'
+			| 'READ'
+			| 'READ_PROCESS_INSTANCE'
+			| 'READ_USER_TASK'
+			| 'READ_DECISION_INSTANCE'
+			| 'READ_PROCESS_DEFINITION'
+			| 'READ_DECISION_DEFINITION'
+			| 'UPDATE'
+			| 'UPDATE_PROCESS_INSTANCE'
+			| 'UPDATE_USER_TASK'
+			| 'DELETE'
+			| 'DELETE_PROCESS'
+			| 'DELETE_DRD'
+			| 'DELETE_FORM'
+			| 'DELETE_RESOURCE'
+			| 'DELETE_PROCESS_INSTANCE'
+			| 'DELETE_DECISION_INSTANCE'
+		/**
+		 * @description The type of resource to add/remove permissions to/from.
+		 * @enum {unknown}
+		 */
+		ResourceTypeEnum:
+			| 'AUTHORIZATION'
+			| 'MAPPING_RULE'
+			| 'MESSAGE'
+			| 'BATCH'
+			| 'BATCH_OPERATION'
+			| 'APPLICATION'
+			| 'SYSTEM'
+			| 'TENANT'
+			| 'RESOURCE'
+			| 'PROCESS_DEFINITION'
+			| 'DECISION_REQUIREMENTS_DEFINITION'
+			| 'DECISION_DEFINITION'
+			| 'GROUP'
+			| 'USER'
+			| 'ROLE'
+		/**
+		 * @description The type of the owner of permissions.
+		 * @enum {unknown}
+		 */
+		OwnerTypeEnum:
+			| 'USER'
+			| 'CLIENT'
+			| 'ROLE'
+			| 'GROUP'
+			| 'MAPPING_RULE'
+			| 'UNSPECIFIED'
+		AuthorizationRequest: {
+			/** @description The ID of the owner of the permissions. */
+			ownerId: string
+			/** @description The type of the owner of the permissions. */
+			ownerType: components['schemas']['OwnerTypeEnum']
+			/** @description The ID of the resource to add permissions to. */
+			resourceId: string
+			/** @description The type of resource to add permissions to. */
+			resourceType: components['schemas']['ResourceTypeEnum']
+			/** @description The permission types to add. */
+			permissionTypes: (string & components['schemas']['PermissionTypeEnum'])[]
+		}
+		AuthorizationCreateResult: {
+			/** @description The key of the created authorization. */
+			authorizationKey?: string
+		}
+		AuthorizationSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'ownerId' | 'ownerType' | 'resourceId' | 'resourceType'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		AuthorizationSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['AuthorizationSearchQuerySortRequest'][]
+			/** @description The authorization search filters. */
+			filter?: components['schemas']['AuthorizationFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Authorization search filter. */
+		AuthorizationFilter: {
+			/** @description The ID of the owner of permissions. */
+			ownerId?: string
+			/** @description The type of the owner of permissions. */
+			ownerType?: components['schemas']['OwnerTypeEnum']
+			/** @description The IDs of the resource to search permissions for. */
+			resourceIds?: string[]
+			/** @description The type of resource to search permissions for. */
+			resourceType?: components['schemas']['ResourceTypeEnum']
+		}
+		AuthorizationResult: {
+			/** @description The ID of the owner of permissions. */
+			ownerId?: string
+			/** @description The type of the owner of permissions. */
+			ownerType?: components['schemas']['OwnerTypeEnum']
+			/** @description The type of resource that owner have permissions. */
+			resourceType?: components['schemas']['ResourceTypeEnum']
+			/** @description ID of the resource the permission relates to. */
+			resourceId?: string
+			/** @description Specifies the types of the permissions. */
+			permissionTypes?: components['schemas']['PermissionTypeEnum'][]
+			/** @description The key of the authorization. */
+			authorizationKey?: string
+		}
+		AuthorizationSearchResult: {
+			/** @description The matching authorizations. */
+			items?: components['schemas']['AuthorizationResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		UserRequest: {
+			/** @description The password of the user. */
+			password?: string
+			/** @description The username of the user. */
+			username?: string
+			/** @description The name of the user. */
+			name?: string
+			/** @description The email of the user. */
+			email?: string
+		}
+		UserCreateResult: {
+			/** @description The username of the user. */
+			username?: string
+			/** @description The name of the user. */
+			name?: string
+			/** @description The email of the user. */
+			email?: string
+			/** @description The key of the created user */
+			userKey?: string
+		}
+		UserUpdateResult: {
+			/** @description The username of the user. */
+			username?: string
+			/** @description The name of the user. */
+			name?: string
+			/** @description The email of the user. */
+			email?: string
+		}
+		UserSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'username' | 'name' | 'email'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		UserSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['UserSearchQuerySortRequest'][]
+			/** @description The user search filters. */
+			filter?: components['schemas']['UserFilter']
+		} & components['schemas']['SearchQueryRequest']
+		MappingRuleSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'mappingRuleId' | 'claimName' | 'claimValue' | 'name'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		MappingRuleSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['MappingRuleSearchQuerySortRequest'][]
+			/** @description The mapping search filters. */
+			filter?: components['schemas']['MappingRuleFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description User search filter. */
+		UserFilter: {
+			/** @description The username of the user. */
+			username?: components['schemas']['StringFilterProperty']
+			/** @description The name of the user. */
+			name?: components['schemas']['StringFilterProperty']
+			/** @description The email of the user. */
+			email?: components['schemas']['StringFilterProperty']
+		}
+		/** @description Mapping rule search filter. */
+		MappingRuleFilter: {
+			/** @description The claim name to match against a token. */
+			claimName?: string
+			/** @description The value of the claim to match. */
+			claimValue?: string
+			/** @description The name of the mapping. */
+			name?: string
+			/** @description The ID of the mapping. */
+			mappingRuleId?: string
+		}
+		CamundaUserResult: {
+			/** @description The ID of the user. */
+			userId?: string
+			/** @description The display name of the user. */
+			displayName?: string
+			/** @description The applications the user is authorized to use. */
+			authorizedApplications?: string[]
+			/** @description The tenants the user is a member of. */
+			tenants?: {
+				/** @description The ID of the tenant. */
+				tenantId?: string
+				/** @description The name of the tenant. */
+				name?: string
+			}[]
+			/** @description The groups assigned to the user. */
+			groups?: string[]
+			/** @description The roles assigned to the user. */
+			roles?: string[]
+			/** @description The plan of the user. */
+			salesPlanType?: string
+			/** @description The links to the components in the C8 stack. */
+			c8Links?: {
+				/** @description The name of the component. */
+				name?: string
+				/** @description A link to the component. */
+				link?: string
+			}[]
+			/** @description Flag for understanding if the user is able to perform logout. */
+			canLogout?: boolean
+			/** @description Flag for understanding if the user is an API user. */
+			apiUser?: boolean
+			/** @description The system generated key of the user. */
+			userKey?: string
+		}
+		UserResult: {
+			/** @description The username of the user. */
+			username?: string
+			/** @description The name of the user. */
+			name?: string
+			/** @description The email of the user. */
+			email?: string
+			/** @description The key of the user. */
+			userKey?: string
+		}
+		UserSearchResult: {
+			/** @description The matching users. */
+			items?: components['schemas']['UserResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		UserUpdateRequest: {
+			/** @description The password of the user. */
+			password?: string
+			/** @description The name of the user. */
+			name?: string
+			/** @description The email of the user. */
+			email?: string
+		}
+		TenantClientResult: {
+			/** @description The ID of the client. */
+			clientId?: string
+		}
+		TenantClientSearchResult: {
+			/** @description The matching clients. */
+			items?: components['schemas']['TenantClientResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		TenantClientSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['TenantClientSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		TenantClientSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'clientId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		TenantUserResult: {
+			/** @description The username of the user. */
+			username?: string
+		}
+		TenantUserSearchResult: {
+			/** @description The matching users. */
+			items?: components['schemas']['TenantUserResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		TenantUserSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['TenantUserSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		TenantUserSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'username'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		TenantGroupResult: {
+			/** @description The groupId of the group. */
+			groupId?: string
+		}
+		TenantGroupSearchResult: {
+			/** @description The matching groups. */
+			items?: components['schemas']['TenantGroupResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		TenantGroupSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['TenantGroupSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		TenantGroupSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'groupId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		RoleCreateRequest: {
+			/** @description The ID of the new role. */
+			roleId: string
+			/** @description The display name of the new role. */
+			name: string
+			/** @description The description of the new role. */
+			description?: string
+		}
+		RoleCreateResult: {
+			/** @description The ID of the created role. */
+			roleId?: string
+			/** @description The display name of the created role. */
+			name?: string
+			/** @description The description of the created role. */
+			description?: string
+		}
+		RoleUpdateRequest: {
+			/** @description The display name of the new role. */
+			name: string
+			/** @description The description of the new role. */
+			description: string
+		}
+		RoleUpdateResult: {
+			/** @description The display name of the updated role. */
+			name?: string
+			/** @description The description of the updated role. */
+			description?: string
+			/** @description The ID of the updated role. */
+			roleId?: string
+		}
+		/** @description Role search response item. */
+		RoleResult: {
+			/** @description The role name. */
+			name?: string
+			/** @description The role id. */
+			roleId?: string
+			/** @description The description of the role. */
+			description?: string
+		}
+		RoleSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'name' | 'roleId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Role search request. */
+		RoleSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['RoleSearchQuerySortRequest'][]
+			/** @description The role search filters. */
+			filter?: components['schemas']['RoleFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Role filter request */
+		RoleFilter: {
+			/** @description The role ID search filters. */
+			roleId?: string
+			/** @description The role name search filters. */
+			name?: string
+		}
+		/** @description Role search response. */
+		RoleSearchQueryResult: {
+			/** @description The matching roles. */
+			items?: components['schemas']['RoleResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		RoleUserResult: {
+			/** @description The username of the user. */
+			username?: string
+		}
+		RoleUserSearchResult: {
+			/** @description The matching users. */
+			items?: components['schemas']['RoleUserResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		RoleUserSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['RoleUserSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		RoleUserSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'username'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		RoleClientResult: {
+			/** @description The ID of the client. */
+			clientId?: string
+		}
+		RoleClientSearchResult: {
+			/** @description The matching clients. */
+			items?: components['schemas']['RoleClientResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		RoleClientSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['RoleClientSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		RoleClientSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'clientId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		RoleGroupResult: {
+			/** @description The id of the group. */
+			groupId?: string
+		}
+		RoleGroupSearchResult: {
+			/** @description The matching groups. */
+			items?: components['schemas']['RoleGroupResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		RoleGroupSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['RoleGroupSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		RoleGroupSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'groupId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		GroupCreateRequest: {
+			/** @description The ID of the new group. */
+			groupId: string
+			/** @description The display name of the new group. */
+			name: string
+			/** @description The description of the new group. */
+			description?: string
+		}
+		GroupCreateResult: {
+			/** @description The ID of the created group. */
+			groupId?: string
+			/** @description The display name of the created group. */
+			name?: string
+			/** @description The description of the created group. */
+			description?: string
+		}
+		GroupUpdateRequest: {
+			/** @description The new name of the group. */
+			name: string
+			/** @description The new description of the group. */
+			description: string
+		}
+		GroupUpdateResult: {
+			/** @description The unique external group ID. */
+			groupId?: string
+			/** @description The name of the group. */
+			name?: string
+			/** @description The description of the group. */
+			description?: string
+		}
+		/** @description Group search response item. */
+		GroupResult: {
+			/** @description The group name. */
+			name?: string
+			/** @description The group ID. */
+			groupId?: string
+			/** @description The group description. */
+			description?: string
+		}
+		GroupSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'name' | 'groupId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Group search request. */
+		GroupSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['GroupSearchQuerySortRequest'][]
+			/** @description The group search filters. */
+			filter?: components['schemas']['GroupFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Group filter request */
+		GroupFilter: {
+			/** @description The group ID search filters. */
+			groupId?: components['schemas']['StringFilterProperty']
+			/** @description The group name search filters. */
+			name?: string
+		}
+		/** @description Group search response. */
+		GroupSearchQueryResult: {
+			/** @description The matching groups. */
+			items?: components['schemas']['GroupResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		GroupUserResult: {
+			/** @description The username of the user. */
+			username?: string
+		}
+		GroupUserSearchResult: {
+			/** @description The matching members. */
+			items?: components['schemas']['GroupUserResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		GroupUserSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['GroupUserSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		GroupUserSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'username'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		GroupClientResult: {
+			/** @description The ID of the client. */
+			clientId?: string
+		}
+		GroupClientSearchResult: {
+			/** @description The matching client IDs. */
+			items?: components['schemas']['GroupClientResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		GroupClientSearchQueryRequest: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['GroupClientSearchQuerySortRequest'][]
+		} & components['schemas']['SearchQueryRequest']
+		GroupClientSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'clientId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		MappingRuleCreateUpdateRequest: {
+			/** @description The name of the claim to map. */
+			claimName: string
+			/** @description The value of the claim to map. */
+			claimValue: string
+			/** @description The name of the mapping. */
+			name: string
+		}
+		MappingRuleCreateRequest: {
+			/** @description The unique ID of the mapping. */
+			mappingRuleId: string
+		} & components['schemas']['MappingRuleCreateUpdateRequest']
+		MappingRuleUpdateRequest: components['schemas']['MappingRuleCreateUpdateRequest']
+		MappingRuleCreateUpdateResult: {
+			/** @description The name of the claim to map. */
+			claimName?: string
+			/** @description The value of the claim to map. */
+			claimValue?: string
+			/** @description The name of the mapping. */
+			name?: string
+			/** @description The unique ID of the mapping. */
+			mappingRuleId?: string
+		}
+		MappingRuleCreateResult: components['schemas']['MappingRuleCreateUpdateResult']
+		MappingRuleUpdateResult: components['schemas']['MappingRuleCreateUpdateResult']
+		MappingRuleSearchQueryResult: {
+			/** @description The matching mapping rules. */
+			items?: components['schemas']['MappingRuleResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		MappingRuleResult: {
+			/** @description The name of the claim to map. */
+			claimName?: string
+			/** @description The value of the claim to map. */
+			claimValue?: string
+			/** @description The name of the mapping. */
+			name?: string
+			/** @description The ID of the mapping. */
+			mappingRuleId?: string
+		}
+		/** @description The response of a topology request. */
+		TopologyResponse: {
+			/** @description A list of brokers that are part of this cluster. */
+			brokers?: components['schemas']['BrokerInfo'][] | null
+			/**
+			 * Format: int32
+			 * @description The number of brokers in the cluster.
+			 */
+			clusterSize?: number | null
+			/**
+			 * Format: int32
+			 * @description The number of partitions are spread across the cluster.
+			 */
+			partitionsCount?: number | null
+			/**
+			 * Format: int32
+			 * @description The configured replication factor for this cluster.
+			 */
+			replicationFactor?: number | null
+			/** @description The version of the Zeebe Gateway. */
+			gatewayVersion?: string | null
+			/** @description ID of the last completed change */
+			lastCompletedChangeId?: string | null
+		}
+		/** @description The response of a license request. */
+		LicenseResponse: {
+			/** @description True if the Camunda license is valid, false if otherwise */
+			validLicense?: boolean
+			/** @description Will return the license type property of the Camunda license */
+			licenseType?: string
+			/** @description Will be false when a license contains a non-commerical=true property */
+			isCommercial?: boolean
+			/**
+			 * Format: date-time
+			 * @description The date when the Camunda license expires
+			 */
+			expiresAt?: string | null
+		}
+		/** @description Provides information on a broker node. */
+		BrokerInfo: {
+			/**
+			 * Format: int32
+			 * @description The unique (within a cluster) node ID for the broker.
+			 */
+			nodeId?: number
+			/** @description The hostname for reaching the broker. */
+			host?: string
+			/**
+			 * Format: int32
+			 * @description The port for reaching the broker.
+			 */
+			port?: number
+			/** @description A list of partitions managed or replicated on this broker. */
+			partitions?: components['schemas']['Partition'][]
+			/** @description The broker version. */
+			version?: string
+		}
+		/** @description Provides information on a partition within a broker node. */
+		Partition: {
+			/**
+			 * Format: int32
+			 * @description The unique ID of this partition.
+			 */
+			partitionId?: number
+			/**
+			 * @description Describes the Raft role of the broker for a given partition.
+			 * @enum {string}
+			 */
+			role?: 'leader' | 'follower' | 'inactive'
+			/**
+			 * @description Describes the current health of the partition.
+			 * @enum {string}
+			 */
+			health?: 'healthy' | 'unhealthy' | 'dead'
+		}
+		UserTaskCompletionRequest: {
+			/** @description The variables to complete the user task with. */
+			variables?: {
+				[key: string]: unknown
+			} | null
+			/** @description A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "complete".
+			 *      */
+			action?: string | null
+		}
+		UserTaskAssignmentRequest: {
+			/** @description The assignee for the user task. The assignee must not be empty or `null`. */
+			assignee?: string
+			/** @description By default, the task is reassigned if it was already assigned. Set this to `false` to return an error in such cases. The task must then first be unassigned to be assigned again. Use this when you have users picking from group task queues to prevent race conditions.
+			 *      */
+			allowOverride?: boolean | null
+			/** @description A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "assign".
+			 *      */
+			action?: string | null
+		}
+		UserTaskUpdateRequest: {
+			changeset?: components['schemas']['Changeset']
+			/** @description A custom action value that will be accessible from user task events resulting from this endpoint invocation. If not provided, it will default to "update".
+			 *      */
+			action?: string | null
+		}
+		/** @description JSON object with changed task attribute values.
+		 *
+		 *     The following attributes can be adjusted with this endpoint, additional attributes
+		 *     will be ignored:
+		 *
+		 *     * `candidateGroups` - reset by providing an empty list
+		 *     * `candidateUsers` - reset by providing an empty list
+		 *     * `dueDate` - reset by providing an empty String
+		 *     * `followUpDate` - reset by providing an empty String
+		 *     * `priority` - minimum 0, maximum 100, default 50
+		 *
+		 *     Providing any of those attributes with a `null` value or omitting it preserves
+		 *     the persisted attribute's value.
+		 *
+		 *     The assignee cannot be adjusted with this endpoint, use the Assign task endpoint.
+		 *     This ensures correct event emission for assignee changes.
+		 *      */
+		Changeset:
+			| ({
+					/**
+					 * Format: date-time
+					 * @description The due date of the task. Reset by providing an empty String.
+					 */
+					dueDate?: string | null
+					/**
+					 * Format: date-time
+					 * @description The follow-up date of the task. Reset by providing an empty String.
+					 */
+					followUpDate?: string | null
+					/** @description The list of candidate users of the task. Reset by providing an empty list. */
+					candidateUsers?: string[] | null
+					/** @description The list of candidate groups of the task. Reset by providing an empty list. */
+					candidateGroups?: string[] | null
+					/**
+					 * Format: int32
+					 * @description The priority of the task.
+					 * @default 50
+					 */
+					priority: number | null
+			  } & {
+					[key: string]: unknown
+			  })
+			| null
+		ClockPinRequest: {
+			/**
+			 * Format: int64
+			 * @description The exact time in epoch milliseconds to which the clock should be pinned.
+			 */
+			timestamp: number
+		}
+		JobActivationRequest: {
+			/** @description The job type, as defined in the BPMN process (e.g. <zeebe:taskDefinition type="payment-service" />).
+			 *      */
+			type: string
+			/** @description The name of the worker activating the jobs, mostly used for logging purposes. */
+			worker?: string | null
+			/**
+			 * Format: int64
+			 * @description A job returned after this call will not be activated by another call until the timeout (in ms) has been reached.
+			 *
+			 */
+			timeout: number
+			/**
+			 * Format: int32
+			 * @description The maximum jobs to activate by this request.
+			 */
+			maxJobsToActivate: number
+			/** @description A list of variables to fetch as the job variables; if empty, all visible variables at the time of activation for the scope of the job will be returned.
+			 *      */
+			fetchVariable?: string[] | null
+			/**
+			 * Format: int64
+			 * @description The request will be completed when at least one job is activated or after the requestTimeout (in ms). If the requestTimeout = 0, a default timeout is used. If the requestTimeout < 0, long polling is disabled and the request is completed immediately, even when no job is activated.
+			 *
+			 * @default 0
+			 */
+			requestTimeout: number | null
+			/** @description A list of IDs of tenants for which to activate jobs. */
+			tenantIds?: string[] | null
+		}
+		/** @description The list of activated jobs */
+		JobActivationResult: {
+			/** @description The activated jobs. */
+			jobs?: components['schemas']['ActivatedJobResult'][]
+		}
+		ActivatedJobResult: {
+			/** @description The type of the job (should match what was requested). */
+			type?: string
+			/** @description The bpmn process ID of the job's process definition. */
+			processDefinitionId?: string
+			/**
+			 * Format: int32
+			 * @description The version of the job's process definition.
+			 */
+			processDefinitionVersion?: number
+			/** @description The associated task element ID. */
+			elementId?: string
+			/** @description A set of custom headers defined during modelling; returned as a serialized JSON document. */
+			customHeaders?: {
+				[key: string]: unknown
+			}
+			/** @description The name of the worker which activated this job. */
+			worker?: string
+			/**
+			 * Format: int32
+			 * @description The amount of retries left to this job (should always be positive).
+			 */
+			retries?: number
+			/**
+			 * Format: int64
+			 * @description When the job can be activated again, sent as a UNIX epoch timestamp.
+			 */
+			deadline?: number
+			/** @description All variables visible to the task scope, computed at activation time. */
+			variables?: {
+				[key: string]: unknown
+			}
+			/** @description The ID of the tenant that owns the job. */
+			tenantId?: string
+			/** @description The key, a unique identifier for the job. */
+			jobKey?: string
+			/** @description The job's process instance key. */
+			processInstanceKey?: string
+			/** @description The key of the job's process definition. */
+			processDefinitionKey?: string
+			/** @description The unique key identifying the associated task, unique within the scope of the process instance.
+			 *      */
+			elementInstanceKey?: string
+			kind?: components['schemas']['JobKindEnum']
+			listenerEventType?: components['schemas']['JobListenerEventTypeEnum']
+			userTask?: components['schemas']['UserTaskProperties']
+		}
+		/** @description Contains properties of a user task. */
+		UserTaskProperties: {
+			/** @description The action performed on the user task. */
+			action?: string
+			/** @description The user assigned to the task. */
+			assignee?: string | null
+			/** @description The groups eligible to claim the task. */
+			candidateGroups?: string[]
+			/** @description The users eligible to claim the task. */
+			candidateUsers?: string[]
+			/** @description The attributes that were changed in the task. */
+			changedAttributes?: string[]
+			/**
+			 * Format: date-time
+			 * @description The due date of the user task in ISO 8601 format.
+			 */
+			dueDate?: string | null
+			/**
+			 * Format: date-time
+			 * @description The follow-up date of the user task in ISO 8601 format.
+			 */
+			followUpDate?: string | null
+			/** @description The key of the form associated with the user task. */
+			formKey?: string | null
+			/**
+			 * Format: int32
+			 * @description The priority of the user task.
+			 */
+			priority?: number | null
+			/** @description The unique key identifying the user task. */
+			userTaskKey?: string | null
+		}
+		JobFailRequest: {
+			/**
+			 * Format: int32
+			 * @description The amount of retries the job should have left
+			 *
+			 * @default 0
+			 */
+			retries: number
+			/** @description An optional message describing why the job failed. This is particularly useful if a job runs out of retries and an incident is raised, as this message can help explain why an incident was raised.
+			 *      */
+			errorMessage?: string | null
+			/**
+			 * Format: int64
+			 * @description The backoff timeout (in ms) for the next retry.
+			 *
+			 * @default 0
+			 */
+			retryBackOff: number
+			/** @description JSON object that will instantiate the variables at the local scope of the job's associated task.
+			 *      */
+			variables?: {
+				[key: string]: unknown
+			} | null
+		}
+		JobErrorRequest: {
+			/** @description The error code that will be matched with an error catch event.
+			 *      */
+			errorCode: string
+			/** @description An error message that provides additional context.
+			 *      */
+			errorMessage?: string | null
+			/** @description JSON object that will instantiate the variables at the local scope of the error catch event that catches the thrown error.
+			 *      */
+			variables?: {
+				[key: string]: unknown
+			} | null
+		}
+		JobCompletionRequest: {
+			/** @description The variables to complete the job with. */
+			variables?: {
+				[key: string]: unknown
+			} | null
+			result?: components['schemas']['JobResult']
+		}
+		/** @description The result of the completed job as determined by the worker.
+		 *      */
+		JobResult: {
+			/**
+			 * @description Used to distinguish between different types of job results.
+			 * @default userTask
+			 * @enum {string}
+			 */
+			type: 'userTask' | 'adHocSubProcess'
+		}
+		JobResultUserTask:
+			| (Omit<components['schemas']['JobResult'], 'type'> & {
+					/** @description Indicates whether the worker denies the work, i.e. explicitly doesn't approve it. For example, a user task listener can deny the completion of a task by setting this flag to true. In this example, the completion of a task is represented by a job that the worker can complete as denied. As a result, the completion request is rejected and the task remains active. Defaults to false.
+					 *      */
+					denied?: boolean | null
+					/** @description The reason provided by the user task listener for denying the work. */
+					deniedReason?: string | null
+					corrections?: components['schemas']['JobResultCorrections']
+			  } & {
+					/**
+					 * @description discriminator enum property added by openapi-typescript
+					 * @enum {string}
+					 */
+					type: 'userTask'
+			  })
+			| null
+		/** @description JSON object with attributes that were corrected by the worker.
+		 *
+		 *     The following attributes can be corrected, additional attributes will be ignored:
+		 *
+		 *     * `assignee` - clear by providing an empty String
+		 *     * `dueDate` - clear by providing an empty String
+		 *     * `followUpDate` - clear by providing an empty String
+		 *     * `candidateGroups` - clear by providing an empty list
+		 *     * `candidateUsers` - clear by providing an empty list
+		 *     * `priority` - minimum 0, maximum 100, default 50
+		 *
+		 *     Providing any of those attributes with a `null` value or omitting it preserves
+		 *     the persisted attribute's value.
+		 *      */
+		JobResultCorrections: {
+			/** @description Assignee of the task. */
+			assignee?: string | null
+			/**
+			 * Format: date-time
+			 * @description The due date of the task.
+			 */
+			dueDate?: string | null
+			/**
+			 * Format: date-time
+			 * @description The follow-up date of the task.
+			 */
+			followUpDate?: string | null
+			/** @description The list of candidate users of the task. */
+			candidateUsers?: string[] | null
+			/** @description The list of candidate groups of the task. */
+			candidateGroups?: string[] | null
+			/**
+			 * Format: int32
+			 * @description The priority of the task.
+			 */
+			priority?: number | null
+		} | null
+		JobResultAdHocSubProcess:
+			| (Omit<components['schemas']['JobResult'], 'type'> & {
+					/** @description Indicates which elements need to be activated in the ad-hoc subprocess. */
+					activateElements?: components['schemas']['JobResultActivateElement'][]
+					/**
+					 * @description Indicates whether the completion condition of the ad-hoc subprocess is fulfilled.
+					 * @default false
+					 */
+					isCompletionConditionFulfilled: boolean
+					/**
+					 * @description Indicates whether the remaining instances of the ad-hoc subprocess should be canceled.
+					 * @default false
+					 */
+					isCancelRemainingInstances: boolean
+			  } & {
+					/**
+					 * @description discriminator enum property added by openapi-typescript
+					 * @enum {string}
+					 */
+					type: 'adHocSubProcess'
+			  })
+			| null
+		JobResultActivateElement: {
+			/** @description The ID of the element to activate. */
+			elementId?: string
+			/** @description JSON document that will create the variables on the scope of the activated element.
+			 *     It must be a JSON object, as variables will be mapped in a key-value fashion.
+			 *      */
+			variables?: {
+				[key: string]: unknown
+			} | null
+		}
+		JobUpdateRequest: {
+			changeset: components['schemas']['JobChangeset']
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation.
+			 *     Must be > 0 if provided.
+			 *
+			 */
+			operationReference?: number
+		}
+		/** @description JSON object with changed job attribute values.
+		 *
+		 *     The following attributes can be adjusted with this endpoint, additional attributes
+		 *     will be ignored:
+		 *
+		 *     * `retries` - The new amount of retries for the job; must be a positive number.
+		 *     * `timeout` - The duration of the new timeout in ms, starting from the current moment.
+		 *
+		 *     Providing any of those attributes with a null value or omitting it preserves the persisted attribute’s value.
+		 *
+		 *     The job cannot be completed or failed with this endpoint, use the complete job or fail job endpoints instead.
+		 *      */
+		JobChangeset: {
+			/**
+			 * Format: int32
+			 * @description The new amount of retries for the job; must be a positive number.
+			 */
+			retries?: number | null
+			/**
+			 * Format: int64
+			 * @description The duration of the new timeout in ms, starting from the current moment.
+			 */
+			timeout?: number | null
+		}
+		/** @description Job search request. */
+		JobSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['JobSearchQuerySortRequest'][]
+			/** @description The job search filters. */
+			filter?: components['schemas']['JobFilter']
+		} & components['schemas']['SearchQueryRequest']
+		JobSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'deadline'
+				| 'deniedReason'
+				| 'elementId'
+				| 'elementInstanceKey'
+				| 'endTime'
+				| 'errorCode'
+				| 'errorMessage'
+				| 'hasFailedWithRetriesLeft'
+				| 'isDenied'
+				| 'jobKey'
+				| 'kind'
+				| 'listenerEventType'
+				| 'processDefinitionId'
+				| 'processDefinitionKey'
+				| 'processInstanceKey'
+				| 'retries'
+				| 'state'
+				| 'tenantId'
+				| 'type'
+				| 'worker'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Job search filter. */
+		JobFilter: {
+			/** @description When the job can be activated. */
+			deadline?: components['schemas']['DateTimeFilterProperty']
+			/** @description The reason provided by the user task listener for denying the work. */
+			deniedReason?: components['schemas']['StringFilterProperty']
+			/** @description The element ID associated with the job. */
+			elementId?: components['schemas']['StringFilterProperty']
+			/** @description The element instance key associated with the job. */
+			elementInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description When the job ended. */
+			endTime?: components['schemas']['DateTimeFilterProperty']
+			/** @description The error code provided for the failed job. */
+			errorCode?: components['schemas']['StringFilterProperty']
+			/** @description The error message that provides additional context for a failed job. */
+			errorMessage?: components['schemas']['StringFilterProperty']
+			/** @description Indicates whether the job has failed with retries left. */
+			hasFailedWithRetriesLeft?: boolean
+			/** @description Indicates whether the user task listener denies the work. */
+			isDenied?: boolean
+			/** @description The key, a unique identifier for the job. */
+			jobKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The kind of the job. */
+			kind?: components['schemas']['JobKindFilterProperty']
+			/** @description The listener event type of the job. */
+			listenerEventType?: components['schemas']['JobListenerEventTypeFilterProperty']
+			/** @description The process definition ID associated with the job. */
+			processDefinitionId?: components['schemas']['StringFilterProperty']
+			/** @description The process definition key associated with the job. */
+			processDefinitionKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The process instance key associated with the job. */
+			processInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The number of retries left. */
+			retries?: components['schemas']['IntegerFilterProperty']
+			/** @description The state of the job. */
+			state?: components['schemas']['JobStateFilterProperty']
+			/** @description The tenant ID. */
+			tenantId?: components['schemas']['StringFilterProperty']
+			/** @description The type of the job. */
+			type?: components['schemas']['StringFilterProperty']
+			/** @description The name of the worker for this job. */
+			worker?: components['schemas']['StringFilterProperty']
+		}
+		/** @description Job search response. */
+		JobSearchQueryResult: {
+			/** @description The matching jobs. */
+			items?: components['schemas']['JobSearchResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		JobSearchResult: {
+			/** @description A set of custom headers defined during modelling. */
+			customHeaders?: {
+				[key: string]: string
+			}
+			/**
+			 * Format: date-time
+			 * @description When the job can be activated.
+			 */
+			deadline?: string
+			/** @description The reason provided by the user task listener for denying the work. */
+			deniedReason?: string | null
+			/** @description The element ID associated with the job. */
+			elementId?: string
+			/** @description The element instance key associated with the job. */
+			elementInstanceKey?: string
+			/**
+			 * Format: date-time
+			 * @description When the job ended.
+			 */
+			endTime?: string
+			/** @description The error code provided for the failed job. */
+			errorCode?: string | null
+			/** @description The error message that provides additional context for a failed job. */
+			errorMessage?: string | null
+			/** @description Indicates whether the job has failed with retries left. */
+			hasFailedWithRetriesLeft?: boolean
+			/** @description Indicates whether the user task listener denies the work. */
+			isDenied?: boolean | null
+			/** @description The key, a unique identifier for the job. */
+			jobKey?: string
+			kind?: components['schemas']['JobKindEnum']
+			listenerEventType?: components['schemas']['JobListenerEventTypeEnum']
+			/** @description The process definition ID associated with the job. */
+			processDefinitionId?: string
+			/** @description The process definition key associated with the job. */
+			processDefinitionKey?: string
+			/** @description The process instance key associated with the job. */
+			processInstanceKey?: string
+			/**
+			 * Format: int32
+			 * @description The amount of retries left to this job.
+			 */
+			retries?: number
+			state?: components['schemas']['JobStateEnum']
+			/** @description The tenant ID. */
+			tenantId?: string
+			/** @description The type of the job. */
+			type?: string
+			/** @description The name of the worker of this job. */
+			worker?: string
+		}
+		/**
+		 * @description The state of the job.
+		 * @enum {unknown}
+		 */
+		JobStateEnum:
+			| 'CANCELED'
+			| 'COMPLETED'
+			| 'CREATED'
+			| 'ERROR_THROWN'
+			| 'FAILED'
+			| 'MIGRATED'
+			| 'RETRIES_UPDATED'
+			| 'TIMED_OUT'
+		/**
+		 * @description The job kind.
+		 * @enum {unknown}
+		 */
+		JobKindEnum: 'BPMN_ELEMENT' | 'EXECUTION_LISTENER' | 'TASK_LISTENER'
+		/**
+		 * @description The listener event type of the job.
+		 * @enum {unknown}
+		 */
+		JobListenerEventTypeEnum:
+			| 'ASSIGNING'
+			| 'CANCELING'
+			| 'COMPLETING'
+			| 'CREATING'
+			| 'END'
+			| 'START'
+			| 'UNSPECIFIED'
+			| 'UPDATING'
+		/** @description JobStateEnum property with full advanced search capabilities. */
+		JobStateFilterProperty:
+			| (string & components['schemas']['JobStateEnum'])
+			| components['schemas']['AdvancedJobStateFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced JobStateEnum filter.
+		 */
+		AdvancedJobStateFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['JobStateEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['JobStateEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['JobStateEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/** @description JobKindEnum property with full advanced search capabilities. */
+		JobKindFilterProperty:
+			| (string & components['schemas']['JobKindEnum'])
+			| components['schemas']['AdvancedJobKindFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced JobKindEnum filter.
+		 */
+		AdvancedJobKindFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['JobKindEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['JobKindEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['JobKindEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/** @description JobListenerEventTypeEnum property with full advanced search capabilities. */
+		JobListenerEventTypeFilterProperty:
+			| (string & components['schemas']['JobListenerEventTypeEnum'])
+			| components['schemas']['AdvancedJobListenerEventTypeFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced JobListenerEventTypeEnum filter.
+		 */
+		AdvancedJobListenerEventTypeFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['JobListenerEventTypeEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['JobListenerEventTypeEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['JobListenerEventTypeEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/** @description A Problem detail object as described in [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457). There may be additional properties specific to the problem type.
+		 *      */
+		ProblemDetail: {
+			/**
+			 * Format: uri
+			 * @description A URI identifying the problem type.
+			 * @default about:blank
+			 */
+			type: string
+			/** @description A summary of the problem type. */
+			title?: string
+			/**
+			 * Format: int32
+			 * @description The HTTP status code for this problem.
+			 */
+			status?: number
+			/** @description An explanation of the problem in more detail. */
+			detail?: string
+			/**
+			 * Format: uri
+			 * @description A URI identifying the origin of the problem.
+			 */
+			instance?: string
+		}
+		SearchQueryRequest: {
+			/** @description Pagination criteria. */
+			page?: components['schemas']['SearchQueryPageRequest']
+		}
+		SearchQueryPageRequest: {
+			/**
+			 * Format: int32
+			 * @description The index of items to start searching from.
+			 */
+			from?: number
+			/**
+			 * Format: int32
+			 * @description The maximum number of items to return in one request.
+			 * @default 100
+			 */
+			limit: number
+			/** @description Use the `endCursor` value from the previous response to fetch the next page of results. */
+			after?: string
+			/** @description Use the `startCursor` value from the previous response to fetch the previous page of results. */
+			before?: string
+		}
+		SearchQueryResponse: {
+			/** @description Pagination information about the search results. */
+			page?: components['schemas']['SearchQueryPageResponse']
+		}
+		/** @description Pagination information about the search results. */
+		SearchQueryPageResponse: {
+			/**
+			 * Format: int64
+			 * @description Total items matching the criteria.
+			 */
+			totalItems?: number
+			/** @description Indicates if more results exist beyond the reported totalItems value. Due to system limitations, the totalItems value can be capped.
+			 *      */
+			hasMoreTotalItems?: boolean
+			/** @description The cursor value for getting the previous page of results. Use this in the `before` field of an ensuing request. */
+			startCursor?: string
+			/** @description The cursor value for getting the next page of results. Use this in the `after` field of an ensuing request. */
+			endCursor?: string
+		}
+		DecisionRequirementsSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'decisionRequirementsKey'
+				| 'decisionRequirementsName'
+				| 'version'
+				| 'decisionRequirementsId'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		DecisionRequirementsSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['DecisionRequirementsSearchQuerySortRequest'][]
+			/** @description The decision definition search filters. */
+			filter?: components['schemas']['DecisionRequirementsFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Decision requirements search filter. */
+		DecisionRequirementsFilter: {
+			/** @description The DMN name of the decision requirements. */
+			decisionRequirementsName?: string
+			/**
+			 * Format: int32
+			 * @description The assigned version of the decision requirements.
+			 */
+			version?: number
+			/** @description the DMN ID of the decision requirements. */
+			decisionRequirementsId?: string
+			/** @description The tenant ID of the decision requirements. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this decision requirements. */
+			decisionRequirementsKey?: string
+			/** @description The name of the resource from which the decision requirements were parsed. */
+			resourceName?: string
+		}
+		DecisionRequirementsSearchQueryResult: {
+			/** @description The matching decision requirements. */
+			items?: components['schemas']['DecisionRequirementsResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		DecisionRequirementsResult: {
+			/** @description The DMN name of the decision requirements. */
+			decisionRequirementsName?: string
+			/**
+			 * Format: int32
+			 * @description The assigned version of the decision requirements.
+			 */
+			version?: number
+			/** @description The DMN ID of the decision requirements. */
+			decisionRequirementsId?: string
+			/** @description The name of the resource from which this decision requirements was parsed. */
+			resourceName?: string
+			/** @description The tenant ID of the decision requirements. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this decision requirements. */
+			decisionRequirementsKey?: string
+		}
+		DecisionEvaluationInstruction: {
+			/** @description The ID of the decision to be evaluated.
+			 *     Cannot be used together with decisionDefinitionKey. When using the decision ID, the latest
+			 *     deployed version of the decision is used.
+			 *      */
+			decisionDefinitionId?: string
+			/** @description The message variables as JSON document. */
+			variables?: {
+				[key: string]: unknown
+			}
+			/** @description The tenant ID of the decision. */
+			tenantId?: string
+			/** @description The unique key identifying the decision to be evaluated.
+			 *     Cannot be used together with decisionDefinitionId.
+			 *      */
+			decisionDefinitionKey?: string
+		}
+		EvaluateDecisionResult: {
+			/** @description The ID of the decision which was evaluated. */
+			decisionDefinitionId?: string
+			/** @description The name of the decision which was evaluated. */
+			decisionDefinitionName?: string
+			/**
+			 * Format: int32
+			 * @description The version of the decision which was evaluated.
+			 */
+			decisionDefinitionVersion?: number
+			/** @description The ID of the decision requirements graph that the decision which was evaluated is part of. */
+			decisionRequirementsId?: string
+			/** @description JSON document that will instantiate the result of the decision which was evaluated.
+			 *      */
+			output?: string
+			/** @description The ID of the decision which failed during evaluation. */
+			failedDecisionDefinitionId?: string
+			/** @description Message describing why the decision which was evaluated failed. */
+			failureMessage?: string
+			/** @description The tenant ID of the evaluated decision. */
+			tenantId?: string
+			/** @description The unique key identifying the decision which was evaluated. */
+			decisionDefinitionKey?: string
+			/** @description The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
+			decisionRequirementsKey?: string
+			/** @description The unique key identifying this decision evaluation. */
+			decisionInstanceKey?: string
+			/** @description Decisions that were evaluated within the requested decision evaluation. */
+			evaluatedDecisions?: components['schemas']['EvaluatedDecisionResult'][]
+		}
+		/** @description A decision that was evaluated. */
+		EvaluatedDecisionResult: {
+			/** @description The ID of the decision which was evaluated. */
+			decisionDefinitionId?: string
+			/** @description The name of the decision which was evaluated. */
+			decisionDefinitionName?: string
+			/**
+			 * Format: int32
+			 * @description The version of the decision which was evaluated.
+			 */
+			decisionDefinitionVersion?: number
+			/** @description The type of the decision which was evaluated. */
+			decisionDefinitionType?: string
+			/** @description JSON document that will instantiate the result of the decision which was evaluated.
+			 *      */
+			output?: string
+			/** @description The tenant ID of the evaluated decision. */
+			tenantId?: string
+			/** @description The decision rules that matched within this decision evaluation. */
+			matchedRules?: components['schemas']['MatchedDecisionRuleItem'][]
+			/** @description The decision inputs that were evaluated within this decision evaluation. */
+			evaluatedInputs?: components['schemas']['EvaluatedDecisionInputItem'][]
+			/** @description The unique key identifying the decision which was evaluate. */
+			decisionDefinitionKey?: string
+		}
+		/** @description A decision rule that matched within this decision evaluation. */
+		MatchedDecisionRuleItem: {
+			/** @description The ID of the matched rule. */
+			ruleId?: string
+			/**
+			 * Format: int32
+			 * @description The index of the matched rule.
+			 */
+			ruleIndex?: number
+			/** @description The evaluated decision outputs. */
+			evaluatedOutputs?: components['schemas']['EvaluatedDecisionOutputItem'][]
+		}
+		/** @description A decision input that was evaluated within this decision evaluation. */
+		EvaluatedDecisionInputItem: {
+			/** @description The ID of the evaluated decision input. */
+			inputId?: string
+			/** @description The name of the evaluated decision input. */
+			inputName?: string
+			/** @description The value of the evaluated decision input. */
+			inputValue?: string
+		}
+		/** @description The evaluated decision outputs. */
+		EvaluatedDecisionOutputItem: {
+			/** @description The ID of the evaluated decision output. */
+			outputId?: string
+			/** @description The name of the evaluated decision output. */
+			outputName?: string
+			/** @description The value of the evaluated decision output. */
+			outputValue?: string
+		}
+		DecisionInstanceSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'decisionDefinitionId'
+				| 'decisionDefinitionKey'
+				| 'decisionDefinitionName'
+				| 'decisionDefinitionType'
+				| 'decisionDefinitionVersion'
+				| 'decisionInstanceId'
+				| 'decisionInstanceKey'
+				| 'elementInstanceKey'
+				| 'evaluationDate'
+				| 'evaluationFailure'
+				| 'processDefinitionKey'
+				| 'processInstanceKey'
+				| 'state'
+				| 'tenantId'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		DecisionInstanceSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['DecisionInstanceSearchQuerySortRequest'][]
+			/** @description The decision instance search filters. */
+			filter?: components['schemas']['DecisionInstanceFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Decision instance search filter. */
+		DecisionInstanceFilter: {
+			/** @description The ID of the decision instance. */
+			decisionInstanceId?: string
+			state?: components['schemas']['DecisionInstanceStateEnum']
+			/** @description The evaluation failure of the decision instance. */
+			evaluationFailure?: string
+			/** @description The evaluation date of the decision instance. */
+			evaluationDate?: components['schemas']['DateTimeFilterProperty']
+			/** @description The ID of the DMN decision. */
+			decisionDefinitionId?: string
+			/** @description The name of the DMN decision. */
+			decisionDefinitionName?: string
+			/**
+			 * Format: int32
+			 * @description The version of the decision.
+			 */
+			decisionDefinitionVersion?: number
+			decisionDefinitionType?: components['schemas']['DecisionDefinitionTypeEnum']
+			/** @description The tenant ID of the decision instance. */
+			tenantId?: string
+			/** @description The key of the decision instance. Note that this is not the unique identifier of the entity itself; the `decisionInstanceId` serves as the primary identifier.
+			 *      */
+			decisionInstanceKey?: string
+			/** @description The key of the process definition. */
+			processDefinitionKey?: string
+			/** @description The key of the process instance. */
+			processInstanceKey?: string
+			/** @description The key of the decision. */
+			decisionDefinitionKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The key of the element instance this decision instance is linked to. */
+			elementInstanceKey?: components['schemas']['BasicStringFilterProperty']
+		}
+		DecisionInstanceSearchQueryResult: {
+			/** @description The matching decision instances. */
+			items?: components['schemas']['DecisionInstanceResult'][]
+		} & components['schemas']['SearchQueryResponse']
+		DecisionInstanceResult: {
+			/** @description The ID of the decision instance. */
+			decisionInstanceId?: string
+			state?: components['schemas']['DecisionInstanceStateEnum']
+			/**
+			 * Format: date-time
+			 * @description The evaluation date of the decision instance.
+			 */
+			evaluationDate?: string
+			/** @description The evaluation failure of the decision instance. */
+			evaluationFailure?: string
+			/** @description The ID of the DMN decision. */
+			decisionDefinitionId?: string
+			/** @description The name of the DMN decision. */
+			decisionDefinitionName?: string
+			/**
+			 * Format: int32
+			 * @description The version of the decision.
+			 */
+			decisionDefinitionVersion?: number
+			decisionDefinitionType?: components['schemas']['DecisionDefinitionTypeEnum']
+			/** @description The result of the decision instance. */
+			result?: string
+			/** @description The tenant ID of the decision instance. */
+			tenantId?: string
+			/** @description The key of the decision instance. Note that this is not the unique identifier of the entity itself; the `decisionInstanceId` serves as the primary identifier. */
+			decisionInstanceKey?: string
+			/** @description The key of the process definition. */
+			processDefinitionKey?: string
+			/** @description The key of the process instance. */
+			processInstanceKey?: string
+			/** @description The key of the decision. */
+			decisionDefinitionKey?: string
+			/** @description The key of the element instance this decision instance is linked to. */
+			elementInstanceKey?: string
+		}
+		DecisionInstanceGetQueryResult: components['schemas']['DecisionInstanceResult'] & {
+			/** @description The evaluated inputs of the decision instance.
+			 *      */
+			evaluatedInputs?: components['schemas']['EvaluatedDecisionInputItem'][]
+			/** @description The matched rules of the decision instance.
+			 *      */
+			matchedRules?: components['schemas']['MatchedDecisionRuleItem'][]
+		}
+		/**
+		 * @description The type of the decision.
+		 * @enum {unknown}
+		 */
+		DecisionDefinitionTypeEnum:
+			| 'DECISION_TABLE'
+			| 'LITERAL_EXPRESSION'
+			| 'UNSPECIFIED'
+			| 'UNKNOWN'
+		/**
+		 * @description The state of the decision instance.
+		 * @enum {unknown}
+		 */
+		DecisionInstanceStateEnum:
+			| 'EVALUATED'
+			| 'FAILED'
+			| 'UNSPECIFIED'
+			| 'UNKNOWN'
+		/**
+		 * @description The order in which to sort the related field.
+		 * @default ASC
+		 * @enum {string}
+		 */
+		SortOrderEnum: 'ASC' | 'DESC'
+		MessageCorrelationRequest: {
+			/** @description The message name as defined in the BPMN process
+			 *      */
+			name?: string
+			/**
+			 * @description The correlation key of the message
+			 * @default
+			 */
+			correlationKey: string
+			/** @description The message variables as JSON document */
+			variables?: {
+				[key: string]: unknown
+			} | null
+			/** @description the tenant for which the message is published */
+			tenantId?: string | null
+		}
+		/** @description The message key of the correlated message, as well as the first process instance key it
+		 *     correlated with.
+		 *      */
+		MessageCorrelationResult: {
+			/** @description The tenant ID of the correlated message */
+			tenantId?: string
+			/** @description The key of the correlated message */
+			messageKey?: string
+			/** @description The key of the first process instance the message correlated with */
+			processInstanceKey?: string
+		}
+		MessagePublicationRequest: {
+			/** @description The name of the message. */
+			name: string
+			/**
+			 * @description The correlation key of the message.
+			 * @default
+			 */
+			correlationKey: string
+			/**
+			 * Format: int64
+			 * @description Timespan (in ms) to buffer the message on the broker.
+			 * @default 0
+			 */
+			timeToLive: number
+			/** @description The unique ID of the message. Only useful to ensure only one message with the given ID
+			 *     will ever be published (during its lifetime).
+			 *      */
+			messageId?: string | null
+			/** @description The message variables as JSON document. */
+			variables?: {
+				[key: string]: unknown
+			} | null
+			/** @description The tenant of the message sender. */
+			tenantId?: string | null
+		}
+		/** @description The message key of the published message. */
+		MessagePublicationResult: {
+			/** @description The tenant ID of the message. */
+			tenantId?: string
+			/** @description The key of the message */
+			messageKey?: string
+		}
+		DocumentReference: {
+			/**
+			 * @description Document discriminator. Always set to "camunda".
+			 * @enum {string}
+			 */
+			'camunda.document.type'?: 'camunda'
+			/** @description The ID of the document store. */
+			storeId?: string
+			/** @description The ID of the document. */
+			documentId?: string
+			/** @description The hash of the document. */
+			contentHash?: string
+			metadata?: components['schemas']['DocumentMetadata']
+		}
+		DocumentCreationFailureDetail: {
+			/** @description The name of the file. */
+			fileName?: string
+			/** @description The detail of the failure. */
+			detail?: string
+		}
+		DocumentCreationBatchResponse: {
+			/** @description Documents that were successfully created. */
+			createdDocuments?: components['schemas']['DocumentReference'][]
+			/** @description Documents that failed creation. */
+			failedDocuments?: components['schemas']['DocumentCreationFailureDetail'][]
+		}
+		/** @description Information about the document. */
+		DocumentMetadata: {
+			/** @description The content type of the document. */
+			contentType?: string
+			/** @description The name of the file. */
+			fileName?: string
+			/**
+			 * Format: date-time
+			 * @description The date and time when the document expires.
+			 */
+			expiresAt?: string
+			/**
+			 * Format: int64
+			 * @description The size of the document in bytes.
+			 */
+			size?: number
+			/** @description The ID of the process definition that created the document. */
+			processDefinitionId?: string
+			/** @description The key of the process instance that created the document. */
+			processInstanceKey?: string
+			/** @description Custom properties of the document. */
+			customProperties?: {
+				[key: string]: unknown
+			}
+		}
+		DocumentLinkRequest: {
+			/**
+			 * Format: int64
+			 * @description The time-to-live of the document link in ms.
+			 * @default 3600000
+			 */
+			timeToLive: number
+		}
+		DocumentLink: {
+			/** @description The link to the document. */
+			url?: string
+			/**
+			 * Format: date-time
+			 * @description The date and time when the link expires.
+			 */
+			expiresAt?: string
+		}
+		DeploymentResult: {
+			/** @description The tenant ID associated with the deployment. */
+			tenantId?: string
+			/** @description The unique key identifying the deployment. */
+			deploymentKey?: string
+			/** @description Items deployed by the request. */
+			deployments?: components['schemas']['DeploymentMetadataResult'][]
+		}
+		DeploymentMetadataResult: {
+			processDefinition?: components['schemas']['DeploymentProcessResult']
+			decisionDefinition?: components['schemas']['DeploymentDecisionResult']
+			decisionRequirements?: components['schemas']['DeploymentDecisionRequirementsResult']
+			form?: components['schemas']['DeploymentFormResult']
+			resource?: components['schemas']['DeploymentResourceResult']
+		}
+		/** @description A deployed process. */
+		DeploymentProcessResult: {
+			/** @description The bpmn process ID, as parsed during deployment, together with the version forms a
+			 *     unique identifier for a specific process definition.
+			 *      */
+			processDefinitionId?: string
+			/**
+			 * Format: int32
+			 * @description The assigned process version.
+			 */
+			processDefinitionVersion?: number
+			/** @description The resource name from which this process was parsed. */
+			resourceName?: string
+			/** @description The tenant ID of the deployed process. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this process. */
+			processDefinitionKey?: string
+		}
+		/** @description A deployed decision. */
+		DeploymentDecisionResult: {
+			/** @description The dmn decision ID, as parsed during deployment, together with the version forms a
+			 *     unique identifier for a specific decision.
+			 *      */
+			decisionDefinitionId?: string
+			/**
+			 * Format: int32
+			 * @description The assigned decision version.
+			 */
+			version?: number
+			/** @description The DMN name of the decision, as parsed during deployment. */
+			name?: string
+			/** @description The tenant ID of the deployed decision. */
+			tenantId?: string
+			/** @description The dmn ID of the decision requirements graph that this decision is part of, as parsed during deployment.
+			 *      */
+			decisionRequirementsId?: string
+			/** @description The assigned decision key, which acts as a unique identifier for this decision.
+			 *      */
+			decisionDefinitionKey?: string
+			/** @description The assigned key of the decision requirements graph that this decision is part of.
+			 *      */
+			decisionRequirementsKey?: string
+		}
+		/** @description Deployed decision requirements. */
+		DeploymentDecisionRequirementsResult: {
+			/** @description The dmn decision requirements ID, as parsed during deployment; together with the versions forms a unique identifier for a specific decision.
+			 *      */
+			decisionRequirementsId?: string
+			/**
+			 * Format: int32
+			 * @description The assigned decision requirements version.
+			 */
+			version?: number
+			/** @description The DMN name of the decision requirements, as parsed during deployment. */
+			decisionRequirementsName?: string
+			/** @description The tenant ID of the deployed decision requirements. */
+			tenantId?: string
+			/** @description The resource name from which this decision requirements was parsed. */
+			resourceName?: string
+			/** @description The assigned decision requirements key, which acts as a unique identifier for this decision requirements.
+			 *      */
+			decisionRequirementsKey?: string
+		}
+		/** @description A deployed form. */
+		DeploymentFormResult: {
+			/** @description The form ID, as parsed during deployment, together with the version forms a
+			 *     unique identifier for a specific form.
+			 *      */
+			formId?: string
+			/**
+			 * Format: int32
+			 * @description The assigned form version.
+			 */
+			version?: number
+			/** @description The resource name from which this form was parsed. */
+			resourceName?: string
+			/** @description The tenant ID of the deployed form. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this form. */
+			formKey?: string
+		}
+		/** @description A deployed Resource. */
+		DeploymentResourceResult: {
+			/** @description The resource ID, as parsed during deployment, together with the version forms a
+			 *     unique identifier for a specific form.
+			 *      */
+			resourceId?: string
+			/**
+			 * Format: int32
+			 * @description The assigned resource version.
+			 */
+			version?: number
+			/** @description The resource name from which this resource was parsed. */
+			resourceName?: string
+			/** @description The tenant ID of the deployed form. */
+			tenantId?: string
+			/** @description The assigned key, which acts as a unique identifier for this Resource. */
+			resourceKey?: string
+		}
+		IncidentResolutionRequest: {
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation.
+			 *     Must be >0 if provided.
+			 *
+			 */
+			operationReference?: number
+		}
+		ProcessInstanceCreationInstruction: {
+			/** @description The BPMN process ID of the process definition to start an instance of.
+			 *     Cannot be used together with processDefinitionKey.
+			 *      */
+			processDefinitionId?: string
+			/**
+			 * Format: int32
+			 * @description The version of the process. Only considered when a processDefinitionId is provided.
+			 *     By default, the latest version of the process is used.
+			 *
+			 * @default -1
+			 */
+			processDefinitionVersion: number
+			/** @description JSON object that will instantiate the variables for the root variable scope
+			 *     of the process instance.
+			 *      */
+			variables?: {
+				[key: string]: unknown
+			}
+			/** @description The tenant ID of the process definition. */
+			tenantId?: string
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation.
+			 *     Must be >0 if provided.
+			 *
+			 */
+			operationReference?: number
+			/** @description List of start instructions. By default, the process instance will start at
+			 *     the start event. If provided, the process instance will apply start instructions
+			 *     after it has been created.
+			 *      */
+			startInstructions?: components['schemas']['ProcessInstanceCreationStartInstruction'][]
+			/** @description Runtime instructions (alpha). List of instructions that affect the runtime behavior of
+			 *     the process instance. Refer to specific instruction types for more details.
+			 *
+			 *     This parameter is an alpha feature and may be subject to change
+			 *     in future releases.
+			 *      */
+			runtimeInstructions?: components['schemas']['ProcessInstanceCreationRuntimeInstruction'][]
+			/**
+			 * @description Wait for the process instance to complete. If the process instance completion does
+			 *     not occur within the requestTimeout, the request will be closed. This can lead to a 504
+			 *     response status. Disabled by default.
+			 *
+			 * @default false
+			 */
+			awaitCompletion: boolean
+			/** @description List of variables by name to be included in the response when awaitCompletion is set to true.
+			 *     If empty, all visible variables in the root scope will be returned.
+			 *      */
+			fetchVariables?: string[]
+			/**
+			 * Format: int64
+			 * @description Timeout (in ms) the request waits for the process to complete. By default or
+			 *     when set to 0, the generic request timeout configured in the cluster is applied.
+			 *
+			 */
+			requestTimeout?: number
+			/** @description The unique key identifying the process definition, for example, returned for a process in the
+			 *     deploy resources endpoint. Cannot be used together with processDefinitionId.
+			 *      */
+			processDefinitionKey?: string
+		}
+		ProcessInstanceCreationStartInstruction: {
+			/** @description Future extensions might include:
+			 *       - different types of start instructions
+			 *       - ability to set local variables for different flow scopes
+			 *
+			 *     For now, however, the start instruction is implicitly a "startBeforeElement" instruction
+			 *      */
+			elementId?: string
+		}
+		/**
+		 * @description The type of the runtime instruction. For now, only SUSPEND_PROCESS_INSTANCE is supported.
+		 *
+		 *     Caution: process instance suspension is an alpha feature and may be subject to change
+		 *     in future releases.
+		 *
+		 *     Note the following limitations of suspended process instances:
+		 *       - Suspended process instances currently cannot be resumed. The only possible state
+		 *         transition is to cancel the suspended instance.
+		 *       - Suspending a process instance currently means that all jobs, user tasks, incidents, and
+		 *         event subscriptions are removed from the runtime state. This means that process instances
+		 *         suspended with the current implementation may not be fully recoverable in the future,
+		 *         when the resume functionality is implemented.
+		 *       - Suspended process instances currently cannot be modified or migrated.
+		 *
+		 *     It is therefore not recommended to use process instance suspension outside of testing or
+		 *     debugging context.
+		 *
+		 * @enum {string}
+		 */
+		RuntimeInstructionType: 'SUSPEND_PROCESS_INSTANCE'
+		/** @description Base type for all runtime instructions.
+		 *      */
+		ProcessInstanceCreationRuntimeInstruction: {
+			type: components['schemas']['RuntimeInstructionType']
+		}
+		ProcessInstanceCreationSuspendInstruction: Omit<
+			components['schemas']['ProcessInstanceCreationRuntimeInstruction'],
+			'type'
+		> & {
+			/** @description The ID of the element that, once completed, will cause the process to move into suspended state.
+			 *      */
+			afterElementId: string
+		} & {
+			/**
+			 * @description discriminator enum property added by openapi-typescript
+			 * @enum {string}
+			 */
+			type: 'SUSPEND_PROCESS_INSTANCE'
+		}
+		CreateProcessInstanceResult: {
+			/** @description The BPMN process ID of the process definition which was used to create the process.
+			 *     instance
+			 *      */
+			processDefinitionId?: string
+			/**
+			 * Format: int32
+			 * @description The version of the process definition which was used to create the process instance.
+			 *
+			 */
+			processDefinitionVersion?: number
+			/** @description The tenant ID of the created process instance. */
+			tenantId?: string
+			/** @description All the variables visible in the root scope. */
+			variables?: {
+				[key: string]: unknown
+			}
+			/** @description The key of the process definition which was used to create the process instance.
+			 *      */
+			processDefinitionKey?: string
+			/** @description The unique identifier of the created process instance; to be used wherever a request
+			 *     needs a process instance key (e.g. CancelProcessInstanceRequest).
+			 *      */
+			processInstanceKey?: string
+		}
+		ProcessInstanceMigrationBatchOperationRequest: {
+			filter: components['schemas']['ProcessInstanceFilter']
+			migrationPlan: components['schemas']['ProcessInstanceMigrationBatchOperationPlan']
+		}
+		/** @description The migration instructions describe how to migrate a process instance from one process definition to another.
+		 *      */
+		ProcessInstanceMigrationBatchOperationPlan: {
+			/** @description Element mappings from the source process instance to the target process instance. */
+			mappingInstructions: components['schemas']['MigrateProcessInstanceMappingInstruction'][]
+			/** @description The key of process definition to migrate the process instance to. */
+			targetProcessDefinitionKey: string
+		}
+		/** @description The migration instructions describe how to migrate a process instance from one process definition to another.
+		 *      */
+		ProcessInstanceMigrationInstruction: {
+			/** @description Element mappings from the source process instance to the target process instance. */
+			mappingInstructions: components['schemas']['MigrateProcessInstanceMappingInstruction'][]
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided.
+			 *
+			 */
+			operationReference?: number
+			/** @description The key of process definition to migrate the process instance to. */
+			targetProcessDefinitionKey: string
+		}
+		/** @description The mapping instructions describe how to map elements from the source process definition to the target process definition.
+		 *      */
+		MigrateProcessInstanceMappingInstruction: {
+			/** @description The element ID to migrate from. */
+			sourceElementId: string
+			/** @description The element ID to migrate into. */
+			targetElementId: string
+		}
+		ProcessInstanceModificationInstruction: {
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided.
+			 *
+			 */
+			operationReference?: number
+			/** @description Instructions describing which elements should be activated in which scopes and which variables should be created. */
+			activateInstructions?: components['schemas']['ProcessInstanceModificationActivateInstruction'][]
+			/** @description Instructions describing which elements should be terminated. */
+			terminateInstructions?: components['schemas']['ProcessInstanceModificationTerminateInstruction'][]
+		}
+		/** @description Instructions describing an element that should be activated. */
+		ProcessInstanceModificationActivateInstruction: {
+			/** @description The ID of the element that should be activated. */
+			elementId: string
+			/** @description Instructions describing which variables should be created. */
+			variableInstructions?: components['schemas']['ModifyProcessInstanceVariableInstruction'][]
+			/**
+			 * @description The key of the ancestor scope the element instance should be created in.
+			 *     Set to -1 to create the new element instance within an existing element instance of the
+			 *     flow scope.
+			 *
+			 * @default -1
+			 */
+			ancestorElementInstanceKey: string
+		}
+		/** @description Instructions describing which variables should be created. */
+		ModifyProcessInstanceVariableInstruction: {
+			/** @description JSON document that will instantiate the variables for the root variable scope of the process instance.
+			 *     It must be a JSON object, as variables will be mapped in a key-value fashion.
+			 *      */
+			variables: {
+				[key: string]: unknown
+			}
+			/**
+			 * @description The ID of the element in which scope the variables should be created.
+			 *     Leave empty to create the variables in the global scope of the process instance
+			 *
+			 * @default
+			 */
+			scopeId: string
+		}
+		/** @description Instructions describing which elements should be terminated. */
+		ProcessInstanceModificationTerminateInstruction: {
+			/** @description The ID of the element that should be terminated. */
+			elementInstanceKey: string
+		}
+		SetVariableRequest: {
+			/** @description JSON object representing the variables to set in the element’s scope. */
+			variables: {
+				[key: string]: unknown
+			}
+			/**
+			 * @description If set to true, the variables are merged strictly into the local scope (as specified by the `elementInstanceKey`).
+			 *     Otherwise, the variables are propagated to upper scopes and set at the outermost one.
+			 *
+			 *     Let’s consider the following example:
+			 *
+			 *     There are two scopes '1' and '2'.
+			 *     Scope '1' is the parent scope of '2'. The effective variables of the scopes are:
+			 *     1 => { "foo" : 2 }
+			 *     2 => { "bar" : 1 }
+			 *
+			 *     An update request with elementInstanceKey as '2', variables { "foo" : 5 }, and local set
+			 *     to true leaves scope '1' unchanged and adjusts scope '2' to { "bar" : 1, "foo" 5 }.
+			 *
+			 *     By default, with local set to false, scope '1' will be { "foo": 5 }
+			 *     and scope '2' will be { "bar" : 1 }.
+			 *
+			 * @default false
+			 */
+			local: boolean
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation. Must be > 0 if provided.
+			 *
+			 */
+			operationReference?: number
+		}
+		DeleteResourceRequest: {
+			/**
+			 * Format: int64
+			 * @description A reference key chosen by the user that will be part of all records resulting from this operation.
+			 *     Must be > 0 if provided.
+			 *
+			 */
+			operationReference?: number
+		} | null
+		SignalBroadcastRequest: {
+			/** @description The name of the signal to broadcast. */
+			signalName: string
+			/** @description The signal variables as a JSON object. */
+			variables?: {
+				[key: string]: unknown
+			}
+			/** @description The ID of the tenant that owns the signal. */
+			tenantId?: string
+		}
+		SignalBroadcastResult: {
+			/** @description The tenant ID of the signal that was broadcast. */
+			tenantId?: string
+			/** @description The unique ID of the signal that was broadcast. */
+			signalKey?: string
+		}
+		FormResult: {
+			/** @description The tenant ID of the form. */
+			tenantId?: string
+			/** @description The user-provided identifier of the form. */
+			formId?: string
+			/** @description The form content. */
+			schema?: Record<string, never>
+			/**
+			 * Format: int64
+			 * @description The version of the the deployed form.
+			 */
+			version?: number
+			/** @description The assigned key, which acts as a unique identifier for this form. */
+			formKey?: string
+		}
+		ResourceResult: {
+			/** @description The resource name from which this resource was parsed. */
+			resourceName?: string
+			/**
+			 * Format: int32
+			 * @description The assigned resource version.
+			 */
+			version?: number
+			/** @description The version tag of this resource. */
+			versionTag?: string
+			/** @description The resource ID of this resource. */
+			resourceId?: string
+			/** @description The tenant ID of this resource. */
+			tenantId?: string
+			/** @description The unique key of this resource. */
+			resourceKey?: string
+		}
+		/**
+		 * @description The type of the batch operation.
+		 * @enum {string}
+		 */
+		BatchOperationTypeEnum:
+			| 'CANCEL_PROCESS_INSTANCE'
+			| 'RESOLVE_INCIDENT'
+			| 'MIGRATE_PROCESS_INSTANCE'
+			| 'MODIFY_PROCESS_INSTANCE'
+		BatchOperationCreatedResult: {
+			/** @description Key of the batch operation. */
+			batchOperationKey?: string
+			batchOperationType?: components['schemas']['BatchOperationTypeEnum']
+		}
+		BatchOperationSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field:
+				| 'batchOperationKey'
+				| 'operationType'
+				| 'state'
+				| 'startDate'
+				| 'endDate'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Batch operation search request. */
+		BatchOperationSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['BatchOperationSearchQuerySortRequest'][]
+			/** @description The batch operation search filters. */
+			filter?: components['schemas']['BatchOperationFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Batch operation filter request. */
+		BatchOperationFilter: {
+			/** @description The key (or operate legacy ID) of the batch operation. */
+			batchOperationKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The type of the batch operation. */
+			operationType?: components['schemas']['BatchOperationTypeFilterProperty']
+			/** @description The state of the batch operation. */
+			state?: components['schemas']['BatchOperationStateFilterProperty']
+		}
+		/** @description BatchOperationTypeEnum property with full advanced search capabilities. */
+		BatchOperationTypeFilterProperty:
+			| (string & components['schemas']['BatchOperationTypeEnum'])
+			| components['schemas']['AdvancedBatchOperationTypeFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced BatchOperationTypeEnum filter.
+		 */
+		AdvancedBatchOperationTypeFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['BatchOperationTypeEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['BatchOperationTypeEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['BatchOperationTypeEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/** @description BatchOperationStateEnum property with full advanced search capabilities. */
+		BatchOperationStateFilterProperty:
+			| (string & components['schemas']['BatchOperationStateEnum'])
+			| components['schemas']['AdvancedBatchOperationStateFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced BatchOperationStateEnum filter.
+		 */
+		AdvancedBatchOperationStateFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['BatchOperationStateEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['BatchOperationStateEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['BatchOperationStateEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/**
+		 * @description The state, one of ACTIVE, COMPLETED, TERMINATED.
+		 * @enum {unknown}
+		 */
+		BatchOperationStateEnum:
+			| 'CREATED'
+			| 'ACTIVE'
+			| 'SUSPENDED'
+			| 'COMPLETED'
+			| 'PARTIALLY_COMPLETED'
+			| 'CANCELED'
+			| 'INCOMPLETED'
+		BatchOperationItemSearchQuerySortRequest: {
+			/**
+			 * @description The field to sort by.
+			 * @enum {string}
+			 */
+			field: 'batchOperationKey' | 'itemKey' | 'processInstanceKey' | 'state'
+			order?: components['schemas']['SortOrderEnum']
+		}
+		/** @description Batch operation item search request. */
+		BatchOperationItemSearchQuery: {
+			/** @description Sort field criteria. */
+			sort?: components['schemas']['BatchOperationItemSearchQuerySortRequest'][]
+			/** @description The batch operation search filters. */
+			filter?: components['schemas']['BatchOperationItemFilter']
+		} & components['schemas']['SearchQueryRequest']
+		/** @description Batch operation item filter request. */
+		BatchOperationItemFilter: {
+			/** @description The key (or operate legacy ID) of the batch operation. */
+			batchOperationKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The key of the item, e.g. a process instance key. */
+			itemKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The process instance key of the processed item. */
+			processInstanceKey?: components['schemas']['BasicStringFilterProperty']
+			/** @description The state of the batch operation. */
+			state?: string &
+				components['schemas']['BatchOperationItemStateFilterProperty']
+		}
+		/** @description BatchOperationItemStateEnum property with full advanced search capabilities. */
+		BatchOperationItemStateFilterProperty:
+			| (string & components['schemas']['BatchOperationItemStateEnum'])
+			| components['schemas']['AdvancedBatchOperationItemStateFilter']
+		/**
+		 * Advanced filter
+		 * @description Advanced BatchOperationItemStateEnum filter.
+		 */
+		AdvancedBatchOperationItemStateFilter: {
+			/** @description Checks for equality with the provided value. */
+			$eq?: components['schemas']['BatchOperationItemStateEnum']
+			/** @description Checks for inequality with the provided value. */
+			$neq?: components['schemas']['BatchOperationItemStateEnum']
+			/** @description Checks if the current property exists. */
+			$exists?: boolean
+			/** @description Checks if the property matches any of the provided values. */
+			$in?: components['schemas']['BatchOperationItemStateEnum'][]
+			$like?: components['schemas']['LikeFilterProperty']
+		}
+		/**
+		 * @description The state, one of ACTIVE, COMPLETED, TERMINATED.
+		 * @enum {unknown}
+		 */
+		BatchOperationItemStateEnum: 'ACTIVE' | 'COMPLETED' | 'CANCELED' | 'FAILED'
+		BatchOperationSearchQueryResult: {
+			/** @description The matching batch operations. */
+			items?: components['schemas']['BatchOperationResponse'][]
+		} & components['schemas']['SearchQueryResponse']
+		BatchOperationResponse: {
+			/** @description Key or (Operate Legacy ID = UUID) of the batch operation. */
+			batchOperationKey?: string
+			/**
+			 * @description The state of the batch operation.
+			 * @enum {string}
+			 */
+			state?:
+				| 'CREATED'
+				| 'ACTIVE'
+				| 'SUSPENDED'
+				| 'COMPLETED'
+				| 'PARTIALLY_COMPLETED'
+				| 'CANCELED'
+				| 'INCOMPLETED'
+			batchOperationType?: components['schemas']['BatchOperationTypeEnum']
+			/**
+			 * Format: date-time
+			 * @description The start date of the batch operation.
+			 */
+			startDate?: string
+			/**
+			 * Format: date-time
+			 * @description The end date of the batch operation.
+			 */
+			endDate?: string
+			/**
+			 * Format: int32
+			 * @description The total number of items contained in this batch operation.
+			 */
+			operationsTotalCount?: number
+			/**
+			 * Format: int32
+			 * @description The number of items which failed during execution of the batch operation. (e.g. because they are rejected by the Zeebe engine).
+			 */
+			operationsFailedCount?: number
+			/**
+			 * Format: int32
+			 * @description The number of successfully completed tasks.
+			 */
+			operationsCompletedCount?: number
+			/** @description The errors that occurred per partition during the batch operation. */
+			errors?: components['schemas']['BatchOperationError'][]
+		}
+		BatchOperationError: {
+			/**
+			 * Format: int32
+			 * @description The partition ID where the error occurred.
+			 */
+			partitionId?: number
+			/**
+			 * @description The type of the error that occurred during the batch operation.
+			 * @enum {string}
+			 */
+			type?: 'QUERY_FAILED'
+			/** @description The error message that occurred during the batch operation. */
+			message?: string
+		}
+		BatchOperationItemSearchQueryResult: {
+			/** @description The matching batch operations. */
+			items?: components['schemas']['BatchOperationItemResponse'][]
+		} & components['schemas']['SearchQueryResponse']
+		BatchOperationItemResponse: {
+			/** @description The key (or operate legacy ID) of the batch operation. */
+			batchOperationKey?: string
+			/** @description Key of the item, e.g. a process instance key. */
+			itemKey?: string
+			/** @description the process instance key of the processed item. */
+			processInstanceKey?: string
+			/**
+			 * @description State of the item.
+			 * @enum {string}
+			 */
+			state?: 'ACTIVE' | 'COMPLETED' | 'CANCELED' | 'FAILED'
+			/**
+			 * Format: date-time
+			 * @description the date this item was processed.
+			 */
+			processedDate?: string
+			/** @description the error message from the engine in case of a failed operation. */
+			errorMessage?: string
+		}
+		/** @description The process instance filter to define on which process instances tokens should be moved,
+		 *     as well as mapping instructions which active element instances should be terminated and which
+		 *     new element instances should be activated
+		 *      */
+		ProcessInstanceModificationBatchOperationRequest: {
+			filter: components['schemas']['ProcessInstanceFilter']
+			/** @description Instructions describing which elements should be activated in which scopes and which variables should be created. */
+			moveInstructions: components['schemas']['ProcessInstanceModificationMoveBatchOperationInstruction'][]
+		}
+		/** @description Instructions describing a move operation. This instruction will terminate all active elementInstance
+		 *     at sourceElementId and activate a new element instance for each terminated one at targetElementId. */
+		ProcessInstanceModificationMoveBatchOperationInstruction: {
+			/** @description The ID of the element that should be terminated. */
+			sourceElementId: string
+			/** @description The ID of the element that should be activated. */
+			targetElementId: string
+		}
+	}
+	responses: {
+		/** @description An internal error occurred while processing the request.
+		 *      */
+		InternalServerError: {
+			headers: {
+				[name: string]: unknown
+			}
+			content: {
+				'application/problem+json': components['schemas']['ProblemDetail']
+			}
+		}
+		/** @description The request lacks valid authentication credentials. */
+		Unauthorized: {
+			headers: {
+				[name: string]: unknown
+			}
+			content: {
+				'application/problem+json': components['schemas']['ProblemDetail']
+			}
+		}
+		/** @description Forbidden. The request is not allowed. */
+		Forbidden: {
+			headers: {
+				[name: string]: unknown
+			}
+			content: {
+				'application/problem+json': components['schemas']['ProblemDetail']
+			}
+		}
+		/** @description The provided data is not valid. */
+		InvalidData: {
+			headers: {
+				[name: string]: unknown
+			}
+			content: {
+				'application/problem+json': components['schemas']['ProblemDetail']
+			}
+		}
+		/** @description The service is currently unavailable. This may happen only on some requests where the system creates backpressure to prevent the server's compute resources from being exhausted, avoiding more severe failures. Clients are recommended to eventually retry those requests after a backoff period. You can learn more about the backpressure mechanism here: https://docs.camunda.io/docs/components/zeebe/technical-concepts/internal-processing/#handling-backpressure .
+		 *      */
+		ServiceUnavailable: {
+			headers: {
+				[name: string]: unknown
+			}
+			content: {
+				'application/problem+json': components['schemas']['ProblemDetail']
+			}
+		}
+	}
+	parameters: never
+	requestBodies: never
+	headers: never
+	pathItems: never
 }
-export type $defs = Record<string, never>;
+export type $defs = Record<string, never>
 export interface operations {
-    getTopology: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Obtains the current topology of the cluster the gateway is part of. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TopologyResponse"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getLicense: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Obtains the current status of the Camunda license. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LicenseResponse"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getAuthentication: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The current user is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CamundaUserResult"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    activateJobs: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["JobActivationRequest"];
-            };
-        };
-        responses: {
-            /** @description The list of activated jobs. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobActivationResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchJobs: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["JobSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The job search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    failJob: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the job to fail. */
-                jobKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["JobFailRequest"];
-            };
-        };
-        responses: {
-            /** @description The job is failed. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The job with the given jobKey is not found.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    throwJobError: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the job. */
-                jobKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["JobErrorRequest"];
-            };
-        };
-        responses: {
-            /** @description An error is thrown for the job. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The job with the given jobKey is not found.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    completeJob: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the job to complete. */
-                jobKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["JobCompletionRequest"];
-            };
-        };
-        responses: {
-            /** @description The job was completed successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The job with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    updateJob: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the job to update. */
-                jobKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["JobUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The job was updated successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The job with the jobKey is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    resolveIncident: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Key of the incident to resolve. */
-                incidentKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["IncidentResolutionRequest"];
-            };
-        };
-        responses: {
-            /** @description The incident is marked as resolved. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The incident with the incidentKey is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    createTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TenantCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description The tenant was created successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The resource was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The tenant was retrieved successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description Tenant not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    updateTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TenantUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The tenant was updated successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantUpdateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    deleteTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The tenant was deleted successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    assignUserToTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The username of the user to assign. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user was successfully assigned to the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or user was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeUserFromTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the user. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user was successfully removed from the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or user was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchUsersForTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["TenantUserSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The search result of users for the tenant. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantUserSearchResult"];
-                };
-            };
-        };
-    };
-    searchClientsForTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["TenantClientSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The search result of users for the tenant. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantClientSearchResult"];
-                };
-            };
-        };
-    };
-    searchGroupIdsForTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["TenantGroupSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The search result of groups for the tenant. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantGroupSearchResult"];
-                };
-            };
-        };
-    };
-    searchRolesForTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The search result of roles for the tenant. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleSearchQueryResult"];
-                };
-            };
-        };
-    };
-    assignClientToTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The ID of the client to assign. */
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The client was successfully assigned to the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The tenant was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeClientFromTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the application. */
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The client was successfully removed from the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The tenant does not exist or the client was not assigned to it. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    assignMappingRuleToTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the mapping rule. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The mapping rule was successfully assigned to the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or mapping rule was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeMappingRuleFromTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the mapping rule. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The mapping rule was successfully removed from the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or mapping rule was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchMappingsForTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["MappingRuleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The search result of MappingRules for the tenant. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleSearchQueryResult"];
-                };
-            };
-        };
-    };
-    assignGroupToTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the group. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The group was successfully assigned to the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or group was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeGroupFromTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the group. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The group was successfully removed from the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or group was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    assignRoleToTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the role. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was successfully assigned to the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or role was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeRoleFromTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique identifier of the tenant. */
-                tenantId: string;
-                /** @description The unique identifier of the role. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was successfully removed from the tenant. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The tenant or role was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchTenants: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["TenantSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The tenants search result */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    completeUserTask: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the user task to complete. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["UserTaskCompletionRequest"];
-            };
-        };
-        responses: {
-            /** @description The user task was completed successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The user task with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    assignUserTask: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the user task to assign. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserTaskAssignmentRequest"];
-            };
-        };
-        responses: {
-            /** @description The user task's assignment was adjusted. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The user task with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getUserTask: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The user task key. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user task is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserTaskResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The user task with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    updateUserTask: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the user task to update. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["UserTaskUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The user task was updated successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The user task with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getUserTaskForm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The user task key. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The form is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FormResult"];
-                };
-            };
-            /** @description The user task was found, but no form is associated with it.
-             *      */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    unassignUserTask: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the user task. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user task was unassigned successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The user task with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchUserTasks: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["UserTaskSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The user task search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserTaskSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchUserTaskVariables: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the user task. */
-                userTaskKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["UserTaskVariableSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The user task variables search response.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VariableSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchVariables: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["VariableSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The variable search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VariableSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getVariable: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The variable key. */
-                variableKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The variable is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VariableResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    pinClock: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ClockPinRequest"];
-            };
-        };
-        responses: {
-            /** @description The clock was successfully pinned to the specified time in epoch milliseconds.
-             *      */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    resetClock: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The clock was successfully reset to the system time. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchProcessDefinitions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ProcessDefinitionSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The process definition search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessDefinitionSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getProcessDefinition: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the process definition, which acts as a unique identifier for this process definition. */
-                processDefinitionKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The process definition is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessDefinitionResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The process definition with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getProcessDefinitionXML: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the process definition, which acts as a unique identifier for this process. */
-                processDefinitionKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The XML of the process definition is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/xml": string;
-                };
-            };
-            /** @description The process definition was found but does not have XML.
-             *      */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/plain": string;
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The decision with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getStartProcessForm: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The process key. */
-                processDefinitionKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The form is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FormResult"];
-                };
-            };
-            /** @description The process was found, but no form is associated with it.
-             *      */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getProcessDefinitionStatistics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the process definition, which acts as a unique identifier for this process definition. */
-                processDefinitionKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ProcessDefinitionElementStatisticsQuery"];
-            };
-        };
-        responses: {
-            /** @description The process definition statistics result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessDefinitionElementStatisticsQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createProcessInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceCreationInstruction"];
-            };
-        };
-        responses: {
-            /** @description The process instance was created. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreateProcessInstanceResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-            /** @description The process instance creation request timed out in the gateway.
-             *
-             *     This can happen if the `awaitCompletion` request parameter is set to `true`
-             *     and the created process instance did not complete within the defined request timeout.
-             *     This often happens when the created instance is not fully automated or contains wait states.
-             *      */
-            504: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-        };
-    };
-    getProcessInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The process instance key. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The process instance is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessInstanceResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The process instance with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getProcessInstanceSequenceFlows: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the process instance, which acts as a unique identifier for this process instance. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The process instance sequence flows result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessInstanceSequenceFlowsQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getProcessInstanceStatistics: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the process instance, which acts as a unique identifier for this process instance. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The process instance statistics result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessInstanceElementStatisticsQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchProcessInstances: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The process instance search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessInstanceSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchProcessInstanceIncidents: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the process instance, which acts as a unique identifier for this process instance. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceIncidentSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The process instance search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IncidentSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The process instance with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    cancelProcessInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the process instance to cancel. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["CancelProcessInstanceRequest"];
-            };
-        };
-        responses: {
-            /** @description The process instance is canceled. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The process instance is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    cancelProcessInstancesBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceFilter"];
-            };
-        };
-        responses: {
-            /** @description The batch operation request was created. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationCreatedResult"];
-                };
-            };
-            /** @description The process instance batch operation failed. More details are provided in the response body.
-             *      */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    resolveIncidentsBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceFilter"];
-            };
-        };
-        responses: {
-            /** @description The batch operation request was created. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationCreatedResult"];
-                };
-            };
-            /** @description The process instance batch operation failed. More details are provided in the response body.
-             *      */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    migrateProcessInstancesBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceMigrationBatchOperationRequest"];
-            };
-        };
-        responses: {
-            /** @description The batch operation request was created. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationCreatedResult"];
-                };
-            };
-            /** @description The process instance batch operation failed. More details are provided in the response body.
-             *      */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    modifyProcessInstancesBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceModificationBatchOperationRequest"];
-            };
-        };
-        responses: {
-            /** @description The batch operation request was created. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationCreatedResult"];
-                };
-            };
-            /** @description The process instance batch operation failed. More details are provided in the response body.
-             *      */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    migrateProcessInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the process instance that should be migrated. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceMigrationInstruction"];
-            };
-        };
-        responses: {
-            /** @description The process instance is migrated. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The process instance is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    modifyProcessInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the process instance that should be modified. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProcessInstanceModificationInstruction"];
-            };
-        };
-        responses: {
-            /** @description The process instance is modified. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The process instance is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getProcessInstanceCallHierarchy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the process instance to fetch the hierarchy for. */
-                processInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The call hierarchy is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProcessInstanceCallHierarchyEntry"][];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The process instance is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchElementInstances: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ElementInstanceSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The element instance search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ElementInstanceSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getElementInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the element instance, which acts as a unique identifier for this element instance. */
-                elementInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The element instance is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ElementInstanceResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The element instance with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchDecisionDefinitions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DecisionDefinitionSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The decision definition search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DecisionDefinitionSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getDecisionDefinition: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the decision definition, which acts as a unique identifier for this decision. */
-                decisionDefinitionKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The decision definition is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DecisionDefinitionResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The decision with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getDecisionDefinitionXML: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the decision definition, which acts as a unique identifier for this decision. */
-                decisionDefinitionKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The XML of the decision definition is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/xml": string;
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The decision with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchDecisionRequirements: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DecisionRequirementsSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The decision requirements search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DecisionRequirementsSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getDecisionRequirements: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the decision requirements, which acts as a unique identifier for this decision requirements. */
-                decisionRequirementsKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The decision requirements is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DecisionRequirementsResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The decision requirements with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getDecisionRequirementsXML: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the decision requirements, which acts as a unique identifier for this decision. */
-                decisionRequirementsKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The XML of the decision requirements is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/xml": string;
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The decision requirements with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchDecisionInstances: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DecisionInstanceSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The decision instance search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DecisionInstanceSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getDecisionInstance: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned ID of the decision instance, which acts as a unique identifier for this decision instance. */
-                decisionInstanceId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The decision instance is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DecisionInstanceGetQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The decision instance with the given ID was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    evaluateDecision: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DecisionEvaluationInstruction"];
-            };
-        };
-        responses: {
-            /** @description The decision was evaluated. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluateDecisionResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The decision is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    createAuthorization: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AuthorizationRequest"];
-            };
-        };
-        responses: {
-            /** @description The authorization was created successfully.
-             *      */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthorizationCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The owner was not found.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getAuthorization: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the authorization to get. */
-                authorizationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The authorization was successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthorizationResult"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The authorization with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    updateAuthorization: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the authorization to delete. */
-                authorizationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AuthorizationRequest"];
-            };
-        };
-        responses: {
-            /** @description The authorization was updated successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            /** @description The authorization with the authorizationKey was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    deleteAuthorization: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the authorization to delete. */
-                authorizationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The authorization was deleted successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            /** @description The authorization with the authorizationKey was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchAuthorizations: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AuthorizationSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The authorization search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthorizationSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description The role was created successfully.
-             *      */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleResult"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    updateRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the role to update. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RoleUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The role was updated successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleUpdateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            /** @description The role with the ID is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    deleteRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the role to delete. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was deleted successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            /** @description The role with the ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchUsersForRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleUserSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The users with the assigned role. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleUserSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchClientsForRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleClientSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The clients with the assigned role. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleClientSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    addRoleToUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The user username. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was assigned successfully to the user. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or user with the given ID or username was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The role is already assigned to the user with the given ID. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeUserFromRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The user username. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user was unassigned successfully from the role. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or user with the given ID or username was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    addRoleToClient: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The client ID. */
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was assigned successfully to the client. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The role was already assigned to the client with the given ID. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeRoleFromClient: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The client ID. */
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was unassigned successfully from the client. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or client with the given ID or username was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchRoles: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The roles search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description An internal error occurred while processing the request. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-        };
-    };
-    addRoleToGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was assigned successfully to the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The role is already assigned to the group with the given ID. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeRoleFromGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was unassigned successfully from the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchGroupsForRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleGroupSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The groups with assigned role. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleGroupSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    addRoleToMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The mapping rule ID. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was assigned successfully to the mapping rule. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or mapping rule with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The role is already assigned to the mapping rule with the given ID. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    removeRoleFromMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-                /** @description The mapping rule ID. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The role was unassigned successfully from the mapping rule. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role or mapping with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchMappingRulesForRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The role ID. */
-                roleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["MappingRuleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The mapping rules with assigned role. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The role with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["GroupCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description The group was created successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The group is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupResult"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    updateGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the group to update. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GroupUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The group was updated successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupUpdateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    deleteGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the group to delete. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The group was deleted successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchUsersForGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["GroupUserSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The users assigned to the group. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupUserSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchMappingRulesForGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["MappingRuleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The mapping rules assigned to the group. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchRolesForGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["RoleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The roles assigned to the group. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RoleSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchClientsForGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["GroupClientSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The clients assigned to the group. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupClientSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    addUserToGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-                /** @description The user username. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user was assigned successfully to the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group or user with the given ID or username was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The user with the given ID is already assigned to the group. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    unassignUserFromGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-                /** @description The user username. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user was unassigned successfully from the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group or user with the given ID was not found, or the user is not assigned to this group. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    addClientToGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-                /** @description The client ID. */
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The client was assigned successfully to the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The client with the given ID is already assigned to the group. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    unassignClientFromGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-                /** @description The client ID. */
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The client was unassigned successfully from the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group with the given ID was not found, or the client is not assigned to this group. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    assignMappingRuleToGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-                /** @description The mapping rule ID. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The mapping rule was assigned successfully to the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group or mapping rule with the given ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The mapping rule with the given ID is already assigned to the group. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    unassignMappingRuleFromGroup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The group ID. */
-                groupId: string;
-                /** @description The mapping rule ID. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The mapping rule was unassigned successfully from the group. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The group or mapping rule with the given ID was not found, or the mapping rule is not assigned to this group. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchGroups: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["GroupSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The groups search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description An internal error occurred while processing the request. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-        };
-    };
-    createMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["MappingRuleCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description The mapping rule was created successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The request to create a mapping rule was denied.
-             *     More details are provided in the response body.
-             *      */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The request to create a mapping rule was denied. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the mapping rule to get. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The mapping rule was returned successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleResult"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            /** @description The mapping rule with the mappingRuleId was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    updateMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the mapping rule to update. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["MappingRuleUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The mapping rule was updated successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleUpdateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The request to update a mapping rule was denied.
-             *     More details are provided in the response body.
-             *      */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The request to update a mapping rule was denied. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    deleteMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the mapping rule to delete. */
-                mappingRuleId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The mapping rule was deleted successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            /** @description The mapping rule with the mappingRuleId was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchMappingRule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MappingRuleSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The mapping rule search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MappingRuleSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    publishMessage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MessagePublicationRequest"];
-            };
-        };
-        responses: {
-            /** @description The message was published. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MessagePublicationResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    correlateMessage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MessageCorrelationRequest"];
-            };
-        };
-        responses: {
-            /** @description The message is correlated to one or more process instances */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MessageCorrelationResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchMessageSubscriptions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["MessageSubscriptionSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The message subscription search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MessageSubscriptionSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createDocument: {
-        parameters: {
-            query?: {
-                /** @description The ID of the document store to upload the documents to. Currently, only a single document store is supported per cluster. However, this attribute is included to allow for potential future support of multiple document stores. */
-                storeId?: string;
-                /** @description The ID of the document to upload. If not provided, a new ID will be generated. Specifying an existing ID will result in an error if the document already exists.
-                 *      */
-                documentId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                    metadata?: components["schemas"]["DocumentMetadata"];
-                };
-            };
-        };
-        responses: {
-            /** @description The document was uploaded successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentReference"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-        };
-    };
-    createDocuments: {
-        parameters: {
-            query?: {
-                /** @description The ID of the document store to upload the documents to. Currently, only a single document store is supported per cluster. However, this attribute is included to allow for potential future support of multiple document stores. */
-                storeId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** @description The documents to upload. */
-                    files: string[];
-                };
-            };
-        };
-        responses: {
-            /** @description All documents were uploaded successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentCreationBatchResponse"];
-                };
-            };
-            /** @description Not all documents were uploaded successfully. More details are provided in the response body.
-             *      */
-            207: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentCreationBatchResponse"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-        };
-    };
-    getDocument: {
-        parameters: {
-            query: {
-                /** @description The ID of the document store to download the document from. */
-                storeId?: string;
-                /** @description The hash of the document content that was computed by the document store during upload. The hash is part of the document reference that is returned when uploading a document. If the client fails to provide the correct hash, the request will be rejected.
-                 *      */
-                contentHash: string;
-            };
-            header?: never;
-            path: {
-                /** @description The ID of the document to download. */
-                documentId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The document was downloaded successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/octet-stream": string;
-                };
-            };
-            /** @description The document with the given ID was not found.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    deleteDocument: {
-        parameters: {
-            query?: {
-                /** @description The ID of the document store to delete the document from. */
-                storeId?: string;
-            };
-            header?: never;
-            path: {
-                /** @description The ID of the document to delete. */
-                documentId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The document was deleted successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description The document with the given ID was not found.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createDocumentLink: {
-        parameters: {
-            query: {
-                /** @description The ID of the document store to link the document from. */
-                storeId?: string;
-                /** @description The hash of the document content that was computed by the document store during upload. The hash is part of the document reference that is returned when uploading a document. If the client fails to provide the correct hash, the request will be rejected.
-                 *      */
-                contentHash: string;
-            };
-            header?: never;
-            path: {
-                /** @description The ID of the document to link. */
-                documentId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DocumentLinkRequest"];
-            };
-        };
-        responses: {
-            /** @description The document link was created successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentLink"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-        };
-    };
-    createUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserRequest"];
-            };
-        };
-        responses: {
-            /** @description The user was created successfully.
-             *      */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description A user with the given username already exists.
-             *      */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchUsers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserSearchQueryRequest"];
-            };
-        };
-        responses: {
-            /** @description The user search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserSearchResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The username of the user. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserResult"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The user with the given username was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    deleteUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The username of the user to delete. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The user was deleted successfully. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The user is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    updateUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The username of the user to update. */
-                username: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description The user was updated successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserUpdateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description The user was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    createAdminUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserRequest"];
-            };
-        };
-        responses: {
-            /** @description The user was created and got assigned the admin role successfully.
-             *      */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserCreateResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchIncidents: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["IncidentSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The incident search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IncidentSearchQueryResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getIncident: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The assigned key of the incident, which acts as a unique identifier for this incident. */
-                incidentKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The incident is successfully returned.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IncidentResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The incident with the given key was not found. More details are provided in the response body.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getUsageMetrics: {
-        parameters: {
-            query: {
-                /** @description The start date for usage metrics, including this date. */
-                startTime: string;
-                /** @description The end date for usage metrics, including this date. */
-                endTime: string;
-                /** @description Restrict results to a specific tenant ID. If not provided, results for all tenants are returned. */
-                tenantId?: string;
-                /** @description Whether to return tenant metrics in addition to the total metrics or not. Default false. */
-                withTenants?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The usage metrics search result.
-             *      */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UsageMetricsResponse"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createDeployment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** @description The binary data to create the deployment resources. It is possible to have more than one form part with different form part names for the binary data to create a deployment.
-                     *      */
-                    resources: string[];
-                    /** @description The tenant to deploy the resources to. */
-                    tenantId?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description The resources are deployed. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DeploymentResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    deleteResource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the resource to delete.
-                 *     This can be the key of a process definition, the key of a decision requirements
-                 *     definition or the key of a form definition
-                 *      */
-                resourceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DeleteResourceRequest"];
-            };
-        };
-        responses: {
-            /** @description The resource is deleted. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The resource is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getResource: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique key identifying the resource. */
-                resourceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The resource is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResourceResult"];
-                };
-            };
-            /** @description A resource with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    getResourceContent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The unique key identifying the resource. */
-                resourceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The resource content is successfully returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": string;
-                };
-            };
-            /** @description A resource with the given key was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    createElementInstanceVariables: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the element instance to update the variables for.
-                 *     This can be the process instance key (as obtained during instance creation), or a given
-                 *     element, such as a service task (see the `elementInstanceKey` on the job message).
-                 *      */
-                elementInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetVariableRequest"];
-            };
-        };
-        responses: {
-            /** @description The variables were updated. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    activateAdHocSubProcessActivities: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key of the ad-hoc sub-process instance that contains the activities. */
-                adHocSubProcessInstanceKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AdHocSubProcessActivateActivitiesInstruction"];
-            };
-        };
-        responses: {
-            /** @description The ad-hoc sub-process instance is modified. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description The ad-hoc sub-process instance is not found or the provided key does not identify an
-             *     ad-hoc sub-process.
-             *      */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    broadcastSignal: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SignalBroadcastRequest"];
-            };
-        };
-        responses: {
-            /** @description The signal was broadcast. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SignalBroadcastResult"];
-                };
-            };
-            400: components["responses"]["InvalidData"];
-            /** @description The signal is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    getBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key (or operate legacy ID) of the batch operation.
-                 *      */
-                batchOperationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The batch operation was found. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationResponse"];
-                };
-            };
-            /** @description The provided data is not valid. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            /** @description The batch operation is not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    searchBatchOperations: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["BatchOperationSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The batch operation search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationSearchQueryResult"];
-                };
-            };
-            /** @description The provided data is not valid. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    cancelBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key (or operate legacy ID) of the batch operation.
-                 *      */
-                batchOperationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": unknown;
-            };
-        };
-        responses: {
-            /** @description The batch operation cancel request was created. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The batch operation was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
-    suspendBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key (or operate legacy ID) of the batch operation.
-                 *      */
-                batchOperationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": unknown;
-            };
-        };
-        responses: {
-            /** @description The batch operation pause request was created. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The batch operation was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    resumeBatchOperation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The key (or operate legacy ID) of the batch operation.
-                 *      */
-                batchOperationKey: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": unknown;
-            };
-        };
-        responses: {
-            /** @description The batch operation resume request was created. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["InvalidData"];
-            403: components["responses"]["Forbidden"];
-            /** @description Not found. The batch operation was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    searchBatchOperationItems: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["BatchOperationItemSearchQuery"];
-            };
-        };
-        responses: {
-            /** @description The batch operation search result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchOperationItemSearchQueryResult"];
-                };
-            };
-            /** @description The provided data is not valid. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetail"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-        };
-    };
+	getTopology: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description Obtains the current topology of the cluster the gateway is part of. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TopologyResponse']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getLicense: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description Obtains the current status of the Camunda license. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['LicenseResponse']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getAuthentication: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The current user is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['CamundaUserResult']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	activateJobs: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['JobActivationRequest']
+			}
+		}
+		responses: {
+			/** @description The list of activated jobs. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['JobActivationResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchJobs: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['JobSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The job search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['JobSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	failJob: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the job to fail. */
+				jobKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['JobFailRequest']
+			}
+		}
+		responses: {
+			/** @description The job is failed. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The job with the given jobKey is not found.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	throwJobError: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the job. */
+				jobKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['JobErrorRequest']
+			}
+		}
+		responses: {
+			/** @description An error is thrown for the job. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The job with the given jobKey is not found.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	completeJob: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the job to complete. */
+				jobKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['JobCompletionRequest']
+			}
+		}
+		responses: {
+			/** @description The job was completed successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The job with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	updateJob: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the job to update. */
+				jobKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['JobUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The job was updated successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The job with the jobKey is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The job with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	resolveIncident: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description Key of the incident to resolve. */
+				incidentKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['IncidentResolutionRequest']
+			}
+		}
+		responses: {
+			/** @description The incident is marked as resolved. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The incident with the incidentKey is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	createTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['TenantCreateRequest']
+			}
+		}
+		responses: {
+			/** @description The tenant was created successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The resource was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The tenant was retrieved successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description Tenant not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	updateTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['TenantUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The tenant was updated successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantUpdateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	deleteTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The tenant was deleted successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	assignUserToTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The username of the user to assign. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user was successfully assigned to the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or user was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeUserFromTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the user. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user was successfully removed from the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or user was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchUsersForTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['TenantUserSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The search result of users for the tenant. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantUserSearchResult']
+				}
+			}
+		}
+	}
+	searchClientsForTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['TenantClientSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The search result of users for the tenant. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantClientSearchResult']
+				}
+			}
+		}
+	}
+	searchGroupIdsForTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['TenantGroupSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The search result of groups for the tenant. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantGroupSearchResult']
+				}
+			}
+		}
+	}
+	searchRolesForTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The search result of roles for the tenant. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleSearchQueryResult']
+				}
+			}
+		}
+	}
+	assignClientToTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The ID of the client to assign. */
+				clientId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The client was successfully assigned to the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The tenant was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeClientFromTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the application. */
+				clientId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The client was successfully removed from the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The tenant does not exist or the client was not assigned to it. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	assignMappingRuleToTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the mapping rule. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The mapping rule was successfully assigned to the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or mapping rule was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeMappingRuleFromTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the mapping rule. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The mapping rule was successfully removed from the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or mapping rule was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchMappingsForTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MappingRuleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The search result of MappingRules for the tenant. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleSearchQueryResult']
+				}
+			}
+		}
+	}
+	assignGroupToTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the group. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The group was successfully assigned to the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or group was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeGroupFromTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the group. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The group was successfully removed from the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or group was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	assignRoleToTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the role. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was successfully assigned to the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or role was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeRoleFromTenant: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique identifier of the tenant. */
+				tenantId: string
+				/** @description The unique identifier of the role. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was successfully removed from the tenant. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The tenant or role was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchTenants: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['TenantSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The tenants search result */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['TenantSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description Not found */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	completeUserTask: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the user task to complete. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['UserTaskCompletionRequest']
+			}
+		}
+		responses: {
+			/** @description The user task was completed successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The user task with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	assignUserTask: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the user task to assign. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserTaskAssignmentRequest']
+			}
+		}
+		responses: {
+			/** @description The user task's assignment was adjusted. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The user task with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getUserTask: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The user task key. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user task is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserTaskResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The user task with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	updateUserTask: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the user task to update. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['UserTaskUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The user task was updated successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The user task with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getUserTaskForm: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The user task key. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The form is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['FormResult']
+				}
+			}
+			/** @description The user task was found, but no form is associated with it.
+			 *      */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description Not found */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	unassignUserTask: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the user task. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user task was unassigned successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The user task with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The user task with the given key is in the wrong state currently. More details are provided in the response body.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchUserTasks: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['UserTaskSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The user task search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserTaskSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchUserTaskVariables: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the user task. */
+				userTaskKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['UserTaskVariableSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The user task variables search response.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['VariableSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchVariables: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['VariableSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The variable search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['VariableSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getVariable: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The variable key. */
+				variableKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The variable is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['VariableResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description Not found */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	pinClock: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ClockPinRequest']
+			}
+		}
+		responses: {
+			/** @description The clock was successfully pinned to the specified time in epoch milliseconds.
+			 *      */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	resetClock: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The clock was successfully reset to the system time. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchProcessDefinitions: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ProcessDefinitionSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The process definition search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessDefinitionSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getProcessDefinition: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the process definition, which acts as a unique identifier for this process definition. */
+				processDefinitionKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The process definition is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessDefinitionResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The process definition with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getProcessDefinitionXML: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the process definition, which acts as a unique identifier for this process. */
+				processDefinitionKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The XML of the process definition is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'text/xml': string
+				}
+			}
+			/** @description The process definition was found but does not have XML.
+			 *      */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'text/plain': string
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The decision with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getStartProcessForm: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The process key. */
+				processDefinitionKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The form is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['FormResult']
+				}
+			}
+			/** @description The process was found, but no form is associated with it.
+			 *      */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description Not found */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getProcessDefinitionStatistics: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the process definition, which acts as a unique identifier for this process definition. */
+				processDefinitionKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ProcessDefinitionElementStatisticsQuery']
+			}
+		}
+		responses: {
+			/** @description The process definition statistics result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessDefinitionElementStatisticsQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createProcessInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceCreationInstruction']
+			}
+		}
+		responses: {
+			/** @description The process instance was created. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['CreateProcessInstanceResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+			/** @description The process instance creation request timed out in the gateway.
+			 *
+			 *     This can happen if the `awaitCompletion` request parameter is set to `true`
+			 *     and the created process instance did not complete within the defined request timeout.
+			 *     This often happens when the created instance is not fully automated or contains wait states.
+			 *      */
+			504: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+		}
+	}
+	getProcessInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The process instance key. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The process instance is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessInstanceResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The process instance with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getProcessInstanceSequenceFlows: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the process instance, which acts as a unique identifier for this process instance. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The process instance sequence flows result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessInstanceSequenceFlowsQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getProcessInstanceStatistics: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the process instance, which acts as a unique identifier for this process instance. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The process instance statistics result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessInstanceElementStatisticsQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchProcessInstances: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The process instance search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessInstanceSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchProcessInstanceIncidents: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the process instance, which acts as a unique identifier for this process instance. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceIncidentSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The process instance search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['IncidentSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The process instance with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	cancelProcessInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the process instance to cancel. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['CancelProcessInstanceRequest']
+			}
+		}
+		responses: {
+			/** @description The process instance is canceled. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The process instance is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	cancelProcessInstancesBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceFilter']
+			}
+		}
+		responses: {
+			/** @description The batch operation request was created. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationCreatedResult']
+				}
+			}
+			/** @description The process instance batch operation failed. More details are provided in the response body.
+			 *      */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	resolveIncidentsBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceFilter']
+			}
+		}
+		responses: {
+			/** @description The batch operation request was created. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationCreatedResult']
+				}
+			}
+			/** @description The process instance batch operation failed. More details are provided in the response body.
+			 *      */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	migrateProcessInstancesBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceMigrationBatchOperationRequest']
+			}
+		}
+		responses: {
+			/** @description The batch operation request was created. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationCreatedResult']
+				}
+			}
+			/** @description The process instance batch operation failed. More details are provided in the response body.
+			 *      */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	modifyProcessInstancesBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceModificationBatchOperationRequest']
+			}
+		}
+		responses: {
+			/** @description The batch operation request was created. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationCreatedResult']
+				}
+			}
+			/** @description The process instance batch operation failed. More details are provided in the response body.
+			 *      */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	migrateProcessInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the process instance that should be migrated. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceMigrationInstruction']
+			}
+		}
+		responses: {
+			/** @description The process instance is migrated. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The process instance is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	modifyProcessInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the process instance that should be modified. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ProcessInstanceModificationInstruction']
+			}
+		}
+		responses: {
+			/** @description The process instance is modified. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The process instance is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getProcessInstanceCallHierarchy: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the process instance to fetch the hierarchy for. */
+				processInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The call hierarchy is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ProcessInstanceCallHierarchyEntry'][]
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The process instance is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchElementInstances: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ElementInstanceSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The element instance search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ElementInstanceSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getElementInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the element instance, which acts as a unique identifier for this element instance. */
+				elementInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The element instance is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ElementInstanceResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The element instance with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchDecisionDefinitions: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['DecisionDefinitionSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The decision definition search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DecisionDefinitionSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getDecisionDefinition: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the decision definition, which acts as a unique identifier for this decision. */
+				decisionDefinitionKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The decision definition is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DecisionDefinitionResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The decision with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getDecisionDefinitionXML: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the decision definition, which acts as a unique identifier for this decision. */
+				decisionDefinitionKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The XML of the decision definition is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'text/xml': string
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The decision with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchDecisionRequirements: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['DecisionRequirementsSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The decision requirements search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DecisionRequirementsSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getDecisionRequirements: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the decision requirements, which acts as a unique identifier for this decision requirements. */
+				decisionRequirementsKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The decision requirements is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DecisionRequirementsResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The decision requirements with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getDecisionRequirementsXML: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the decision requirements, which acts as a unique identifier for this decision. */
+				decisionRequirementsKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The XML of the decision requirements is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'text/xml': string
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The decision requirements with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchDecisionInstances: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['DecisionInstanceSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The decision instance search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DecisionInstanceSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getDecisionInstance: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned ID of the decision instance, which acts as a unique identifier for this decision instance. */
+				decisionInstanceId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The decision instance is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DecisionInstanceGetQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The decision instance with the given ID was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	evaluateDecision: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DecisionEvaluationInstruction']
+			}
+		}
+		responses: {
+			/** @description The decision was evaluated. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['EvaluateDecisionResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			/** @description The decision is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	createAuthorization: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AuthorizationRequest']
+			}
+		}
+		responses: {
+			/** @description The authorization was created successfully.
+			 *      */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['AuthorizationCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The owner was not found.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getAuthorization: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the authorization to get. */
+				authorizationKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The authorization was successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['AuthorizationResult']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The authorization with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	updateAuthorization: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the authorization to delete. */
+				authorizationKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AuthorizationRequest']
+			}
+		}
+		responses: {
+			/** @description The authorization was updated successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			401: components['responses']['Unauthorized']
+			/** @description The authorization with the authorizationKey was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	deleteAuthorization: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the authorization to delete. */
+				authorizationKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The authorization was deleted successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			401: components['responses']['Unauthorized']
+			/** @description The authorization with the authorizationKey was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchAuthorizations: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AuthorizationSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The authorization search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['AuthorizationSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleCreateRequest']
+			}
+		}
+		responses: {
+			/** @description The role was created successfully.
+			 *      */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleResult']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The role with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	updateRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the role to update. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RoleUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The role was updated successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleUpdateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			/** @description The role with the ID is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	deleteRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the role to delete. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was deleted successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			401: components['responses']['Unauthorized']
+			/** @description The role with the ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchUsersForRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleUserSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The users with the assigned role. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleUserSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The role with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchClientsForRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleClientSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The clients with the assigned role. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleClientSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The role with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	addRoleToUser: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The user username. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was assigned successfully to the user. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or user with the given ID or username was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The role is already assigned to the user with the given ID. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeUserFromRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The user username. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user was unassigned successfully from the role. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or user with the given ID or username was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	addRoleToClient: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The client ID. */
+				clientId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was assigned successfully to the client. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The role was already assigned to the client with the given ID. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeRoleFromClient: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The client ID. */
+				clientId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was unassigned successfully from the client. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or client with the given ID or username was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchRoles: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The roles search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description An internal error occurred while processing the request. */
+			500: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+		}
+	}
+	addRoleToGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was assigned successfully to the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The role is already assigned to the group with the given ID. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeRoleFromGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was unassigned successfully from the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchGroupsForRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleGroupSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The groups with assigned role. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleGroupSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The role with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	addRoleToMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The mapping rule ID. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was assigned successfully to the mapping rule. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or mapping rule with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The role is already assigned to the mapping rule with the given ID. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	removeRoleFromMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+				/** @description The mapping rule ID. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The role was unassigned successfully from the mapping rule. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The role or mapping with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchMappingRulesForRole: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The role ID. */
+				roleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MappingRuleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The mapping rules with assigned role. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The role with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['GroupCreateRequest']
+			}
+		}
+		responses: {
+			/** @description The group was created successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['GroupCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The group is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['GroupResult']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	updateGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the group to update. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['GroupUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The group was updated successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['GroupUpdateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	deleteGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the group to delete. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The group was deleted successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			401: components['responses']['Unauthorized']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchUsersForGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['GroupUserSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The users assigned to the group. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['GroupUserSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchMappingRulesForGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MappingRuleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The mapping rules assigned to the group. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchRolesForGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['RoleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The roles assigned to the group. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['RoleSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchClientsForGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['GroupClientSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The clients assigned to the group. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['GroupClientSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	addUserToGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+				/** @description The user username. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user was assigned successfully to the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The group or user with the given ID or username was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The user with the given ID is already assigned to the group. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	unassignUserFromGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+				/** @description The user username. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user was unassigned successfully from the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The group or user with the given ID was not found, or the user is not assigned to this group. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	addClientToGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+				/** @description The client ID. */
+				clientId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The client was assigned successfully to the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The client with the given ID is already assigned to the group. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	unassignClientFromGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+				/** @description The client ID. */
+				clientId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The client was unassigned successfully from the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The group with the given ID was not found, or the client is not assigned to this group. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	assignMappingRuleToGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+				/** @description The mapping rule ID. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The mapping rule was assigned successfully to the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The group or mapping rule with the given ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The mapping rule with the given ID is already assigned to the group. */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	unassignMappingRuleFromGroup: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The group ID. */
+				groupId: string
+				/** @description The mapping rule ID. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The mapping rule was unassigned successfully from the group. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The group or mapping rule with the given ID was not found, or the mapping rule is not assigned to this group. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchGroups: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['GroupSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The groups search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['GroupSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description An internal error occurred while processing the request. */
+			500: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+		}
+	}
+	createMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MappingRuleCreateRequest']
+			}
+		}
+		responses: {
+			/** @description The mapping rule was created successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			/** @description The request to create a mapping rule was denied.
+			 *     More details are provided in the response body.
+			 *      */
+			403: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The request to create a mapping rule was denied. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the mapping rule to get. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The mapping rule was returned successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleResult']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			/** @description The mapping rule with the mappingRuleId was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	updateMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the mapping rule to update. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MappingRuleUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The mapping rule was updated successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleUpdateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			/** @description The request to update a mapping rule was denied.
+			 *     More details are provided in the response body.
+			 *      */
+			403: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The request to update a mapping rule was denied. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	deleteMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The ID of the mapping rule to delete. */
+				mappingRuleId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The mapping rule was deleted successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			401: components['responses']['Unauthorized']
+			/** @description The mapping rule with the mappingRuleId was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchMappingRule: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MappingRuleSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The mapping rule search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MappingRuleSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	publishMessage: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MessagePublicationRequest']
+			}
+		}
+		responses: {
+			/** @description The message was published. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MessagePublicationResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	correlateMessage: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MessageCorrelationRequest']
+			}
+		}
+		responses: {
+			/** @description The message is correlated to one or more process instances */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MessageCorrelationResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchMessageSubscriptions: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MessageSubscriptionSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The message subscription search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['MessageSubscriptionSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createDocument: {
+		parameters: {
+			query?: {
+				/** @description The ID of the document store to upload the documents to. Currently, only a single document store is supported per cluster. However, this attribute is included to allow for potential future support of multiple document stores. */
+				storeId?: string
+				/** @description The ID of the document to upload. If not provided, a new ID will be generated. Specifying an existing ID will result in an error if the document already exists.
+				 *      */
+				documentId?: string
+			}
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'multipart/form-data': {
+					/** Format: binary */
+					file: string
+					metadata?: components['schemas']['DocumentMetadata']
+				}
+			}
+		}
+		responses: {
+			/** @description The document was uploaded successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DocumentReference']
+				}
+			}
+			400: components['responses']['InvalidData']
+		}
+	}
+	createDocuments: {
+		parameters: {
+			query?: {
+				/** @description The ID of the document store to upload the documents to. Currently, only a single document store is supported per cluster. However, this attribute is included to allow for potential future support of multiple document stores. */
+				storeId?: string
+			}
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'multipart/form-data': {
+					/** @description The documents to upload. */
+					files: string[]
+				}
+			}
+		}
+		responses: {
+			/** @description All documents were uploaded successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DocumentCreationBatchResponse']
+				}
+			}
+			/** @description Not all documents were uploaded successfully. More details are provided in the response body.
+			 *      */
+			207: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DocumentCreationBatchResponse']
+				}
+			}
+			400: components['responses']['InvalidData']
+		}
+	}
+	getDocument: {
+		parameters: {
+			query: {
+				/** @description The ID of the document store to download the document from. */
+				storeId?: string
+				/** @description The hash of the document content that was computed by the document store during upload. The hash is part of the document reference that is returned when uploading a document. If the client fails to provide the correct hash, the request will be rejected.
+				 *      */
+				contentHash: string
+			}
+			header?: never
+			path: {
+				/** @description The ID of the document to download. */
+				documentId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The document was downloaded successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/octet-stream': string
+				}
+			}
+			/** @description The document with the given ID was not found.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	deleteDocument: {
+		parameters: {
+			query?: {
+				/** @description The ID of the document store to delete the document from. */
+				storeId?: string
+			}
+			header?: never
+			path: {
+				/** @description The ID of the document to delete. */
+				documentId: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The document was deleted successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			/** @description The document with the given ID was not found.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createDocumentLink: {
+		parameters: {
+			query: {
+				/** @description The ID of the document store to link the document from. */
+				storeId?: string
+				/** @description The hash of the document content that was computed by the document store during upload. The hash is part of the document reference that is returned when uploading a document. If the client fails to provide the correct hash, the request will be rejected.
+				 *      */
+				contentHash: string
+			}
+			header?: never
+			path: {
+				/** @description The ID of the document to link. */
+				documentId: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['DocumentLinkRequest']
+			}
+		}
+		responses: {
+			/** @description The document link was created successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DocumentLink']
+				}
+			}
+			400: components['responses']['InvalidData']
+		}
+	}
+	createUser: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserRequest']
+			}
+		}
+		responses: {
+			/** @description The user was created successfully.
+			 *      */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description A user with the given username already exists.
+			 *      */
+			409: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchUsers: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserSearchQueryRequest']
+			}
+		}
+		responses: {
+			/** @description The user search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserSearchResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getUser: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The username of the user. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserResult']
+				}
+			}
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The user with the given username was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	deleteUser: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The username of the user to delete. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The user was deleted successfully. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The user is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	updateUser: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The username of the user to update. */
+				username: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserUpdateRequest']
+			}
+		}
+		responses: {
+			/** @description The user was updated successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserUpdateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description The user was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	createAdminUser: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserRequest']
+			}
+		}
+		responses: {
+			/** @description The user was created and got assigned the admin role successfully.
+			 *      */
+			201: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UserCreateResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchIncidents: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['IncidentSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The incident search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['IncidentSearchQueryResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getIncident: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The assigned key of the incident, which acts as a unique identifier for this incident. */
+				incidentKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The incident is successfully returned.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['IncidentResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The incident with the given key was not found. More details are provided in the response body.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getUsageMetrics: {
+		parameters: {
+			query: {
+				/** @description The start date for usage metrics, including this date. */
+				startTime: string
+				/** @description The end date for usage metrics, including this date. */
+				endTime: string
+				/** @description Restrict results to a specific tenant ID. If not provided, results for all tenants are returned. */
+				tenantId?: string
+				/** @description Whether to return tenant metrics in addition to the total metrics or not. Default false. */
+				withTenants?: boolean
+			}
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The usage metrics search result.
+			 *      */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['UsageMetricsResponse']
+				}
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createDeployment: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'multipart/form-data': {
+					/** @description The binary data to create the deployment resources. It is possible to have more than one form part with different form part names for the binary data to create a deployment.
+					 *      */
+					resources: string[]
+					/** @description The tenant to deploy the resources to. */
+					tenantId?: string
+				}
+			}
+		}
+		responses: {
+			/** @description The resources are deployed. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['DeploymentResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	deleteResource: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the resource to delete.
+				 *     This can be the key of a process definition, the key of a decision requirements
+				 *     definition or the key of a form definition
+				 *      */
+				resourceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['DeleteResourceRequest']
+			}
+		}
+		responses: {
+			/** @description The resource is deleted. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			/** @description The resource is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getResource: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique key identifying the resource. */
+				resourceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The resource is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['ResourceResult']
+				}
+			}
+			/** @description A resource with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	getResourceContent: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The unique key identifying the resource. */
+				resourceKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The resource content is successfully returned. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': string
+				}
+			}
+			/** @description A resource with the given key was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	createElementInstanceVariables: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the element instance to update the variables for.
+				 *     This can be the process instance key (as obtained during instance creation), or a given
+				 *     element, such as a service task (see the `elementInstanceKey` on the job message).
+				 *      */
+				elementInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SetVariableRequest']
+			}
+		}
+		responses: {
+			/** @description The variables were updated. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	activateAdHocSubProcessActivities: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key of the ad-hoc sub-process instance that contains the activities. */
+				adHocSubProcessInstanceKey: string
+			}
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AdHocSubProcessActivateActivitiesInstruction']
+			}
+		}
+		responses: {
+			/** @description The ad-hoc sub-process instance is modified. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			401: components['responses']['Unauthorized']
+			403: components['responses']['Forbidden']
+			/** @description The ad-hoc sub-process instance is not found or the provided key does not identify an
+			 *     ad-hoc sub-process.
+			 *      */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	broadcastSignal: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SignalBroadcastRequest']
+			}
+		}
+		responses: {
+			/** @description The signal was broadcast. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['SignalBroadcastResult']
+				}
+			}
+			400: components['responses']['InvalidData']
+			/** @description The signal is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	getBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key (or operate legacy ID) of the batch operation.
+				 *      */
+				batchOperationKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: never
+		responses: {
+			/** @description The batch operation was found. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationResponse']
+				}
+			}
+			/** @description The provided data is not valid. */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			/** @description The batch operation is not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	searchBatchOperations: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['BatchOperationSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The batch operation search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationSearchQueryResult']
+				}
+			}
+			/** @description The provided data is not valid. */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	cancelBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key (or operate legacy ID) of the batch operation.
+				 *      */
+				batchOperationKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': unknown
+			}
+		}
+		responses: {
+			/** @description The batch operation cancel request was created. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The batch operation was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
+	suspendBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key (or operate legacy ID) of the batch operation.
+				 *      */
+				batchOperationKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': unknown
+			}
+		}
+		responses: {
+			/** @description The batch operation pause request was created. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The batch operation was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	resumeBatchOperation: {
+		parameters: {
+			query?: never
+			header?: never
+			path: {
+				/** @description The key (or operate legacy ID) of the batch operation.
+				 *      */
+				batchOperationKey: string
+			}
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': unknown
+			}
+		}
+		responses: {
+			/** @description The batch operation resume request was created. */
+			204: {
+				headers: {
+					[name: string]: unknown
+				}
+				content?: never
+			}
+			400: components['responses']['InvalidData']
+			403: components['responses']['Forbidden']
+			/** @description Not found. The batch operation was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+			503: components['responses']['ServiceUnavailable']
+		}
+	}
+	searchBatchOperationItems: {
+		parameters: {
+			query?: never
+			header?: never
+			path?: never
+			cookie?: never
+		}
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['BatchOperationItemSearchQuery']
+			}
+		}
+		responses: {
+			/** @description The batch operation search result. */
+			200: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/json': components['schemas']['BatchOperationItemSearchQueryResult']
+				}
+			}
+			/** @description The provided data is not valid. */
+			400: {
+				headers: {
+					[name: string]: unknown
+				}
+				content: {
+					'application/problem+json': components['schemas']['ProblemDetail']
+				}
+			}
+			500: components['responses']['InternalServerError']
+		}
+	}
 }
