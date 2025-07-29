@@ -6,7 +6,7 @@ import { ActivatedJob } from './interfaces-grpc-1.0'
 export function parseVariables<T extends { variables: string }, V = JSONDoc>(
 	input: T
 ): Omit<T, 'variables'> & { variables: V } {
-	return Object.assign({}, input, {
+	return Object.assign({}, input ?? {}, {
 		variables: losslessParse(input.variables || '{}') as V,
 	})
 }

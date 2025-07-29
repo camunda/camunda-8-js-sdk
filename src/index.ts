@@ -58,3 +58,5 @@ export {
 	Tasklist,
 	Zeebe,
 }
+
+export * as CamundaRestApiTypes from './c8/lib/C8Dto'

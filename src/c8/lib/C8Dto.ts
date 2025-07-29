@@ -11,6 +11,8 @@ import {
 	JSONDoc,
 } from '../../zeebe/types'
 
+import { DeployResourceResponseDto, SearchSortRequest } from './C8DtoInternal'
+
 export class RestApiJob<
 	Variables = LosslessDto,
 	CustomHeaders = LosslessDto,
@@ -67,9 +69,6 @@ export interface NewUserInfo {
 	// enabled: boolean
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Ctor<T> = new (obj: any) => T
-
 export class ProcessDeployment extends LosslessDto {
 	/** This is the ID of the process definition. It is a human-readable string defined in the process model */
 	processDefinitionId!: string
@@ -112,18 +111,6 @@ export class FormDeployment {
 	tenantId!: string
 }
 
-export class DeployResourceResponseDto extends LosslessDto {
-	@Int64String
-	deploymentKey!: string
-	deployments!: (
-		| { processDefinition: ProcessDeployment }
-		| { decisionDefinition: DecisionDeployment }
-		| { decisionRequirements: DecisionRequirementsDeployment }
-		| { form: FormDeployment }
-	)[]
-	tenantId!: string
-}
-
 export class DeployResourceResponse extends DeployResourceResponseDto {
 	processes!: ProcessDeployment[]
 	decisions!: DecisionDeployment[]
@@ -157,6 +144,10 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	 */
 	readonly variables!: T
 }
+
+export class CreateProcessInstanceWithResultResponse<
+	T,
+> extends CreateProcessInstanceResponse<T> {}
 
 export interface MigrationMappingInstruction {
 	/** The element ID to migrate from. */
@@ -228,7 +219,7 @@ export class PublishMessageResponse extends LosslessDto {
 	tenantId!: string
 }
 
-export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
+interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	/**
 	 * the version of the process; if not specified it will use the latest version
 	 */
@@ -270,7 +261,7 @@ export interface ProcessInstanceCreationStartInstruction {
 	elementId: string
 }
 
-export interface CreateProcessInstanceFromProcessDefinitionId<
+interface CreateProcessInstanceFromProcessDefinitionId<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
@@ -279,7 +270,7 @@ export interface CreateProcessInstanceFromProcessDefinitionId<
 	processDefinitionId: string
 }
 
-export interface CreateProcessInstanceFromProcessDefinition<
+interface CreateProcessInstanceFromProcessDefinition<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
@@ -288,7 +279,7 @@ export interface CreateProcessInstanceFromProcessDefinition<
 	processDefinitionKey: string
 }
 
-export type CreateProcessInstanceReq<T extends JSONDoc | LosslessDto> =
+export type CreateProcessInstanceRequest<T extends JSONDoc | LosslessDto> =
 	| CreateProcessInstanceFromProcessDefinitionId<T>
 	| CreateProcessInstanceFromProcessDefinition<T>
 
@@ -365,7 +356,7 @@ export interface RestJob<
 	readonly tenantId: string
 }
 
-export type JobWithMethods<VariablesDto, CustomHeadersDto> = RestJob<
+export type ActivatedJob<VariablesDto, CustomHeadersDto> = RestJob<
 	VariablesDto,
 	CustomHeadersDto
 > &
@@ -394,7 +385,7 @@ export type SearchPageRequest =
 	| SearchPageRequestSearchBefore
 
 /** Generic search request interface that can be used for most search operations */
-export interface BaseSearchRequest<TSortFields extends string, TFilter> {
+interface BaseSearchRequest<TSortFields extends string, TFilter> {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
@@ -448,7 +439,7 @@ export interface AdvancedNumberFilter {
 	$lte?: number
 }
 
-export interface VariableSearchFilterRequest {
+export interface VariableSearchRequestFilter {
 	/** The key for this variable. */
 	variableKey?: string | AdvancedStringFilter
 	/** Name of the variable. */
@@ -465,14 +456,7 @@ export interface VariableSearchFilterRequest {
 	isTruncated?: boolean
 }
 
-export type SearchSortRequest<T = string> = Array<{
-	/** The field to sort by. */
-	field: T
-	/** The order in which to sort the related field. Default value: ASC */
-	order?: 'ASC' | 'DESC'
-}>
-
-export interface CamundaRestSearchResponsePagination {
+interface SearchResponsePagination {
 	/** Total items matching the criteria. */
 	totalItems: number
 	/** The cursor for the first item in the result set. Use this in the searchBefore field of an ensuing request. */
@@ -481,14 +465,14 @@ export interface CamundaRestSearchResponsePagination {
 	endCursor: string
 }
 
-interface PaginatedCamundaRestSearchResponse<T> {
+interface PaginatedSearchResponse<T> {
 	/** Pagination information about the search results. */
-	page: CamundaRestSearchResponsePagination
+	page: SearchResponsePagination
 	/** The matching items. */
 	items: T[]
 }
 
-interface VariableDetails {
+export interface VariableDetails {
 	/** The key for this variable. */
 	variableKey: string
 	/** The key of the scope of this variable. */
@@ -513,10 +497,10 @@ export interface SearchVariablesRequest
 		| 'variableKey'
 		| 'scopeKey'
 		| 'processInstanceKey',
-		VariableSearchFilterRequest
+		VariableSearchRequestFilter
 	> {}
-export interface CamundaRestSearchVariablesResponse
-	extends PaginatedCamundaRestSearchResponse<VariableDetails> {}
+export interface SearchVariablesResponse
+	extends PaginatedSearchResponse<VariableDetails> {}
 
 export type SearchUserTasksSortRequest = SearchSortRequest<
 	'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority'
@@ -542,7 +526,7 @@ export interface AdvancedDateTimeFilter {
 }
 
 /** User task filter request. */
-export interface SearchUserTasksFilter {
+export interface SearchUserTasksRequestFilter {
 	/** The key for this user task. */
 	userTaskKey?: string
 	/** The state of the user task. */
@@ -594,10 +578,10 @@ export interface SearchUserTasksFilter {
 export interface SearchTasksRequest
 	extends BaseSearchRequestWithOptionalFilter<
 		'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority',
-		SearchUserTasksFilter
+		SearchUserTasksRequestFilter
 	> {}
 
-interface UserTaskDetails {
+export interface UserTaskDetails {
 	/** The key of the user task. */
 	userTaskKey: string
 	/** The key of the element instance. */
@@ -610,8 +594,8 @@ interface UserTaskDetails {
 	formKey: string
 }
 
-export interface CamundaRestSearchUserTasksResponse
-	extends PaginatedCamundaRestSearchResponse<UserTaskDetails> {}
+export interface SearchUserTasksResponse
+	extends PaginatedSearchResponse<UserTaskDetails> {}
 
 export interface UserTask {
 	/** The name for this user task. */
@@ -670,7 +654,7 @@ export interface AssignUserTaskRequest {
 	action?: string
 }
 
-export interface UserTaskVariablesRequest
+export interface SearchUserTaskVariablesRequest
 	extends BaseSearchRequestWithOptionalFilter<
 		| 'value'
 		| 'name'
@@ -687,8 +671,8 @@ export interface UserTaskVariablesRequest
 }
 
 /** The user task variables search response for CamundaRestClient. */
-export interface CamundaRestUserTaskVariablesResponse
-	extends PaginatedCamundaRestSearchResponse<{
+export interface SearchUserTaskVariablesResponse
+	extends PaginatedSearchResponse<{
 		/** The key for this variable. */
 		variableKey: string
 		/** The key of the scope of this variable. */
@@ -714,7 +698,7 @@ export interface AdvancedProcessInstanceStateFilter {
 	$like: string
 }
 
-export interface ProcessInstanceSearchFilter {
+export interface SearchProcessInstanceRequestFilter {
 	/** The key of this process instance. */
 	processInstanceKey?: string | AdvancedStringFilter
 	/** The process definition ID. */
@@ -764,7 +748,7 @@ export interface SearchProcessInstanceRequest
 		| 'endDate'
 		| 'tenantId'
 		| 'hasIncident',
-		ProcessInstanceSearchFilter
+		SearchProcessInstanceRequestFilter
 	> {}
 
 export interface ProcessInstanceDetails {
@@ -794,8 +778,8 @@ export interface ProcessInstanceDetails {
 	hasIncident: boolean
 }
 
-export interface CamundaRestSearchProcessInstanceResponse
-	extends PaginatedCamundaRestSearchResponse<ProcessInstanceDetails> {}
+export interface SearchProcessInstanceResponse
+	extends PaginatedSearchResponse<ProcessInstanceDetails> {}
 
 export interface DownloadDocumentRequest {
 	/** The ID of the document to download. */
@@ -817,10 +801,10 @@ export interface UploadDocumentRequest {
 	documentId?: string
 	/** A file ReadStream created with fs.createReadStream() */
 	file: ReadStream
-	metadata?: UploadDocumentMetadata
+	metadata?: DocumentMetadata
 }
 
-export interface UploadDocumentMetadata {
+export interface DocumentMetadata {
 	/** The content type of the document. */
 	contentType?: string
 	/** The name of the file. */
@@ -846,7 +830,7 @@ export class UploadDocumentResponse extends LosslessDto {
 	documentId!: string
 	/** The hash of the document. */
 	contentHash!: string
-	metadata!: UploadDocumentMetadata
+	metadata!: DocumentMetadata
 }
 
 export class UploadDocumentsResponse {
@@ -1005,63 +989,6 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	evaluatedDecisions!: EvaluatedDecision[]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type UnknownRequestBody = Record<string, any>
-// Base interface with common properties
-export interface BaseApiEndpointRequest<
-	T extends UnknownRequestBody = UnknownRequestBody,
-> {
-	method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-	/** The URL path of the API endpoint. */
-	urlPath: string
-	/** The request body. */
-	body?: T
-	/** TODO: multi-part form support needs to be implemented */
-	formData?: FormData
-	/** The query parameters. */
-	queryParams?: { [key: string]: string | number | boolean | undefined }
-	/** The headers. */
-	headers?: { [key: string]: string | number | boolean }
-	/** A custom JSON parsing function */
-	parseJson?: typeof JSON.parse
-}
-
-// Interface for requests that return JSON (json=true or undefined)
-export interface JsonApiEndpointRequest<
-	T extends UnknownRequestBody = UnknownRequestBody,
-> extends BaseApiEndpointRequest<T> {
-	/** JSON-parse response? Default: true */
-	json?: true | undefined
-}
-
-// Interface for requests that return raw response (json=false)
-export interface RawApiEndpointRequest<
-	T extends UnknownRequestBody = UnknownRequestBody,
-> extends BaseApiEndpointRequest<T> {
-	/** JSON-parse response? */
-	json: false
-}
-
-// Combined type for use in function signatures
-export type ApiEndpointRequest<
-	T extends UnknownRequestBody = UnknownRequestBody,
-> = JsonApiEndpointRequest<T> | RawApiEndpointRequest<T>
-export interface SearchUsersRequest {
-	/** Pagination criteria. */
-	page: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchSortRequest<'username' | 'name' | 'email'>
-	/** User search filter. */
-	filter: {
-		/** The username of the user. */
-		username?: string
-		/** The name of the user. */
-		name?: string
-		/** The email of the user. */
-		email?: string
-	}
-}
-
 class UserItem extends LosslessDto {
 	/** The ID of the user. */
 	@Int64String
@@ -1079,7 +1006,7 @@ class UserItem extends LosslessDto {
 /** The user search result. */
 export class SearchUsersResponse extends LosslessDto {
 	/** Pagination information about the search results. */
-	page!: CamundaRestSearchResponsePagination
+	page!: SearchResponsePagination
 	/** The matching users. */
 	@ChildDto(UserItem)
 	items!: UserItem[]
@@ -1111,7 +1038,7 @@ export interface GetProcessDefinitionResponse {
 	processDefinitionKey: string
 }
 
-export interface ProcessDefinitionSearchFilter {
+export interface ProcessDefinitionSearchRequestFilter {
 	/** Name of this process definition. */
 	name?: string
 	/** Resource name of this process definition. */
@@ -1137,10 +1064,10 @@ export interface SearchProcessDefinitionsRequest
 		| 'versionTag'
 		| 'processDefinitionId'
 		| 'tenantId',
-		ProcessDefinitionSearchFilter
+		ProcessDefinitionSearchRequestFilter
 	> {}
 
-interface DefinitionDetails {
+export interface ProcessDefinitionDetails {
 	/** Name of this process definition. */
 	name: string
 	/** Resource name for this process definition. */
@@ -1157,10 +1084,10 @@ interface DefinitionDetails {
 	processDefinitionKey: string
 }
 
-export interface CamundaRestSearchProcessDefinitionsResponse
-	extends PaginatedCamundaRestSearchResponse<DefinitionDetails> {}
+export interface SearchProcessDefinitionsResponse
+	extends PaginatedSearchResponse<ProcessDefinitionDetails> {}
 
-export interface ElementInstanceSearchFilter {
+export interface ElementInstanceSearchRequestFilter {
 	processDefinitionId?: string
 	state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
 	type?:
@@ -1213,7 +1140,7 @@ export interface SearchElementInstancesRequest
 		| 'state'
 		| 'incidentKey'
 		| 'tenantId',
-		ElementInstanceSearchFilter
+		ElementInstanceSearchRequestFilter
 	> {}
 
 export interface ElementInstanceDetails {
@@ -1271,15 +1198,10 @@ export interface ElementInstanceDetails {
 	incidentKey?: string
 }
 
-export interface SearchElementInstancesResponse {
-	page: CamundaRestSearchResponsePagination
-	items: Array<ElementInstanceDetails>
-}
+export interface SearchElementInstancesResponse
+	extends PaginatedSearchResponse<ElementInstanceDetails> {}
 
-export interface CamundaRestSearchElementInstancesResponse
-	extends PaginatedCamundaRestSearchResponse<ElementInstanceDetails> {}
-
-export interface IncidentSearchFilter {
+export interface IncidentSearchRequestFilter {
 	/** The process definition ID associated to this incident. */
 	processDefinitionId?: string
 	/** Incident error type with a defined set of values. */
@@ -1335,7 +1257,7 @@ export interface SearchIncidentsRequest
 		| 'state'
 		| 'jobKey'
 		| 'tenantId',
-		IncidentSearchFilter
+		IncidentSearchRequestFilter
 	> {}
 
 interface IncidentDetails {
@@ -1380,8 +1302,8 @@ interface IncidentDetails {
 	jobKey: string
 }
 
-export interface CamundaRestSearchIncidentsResponse
-	extends PaginatedCamundaRestSearchResponse<IncidentDetails> {}
+export interface SearchIncidentsResponse
+	extends PaginatedSearchResponse<IncidentDetails> {}
 
 export interface DecisionInstanceSearchFilter {
 	/** The decision instance key. */
@@ -1412,7 +1334,7 @@ export interface DecisionInstanceSearchFilter {
 		| 'UNKNOWN'
 }
 
-export interface CamundaRestSearchDecisionInstancesRequest
+export interface SearchDecisionInstancesRequest
 	extends BaseSearchRequest<
 		| 'decisionInstanceKey'
 		| 'decisionDefinitionId'
@@ -1463,8 +1385,8 @@ interface DecisionInstanceDetails {
 	decisionInstanceId: string
 }
 
-export interface CamundaRestSearchDecisionInstancesResponse
-	extends PaginatedCamundaRestSearchResponse<DecisionInstanceDetails> {}
+export interface SearchDecisionInstancesResponse
+	extends PaginatedSearchResponse<DecisionInstanceDetails> {}
 
 /**
  * Response from getting a single decision instance by its key.
