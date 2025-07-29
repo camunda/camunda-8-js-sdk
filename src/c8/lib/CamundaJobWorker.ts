@@ -192,6 +192,14 @@ export class CamundaJobWorker<
 		})
 	}
 
+	/** This is an alias for stop(). Provided for compatibility with the gRPC worker implementation.
+	 * Stops the Job Worker polling for more jobs. If await this call, and it will return as soon as all currently active jobs are completed.
+	 * The deadline for all currently active jobs to complete is 30s by default. If the active jobs do not complete by the deadline, this method will throw.
+	 */
+	public close(deadlineMs = 30000) {
+		return this.stop(deadlineMs)
+	}
+
 	private poll() {
 		if (this.pollLock || this.stopping) {
 			return
