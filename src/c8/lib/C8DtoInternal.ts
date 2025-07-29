@@ -5,7 +5,6 @@ import {
 	DecisionRequirementsDeployment,
 	FormDeployment,
 	ProcessDeployment,
-	SearchPageRequest,
 } from './C8Dto'
 
 export class DeployResourceResponseDto extends LosslessDto {
@@ -45,21 +44,7 @@ export interface RawApiEndpointRequest<
 export type ApiEndpointRequest<
 	T extends UnknownRequestBody = UnknownRequestBody,
 > = JsonApiEndpointRequest<T> | RawApiEndpointRequest<T>
-export interface SearchUsersRequest {
-	/** Pagination criteria. */
-	page: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchSortRequest<'username' | 'name' | 'email'>
-	/** User search filter. */
-	filter: {
-		/** The username of the user. */
-		username?: string
-		/** The name of the user. */
-		name?: string
-		/** The email of the user. */
-		email?: string
-	}
-}
+
 export type SearchSortRequest<T = string> = Array<{
 	/** The field to sort by. */
 	field: T

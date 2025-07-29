@@ -77,6 +77,7 @@ import {
 	SearchProcessInstanceRequest,
 	SearchProcessInstanceResponse,
 	SearchTasksRequest,
+	SearchUsersRequest,
 	SearchUsersResponse,
 	SearchUserTasksResponse,
 	SearchUserTaskVariablesRequest,
@@ -96,7 +97,6 @@ import {
 	DeployResourceResponseDto,
 	JsonApiEndpointRequest,
 	RawApiEndpointRequest,
-	SearchUsersRequest,
 	UnknownRequestBody,
 } from './C8DtoInternal'
 import { getLogger, Logger } from './C8Logger'

@@ -1003,6 +1003,23 @@ class UserItem extends LosslessDto {
 	email!: string
 }
 
+/* The request to search for users. */
+export interface SearchUsersRequest {
+	/** Pagination criteria. */
+	page: SearchPageRequest
+	/** Sort field criteria. */
+	sort?: SearchSortRequest<'username' | 'name' | 'email'>
+	/** User search filter. */
+	filter: {
+		/** The username of the user. */
+		username?: string
+		/** The name of the user. */
+		name?: string
+		/** The email of the user. */
+		email?: string
+	}
+}
+
 /** The user search result. */
 export class SearchUsersResponse extends LosslessDto {
 	/** Pagination information about the search results. */
