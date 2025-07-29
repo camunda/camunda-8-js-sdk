@@ -52,11 +52,13 @@ export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
 		JSON.stringify(Object.keys(error as unknown as object))
 	)
 	if (error instanceof RequestError) {
+		const is401 = error.response?.statusCode === 401
+		const hasRetried = retryCount && retryCount > 0
 		trace('gotBeforeRetryHook: HTTPError detected:', error.response?.statusCode)
 		// If we have a 401 error, we handle it by retrying the request only once.
-		if (error.response?.statusCode === 401) {
+		if (is401 || error.code === '401') {
 			// If we get a 401 error, we will retry the request only once.
-			if (retryCount && retryCount > 0) {
+			if (hasRetried) {
 				// If we have already retried, we throw the error to stop retrying.
 				throw error
 			}
@@ -157,5 +159,5 @@ export const makeBeforeRetryHandlerFor401TokenRetry =
  */
 export const GotRetryConfig = {
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as Method[],
-	statusCodes: [429, 503, 401],
+	statusCodes: [401, 429, 503],
 }
