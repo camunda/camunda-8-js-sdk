@@ -1,3 +1,15 @@
+## [8.7.25](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.24...v8.7.25) (2025-07-29)
+
+
+### Bug Fixes
+
+* export SearchUsersRequest type ([5c44ffe](https://github.com/camunda/camunda-8-js-sdk/commit/5c44ffe8074e3899df847710ec95a64477d9d61b))
+
+
+### Features
+
+* export Camunda Rest Types. fixes [#564](https://github.com/camunda/camunda-8-js-sdk/issues/564) ([b4b0d53](https://github.com/camunda/camunda-8-js-sdk/commit/b4b0d53522513622f0db1f96de62906d2bbaff80))
+
 ## [8.7.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.23...v8.7.24) (2025-07-25)
 
 
