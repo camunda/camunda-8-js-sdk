@@ -4,11 +4,11 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Full API Docs are [here](https://camunda.github.io/camunda-8-js-sdk/).
+[Full API Docs](https://camunda.github.io/camunda-8-js-sdk/).
 
 This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
 
-See the QUICKSTART.md file in [the repository](https://github.com/camunda/camunda-8-js-sdk) for a quick start.
+See the [Getting Started Example](https://docs.camunda.io/docs/next/guides/getting-started-example/) in the Camunda Docs for a quick start.
 
 ## What does "supported" mean?
 
@@ -32,15 +32,23 @@ npm i @camunda8/sdk
 
 ## Usage
 
-In this release, the functionality of Camunda 8 is exposed via dedicated clients for the component APIs.
+The functionality of Camunda 8 is exposed via dedicated clients for the component APIs. The recommended API client for Camunda 8.8 is the Orchestration Cluster API, using the `CamundaRestClient`.
 
 ```typescript
 import { Camunda8 } from '@camunda8/sdk'
 
+// Optional: Import types for CamundaRestClient requests and responses
+import type { CamundaRestTypes} from '@camunda8/sdk'
+
 const c8 = new Camunda8()
-const restClient = c8.getCamundaRestClient() // New REST API
+
+// Camunda 8 Orchestration API - recommended API from 8.8.0
+const restClient = c8.getCamundaRestClient()
+
+// Zeebe gRPC client - not recommended for new users
 const zeebe = c8.getZeebeGrpcApiClient()
-const zeebeRest = c8.getZeebeRestClient() // Deprecated
+
+// Camunda v1 REST API clients
 const operate = c8.getOperateApiClient()
 const optimize = c8.getOptimizeApiClient()
 const tasklist = c8.getTasklistApiClient()
@@ -58,9 +66,9 @@ Any configuration passed in to the `Camunda8` constructor is merged over any con
 
 ## A note on how int64 is handled in the JavaScript SDK
 
-Entity keys in Camunda 8 are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda/camunda-8-js-sdk/issues/78) for more details.
+Entity keys in Camunda 8.6 and earlier are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda/camunda-8-js-sdk/issues/78) for more details.
 
-For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and to throw an exception if a number value is detected at a runtime that cannot be accurately represented as the JavaScript `number` type (that is, a value greater than 2^53-1).
+For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. See the section on [Process Variable Typing](#process-variable-typing). If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and to throw an exception if a number value is detected at a runtime that cannot be accurately represented as the JavaScript `number` type (that is, a value greater than 2^53-1).
 
 ## Authorization
 
@@ -206,6 +214,16 @@ CAMUNDA_CUSTOM_PRIVATE_KEY_PATH # path to mTLS (client-side) key
 
 ## Connection configuration examples
 
+### Camunda 8 Run 8.8
+
+This is the configuration for [Camunda 8 Run](https://developers.camunda.com/install-camunda-8/) - a local Camunda 8 instance that is the best way to get started.
+
+```bash
+export ZEEBE_REST_ADDRESS='http://localhost:8080'
+export ZEEBE_GRPC_ADDRESS='grpc://localhost:26500'
+export CAMUNDA_AUTH_STRATEGY=NONE
+```
+
 ### Self-Managed
 
 This is the complete environment configuration needed to run against the Dockerised Self-Managed stack in the `docker` subdirectory:
@@ -226,9 +244,6 @@ export CAMUNDA_MODELER_BASE_URL='http://localhost:8070/api'
 # Turn off the tenant ID, which may have been set by multi-tenant tests
 # You can set this in a constructor config, or in the environment if running multi-tenant
 export CAMUNDA_TENANT_ID=''
-
-# TLS for gRPC is on by default. If the Zeebe broker is not secured by TLS, turn it off
-export CAMUNDA_SECURE_CONNECTION=false
 ```
 
 If you are using an OIDC that requires a `scope` parameter to be passed with the token request, set the following variable:
@@ -268,15 +283,12 @@ export ZEEBE_GRPC_ADDRESS='grpcs://5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.ze
 export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO9TmBnP3zx4Xd8Ho6apgeiZTjn6'
 export ZEEBE_CLIENT_SECRET='iJJu-SHgUtuJTTAMnMLdcb8WGF8s2mHfXhXutEwe8eSbLXn98vUpoxtuLk5uG0en'
-# export CAMUNDA_CREDENTIALS_SCOPES='Zeebe,Tasklist,Operate,Optimize' # What APIs these client creds are authorised for
+
 export CAMUNDA_TASKLIST_BASE_URL='https://syd-1.tasklist.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OPTIMIZE_BASE_URL='https://syd-1.optimize.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OPERATE_BASE_URL='https://syd-1.operate.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OAUTH_URL='https://login.cloud.camunda.io/oauth/token'
 export CAMUNDA_AUTH_STRATEGY='OAUTH'
-
-# This is on by default, but we include it in case it got turned off for local tests
-export CAMUNDA_SECURE_CONNECTION=true
 
 # Admin Console and Modeler API Client
 export CAMUNDA_CONSOLE_CLIENT_ID='e-JdgKfJy9hHSXzi'
@@ -298,7 +310,7 @@ You can supply a custom logger via the constructor. For example, to use the [Pin
 ```typescript
 import pino from 'pino'
 
-import { Camunda8 } from '../../c8/index'
+import { Camunda8 } from '@camunda8/sdk'
 
 const level = process.env.CAMUNDA_LOG_LEVEL ?? 'trace'
 const logger = pino({ level }) // Logging level controlled via the logging library
