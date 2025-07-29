@@ -11,7 +11,8 @@ import {
 	MustReturnJobActionAcknowledgement,
 } from '../../zeebe/types'
 
-import { Ctor, JobWithMethods, RestJob } from './C8Dto'
+import { ActivatedJob, RestJob } from './C8Dto'
+import { Ctor } from './C8DtoInternal'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaRestClient } from './CamundaRestClient'
 
@@ -89,7 +90,7 @@ export class CamundaJobWorker<
 	}
 	stopping: boolean = false
 	private activePoll?: PCancelable<
-		JobWithMethods<VariablesDto, CustomHeadersDto>[]
+		ActivatedJob<VariablesDto, CustomHeadersDto>[]
 	>
 
 	constructor(

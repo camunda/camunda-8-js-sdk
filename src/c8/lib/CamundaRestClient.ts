@@ -39,27 +39,17 @@ import {
 } from '../../zeebe/types'
 
 import {
-	ApiEndpointRequest,
+	ActivatedJob,
 	AssignUserTaskRequest,
 	BroadcastSignalResponse,
-	CamundaRestSearchDecisionInstancesRequest,
-	CamundaRestSearchDecisionInstancesResponse,
-	CamundaRestSearchElementInstancesResponse,
-	CamundaRestSearchIncidentsResponse,
-	CamundaRestSearchProcessDefinitionsResponse,
-	CamundaRestSearchProcessInstanceResponse,
-	CamundaRestSearchUserTasksResponse,
-	CamundaRestSearchVariablesResponse,
-	CamundaRestUserTaskVariablesResponse,
 	CorrelateMessageResponse,
 	CreateDocumentLinkRequest,
-	CreateProcessInstanceReq,
+	CreateProcessInstanceRequest,
 	CreateProcessInstanceResponse,
-	Ctor,
+	CreateProcessInstanceWithResultResponse,
 	DecisionDeployment,
 	DecisionRequirementsDeployment,
 	DeployResourceResponse,
-	DeployResourceResponseDto,
 	DownloadDocumentRequest,
 	ElementInstanceDetails,
 	EvaluateDecisionRequest,
@@ -69,33 +59,46 @@ import {
 	GetProcessDefinitionResponse,
 	GetVariableResponse,
 	JobUpdateChangeset,
-	JobWithMethods,
-	JsonApiEndpointRequest,
 	MigrationRequest,
 	ModifyProcessInstanceRequest,
 	NewUserInfo,
 	PatchAuthorizationRequest,
 	ProcessDeployment,
 	PublishMessageResponse,
-	RawApiEndpointRequest,
 	RestJob,
+	SearchDecisionInstancesRequest,
+	SearchDecisionInstancesResponse,
 	SearchElementInstancesRequest,
+	SearchElementInstancesResponse,
 	SearchIncidentsRequest,
+	SearchIncidentsResponse,
 	SearchProcessDefinitionsRequest,
+	SearchProcessDefinitionsResponse,
 	SearchProcessInstanceRequest,
+	SearchProcessInstanceResponse,
 	SearchTasksRequest,
-	SearchUsersRequest,
 	SearchUsersResponse,
+	SearchUserTasksResponse,
+	SearchUserTaskVariablesRequest,
+	SearchUserTaskVariablesResponse,
 	SearchVariablesRequest,
+	SearchVariablesResponse,
 	TaskChangeSet,
-	UnknownRequestBody,
 	UpdateElementVariableRequest,
 	UploadDocumentRequest,
 	UploadDocumentResponse,
 	UploadDocumentsResponse,
 	UserTask,
-	UserTaskVariablesRequest,
 } from './C8Dto'
+import {
+	ApiEndpointRequest,
+	Ctor,
+	DeployResourceResponseDto,
+	JsonApiEndpointRequest,
+	RawApiEndpointRequest,
+	SearchUsersRequest,
+	UnknownRequestBody,
+} from './C8DtoInternal'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
@@ -437,7 +440,7 @@ export class CamundaRestClient {
 	 */
 	public async searchUserTasks(
 		request: SearchTasksRequest
-	): Promise<CamundaRestSearchUserTasksResponse> {
+	): Promise<SearchUserTasksResponse> {
 		const headers = await this.getHeaders()
 		const page = request.page ?? {
 			from: 0,
@@ -450,7 +453,7 @@ export class CamundaRestClient {
 					headers,
 					body: losslessStringify({ ...request, page, sort }),
 				})
-				.json<CamundaRestSearchUserTasksResponse>()
+				.json<SearchUserTasksResponse>()
 		)
 		/**
 		 * The 8.6 and 8.7 API have different key names for the userTaskKey. This code block normalizes the key names.
@@ -492,8 +495,8 @@ export class CamundaRestClient {
 	 * @since 8.8.0
 	 */
 	public async searchUserTaskVariables(
-		request: UserTaskVariablesRequest
-	): Promise<CamundaRestUserTaskVariablesResponse> {
+		request: SearchUserTaskVariablesRequest
+	): Promise<SearchUserTaskVariablesResponse> {
 		const { userTaskKey, ...req } = request
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
@@ -502,7 +505,7 @@ export class CamundaRestClient {
 					headers,
 					body: losslessStringify(req),
 				})
-				.json<CamundaRestUserTaskVariablesResponse>()
+				.json<SearchUserTaskVariablesResponse>()
 		)
 	}
 	/**
@@ -665,7 +668,7 @@ export class CamundaRestClient {
 			inputVariableDto?: Ctor<VariablesDto>
 			customHeadersDto?: Ctor<CustomHeadersDto>
 		}
-	): PCancelable<JobWithMethods<VariablesDto, CustomHeadersDto>[]> {
+	): PCancelable<ActivatedJob<VariablesDto, CustomHeadersDto>[]> {
 		const {
 			inputVariableDto = LosslessDto,
 			customHeadersDto = LosslessDto,
@@ -697,7 +700,7 @@ export class CamundaRestClient {
 
 		// Make the call cancelable
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/424
-		return new PCancelable<JobWithMethods<VariablesDto, CustomHeadersDto>[]>(
+		return new PCancelable<ActivatedJob<VariablesDto, CustomHeadersDto>[]>(
 			(resolve, reject, onCancel) => {
 				onCancel.shouldReject = false
 				onCancel(
@@ -822,14 +825,14 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async createProcessInstance<T extends JSONDoc | LosslessDto>(
-		request: CreateProcessInstanceReq<T>
+		request: CreateProcessInstanceRequest<T>
 	): Promise<CreateProcessInstanceResponse<never>>
 
 	async createProcessInstance<
 		T extends JSONDoc | LosslessDto,
 		V extends LosslessDto,
 	>(
-		request: CreateProcessInstanceReq<T> & {
+		request: CreateProcessInstanceRequest<T> & {
 			outputVariablesDto?: Ctor<V>
 		}
 	) {
@@ -862,7 +865,7 @@ export class CamundaRestClient {
 		T extends JSONDoc | LosslessDto,
 		V = unknown,
 	>(
-		request: CreateProcessInstanceReq<T> & {
+		request: CreateProcessInstanceRequest<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[]
 		}
@@ -872,18 +875,18 @@ export class CamundaRestClient {
 		T extends JSONDoc | LosslessDto,
 		V extends LosslessDto,
 	>(
-		request: CreateProcessInstanceReq<T> & {
+		request: CreateProcessInstanceRequest<T> & {
 			/** An array of variable names to fetch. If not supplied, all visible variables in the root scope will be returned  */
 			fetchVariables?: string[]
 			/** A Dto specifying the shape of the output variables. If not supplied, the output variables will be returned as a `LosslessDto` of type `unknown`. */
 			outputVariablesDto: Ctor<V>
 		}
-	): Promise<CreateProcessInstanceResponse<V>>
+	): Promise<CreateProcessInstanceWithResultResponse<V>>
 	public async createProcessInstanceWithResult<
 		T extends JSONDoc | LosslessDto,
 		V,
 	>(
-		request: CreateProcessInstanceReq<T> & {
+		request: CreateProcessInstanceRequest<T> & {
 			outputVariablesDto?: Ctor<V>
 		}
 	) {
@@ -901,7 +904,7 @@ export class CamundaRestClient {
 			...request,
 			awaitCompletion: true,
 			outputVariablesDto: request.outputVariablesDto,
-		} as unknown as CreateProcessInstanceReq<T>)
+		} as unknown as CreateProcessInstanceRequest<T>)
 	}
 
 	/**
@@ -954,10 +957,10 @@ export class CamundaRestClient {
 	 */
 	public async searchProcessInstances(
 		request: SearchProcessInstanceRequest
-	): Promise<CamundaRestSearchProcessInstanceResponse> {
+	): Promise<SearchProcessInstanceResponse> {
 		return this.callApiEndpoint<
 			SearchProcessInstanceRequest,
-			CamundaRestSearchProcessInstanceResponse
+			SearchProcessInstanceResponse
 		>({
 			urlPath: `process-instances/search`,
 			method: 'POST',
@@ -1193,10 +1196,10 @@ export class CamundaRestClient {
 	 */
 	public async searchVariables(
 		req: SearchVariablesRequest
-	): Promise<CamundaRestSearchVariablesResponse> {
+	): Promise<SearchVariablesResponse> {
 		return this.callApiEndpoint<
 			SearchVariablesRequest,
-			CamundaRestSearchVariablesResponse
+			SearchVariablesResponse
 		>({
 			urlPath: `variables/search`,
 			method: 'POST',
@@ -1468,10 +1471,10 @@ export class CamundaRestClient {
 	 */
 	public async searchProcessDefinitions(
 		request: SearchProcessDefinitionsRequest
-	): Promise<CamundaRestSearchProcessDefinitionsResponse> {
+	): Promise<SearchProcessDefinitionsResponse> {
 		return this.callApiEndpoint<
 			SearchProcessDefinitionsRequest,
-			CamundaRestSearchProcessDefinitionsResponse
+			SearchProcessDefinitionsResponse
 		>({
 			method: 'POST',
 			urlPath: `process-definitions/search`,
@@ -1486,10 +1489,10 @@ export class CamundaRestClient {
 	 */
 	public async searchElementInstances(
 		request: SearchElementInstancesRequest
-	): Promise<CamundaRestSearchElementInstancesResponse> {
+	): Promise<SearchElementInstancesResponse> {
 		return this.callApiEndpoint<
 			SearchElementInstancesRequest,
-			CamundaRestSearchElementInstancesResponse
+			SearchElementInstancesResponse
 		>({
 			method: 'POST',
 			urlPath: `element-instances/search`,
@@ -1516,10 +1519,10 @@ export class CamundaRestClient {
 	 */
 	public async searchIncidents(
 		request: SearchIncidentsRequest
-	): Promise<CamundaRestSearchIncidentsResponse> {
+	): Promise<SearchIncidentsResponse> {
 		return this.callApiEndpoint<
 			SearchIncidentsRequest,
-			CamundaRestSearchIncidentsResponse
+			SearchIncidentsResponse
 		>({
 			method: 'POST',
 			urlPath: `incidents/search`,
@@ -1533,11 +1536,11 @@ export class CamundaRestClient {
 	 * @since 8.8.0
 	 */
 	public async searchDecisionInstances(
-		request: CamundaRestSearchDecisionInstancesRequest
-	): Promise<CamundaRestSearchDecisionInstancesResponse> {
+		request: SearchDecisionInstancesRequest
+	): Promise<SearchDecisionInstancesResponse> {
 		return this.callApiEndpoint<
-			CamundaRestSearchDecisionInstancesRequest,
-			CamundaRestSearchDecisionInstancesResponse
+			SearchDecisionInstancesRequest,
+			SearchDecisionInstancesResponse
 		>({
 			method: 'POST',
 			urlPath: `decision-instances/search`,
@@ -1644,7 +1647,7 @@ export class CamundaRestClient {
 	 */
 	private addJobMethods = <Variables, CustomHeaders>(
 		job: RestJob<Variables, CustomHeaders>
-	): JobWithMethods<Variables, CustomHeaders> => {
+	): ActivatedJob<Variables, CustomHeaders> => {
 		return {
 			...job,
 			cancelWorkflow: async () => {

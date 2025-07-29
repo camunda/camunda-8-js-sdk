@@ -97,7 +97,7 @@ export function emitConflictWarnings(config: {
 
 	if (conflictingSettings.length > 0) {
 		console.warn(
-			`⚠️  ZEEBE_GRPC_ADDRESS is set and takes precedence. The following conflicting settings will be ignored: ${conflictingSettings.join(
+			`⚠️  ZEEBE_GRPC_ADDRESS is set and takes precedence. The following settings will be ignored: ${conflictingSettings.join(
 				', '
 			)}`
 		)
