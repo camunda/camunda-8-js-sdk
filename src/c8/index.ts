@@ -28,9 +28,14 @@ type ApiClient =
 
 /** Options interface for client creation */
 interface ClientOptions {
-	/** Whether to cache the client instance. Default: true */
-	/** If false, a new client instance will be created every time. */
+	/** Whether to cache the client instance. Overrides global default if specified. */
 	cached?: boolean
+}
+
+/** Options interface for Camunda8 constructor */
+interface Camunda8Options {
+	/** Default caching behavior for all client methods. Default: true */
+	defaultCached?: boolean
 }
 
 /**
@@ -69,6 +74,9 @@ export class Camunda8 {
 	// Private framework integration hook
 	private __apiClientCreationListener?: (client: ApiClient) => void
 
+	// Global cache configuration
+	private defaultCached: boolean
+
 	// Core configuration
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IHeadersProvider
@@ -91,7 +99,11 @@ export class Camunda8 {
 			 * a preconfigured auth strategy. This configuration parameter is provided for advanced use-cases.
 			 **/
 			oAuthProvider?: IHeadersProvider
-		} = {}
+		} = {},
+		/**
+		 * Optional global configuration for the Camunda8 instance.
+		 */
+		options: Camunda8Options = { defaultCached: true }
 	) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
@@ -99,6 +111,7 @@ export class Camunda8 {
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/448
 		this.oAuthProvider =
 			config.oAuthProvider ?? constructOAuthProvider(this.configuration)
+		this.defaultCached = options.defaultCached ?? true
 		this.log = getLogger(config)
 		this.log.debug('Camunda8 SDK initialized')
 	}
@@ -162,9 +175,9 @@ export class Camunda8 {
 	 */
 	public getOperateApiClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): OperateApiClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewOperateApiClient(config)
@@ -202,9 +215,9 @@ export class Camunda8 {
 	 */
 	public getAdminApiClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): AdminApiClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewAdminApiClient(config)
@@ -242,9 +255,9 @@ export class Camunda8 {
 	 */
 	public getModelerApiClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): ModelerApiClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewModelerApiClient(config)
@@ -282,9 +295,9 @@ export class Camunda8 {
 	 */
 	public getOptimizeApiClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): OptimizeApiClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewOptimizeApiClient(config)
@@ -322,9 +335,9 @@ export class Camunda8 {
 	 */
 	public getTasklistApiClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): TasklistApiClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewTasklistApiClient(config)
@@ -362,9 +375,9 @@ export class Camunda8 {
 	 */
 	public getZeebeGrpcApiClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): ZeebeGrpcClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewZeebeGrpcClient(config)
@@ -401,9 +414,9 @@ export class Camunda8 {
 	 */
 	public getZeebeRestClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): ZeebeRestClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewZeebeRestClient(config)
@@ -441,9 +454,9 @@ export class Camunda8 {
 	 */
 	public getCamundaRestClient(
 		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = { cached: true }
+		options: ClientOptions = {}
 	): CamundaRestClient {
-		const { cached = true } = options
+		const { cached = this.defaultCached } = options
 
 		if (!cached) {
 			return this.createNewCamundaRestClient(config)
