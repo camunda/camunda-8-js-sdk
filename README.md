@@ -148,9 +148,9 @@ To use cookie auth, set the following value:
 CAMUNDA_AUTH_STRATEGY=COOKIE
 
 # Optional configurable values - these are the defaults
-CAMUNDA_AUTH_COOKIE_URL=http://localhost:8080/api/login
-CAMUNDA_AUTH_COOKIE_USERNAME=demo
-CAMUNDA_AUTH_COOKIE_PASSWORD=demo
+CAMUNDA_COOKIE_AUTH_URL=http://localhost:8080/api/login
+CAMUNDA_COOKIE_AUTH_USERNAME=demo
+CAMUNDA_COOKIE_AUTH_PASSWORD=demo
 ```
 
 ### Bearer Token Auth
