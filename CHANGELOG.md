@@ -1,3 +1,17 @@
+## [8.7.26](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.25...v8.7.26) (2025-07-30)
+
+
+### Bug Fixes
+
+* **docs:** adjust variable names for cookie auth ([a162005](https://github.com/camunda/camunda-8-js-sdk/commit/a162005e98cd03fc02021f96788f139a332c3f67))
+
+
+### Features
+
+* add ability to override caching of clients. fixes [#575](https://github.com/camunda/camunda-8-js-sdk/issues/575) ([d9c24c5](https://github.com/camunda/camunda-8-js-sdk/commit/d9c24c5bde8d71eded2544dd7bcbc78f8d6dcf2f))
+* add close() method to Rest Job Worker. Fixes [#571](https://github.com/camunda/camunda-8-js-sdk/issues/571) ([da239fb](https://github.com/camunda/camunda-8-js-sdk/commit/da239fb1e1d313798ae74ef7794ecc72e755449d))
+* allow configuration of default Camunda8 client caching behaviour ([97d2a45](https://github.com/camunda/camunda-8-js-sdk/commit/97d2a45dfa19162cdfcda95fbe008882af00abcd))
+
 ## [8.7.25](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.24...v8.7.25) (2025-07-29)
 
 
