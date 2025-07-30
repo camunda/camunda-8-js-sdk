@@ -15,6 +15,29 @@ import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 import { getLogger, Logger } from './lib/C8Logger'
 import { CamundaRestClient } from './lib/CamundaRestClient'
 
+// Union type for all API clients
+type ApiClient =
+	| ZeebeGrpcClient
+	| CamundaRestClient
+	| OperateApiClient
+	| TasklistApiClient
+	| OptimizeApiClient
+	| AdminApiClient
+	| ModelerApiClient
+	| ZeebeRestClient
+
+/** Options interface for client creation */
+interface ClientOptions {
+	/** Whether to cache the client instance. Overrides global default if specified. */
+	cached?: boolean
+}
+
+/** Options interface for Camunda8 constructor */
+interface Camunda8Options {
+	/** Default caching behavior for all client methods. Default: true */
+	defaultCached?: boolean
+}
+
 /**
  * A single point of configuration for all Camunda Platform 8 clients.
  *
@@ -35,16 +58,28 @@ import { CamundaRestClient } from './lib/CamundaRestClient'
  * ```
  */
 export class Camunda8 {
-	private operateApiClient?: OperateApiClient
-	private adminApiClient?: AdminApiClient
-	private modelerApiClient?: ModelerApiClient
-	private optimizeApiClient?: OptimizeApiClient
-	private tasklistApiClient?: TasklistApiClient
-	private zeebeGrpcApiClient?: ZeebeGrpcClient
-	private zeebeRestClient?: ZeebeRestClient
+	// Enhanced configuration-based caching (new functionality)
+	private zeebeGrpcApiClients = new Map<string, ZeebeGrpcClient>()
+	private camundaRestClients = new Map<string, CamundaRestClient>()
+	private operateApiClients = new Map<string, OperateApiClient>()
+	private tasklistApiClients = new Map<string, TasklistApiClient>()
+	private optimizeApiClients = new Map<string, OptimizeApiClient>()
+	private adminApiClients = new Map<string, AdminApiClient>()
+	private modelerApiClients = new Map<string, ModelerApiClient>()
+	private zeebeRestClients = new Map<string, ZeebeRestClient>()
+
+	// Client tracking for lifecycle management
+	private createdClients = new Set<ApiClient>()
+
+	// Private framework integration hook
+	private __apiClientCreationListener?: (client: ApiClient) => void
+
+	// Global cache configuration
+	private defaultCached: boolean
+
+	// Core configuration
 	private configuration: CamundaPlatform8Configuration
 	private oAuthProvider: IHeadersProvider
-	private camundaRestClient?: CamundaRestClient
 	public log: Logger
 
 	/**
@@ -64,7 +99,11 @@ export class Camunda8 {
 			 * a preconfigured auth strategy. This configuration parameter is provided for advanced use-cases.
 			 **/
 			oAuthProvider?: IHeadersProvider
-		} = {}
+		} = {},
+		/**
+		 * Optional global configuration for the Camunda8 instance.
+		 */
+		options: Camunda8Options = { defaultCached: true }
 	) {
 		this.configuration =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config)
@@ -72,8 +111,62 @@ export class Camunda8 {
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/448
 		this.oAuthProvider =
 			config.oAuthProvider ?? constructOAuthProvider(this.configuration)
+		this.defaultCached = options.defaultCached ?? true
 		this.log = getLogger(config)
 		this.log.debug('Camunda8 SDK initialized')
+	}
+
+	/**
+	 * @internal
+	 * Private hook for framework integration. Not part of public API.
+	 * Subject to change without notice. Use at your own risk.
+	 */
+	// @ts-expect-error - Intentionally unused, accessed via type bypass in frameworks
+	private __registerApiClientCreationListener(
+		callback: (client: ApiClient) => void
+	): void {
+		this.__apiClientCreationListener = callback
+	}
+
+	/**
+	 * Creates a deterministic cache key from configuration object
+	 */
+	private createConfigKey(config: Camunda8ClientConfiguration): string {
+		return JSON.stringify(config, Object.keys(config).sort())
+	}
+
+	/**
+	 * Closes all created API clients and clears all caches
+	 */
+	public async closeAllClients(): Promise<void> {
+		const promises = Array.from(this.createdClients).map((client) => {
+			if (client instanceof ZeebeGrpcClient) {
+				return client
+					.close()
+					.catch((err) =>
+						console.warn('Failed to close ZeebeGrpc client:', err)
+					)
+			}
+			if (client instanceof CamundaRestClient) {
+				client.stopWorkers()
+			}
+			return Promise.resolve()
+		})
+
+		await Promise.all(promises)
+
+		// Clear all tracking
+		this.createdClients.clear()
+
+		// Clear all configuration-based caches
+		this.zeebeGrpcApiClients.clear()
+		this.camundaRestClients.clear()
+		this.operateApiClients.clear()
+		this.tasklistApiClients.clear()
+		this.optimizeApiClients.clear()
+		this.adminApiClients.clear()
+		this.modelerApiClients.clear()
+		this.zeebeRestClients.clear()
 	}
 
 	/**
@@ -81,15 +174,39 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/operate-api/overview/
 	 */
 	public getOperateApiClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): OperateApiClient {
-		if (!this.operateApiClient) {
-			this.operateApiClient = new OperateApiClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewOperateApiClient(config)
 		}
-		return this.operateApiClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.operateApiClients.has(configKey)) {
+			return this.operateApiClients.get(configKey)!
+		}
+
+		const client = this.createNewOperateApiClient(config)
+		this.operateApiClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewOperateApiClient(
+		config: Camunda8ClientConfiguration
+	): OperateApiClient {
+		const client = new OperateApiClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
@@ -97,15 +214,39 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/administration-api/administration-api-reference/
 	 */
 	public getAdminApiClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): AdminApiClient {
-		if (!this.adminApiClient) {
-			this.adminApiClient = new AdminApiClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewAdminApiClient(config)
 		}
-		return this.adminApiClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.adminApiClients.has(configKey)) {
+			return this.adminApiClients.get(configKey)!
+		}
+
+		const client = this.createNewAdminApiClient(config)
+		this.adminApiClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewAdminApiClient(
+		config: Camunda8ClientConfiguration
+	): AdminApiClient {
+		const client = new AdminApiClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
@@ -113,15 +254,39 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/web-modeler-api/overview/
 	 */
 	public getModelerApiClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): ModelerApiClient {
-		if (!this.modelerApiClient) {
-			this.modelerApiClient = new ModelerApiClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewModelerApiClient(config)
 		}
-		return this.modelerApiClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.modelerApiClients.has(configKey)) {
+			return this.modelerApiClients.get(configKey)!
+		}
+
+		const client = this.createNewModelerApiClient(config)
+		this.modelerApiClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewModelerApiClient(
+		config: Camunda8ClientConfiguration
+	): ModelerApiClient {
+		const client = new ModelerApiClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
@@ -129,15 +294,39 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/optimize-api/overview/
 	 */
 	public getOptimizeApiClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): OptimizeApiClient {
-		if (!this.optimizeApiClient) {
-			this.optimizeApiClient = new OptimizeApiClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewOptimizeApiClient(config)
 		}
-		return this.optimizeApiClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.optimizeApiClients.has(configKey)) {
+			return this.optimizeApiClients.get(configKey)!
+		}
+
+		const client = this.createNewOptimizeApiClient(config)
+		this.optimizeApiClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewOptimizeApiClient(
+		config: Camunda8ClientConfiguration
+	): OptimizeApiClient {
+		const client = new OptimizeApiClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
@@ -145,15 +334,39 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/tasklist-api-rest/tasklist-api-rest-overview/
 	 */
 	public getTasklistApiClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): TasklistApiClient {
-		if (!this.tasklistApiClient) {
-			this.tasklistApiClient = new TasklistApiClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewTasklistApiClient(config)
 		}
-		return this.tasklistApiClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.tasklistApiClients.has(configKey)) {
+			return this.tasklistApiClients.get(configKey)!
+		}
+
+		const client = this.createNewTasklistApiClient(config)
+		this.tasklistApiClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewTasklistApiClient(
+		config: Camunda8ClientConfiguration
+	): TasklistApiClient {
+		const client = new TasklistApiClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
@@ -161,30 +374,78 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/zeebe-api/overview/
 	 */
 	public getZeebeGrpcApiClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): ZeebeGrpcClient {
-		if (!this.zeebeGrpcApiClient) {
-			this.zeebeGrpcApiClient = new ZeebeGrpcClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewZeebeGrpcClient(config)
 		}
-		return this.zeebeGrpcApiClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.zeebeGrpcApiClients.has(configKey)) {
+			return this.zeebeGrpcApiClients.get(configKey)!
+		}
+
+		const client = this.createNewZeebeGrpcClient(config)
+		this.zeebeGrpcApiClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewZeebeGrpcClient(
+		config: Camunda8ClientConfiguration
+	): ZeebeGrpcClient {
+		const client = new ZeebeGrpcClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
 	 * @deprecated from 8.6.0. Please use getCamundaRestClient() instead.
 	 */
 	public getZeebeRestClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): ZeebeRestClient {
-		if (!this.zeebeRestClient) {
-			this.zeebeRestClient = new ZeebeRestClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewZeebeRestClient(config)
 		}
-		return this.zeebeRestClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.zeebeRestClients.has(configKey)) {
+			return this.zeebeRestClients.get(configKey)!
+		}
+
+		const client = this.createNewZeebeRestClient(config)
+		this.zeebeRestClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewZeebeRestClient(
+		config: Camunda8ClientConfiguration
+	): ZeebeRestClient {
+		const client = new ZeebeRestClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 
 	/**
@@ -192,14 +453,38 @@ export class Camunda8 {
 	 * See: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/camunda-api-rest-overview/
 	 */
 	public getCamundaRestClient(
-		config: Camunda8ClientConfiguration = {}
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
 	): CamundaRestClient {
-		if (!this.camundaRestClient) {
-			this.camundaRestClient = new CamundaRestClient({
-				config: { ...this.configuration, ...config },
-				oAuthProvider: this.oAuthProvider,
-			})
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewCamundaRestClient(config)
 		}
-		return this.camundaRestClient
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.camundaRestClients.has(configKey)) {
+			return this.camundaRestClients.get(configKey)!
+		}
+
+		const client = this.createNewCamundaRestClient(config)
+		this.camundaRestClients.set(configKey, client)
+
+		return client
+	}
+
+	private createNewCamundaRestClient(
+		config: Camunda8ClientConfiguration
+	): CamundaRestClient {
+		const client = new CamundaRestClient({
+			config: { ...this.configuration, ...config },
+			oAuthProvider: this.oAuthProvider,
+		})
+
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
+
+		return client
 	}
 }
