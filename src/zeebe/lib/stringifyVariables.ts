@@ -6,12 +6,12 @@ import { ActivatedJob } from './interfaces-grpc-1.0'
 export function parseVariables<T extends { variables: string }, V = JSONDoc>(
 	input: T
 ): Omit<T, 'variables'> & { variables: V } {
-	// Nullish coalesce the input to avoid issues with undefined variables
-	// This is a run-time guard. The type system disallows passing an array, but type erasure and dynamic programming can override that.
+	// Null guard the input to avoid issues with undefined input
+	// This is a run-time guard. The type system disallows passing undefined, but runtime checks are necessary.
 	// We had a failing test that hit this condition. I'm doing this as a workaround. There is probably a deeper issue that needs to be fixed.
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/565
-	return Object.assign({}, input ?? {}, {
-		variables: losslessParse(input.variables || '{}') as V,
+	return Object.assign({}, input, {
+		variables: losslessParse(input?.variables || '{}') as V,
 	})
 }
 
