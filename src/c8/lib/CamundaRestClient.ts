@@ -652,7 +652,8 @@ export class CamundaRestClient {
 		return worker
 	}
 	/**
-	 * Iterate through all known partitions and activate jobs up to the requested maximum.
+	 * Iterate through all known partitions and activate jobs up to the requested maximum. This method returns a PCancelable promise that resolves to an array of activated jobs.
+	 * The promise will resolve at the request timeout, or as soon as jobs are available.
 	 *
 	 * The parameter `inputVariablesDto` is a Dto to decode the job payload. The `customHeadersDto` parameter is a Dto to decode the custom headers.
 	 * Pass in a Dto class that extends LosslessDto to provide both type information in your code,
@@ -796,7 +797,7 @@ export class CamundaRestClient {
 		return this.callApiEndpoint({
 			urlPath: `jobs/${jobKey}`,
 			method: 'PATCH',
-			body: changeset,
+			body: { changeset },
 			json: false,
 		})
 	}
