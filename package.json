@@ -25,6 +25,7 @@
 		"test:disconnect": "jest --runInBand --verbose true --detectOpenHandles --testPathIgnorePatterns __tests__/config disconnection",
 		"test:smoketest": "npm run build && node smoke-test/smoke-test.js && npx tsd --typings dist/",
 		"test:c8run": "cross-env CAMUNDA_UNIT_TEST=true jest --runInBand --detectOpenHandles __tests__/c8",
+		"stress": "bash scripts/stress.sh",
 		"prepublishOnly": "npm run build && npm run test",
 		"commit": "cz",
 		"prepare": "husky install",
