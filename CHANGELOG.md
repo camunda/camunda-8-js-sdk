@@ -1,3 +1,10 @@
+## [8.7.27](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.26...v8.7.27) (2025-07-31)
+
+
+### Bug Fixes
+
+* correct updateJob method. fixes [#579](https://github.com/camunda/camunda-8-js-sdk/issues/579) ([693c676](https://github.com/camunda/camunda-8-js-sdk/commit/693c676bc84801e46e09fea33f5a4e385de5629d))
+
 ## [8.7.26](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.25...v8.7.26) (2025-07-30)
 
 
