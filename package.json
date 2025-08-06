@@ -153,7 +153,7 @@
 		"win-ca": "3.5.1"
 	},
 	"dependencies": {
-		"@grpc/grpc-js": "1.12.5",
+		"@grpc/grpc-js": "1.13.4",
 		"@grpc/proto-loader": "0.7.13",
 		"@types/form-data": "^2.2.1",
 		"chalk": "^2.4.2",
