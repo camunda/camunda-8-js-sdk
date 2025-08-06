@@ -1,3 +1,10 @@
+## [8.7.28](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.27...v8.7.28) (2025-08-06)
+
+
+### Features
+
+* support new runtimeInstructions field. fixes [#472](https://github.com/camunda/camunda-8-js-sdk/issues/472) ([53bc43d](https://github.com/camunda/camunda-8-js-sdk/commit/53bc43d2cec9c3f26e4134d6dc4fb67222f1806f))
+
 ## [8.7.27](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.26...v8.7.27) (2025-07-31)
 
 
