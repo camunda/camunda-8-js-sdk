@@ -240,6 +240,11 @@ interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	 */
 	startInstructions?: ProcessInstanceCreationStartInstruction[]
 	/**
+	 * Runtime instructions (alpha). List of instructions that affect the runtime behavior of the process instance. Refer to specific instruction types for more details.
+	 * This parameter is an alpha feature and may be subject to change in future releases.
+	 */
+	runtimeInstructions?: ProcessInstanceCreationRuntimeInstruction[]
+	/**
 	 * Wait for the process instance to complete. If the process instance completion does not occur within the requestTimeout, the request will be closed. Defaults to false.
 	 */
 	// This is commented out, because we used specialised methods for the two cases.
@@ -261,6 +266,15 @@ export interface ProcessInstanceCreationStartInstruction {
 	elementId: string
 }
 
+/**
+ * Runtime instructions (alpha). List of instructions that affect the runtime behavior of the process instance. Refer to specific instruction types for more details.
+ * This parameter is an alpha feature and may be subject to change in future releases.
+ */
+export interface ProcessInstanceCreationRuntimeInstruction {
+	type: 'TERMINATE_PROCESS_INSTANCE'
+	afterElementId: string
+}
+
 interface CreateProcessInstanceFromProcessDefinitionId<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
@@ -270,7 +284,7 @@ interface CreateProcessInstanceFromProcessDefinitionId<
 	processDefinitionId: string
 }
 
-interface CreateProcessInstanceFromProcessDefinition<
+interface CreateProcessInstanceFromProcessDefinitionKey<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
@@ -281,7 +295,7 @@ interface CreateProcessInstanceFromProcessDefinition<
 
 export type CreateProcessInstanceRequest<T extends JSONDoc | LosslessDto> =
 	| CreateProcessInstanceFromProcessDefinitionId<T>
-	| CreateProcessInstanceFromProcessDefinition<T>
+	| CreateProcessInstanceFromProcessDefinitionKey<T>
 
 export interface PatchAuthorizationRequest {
 	/** The key of the owner of the authorization. */
