@@ -1321,6 +1321,24 @@ export class CamundaRestClient {
 	 *
 	 * Note that this is currently supported for document stores of type: AWS, GCP, in-memory (non-production), local (non-production)
 	 *
+	 * The filename is inferred from the filepath. If you are not reading the files from disk, you need to set the path, like this:
+	 *
+	 * ```typescript
+	 * // In-memory conversion: create Readable streams exposing a path so form-data infers filename
+const streams: ReadStream[] = uploadedFiles.map((file) => {
+    const stream = new Readable({
+    read() {
+        this.push(file.buffer);
+        this.push(null);
+    }
+    });
+    // Provide minimal fs.ReadStream-like fields used by form-data for filename inference.
+    (stream as any).path = file.originalname;
+    (stream as any).close = () => stream.destroy();
+    return stream as unknown as ReadStream;
+});
+```
+	 *
 	 * Documentation: https://docs.camunda.io/docs/apis-tools/camunda-api-rest/specifications/create-documents/
 	 * @since 8.7.0
 	 */

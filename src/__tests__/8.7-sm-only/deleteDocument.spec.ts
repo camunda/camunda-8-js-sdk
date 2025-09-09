@@ -7,13 +7,14 @@ jest.setTimeout(30000)
 
 // Disabled because the test is flaky and the issue is not resolved yet.
 // See https://github.com/camunda/camunda-8-js-sdk/issues/562
-xtest('It can delete a document', async () => {
+test('It can delete a document', async () => {
 	const response = await c8.uploadDocument({
 		file: fs.createReadStream('README.md'),
 		metadata: {
 			processDefinitionId: 'process-definition-id',
 		},
 	})
+	console.log(response.documentId)
 	expect(response.metadata.processDefinitionId).toBe('process-definition-id')
 	expect(response.metadata.contentType).toBe('text/markdown')
 

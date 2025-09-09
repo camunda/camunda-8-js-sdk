@@ -83,8 +83,6 @@ export class ProcessDeployment extends LosslessDto {
 export class DecisionDeployment extends LosslessDto {
 	decisionDefinitionId!: string
 	version!: number
-	@Int64String
-	decisionKey!: string
 	name!: string
 	tenantId!: string
 	decisionRequirementsId!: string
