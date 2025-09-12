@@ -536,6 +536,7 @@ export class OperateApiClient {
 	public async getVariablesforProcess(
 		processInstanceKey: number | string,
 		options: {
+			/** Defaults to 1000 */
 			size?: number
 			searchAfter?: unknown[]
 			sort?: { field: string; order?: 'ASC' | 'DESC' }[]
