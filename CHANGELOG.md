@@ -1,3 +1,10 @@
+## [8.7.29](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.28...v8.7.29) (2025-09-12)
+
+
+### Bug Fixes
+
+* update DecisionDeploymentDto ([dafa72a](https://github.com/camunda/camunda-8-js-sdk/commit/dafa72aeed86fa18979f59d996d80516216a92a7))
+
 ## [8.7.28](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.27...v8.7.28) (2025-08-06)
 
 
