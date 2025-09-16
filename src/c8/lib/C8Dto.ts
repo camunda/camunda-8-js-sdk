@@ -593,21 +593,21 @@ export interface SearchTasksRequest
 		SearchUserTasksRequestFilter
 	> {}
 
-export interface UserTaskDetails {
-	/** The key of the user task. */
-	userTaskKey: string
-	/** The key of the element instance. */
-	elementInstanceKey: string
-	/** The key of the process definition. */
-	processDefinitionKey: string
-	/** The key of the process instance. */
-	processInstanceKey: string
-	/** The key of the form. */
-	formKey: string
-}
+// export interface UserTaskDetails {
+// 	/** The key of the user task. */
+// 	userTaskKey: string
+// 	/** The key of the element instance. */
+// 	elementInstanceKey: string
+// 	/** The key of the process definition. */
+// 	processDefinitionKey: string
+// 	/** The key of the process instance. */
+// 	processInstanceKey: string
+// 	/** The key of the form. */
+// 	formKey: string
+// }
 
 export interface SearchUserTasksResponse
-	extends PaginatedSearchResponse<UserTaskDetails> {}
+	extends PaginatedSearchResponse<UserTask> {}
 
 export interface UserTask {
 	/** The name for this user task. */
