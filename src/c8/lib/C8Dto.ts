@@ -1335,8 +1335,14 @@ export interface SearchIncidentsResponse
 	extends PaginatedSearchResponse<IncidentDetails> {}
 
 export interface DecisionInstanceSearchFilter {
-	/** The decision instance key. */
-	decisionInstanceKey?: string | AdvancedStringFilter
+	/** System-generated key for a decision evaluation instance. */
+	decisionEvaluationInstanceKey?: string | AdvancedStringFilter
+	/** The state of the decision instance. */
+	state?: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+	/* The evaluation failure of the decision instance. */
+	evaluationFailure?: string
+	/** The evaluation date. */
+	evaluationDate?: string | AdvancedDateTimeFilter
 	/** The decision definition ID. */
 	decisionDefinitionId?: string | AdvancedStringFilter
 	/** The decision definition key. */
@@ -1349,14 +1355,14 @@ export interface DecisionInstanceSearchFilter {
 	processDefinitionKey?: string | AdvancedStringFilter
 	/** The process instance key associated to this decision instance. */
 	processInstanceKey?: string | AdvancedStringFilter
-	/** The state of the decision instance. */
-	state?: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
-	/** The evaluation date. */
-	evaluationDate?: string | AdvancedDateTimeFilter
+	/** The key of the parent decision evaluation. Note that this is not the identifier of an individual decision instance; the decisionEvaluationInstanceKey is the identifier for a decision instance. */
+	decisionEvaluationKey?: string
+	/** The key of the element instance this decision instance is linked to. */
+	elementInstanceKey?: string | AdvancedStringFilter
 	/** The tenant ID. */
 	tenantId?: string | AdvancedStringFilter
 	/** The decision type. */
-	decisionType?:
+	decisionDefinitionType?:
 		| 'DECISION_TABLE'
 		| 'LITERAL_EXPRESSION'
 		| 'UNSPECIFIED'
@@ -1365,23 +1371,26 @@ export interface DecisionInstanceSearchFilter {
 
 export interface SearchDecisionInstancesRequest
 	extends BaseSearchRequest<
-		| 'decisionInstanceKey'
 		| 'decisionDefinitionId'
 		| 'decisionDefinitionKey'
 		| 'decisionDefinitionName'
+		| 'decisionDefinitionType'
 		| 'decisionDefinitionVersion'
+		| 'decisionEvaluationInstanceKey'
+		| 'decisionEvaluationKey'
+		| 'elementInstanceKey'
+		| 'evaluationDate'
+		| 'evaluationFailure'
 		| 'processDefinitionKey'
 		| 'processInstanceKey'
 		| 'state'
-		| 'evaluationDate'
-		| 'tenantId'
-		| 'decisionType',
+		| 'tenantId',
 		DecisionInstanceSearchFilter
 	> {}
 
 interface DecisionInstanceDetails {
-	/** The decision instance key. */
-	decisionInstanceKey: string
+	/** The decision evaluation instance key. */
+	decisionEvaluationInstanceKey: string
 	/** The decision definition ID. */
 	decisionDefinitionId: string
 	/** The decision definition key. */
@@ -1403,7 +1412,7 @@ interface DecisionInstanceDetails {
 	/** The tenant ID. */
 	tenantId: string
 	/** The decision type. */
-	decisionType:
+	decisionDefinitionType:
 		| 'DECISION_TABLE'
 		| 'LITERAL_EXPRESSION'
 		| 'UNSPECIFIED'

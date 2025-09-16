@@ -70,7 +70,7 @@ describe('searchDecisionInstances', () => {
 			const firstItem = result.items[0]
 			expect(firstItem.decisionDefinitionId).toBe('test-decision')
 			expect(firstItem.state).toBe('EVALUATED')
-			expect(firstItem.decisionInstanceKey).toBeDefined()
+			expect(firstItem.decisionEvaluationInstanceKey).toBeDefined()
 			expect(firstItem.evaluationDate).toBeDefined()
 		}
 	})
@@ -98,7 +98,7 @@ describe('searchDecisionInstances', () => {
 			filter: {},
 			sort: [
 				{
-					field: 'decisionInstanceKey',
+					field: 'decisionEvaluationInstanceKey',
 					order: 'ASC',
 				},
 			],
@@ -151,8 +151,10 @@ describe('searchDecisionInstances', () => {
 			const decisionInstance = result.items[0]
 
 			// Verify required properties exist
-			expect(decisionInstance.decisionInstanceKey).toBeDefined()
-			expect(typeof decisionInstance.decisionInstanceKey).toBe('string')
+			expect(decisionInstance.decisionEvaluationInstanceKey).toBeDefined()
+			expect(typeof decisionInstance.decisionEvaluationInstanceKey).toBe(
+				'string'
+			)
 
 			expect(decisionInstance.decisionDefinitionId).toBeDefined()
 			expect(typeof decisionInstance.decisionDefinitionId).toBe('string')
