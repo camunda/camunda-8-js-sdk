@@ -81,7 +81,11 @@ test('It can search user tasks', async () => {
 	}
 
 	// Get the complete user task details
-	const completeTask = await c8.getUserTask(task.userTaskKey)
+	const completeTask = await PollingOperation({
+		operation: () => c8.getUserTask(task.userTaskKey),
+		predicate: (response) => response.userTaskKey === task.userTaskKey,
+		timeout: 5000,
+	})
 
 	// Validate the complete UserTask DTO
 	expect(completeTask).toBeDefined()
