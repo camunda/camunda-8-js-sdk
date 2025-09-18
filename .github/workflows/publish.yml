@@ -219,6 +219,7 @@ jobs:
           npm run test:integration8.8
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          CAMUNDA_AUTH_STRATEGY: NONE
 
       - name: Cleanup
         if: always()
