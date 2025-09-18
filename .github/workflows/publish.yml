@@ -192,6 +192,53 @@ jobs:
           CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL_8_8 }}
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE_8_8 }}
 
+  local_integration_8_8:
+    runs-on: ubuntu-latest
+    environment:
+      name: selfhosted
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username joshua.wulf --password-stdin registry.camunda.cloud
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/docker-compose-8.8.yaml up -d
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:integration8.8
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          ZEEBE_CLIENT_ID: zeebe
+          ZEEBE_CLIENT_SECRET: zecret
+          CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+          CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
+          CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
+          CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8083
+          CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
+          # Needed for Multi-Tenancy
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/docker-compose-8.8.yaml down
+
   # saas_integration_windows:
   #   needs: saas_integration
   #   runs-on: windows-2019
