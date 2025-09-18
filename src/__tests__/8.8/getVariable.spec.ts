@@ -45,8 +45,12 @@ test('Can get a variable', (done) => {
 
 			const { variableKey } = variables.items[0]
 
-			const variable = await restClient.getVariable({
-				variableKey,
+			const variable = await PollingOperation({
+				operation: () =>
+					restClient.getVariable({
+						variableKey,
+					}),
+				predicate: (v) => v.value !== undefined,
 			})
 
 			// Validate all fields in the GetVariableResponse DTO
