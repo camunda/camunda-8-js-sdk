@@ -912,11 +912,11 @@ export type EvaluateDecisionRequest =
 			variables: JSONDoc
 			/** The tenant ID of the decision. */
 			tenantId?: string
-			/** The unique key identifying the decision to be evaluated. */
+			/** Never. The unique key identifying the decision to be evaluated. Cannot be used with decisionDefinitionId */
 			decisionDefinitionKey?: never
 	  }
 	| {
-			/** The ID of the decision to be evaluated. */
+			/** Never. The ID of the decision to be evaluated. */
 			decisionDefinitionId?: never
 			/** The message variables as JSON document. */
 			variables: JSONDoc
@@ -995,8 +995,10 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	decisionDefinitionKey!: string
 	/** The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
 	decisionRequirementsKey!: string
-	/** The unique key identifying this decision evaluation. */
+	/** Deprecated, please refer to decisionEvaluationKey. */
 	decisionInstanceKey!: string
+	/* The unique key identifying this decision evaluation. */
+	decisionEvaluationKey!: string
 	@ChildDto(EvaluatedDecision)
 	evaluatedDecisions!: EvaluatedDecision[]
 }
