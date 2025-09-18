@@ -318,7 +318,7 @@ services:
 
   keycloak: # https://hub.docker.com/r/bitnami/keycloak
     container_name: keycloak
-    image: bitnami/keycloak:${KEYCLOAK_SERVER_VERSION}
+    image: keycloak/keycloak:${KEYCLOAK_SERVER_VERSION}
     volumes:
       - keycloak-theme:/opt/bitnami/keycloak/themes/identity
     ports:
