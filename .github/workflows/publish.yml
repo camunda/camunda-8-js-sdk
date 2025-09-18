@@ -194,8 +194,6 @@ jobs:
 
   local_integration_8_8:
     runs-on: ubuntu-latest
-    environment:
-      name: selfhosted
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
