@@ -231,10 +231,6 @@ jobs:
       - name: Remove mono blocking 8084 port
         run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
 
-      - name: Set up Docker
-        run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username joshua.wulf --password-stdin registry.camunda.cloud
-
       - name: Set up Docker Compose
         run: |
           docker compose -f docker/docker-compose-8.8.yaml up -d
