@@ -14,14 +14,14 @@
 		"sm:stop": "docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down && docker/cleanup-volumes.sh",
 		"sm:stop:8.8": "docker compose -f docker/docker-compose-8.8.yaml down",
 		"sm:start:8.8": "docker compose -f docker/docker-compose-8.8.yaml up -d",
-		"test": "TEST_DEPLOYMENT=unit-test CAMUNDA_UNIT_TEST=true vitest --sequence.concurrent=false",
-		"test:8.8:sm": "TEST_VERSION=8.8 TEST_DEPLOYMENT=self-managed TEST_TENANCY=single-tenant TEST_SECURITY=unsecured vitest --sequence.concurrent=false",
-		"test:8.8:saas": "TEST_VERSION=8.8 TEST_DEPLOYMENT=saas TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest --sequence.concurrent=false",
-		"test:8.7:mt": "TEST_VERSION=8.7 TEST_DEPLOYMENT=self-hosted TEST_TENANCY=multi-tenant TEST_SECURITY=secured vitest --sequence.concurrent=false",
-		"test:8.7:sm": "TEST_VERSION=8.7 TEST_DEPLOYMENT=self-hosted TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest --sequence.concurrent=false",
-		"test:8.7:saas": "TEST_VERSION=8.7 TEST_DEPLOYMENT=saas TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest --sequence.concurrent=false",
+		"test": "TEST_DEPLOYMENT=unit-test CAMUNDA_UNIT_TEST=true vitest run --sequence.concurrent=false",
+		"test:8.8:sm": "TEST_VERSION=8.8 TEST_DEPLOYMENT=self-managed TEST_TENANCY=single-tenant TEST_SECURITY=unsecured vitest run --sequence.concurrent=false",
+		"test:8.8:saas": "TEST_VERSION=8.8 TEST_DEPLOYMENT=saas TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false",
+		"test:8.7:mt": "TEST_VERSION=8.7 TEST_DEPLOYMENT=self-managed TEST_TENANCY=multi-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false",
+		"test:8.7:sm": "TEST_VERSION=8.7 TEST_DEPLOYMENT=self-managed TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false",
+		"test:8.7:saas": "TEST_VERSION=8.7 TEST_DEPLOYMENT=saas TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false",
 		"test:smoketest": "npm run build && node smoke-test/smoke-test.js && npx tsd --typings dist/",
-		"test:c8run": "cross-env CAMUNDA_UNIT_TEST=true jest --runInBand --detectOpenHandles __tests__/c8",
+		"test:c8run": "TEST_VERSION=8.8 TEST_DEPLOYMENT=self-managed TEST_TENANCY=single-tenant TEST_SECURITY=unsecured vitest run --sequence.concurrent=false",
 		"stress": "bash scripts/stress.sh",
 		"prepublishOnly": "npm run build && npm run test",
 		"commit": "cz",
@@ -57,39 +57,13 @@
 			"pre-commit": "lint-staged"
 		}
 	},
-	"ts-jest": {
-		"diagnostics": {
-			"pretty": true,
-			"debug": [
-				"moduleResolution"
-			]
-		}
-	},
-	"jest": {
-		"transform": {
-			"^.+\\.(ts|tsx)$": [
-				"ts-jest",
-				{
-					"tsconfig": "src/__tests__/tsconfig.json"
-				}
-			]
-		},
-		"preset": "ts-jest",
-		"testEnvironment": "node",
-		"testPathIgnorePatterns": [
-			"/node_modules/",
-			"__tests__/config/*.ts"
-		],
-		"globalSetup": "<rootDir>/src/__tests__/config/jest.globalSetup.ts",
-		"globalTeardown": "<rootDir>/src/__tests__/config/jest.globalTeardown.ts"
-	},
 	"config": {
 		"commitizen": {
 			"path": "./node_modules/cz-conventional-changelog"
 		}
 	},
 	"lint-staged": {
-		"packages/**/*.ts": [
+		"src/**/*.ts": [
 			"prettier --write"
 		]
 	},
@@ -107,11 +81,8 @@
 		"@types/express": "^4.17.21",
 		"@types/jsonwebtoken": "^9.0.6",
 		"@types/lodash.mergewith": "^4.6.9",
-		"@types/node": "^20.9.4",
-		"@types/node-fetch": "^2.6.11",
 		"@types/promise-retry": "^1.1.6",
 		"@types/stack-trace": "^0.0.33",
-		"@types/uuid": "^9.0.8",
 		"@types/wtfnode": "^0.7.3",
 		"@typescript-eslint/eslint-plugin": "^6.14.0",
 		"@typescript-eslint/parser": "^6.14.0",
@@ -133,14 +104,13 @@
 		"prettier": "^3.1.1",
 		"semantic-release": "^22.0.12",
 		"shx": "^0.3.4",
-		"ts-jest": "^29.1.1",
 		"ts-protoc-gen": "^0.15.0",
 		"tsconfig-paths": "^4.2.0",
 		"tsd": "^0.31.0",
-		"typedoc": "^0.28.1",
+		"typedoc": "^0.28.13",
 		"typedoc-plugin-include-example": "^2.1.2",
 		"typedoc-plugin-missing-exports": "^4.0.0",
-		"typescript": "^5.3.3",
+		"typescript": "^5.5.x",
 		"vitest": "^3.2.4",
 		"wtfnode": "^0.10.0"
 	},
@@ -151,6 +121,7 @@
 		"@grpc/grpc-js": "1.12.5",
 		"@grpc/proto-loader": "0.7.13",
 		"@types/form-data": "^2.2.1",
+		"@types/node": "^22.18.6",
 		"chalk": "^2.4.2",
 		"console-stamp": "^3.0.2",
 		"dayjs": "^1.8.15",
@@ -169,7 +140,6 @@
 		"typed-duration": "^1.0.12",
 		"typed-emitter": "^2.1.0",
 		"typed-env": "^2.0.0",
-		"uuid": "^7.0.3",
 		"winston": "^3.14.2"
 	}
 }

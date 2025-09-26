@@ -1,4 +1,4 @@
-import { v4 } from 'uuid'
+import { randomUUID } from 'node:crypto'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
@@ -24,7 +24,7 @@ test.runIf(
 )('Can publish a message', async () => {
 	// eslint-disable-next-line no-async-promise-executor
 	return new Promise<void>(async (resolve) => {
-		const uuid = v4()
+		const uuid = randomUUID()
 		const outputVariablesDto = class extends LosslessDto {
 			messageReceived!: boolean
 		}
@@ -67,7 +67,7 @@ test.runIf(
 	'Can correlate a message',
 	() =>
 		new Promise<void>((done) => {
-			const uuid = v4()
+			const uuid = randomUUID()
 			const outputVariablesDto = class extends LosslessDto {
 				messageReceived!: boolean
 			}
@@ -113,7 +113,7 @@ test.runIf(
 	'Correlate message returns expected data',
 	() =>
 		new Promise<void>((done) => {
-			const uuid = v4()
+			const uuid = randomUUID()
 			let processInstanceKey: string
 			c8.createProcessInstance({
 				processDefinitionId: 'rest-message-test',

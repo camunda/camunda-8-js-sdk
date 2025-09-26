@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events'
+import { randomUUID } from 'node:crypto'
 
 import {
 	ClientReadableStream,
@@ -7,7 +8,6 @@ import {
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
-import * as uuid from 'uuid'
 
 import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
@@ -93,7 +93,7 @@ export class ZBWorkerBase<
 	private closePromise?: Promise<null>
 	private closing = false
 	private closed = false
-	private id = uuid.v4()
+	private id: string = randomUUID()
 	private longPoll: MaybeTimeDuration
 	private debugMode: boolean
 	private capacityEmitter: EventEmitter
@@ -166,7 +166,7 @@ export class ZBWorkerBase<
 		this.pollInterval = options.pollInterval!
 		this.longPoll = options.longPoll!
 		this.pollInterval = options.pollInterval!
-		this.id = id || uuid.v4()
+		this.id = id || randomUUID()
 		// Set options.debug to true to count the number of poll requests for testing
 		// See the Worker-LongPoll test
 		this.debugMode = options.debug === true
@@ -499,7 +499,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		this.pollMutex = true
 		debug('Polling...')
 		this.logger.logDebug('Activating Jobs...')
-		const id = uuid.v4()
+		const id = randomUUID()
 		const jobStream = await this.activateJobs(id)
 		const start = Date.now()
 		this.logger.logDebug(

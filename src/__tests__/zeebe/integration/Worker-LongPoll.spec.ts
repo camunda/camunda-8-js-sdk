@@ -1,4 +1,4 @@
-import * as uuid from 'uuid'
+import { randomUUID } from 'node:crypto'
 
 import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
@@ -31,7 +31,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 	() =>
 		new Promise<void>((done) => {
 			const worker = zbcLongPoll.createWorker({
-				taskType: uuid.v4(),
+				taskType: randomUUID(),
 				taskHandler: (job) => job.complete(job.variables),
 				loglevel: 'NONE',
 				debug: true,

@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs'
+import { randomUUID as uuid } from 'node:crypto'
 import * as path from 'path'
 
 import chalk from 'chalk'
@@ -6,7 +7,6 @@ import d from 'debug'
 import { LosslessNumber } from 'lossless-json'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
-import { v4 as uuid } from 'uuid'
 
 import {
 	CamundaEnvironmentConfigurator,

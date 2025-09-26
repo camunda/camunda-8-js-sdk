@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid'
+import { randomUUID as uuid } from 'node:crypto'
 
 import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'

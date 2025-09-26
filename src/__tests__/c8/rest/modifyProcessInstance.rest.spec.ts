@@ -36,7 +36,6 @@ test.runIf(
 					'modify-process-instance-rest.bpmn'
 				),
 			])
-			console.log('Deployed process:', JSON.stringify(res, null, 2))
 			const key = Math.random().toString(36).substring(2, 15)
 
 			const response = await c8.createProcessInstance<Variables>({

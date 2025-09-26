@@ -4,11 +4,6 @@ import path from 'path'
 // eslint-disable-next-line import/order
 import wtf from 'wtfnode'
 
-// See: https://stackoverflow.com/a/74206721/1758461
-// Without this, the paths in tsconfig.json are not resolved correctly
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-require('tsconfig-paths').register()
-
 import { HTTPError } from 'got'
 
 import { Camunda8 } from '../../index'
