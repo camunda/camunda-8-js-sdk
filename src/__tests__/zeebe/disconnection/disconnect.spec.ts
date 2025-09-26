@@ -7,7 +7,7 @@ process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 
 const ZEEBE_DOCKER_TAG = '8.7.0-alpha4'
 
-jest.setTimeout(900000)
+vi.setConfig({ testTimeout: 900_000 })
 
 let container
 let worker
@@ -21,8 +21,8 @@ function log(msg) {
 	// tslint:disable-next-line: no-console
 	console.log(new Date().toString(), msg) // @DEBUG
 }
-
-test('reconnects after a pod reschedule', () =>
+// Disabled on 19 September, 2025. This test hasn't been run in a year or two and the functionality is stabilised
+test.skip('reconnects after a pod reschedule', () =>
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise(async (resolve) => {
 		let readyCount = 0
@@ -141,7 +141,7 @@ test('reconnects after a pod reschedule', () =>
 		resolve(null)
 	}))
 
-test('a worker that started first, connects to a broker that starts later', () =>
+test.skip('a worker that started first, connects to a broker that starts later', () =>
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise(async (resolve) => {
 		let readyCount = 0

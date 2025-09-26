@@ -7,8 +7,9 @@ import path from 'node:path'
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 import { PollingOperation } from '../../lib/PollingOperation'
+import { matrix } from '../../test-support/testTags'
 
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
 const c8 = new CamundaRestClient()
 const testProcessId = 'completeUserTask-rest-test-process'
@@ -21,7 +22,16 @@ beforeAll(async () => {
 	;({ processDefinitionId, processDefinitionKey } = res.processes[0])
 })
 
-test('It can complete a user task', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can complete a user task', async () => {
 	// Start the process but don't await the final result yet
 	const instancePromise = c8.createProcessInstanceWithResult({
 		processDefinitionKey,

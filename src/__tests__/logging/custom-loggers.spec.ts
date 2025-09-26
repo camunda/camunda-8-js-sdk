@@ -5,7 +5,7 @@ import { Camunda8 } from '../../c8/index'
 import { createLogger } from '../../c8/lib/C8Logger'
 
 // Manually verified - it works
-xtest('It can use pino as a logging library', async () => {
+test.skip('It can use pino as a logging library', async () => {
 	const logger = pino({ level: 'trace' })
 	logger.info('Pino console logger created')
 

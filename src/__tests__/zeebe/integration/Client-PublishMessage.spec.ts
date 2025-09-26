@@ -1,9 +1,10 @@
 import { v4 } from 'uuid'
 
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
-jest.setTimeout(45000)
+vi.setConfig({ testTimeout: 45_000 })
 
 const zbc = new ZeebeGrpcClient()
 let processDefinitionKey: string
@@ -23,42 +24,45 @@ afterAll(async () => {
 	await cancelProcesses(processDefinitionKey)
 })
 
-test('Can correlate a message with a running process instance', async () => {
-	// Wait 1 second to make sure the deployment is complete, and distribute to all brokers
-	await new Promise((res) => setTimeout(() => res(null), 1000))
-
-	// eslint-disable-next-line no-async-promise-executor
-	await new Promise(async (resolve) => {
-		// Generate a random uuid for the process "orderId" variable
-		const thisOrderIdValue = v4()
-		// Start a new process instance, and wait for the result - but asynchronously
-		zbc
-			.createProcessInstanceWithResult({
-				bpmnProcessId: 'message-correlation-test',
-				variables: {
-					orderId: thisOrderIdValue,
-				},
-			})
-			.then((res) => {
-				// This code will run after the process instance has completed
-				expect(res.variables.orderId).toBe(thisOrderIdValue)
-				resolve(null)
-			})
-
-		// Wait to ensure the process instance is created before we publish the message
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can correlate a message with a running process instance',
+	async () => {
+		// Wait 1 second to make sure the deployment is complete, and distribute to all brokers
 		await new Promise((res) => setTimeout(() => res(null), 1000))
 
-		// Execution continues WITHOUT waiting for the process instance to complete
-		// Publish the message to the process instance. Set the TTL to 5 seconds, because this will execute
-		// milliseconds after calling createPostInstanceWithResult, and the process will probably not have
-		// started yet.
-		const messageResponse = await zbc.publishMessage({
-			// Although this field is called 'correlationKey', it is actually the *value* of the variable
-			// specified in the process model. The correlationKey in the BPMN message definition is the *name* of the variable.
-			correlationKey: thisOrderIdValue,
-			name: 'MESSAGE_CORRELATION_TEST_CATCH',
-			timeToLive: 20000,
+		// eslint-disable-next-line no-async-promise-executor
+		await new Promise(async (resolve) => {
+			// Generate a random uuid for the process "orderId" variable
+			const thisOrderIdValue = v4()
+			// Start a new process instance, and wait for the result - but asynchronously
+			zbc
+				.createProcessInstanceWithResult({
+					bpmnProcessId: 'message-correlation-test',
+					variables: {
+						orderId: thisOrderIdValue,
+					},
+				})
+				.then((res) => {
+					// This code will run after the process instance has completed
+					expect(res.variables.orderId).toBe(thisOrderIdValue)
+					resolve(null)
+				})
+
+			// Wait to ensure the process instance is created before we publish the message
+			await new Promise((res) => setTimeout(() => res(null), 1000))
+
+			// Execution continues WITHOUT waiting for the process instance to complete
+			// Publish the message to the process instance. Set the TTL to 5 seconds, because this will execute
+			// milliseconds after calling createPostInstanceWithResult, and the process will probably not have
+			// started yet.
+			const messageResponse = await zbc.publishMessage({
+				// Although this field is called 'correlationKey', it is actually the *value* of the variable
+				// specified in the process model. The correlationKey in the BPMN message definition is the *name* of the variable.
+				correlationKey: thisOrderIdValue,
+				name: 'MESSAGE_CORRELATION_TEST_CATCH',
+				timeToLive: 20000,
+			})
+			expect(messageResponse.key).toBeDefined()
 		})
-		expect(messageResponse.key).toBeDefined()
-	})
-})
+	}
+)

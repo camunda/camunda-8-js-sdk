@@ -1,10 +1,16 @@
 import { PollingOperation } from '../../../'
 import { TasklistApiClient } from '../../../tasklist'
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../../../zeebe'
 
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
-test('can update a task', async () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed', version: '8.7' },
+	])
+)('can update a task', async () => {
 	const grpc = new ZeebeGrpcClient()
 
 	await grpc.deployResource({

@@ -319,7 +319,7 @@ const mainEnv = createEnv({
 	CAMUNDA_AUTH_STRATEGY: {
 		type: 'string',
 		choices: ['BASIC', 'OAUTH', 'BEARER', 'COOKIE', 'NONE'],
-		default: 'OAUTH',
+		default: 'NONE',
 	},
 	/** Set to true to enable an output log file with debugging information and diagnostic traces to assist Camunda Support in technical support. */
 	CAMUNDA_SUPPORT_LOG_ENABLED: {

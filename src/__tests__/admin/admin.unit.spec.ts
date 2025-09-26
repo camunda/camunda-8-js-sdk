@@ -8,7 +8,7 @@ beforeAll(() => {
 })
 afterAll(() => EnvironmentSetup.restoreEnv(storage))
 
-test('Censtructor throws without base url', () => {
+test('Constructor throws without base url', () => {
 	try {
 		new AdminApiClient({
 			config: {

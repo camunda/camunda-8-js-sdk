@@ -14,7 +14,7 @@ describe('QuerySubscription Debug Test', () => {
 		]
 
 		// This mock will first return initial data, then add a new item
-		const mockQuery = jest
+		const mockQuery = vi
 			.fn()
 			.mockResolvedValueOnce({
 				items: [items[0], items[1]],

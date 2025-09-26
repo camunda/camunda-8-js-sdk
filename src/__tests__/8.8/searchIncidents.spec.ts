@@ -2,14 +2,23 @@ import { randomUUID } from 'crypto'
 
 import { CamundaRestClient, PollingOperation } from '../..'
 import { CreateProcessInstanceResponse } from '../../c8/lib/C8Dto'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
-
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
 let wfi: CreateProcessInstanceResponse<unknown>
 
-test('It can search process instances', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can search process instances', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/searchIncidentsTest.bpmn',
 	])

@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
+// eslint-disable-next-line import/order
 import wtf from 'wtfnode'
 
 // See: https://stackoverflow.com/a/74206721/1758461
@@ -8,11 +9,14 @@ import wtf from 'wtfnode'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('tsconfig-paths').register()
 
+import { HTTPError } from 'got'
+
+import { Camunda8 } from '../../index'
 import { OAuthProvider } from '../../oauth'
 import { OperateApiClient } from '../../operate'
 import { BpmnParser, ZeebeGrpcClient } from '../../zeebe'
 
-export const cleanUp = async () => {
+async function cleanup() {
 	// Your cleanup process here.
 	console.log('Removing all cached OAuth tokens...')
 	OAuthProvider.clearCacheDir()
@@ -20,7 +24,7 @@ export const cleanUp = async () => {
 		// We are not running in an integration environment, so we can skip the rest of the cleanup
 		return
 	}
-	console.log('Removing any running test process instances...')
+	console.log('[setup] Removing any running test process instances...')
 	const filePath = path.join(__dirname, '..', 'testdata')
 	const files = fs
 		.readdirSync(filePath)
@@ -32,6 +36,62 @@ export const cleanUp = async () => {
 	const processIds = (bpmn as any[]).map(
 		(b) => b?.['bpmn:definitions']?.['bpmn:process']?.['@_id']
 	)
+
+	if (process.env.TEST_VERSION === '8.8') {
+		cleanup8_8(processIds)
+	} else {
+		cleanup8_7(processIds)
+	}
+
+	wtf.dump()
+}
+
+async function cleanup8_8(processIds) {
+	const c8 = new Camunda8()
+	for (const id of processIds) {
+		if (id) {
+			// Are we running in a multi-tenant environment?
+			const multiTenant = !!process.env.CAMUNDA_TENANT_ID
+			const tenantIds = multiTenant
+				? ['<default>', 'red', 'green']
+				: [undefined]
+			for (const tenantId of tenantIds) {
+				const camunda = c8.getCamundaRestClient({
+					CAMUNDA_TENANT_ID: tenantId,
+				})
+				const processes = await camunda.searchProcessInstances({
+					filter: {
+						processDefinitionId: id,
+						state: 'ACTIVE',
+					},
+				})
+				const instancesKeys = processes.items.map(
+					(instance) => instance.processInstanceKey
+				)
+				if (instancesKeys.length > 0) {
+					console.log(
+						`[setup] Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
+					)
+				}
+				for (const key of instancesKeys) {
+					try {
+						await camunda.cancelProcessInstance({
+							processInstanceKey: key,
+						})
+						console.log(`[setup] Cancelled process instance ${key}`)
+					} catch (e) {
+						if (!(e as HTTPError).message.includes('404')) {
+							console.log('[setup] Failed to cancel process instance', key)
+							console.log((e as Error).message)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+async function cleanup8_7(processIds) {
 	const zeebe = new ZeebeGrpcClient({
 		config: {
 			zeebeGrpcSettings: { ZEEBE_CLIENT_LOG_LEVEL: 'NONE' },
@@ -61,25 +121,24 @@ export const cleanUp = async () => {
 				const instancesKeys = res.items.map((instance) => instance.key)
 				if (instancesKeys.length > 0) {
 					console.log(
-						`Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
+						`[setup] Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
 					)
 				}
 				for (const key of instancesKeys) {
 					try {
 						await zeebe.cancelProcessInstance(key)
-						console.log(`Cancelled process instance ${key}`)
+						console.log(`[setup] Cancelled process instance ${key}`)
 					} catch (e) {
 						if (!(e as Error).message.startsWith('5 NOT_FOUND')) {
-							console.log('Failed to cancel process instance', key)
+							console.log(`[setup] Failed to cancel process instance`, key)
 							console.log((e as Error).message)
 						}
 					}
 				}
 			}
 		}
+		await zeebe.close()
 	}
-	await zeebe.close()
-	wtf.dump()
 }
 let previousLogState: string | undefined
 
@@ -94,4 +153,14 @@ export function suppressZeebeLogging() {
 
 export function restoreZeebeLogging() {
 	process.env.ZEEBE_CLIENT_LOG_LEVEL = previousLogState
+}
+
+export async function setup() {
+	suppressZeebeLogging()
+	await cleanup()
+}
+
+export async function teardown() {
+	await cleanup()
+	restoreZeebeLogging()
 }

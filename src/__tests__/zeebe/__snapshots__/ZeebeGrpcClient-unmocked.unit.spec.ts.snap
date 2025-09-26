@@ -1,4 +1,10 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`cancelProcessInstance throws an exception when processInstanceKey is malformed 1`] = `
+[Error: 
+		  processInstanceKey is malformed, value : hello-world
+		  ]
+`;
 
 exports[`cancelProcessInstance throws an exception when workflowInstanceKey is malformed 1`] = `
 [Error: 

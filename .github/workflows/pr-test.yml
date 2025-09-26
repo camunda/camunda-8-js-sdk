@@ -16,7 +16,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "24" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -60,7 +60,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "24" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -79,7 +79,7 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          npm run test:local-integration
+          npm run test:8.7:sm
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           ZEEBE_CLIENT_ID: zeebe
@@ -105,7 +105,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "24" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -124,7 +124,7 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          npm run test:multitenancy
+          npm run test:8.7:mt
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           ZEEBE_CLIENT_ID: zeebe
@@ -151,14 +151,14 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "24" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
 
       - name: Run Integration Tests
         run: |
-          npm run test:integration
+          npm run test:8.7:saas
         env:
           ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS }}
           ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS }}
@@ -187,14 +187,14 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "24" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
 
       - name: Run Integration Tests
         run: |
-          npm run test:integration8.8
+          npm run test:8.8:saas
         env:
           ZEEBE_REST_ADDRESS: ${{ secrets.ZEEBE_REST_ADDRESS_8_8 }}
           ZEEBE_GRPC_ADDRESS: ${{ secrets.ZEEBE_GRPC_ADDRESS_8_8 }}
@@ -222,7 +222,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "24" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -237,10 +237,12 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          npm run test:integration8.8
+          npm run test:8.8:sm
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
+          CAMUNDA_UNIT_TEST: true
+          CAMUNDA_TENANT_ID: <default>
 
       - name: Cleanup
         if: always()

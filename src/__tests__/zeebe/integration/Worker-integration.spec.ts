@@ -1,12 +1,13 @@
 import { JOB_ACTION_ACKNOWLEDGEMENT } from 'zeebe/types'
 
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
-jest.setTimeout(120000)
+vi.setConfig({ testTimeout: 120_000 })
 
-const zbc = new ZeebeGrpcClient()
+let zbc: ZeebeGrpcClient
 let wf: CreateProcessInstanceResponse | undefined
 let processDefinitionKey1: string
 let processDefinitionKey2: string
@@ -18,6 +19,7 @@ let bpmnProcessId3: string
 let bpmnProcessId4: string
 
 beforeAll(async () => {
+	zbc = new ZeebeGrpcClient()
 	const res1 = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
@@ -65,124 +67,141 @@ afterAll(async () => {
 	await cancelProcesses(processDefinitionKey4)
 })
 
-test('Can service a task', (done) => {
-	zbc
-		.createProcessInstance({
-			bpmnProcessId: bpmnProcessId1,
-			variables: {},
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can service a task',
+	() =>
+		new Promise<void>((done) => {
+			zbc
+				.createProcessInstance({
+					bpmnProcessId: bpmnProcessId1,
+					variables: {},
+				})
+				.then((res) => {
+					wf = res
+					zbc.createWorker({
+						taskType: 'console-log',
+						taskHandler: async (job) => {
+							expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
+							const res1 = await job.complete(job.variables)
+							done()
+							return res1
+						},
+						loglevel: 'NONE',
+					})
+				})
 		})
-		.then((res) => {
-			wf = res
-			zbc.createWorker({
-				taskType: 'console-log',
-				taskHandler: async (job) => {
-					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
-					const res1 = await job.complete(job.variables)
-					done(null)
-					return res1
-				},
-				loglevel: 'NONE',
-			})
-		})
-})
+)
 
-test('Can service a task with complete.success', (done) => {
-	zbc
-		.createProcessInstance({
-			bpmnProcessId: bpmnProcessId2,
-			variables: {},
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can service a task with complete.success',
+	() =>
+		new Promise<void>((done) => {
+			zbc
+				.createProcessInstance({
+					bpmnProcessId: bpmnProcessId2,
+					variables: {},
+				})
+				.then((res) => {
+					wf = res
+					zbc.createWorker({
+						taskType: 'console-log-complete',
+						taskHandler: async (job) => {
+							expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
+							const res1 = await job.complete(job.variables)
+							done()
+							return res1
+						},
+						loglevel: 'NONE',
+					})
+				})
 		})
-		.then((res) => {
-			wf = res
-			zbc.createWorker({
-				taskType: 'console-log-complete',
-				taskHandler: async (job) => {
-					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
-					const res1 = await job.complete(job.variables)
-					done(null)
-					return res1
-				},
-				loglevel: 'NONE',
-			})
-		})
-})
+)
 
-test('An already completed job will throw NOT_FOUND if another worker invocation tries to complete it', (done) => {
-	let alreadyActivated = false
-	let threw = false
-	const jobTimeout = 10000 // The job is made available for reactivation after this time
-	const jobDuration = 15000 // The job takes this long to complete
-	const secondWorkerDuration = jobDuration - jobTimeout + 5000 // The second worker will try to complete the job after this time
-	zbc
-		.createProcessInstance({
-			bpmnProcessId: bpmnProcessId4,
-			variables: {},
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'An already completed job will throw NOT_FOUND if another worker invocation tries to complete it',
+	() =>
+		new Promise<void>((done) => {
+			let alreadyActivated = false
+			let threw = false
+			const jobTimeout = 10000 // The job is made available for reactivation after this time
+			const jobDuration = 15000 // The job takes this long to complete
+			const secondWorkerDuration = jobDuration - jobTimeout + 5000 // The second worker will try to complete the job after this time
+			zbc
+				.createProcessInstance({
+					bpmnProcessId: bpmnProcessId4,
+					variables: {},
+				})
+				.then((res) => {
+					wf = res
+					zbc.createWorker({
+						taskType: 'job-complete-error',
+						taskHandler: async (job) => {
+							const delay = alreadyActivated
+								? secondWorkerDuration
+								: jobDuration
+							const shouldThrow = alreadyActivated
+							alreadyActivated = true
+							expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
+							let res: JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT'
+							try {
+								await new Promise((resolve) =>
+									setTimeout(() => resolve(null), delay)
+								)
+								res = await job.complete(job.variables)
+								if (shouldThrow) {
+									throw new Error('Should have thrown NOT_FOUND')
+								}
+								return res
+							} catch (e: unknown) {
+								expect((e as Error).message.includes('NOT_FOUND')).toBe(true)
+								threw = true
+								done()
+							}
+							expect(shouldThrow).toBe(threw)
+							return res
+						},
+						loglevel: 'NONE',
+						timeout: jobTimeout,
+					})
+				})
 		})
-		.then((res) => {
-			wf = res
-			zbc.createWorker({
-				taskType: 'job-complete-error',
-				taskHandler: async (job) => {
-					const delay = alreadyActivated ? secondWorkerDuration : jobDuration
-					const shouldThrow = alreadyActivated
-					alreadyActivated = true
-					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
-					let res: JOB_ACTION_ACKNOWLEDGEMENT = 'JOB_ACTION_ACKNOWLEDGEMENT'
-					try {
-						await new Promise((resolve) =>
-							setTimeout(() => resolve(null), delay)
-						)
-						res = await job.complete(job.variables)
-						if (shouldThrow) {
-							throw new Error('Should have thrown NOT_FOUND')
-						}
-						return res
-					} catch (e: unknown) {
-						expect((e as Error).message.includes('NOT_FOUND')).toBe(true)
-						threw = true
-						done(null)
-					}
-					expect(shouldThrow).toBe(threw)
-					return res
-				},
-				loglevel: 'NONE',
-				timeout: jobTimeout,
-			})
+)
+
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can update process variables with complete.success()',
+	async () => {
+		wf = await zbc.createProcessInstance({
+			bpmnProcessId: bpmnProcessId3,
+			variables: {
+				conditionVariable: true,
+			},
 		})
-})
-
-test('Can update process variables with complete.success()', async () => {
-	wf = await zbc.createProcessInstance({
-		bpmnProcessId: bpmnProcessId3,
-		variables: {
-			conditionVariable: true,
-		},
-	})
-	const wfi = wf?.processInstanceKey
-	expect(wfi).toBeTruthy()
-	zbc.createWorker({
-		taskType: 'wait',
-		taskHandler: async (job) => {
-			expect(job.processInstanceKey).toBe(wfi)
-			return job.complete({
-				conditionVariable: false,
-			})
-		},
-		loglevel: 'NONE',
-	})
-
-	await new Promise((resolve) =>
+		const wfi = wf?.processInstanceKey
+		expect(wfi).toBeTruthy()
 		zbc.createWorker({
-			taskType: 'pathB',
+			taskType: 'wait',
 			taskHandler: async (job) => {
 				expect(job.processInstanceKey).toBe(wfi)
-				expect(job.variables.conditionVariable).toBe(false)
-				const res1 = await job.complete(job.variables)
-				wf = undefined
-				resolve(null)
-				return res1
+				return job.complete({
+					conditionVariable: false,
+				})
 			},
 			loglevel: 'NONE',
 		})
-	)
-})
+
+		await new Promise((resolve) =>
+			zbc.createWorker({
+				taskType: 'pathB',
+				taskHandler: async (job) => {
+					expect(job.processInstanceKey).toBe(wfi)
+					expect(job.variables.conditionVariable).toBe(false)
+					const res1 = await job.complete(job.variables)
+					wf = undefined
+					resolve(null)
+					return res1
+				},
+				loglevel: 'NONE',
+			})
+		)
+	}
+)

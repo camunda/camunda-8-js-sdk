@@ -1,13 +1,31 @@
+import { expect, test } from 'vitest'
+
+import { PollingOperation } from '../../'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-test('It can get the Process Definition', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can get the Process Definition', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/SearchProcessInstances.bpmn',
 	])
 	const key = res.processes[0].processDefinitionKey
-	const processDefinition = await c8.getProcessDefinition(key)
+	const processDefinition = await PollingOperation({
+		operation: () => c8.getProcessDefinition(key),
+		predicate: (pd) => pd !== null,
+		interval: 500,
+		timeout: 5000,
+	})
 
 	// Validate all fields of the GetProcessDefinitionResponse DTO
 	expect(processDefinition.processDefinitionId).toBe(

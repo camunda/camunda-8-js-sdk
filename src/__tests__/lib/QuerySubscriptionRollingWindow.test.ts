@@ -12,7 +12,7 @@ describe('QuerySubscription Rolling Window', () => {
 		}))
 
 		// Mock query function that will return different sets of items
-		const mockQuery = jest.fn().mockImplementation(() => {
+		const mockQuery = vi.fn().mockImplementation(() => {
 			return Promise.resolve({
 				items: items.slice(0, mockQuery.mock.calls.length + 1),
 				page: { totalItems: mockQuery.mock.calls.length + 1 },
@@ -122,6 +122,6 @@ describe('QuerySubscription Rolling Window', () => {
 
 	// Extra safety: clean up any remaining subscriptions after each test
 	afterEach(() => {
-		jest.clearAllTimers()
+		vi.clearAllTimers()
 	})
 })

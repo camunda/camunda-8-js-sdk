@@ -2,15 +2,22 @@
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 import { PollingOperation } from '../../lib/PollingOperation'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(10000)
-//     HTTPError: Response code 403 (Forbidden) (POST ***/v2/users/search).
-// {"type":"about:blank","title":"Access issue","status":403,"detail":"/98a9c2da-a2dd-4c5a-aa9e-977f974daed5/v2/users/search endpoint is not accessible: Users API is disabled because the application is configured in OIDC mode.",
-// "instance":"/98a9c2da-a2dd-4c5a-aa9e-977f974daed5/v2/users/search"}. Enhanced stack trace available as error.source.
+vi.setConfig({ testTimeout: 10_000 })
 
-xtest('It can search users', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured'],
+		},
+	})
+)('It can search users', async () => {
 	// const uuid = randomUUID()
 	await c8
 		.createUser({

@@ -1,8 +1,33 @@
-import { CamundaEnvironmentConfigurator } from '../../lib/Configuration'
+import {
+	EnvironmentSetup,
+	EnvironmentStorage,
+} from '../../lib/EnvironmentSetup'
+
+let storage: EnvironmentStorage = {}
+/** Store all env vars, then wipe them in the environment */
+beforeAll(() => {
+	storage = EnvironmentSetup.storeEnv()
+})
+
+beforeAll(() => {
+	EnvironmentSetup.wipeEnv()
+})
+
+beforeEach(() => {
+	EnvironmentSetup.wipeEnv()
+	vi.resetModules()
+})
+
+/** Restore all env vars */
+afterAll(() => EnvironmentSetup.restoreEnv(storage))
 
 describe('ZEEBE_GRPC_ADDRESS Support', () => {
 	describe('Current behavior preservation', () => {
-		it('should set default ZEEBE_GRPC_ADDRESS when neither ZEEBE_ADDRESS nor ZEEBE_GRPC_ADDRESS are set', () => {
+		it('should set default ZEEBE_GRPC_ADDRESS when neither ZEEBE_ADDRESS nor ZEEBE_GRPC_ADDRESS are set', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 				{}
 			)
@@ -10,7 +35,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			expect(config.ZEEBE_ADDRESS).toBeUndefined()
 		})
 
-		it('should use ZEEBE_ADDRESS when explicitly set', () => {
+		it('should use ZEEBE_ADDRESS when explicitly set', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_ADDRESS: 'localhost:26500',
 			})
@@ -18,14 +47,22 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			expect(config.ZEEBE_GRPC_ADDRESS).toBeUndefined()
 		})
 
-		it('should use ZEEBE_GRPC_ADDRESS when explicitly set', () => {
+		it('should use ZEEBE_GRPC_ADDRESS when explicitly set', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpc://localhost:26500',
 			})
 			expect(config.ZEEBE_GRPC_ADDRESS).toBe('grpc://localhost:26500')
 		})
 
-		it('should handle both ZEEBE_ADDRESS and ZEEBE_GRPC_ADDRESS when explicitly set', () => {
+		it('should handle both ZEEBE_ADDRESS and ZEEBE_GRPC_ADDRESS when explicitly set', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_ADDRESS: 'address:26500',
 				ZEEBE_GRPC_ADDRESS: 'grpc-address:26500',
@@ -34,7 +71,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			expect(config.ZEEBE_GRPC_ADDRESS).toBe('grpc-address:26500')
 		})
 
-		it('should handle TLS configuration with CAMUNDA_SECURE_CONNECTION', () => {
+		it('should handle TLS configuration with CAMUNDA_SECURE_CONNECTION', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpcs://localhost:26500',
 				CAMUNDA_SECURE_CONNECTION: true,
@@ -43,7 +84,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			expect(config.ZEEBE_GRPC_ADDRESS).toBe('grpcs://localhost:26500')
 		})
 
-		it('should handle TLS configuration with ZEEBE_INSECURE_CONNECTION', () => {
+		it('should handle TLS configuration with ZEEBE_INSECURE_CONNECTION', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpcs://localhost:26500',
 				zeebeGrpcSettings: {
@@ -56,7 +101,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 	})
 
 	describe('New ZEEBE_GRPC_ADDRESS validation', () => {
-		it('should validate ZEEBE_GRPC_ADDRESS format with grpc:// protocol', () => {
+		it('should validate ZEEBE_GRPC_ADDRESS format with grpc:// protocol', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			expect(() => {
 				CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 					ZEEBE_GRPC_ADDRESS: 'grpc://localhost:26500',
@@ -64,7 +113,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			}).not.toThrow()
 		})
 
-		it('should validate ZEEBE_GRPC_ADDRESS format with grpcs:// protocol', () => {
+		it('should validate ZEEBE_GRPC_ADDRESS format with grpcs:// protocol', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			expect(() => {
 				CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 					ZEEBE_GRPC_ADDRESS: 'grpcs://localhost:26500',
@@ -72,7 +125,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			}).not.toThrow()
 		})
 
-		it('should throw error for invalid ZEEBE_GRPC_ADDRESS format', () => {
+		it('should throw error for invalid ZEEBE_GRPC_ADDRESS format', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			expect(() => {
 				CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 					ZEEBE_GRPC_ADDRESS: 'http://localhost:26500',
@@ -82,7 +139,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			)
 		})
 
-		it('should preserve ZEEBE_GRPC_ADDRESS with protocol', () => {
+		it('should preserve ZEEBE_GRPC_ADDRESS with protocol', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpcs://remote:26500',
 			})
@@ -91,17 +152,23 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 	})
 
 	describe('Warning system', () => {
-		let consoleWarnSpy: jest.SpyInstance
+		let consoleWarnSpy
 
 		beforeEach(() => {
-			consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+			consoleWarnSpy = vi
+				.spyOn(console, 'warn')
+				.mockImplementation(() => void 0)
 		})
 
 		afterEach(() => {
 			consoleWarnSpy.mockRestore()
 		})
 
-		it('should warn when ZEEBE_GRPC_ADDRESS conflicts with legacy settings', () => {
+		it('should warn when ZEEBE_GRPC_ADDRESS conflicts with legacy settings', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpcs://localhost:26500',
 				ZEEBE_ADDRESS: 'localhost:26500',
@@ -116,7 +183,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			)
 		})
 
-		it('should emit deprecation warnings for ZEEBE_INSECURE_CONNECTION', () => {
+		it('should emit deprecation warnings for ZEEBE_INSECURE_CONNECTION', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				zeebeGrpcSettings: {
 					ZEEBE_INSECURE_CONNECTION: true,
@@ -128,7 +199,11 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 			)
 		})
 
-		it('should emit deprecation warnings for CAMUNDA_SECURE_CONNECTION', () => {
+		it('should emit deprecation warnings for CAMUNDA_SECURE_CONNECTION', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				CAMUNDA_SECURE_CONNECTION: false,
 			})
@@ -140,14 +215,22 @@ describe('ZEEBE_GRPC_ADDRESS Support', () => {
 	})
 
 	describe('Protocol-based address handling', () => {
-		it('should handle grpcs:// protocol correctly', () => {
+		it('should handle grpcs:// protocol correctly', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpcs://localhost:26500',
 			})
 			expect(config.ZEEBE_GRPC_ADDRESS).toBe('grpcs://localhost:26500')
 		})
 
-		it('should handle grpc:// protocol correctly', () => {
+		it('should handle grpc:// protocol correctly', async () => {
+			const { CamundaEnvironmentConfigurator } = (await vi.importActual(
+				'../../lib'
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			)) as any
 			const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({
 				ZEEBE_GRPC_ADDRESS: 'grpc://localhost:26500',
 			})

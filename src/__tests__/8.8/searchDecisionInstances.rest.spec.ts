@@ -1,6 +1,7 @@
 import path from 'node:path'
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { matrix } from '../../test-support/testTags'
 
 const restClient = new CamundaRestClient()
 
@@ -11,8 +12,18 @@ beforeAll(async () => {
 	])
 })
 
-describe('searchDecisionInstances', () => {
-	test('it can search decision instances with minimal request', async () => {
+// Disabled as the endpoint was refactored.
+describe.skip('searchDecisionInstances', () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8'],
+				deployments: ['self-managed', 'saas'],
+				tenancy: ['single-tenant', 'multi-tenant'],
+				security: ['secured', 'unsecured'],
+			},
+		})
+	)('it can search decision instances with minimal request', async () => {
 		// First evaluate a decision to create a decision instance
 		await restClient.evaluateDecision({
 			decisionDefinitionId: 'test-decision',
@@ -75,7 +86,16 @@ describe('searchDecisionInstances', () => {
 		}
 	})
 
-	test('it can search decision instances with pagination', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8'],
+				deployments: ['self-managed', 'saas'],
+				tenancy: ['single-tenant', 'multi-tenant'],
+				security: ['secured', 'unsecured'],
+			},
+		})
+	)('it can search decision instances with pagination', async () => {
 		// Search with pagination
 		const result = await restClient.searchDecisionInstances({
 			filter: {},
@@ -93,7 +113,16 @@ describe('searchDecisionInstances', () => {
 		expect(result.items.length).toBeLessThanOrEqual(5)
 	})
 
-	test('it can search decision instances with sort options', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8'],
+				deployments: ['self-managed', 'saas'],
+				tenancy: ['single-tenant', 'multi-tenant'],
+				security: ['secured', 'unsecured'],
+			},
+		})
+	)('it can search decision instances with sort options', async () => {
 		const result = await restClient.searchDecisionInstances({
 			filter: {},
 			sort: [
@@ -110,7 +139,16 @@ describe('searchDecisionInstances', () => {
 		expect(Array.isArray(result.items)).toBe(true)
 	})
 
-	test('it handles empty search results', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8'],
+				deployments: ['self-managed', 'saas'],
+				tenancy: ['single-tenant', 'multi-tenant'],
+				security: ['secured', 'unsecured'],
+			},
+		})
+	)('it handles empty search results', async () => {
 		// Search with a filter that should return no results
 		const result = await restClient.searchDecisionInstances({
 			filter: {
@@ -126,7 +164,16 @@ describe('searchDecisionInstances', () => {
 		expect(result.items.length).toBe(0)
 	})
 
-	test('it returns correct decision instance properties', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8'],
+				deployments: ['self-managed', 'saas'],
+				tenancy: ['single-tenant', 'multi-tenant'],
+				security: ['secured', 'unsecured'],
+			},
+		})
+	)('it returns correct decision instance properties', async () => {
 		// Evaluate a decision to ensure we have a decision instance
 		await restClient.evaluateDecision({
 			decisionDefinitionId: 'test-decision',

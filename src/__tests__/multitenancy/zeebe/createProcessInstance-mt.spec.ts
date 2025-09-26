@@ -1,3 +1,4 @@
+import { matrix } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
@@ -15,49 +16,73 @@ beforeAll(async () => {
 	bpmnProcessId = res.deployments[0].process.bpmnProcessId
 })
 
-test('Will not throw an error if tenantId is provided when starting a process instance on multi-tenant Zeebe', async () => {
-	let threwError = false
-
-	const client = new ZeebeGrpcClient({
-		config: {
-			CAMUNDA_TENANT_ID: '<default>',
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant'],
+			security: ['secured'],
 		},
 	})
+)(
+	'Will not throw an error if tenantId is provided when starting a process instance on multi-tenant Zeebe',
+	async () => {
+		let threwError = false
 
-	try {
-		const p = await client.createProcessInstance({
-			bpmnProcessId,
-			variables: {},
+		const client = new ZeebeGrpcClient({
+			config: {
+				CAMUNDA_TENANT_ID: '<default>',
+			},
 		})
-		expect(p).toBeTruthy()
-		await client.cancelProcessInstance(p.processInstanceKey)
-	} catch (e) {
-		threwError = true
-		// console.log(e)
+
+		try {
+			const p = await client.createProcessInstance({
+				bpmnProcessId,
+				variables: {},
+			})
+			expect(p).toBeTruthy()
+			await client.cancelProcessInstance(p.processInstanceKey)
+		} catch (e) {
+			threwError = true
+			// console.log(e)
+		}
+
+		expect(threwError).toBe(false)
+		await client.close()
 	}
+)
 
-	expect(threwError).toBe(false)
-	await client.close()
-})
-
-test('Will throw an error if no tenantId is provided when starting a process instance on multi-tenant Zeebe', async () => {
-	let threwError = false
-	const client = new ZeebeGrpcClient({
-		config: {
-			CAMUNDA_TENANT_ID: '',
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant'],
+			security: ['secured'],
 		},
 	})
-	try {
-		const p = await client.createProcessInstance({
-			bpmnProcessId,
-			variables: {},
+)(
+	'Will throw an error if no tenantId is provided when starting a process instance on multi-tenant Zeebe',
+	async () => {
+		let threwError = false
+		const client = new ZeebeGrpcClient({
+			config: {
+				CAMUNDA_TENANT_ID: '',
+			},
 		})
-		client.cancelProcessInstance(p.processInstanceKey)
-	} catch (e) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		expect((e as any).code).toBe(3)
-		threwError = true
+		try {
+			const p = await client.createProcessInstance({
+				bpmnProcessId,
+				variables: {},
+			})
+			client.cancelProcessInstance(p.processInstanceKey)
+		} catch (e) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			expect((e as any).code).toBe(3)
+			threwError = true
+		}
+		expect(threwError).toBe(true)
+		await client.close()
 	}
-	expect(threwError).toBe(true)
-	await client.close()
-})
+)

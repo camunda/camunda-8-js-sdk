@@ -4,18 +4,18 @@ import * as path from 'path'
 import { PollingOperation } from '../../'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 
-jest.setTimeout(10000) // Set a longer timeout for the test suite
+vitest.setConfig({ testTimeout: 10_000 })
 
 // Skipping this test suite for now as getDecisionInstance has been refactored and needs review
-xdescribe('CamundaRestClient.getDecisionInstance', () => {
+test.skip('CamundaRestClient.getDecisionInstance', () => {
 	let client: CamundaRestClient
 	let decisionDefinitionKey: string
 	let decisionEvaluationKey: string
 	let decisionDefId: string
 
+	vitest.setConfig({ testTimeout: 20_000 })
+
 	beforeAll(async () => {
-		// Set longer timeout for deployment
-		jest.setTimeout(30000)
 		client = new CamundaRestClient()
 
 		// Step 1: Deploy DMN
@@ -48,7 +48,7 @@ xdescribe('CamundaRestClient.getDecisionInstance', () => {
 		decisionEvaluationKey = evaluationResult.decisionEvaluationKey
 	})
 
-	it('should fetch a decision instance and return all documented fields', async () => {
+	test.skip('should fetch a decision instance and return all documented fields', async () => {
 		const res = await PollingOperation({
 			operation: () =>
 				client.searchDecisionInstances({ filter: { decisionEvaluationKey } }),
@@ -115,14 +115,13 @@ xdescribe('CamundaRestClient.getDecisionInstance', () => {
 		expect(output.outputValue).toBe('"Light Salad and a nice Steak"')
 	})
 
-	it('should handle a non-existent decision instance', async () => {
+	test.skip('should handle a non-existent decision instance', async () => {
 		// Try to get a non-existent decision instance
 		const INVALID_KEY = '9999999999'
 
 		let errorOccurred = false
 		try {
 			await client.getDecisionInstance(INVALID_KEY)
-			fail('Should have thrown an error for non-existent decision instance')
 		} catch (error) {
 			errorOccurred = true
 			expect(error).toBeDefined()

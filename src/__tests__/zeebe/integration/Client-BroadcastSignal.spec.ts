@@ -1,7 +1,7 @@
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
-jest.setTimeout(60000)
+vi.setConfig({ testTimeout: 60_000 })
 
 const zbc = new ZeebeGrpcClient()
 let pid: string

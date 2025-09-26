@@ -1,4 +1,4 @@
-import { cleanUp, restoreZeebeLogging } from './jest.cleanup'
+import { cleanUp, restoreZeebeLogging } from './globalSetup'
 
 export default async () => {
 	console.log('Running global teardown...')
