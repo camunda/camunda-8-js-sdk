@@ -4,6 +4,11 @@ import { Server, ServerCredentials, loadPackageDefinition } from '@grpc/grpc-js'
 import { loadSync } from '@grpc/proto-loader'
 
 import { Camunda8 } from '../../../c8'
+import {
+	BrokerInfo,
+	Partition,
+	TopologyResponse,
+} from '../../../generated/zeebe_pb'
 import { BearerAuthProvider } from '../../../oauth'
 import { matrix } from '../../../test-support/testTags'
 

@@ -1,3 +1,4 @@
+import { matrix } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
@@ -19,7 +20,16 @@ afterAll(async () => {
 	await cancelProcesses(pid)
 })
 
-test('Can start a process with a signal', async () => {
+test.runIf(
+	matrix({
+		include: {},
+		exclude: [
+			{
+				deployment: 'unit-test',
+			},
+		],
+	})
+)('Can start a process with a signal', async () => {
 	await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Signal.bpmn',
 	})
