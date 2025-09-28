@@ -26,7 +26,6 @@ test.runIf(
 			processDefinitionId: 'process-definition-id',
 		},
 	})
-	console.log(response.documentId)
 	expect(response.metadata.processDefinitionId).toBe('process-definition-id')
 	expect(response.metadata.contentType).toBe('text/markdown')
 

@@ -218,7 +218,7 @@ test.skip('REST worker uses a supplied custom max backoff with invalid secret', 
 					log.message.includes('Backing off worker poll due to failure.')
 				)
 				.map((log) => new Date(log.timestamp).getTime())
-			console.log('times.length', times.length)
+			// console.log('times.length', times.length)
 			// Calculate delays between consecutive errors.
 			const delays: number[] = []
 			for (let i = 1; i < times.length; i++) {
@@ -227,7 +227,7 @@ test.skip('REST worker uses a supplied custom max backoff with invalid secret', 
 			// Assert that each delay is less than or equal to the max backoff delay
 			for (let i = 1; i < delays.length; i++) {
 				// expect(delays[i] - delays[i - 1]).toBeLessThanOrEqual(MAX_BACKOFF)
-				console.log(delays[i])
+				// console.log(delays[i])
 			}
 			expect(pollCount).toBe(4)
 			expect(durations).toBe(8000)

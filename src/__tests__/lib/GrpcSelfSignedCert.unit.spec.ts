@@ -111,7 +111,6 @@ function createServer(): Promise<{ server: Server; port: number }> {
 
 test('can communicate with a gRPC server with self-signed certificate', async () => {
 	const { server, port } = await createServer()
-	console.log('port', port)
 	// Create a client with the public self-signed certificate
 	const zbc = new ZeebeGrpcClient({
 		config: {

@@ -45,7 +45,6 @@ test.runIf(
 			await client.cancelProcessInstance(p.processInstanceKey)
 		} catch (e) {
 			threwError = true
-			// console.log(e)
 		}
 
 		expect(threwError).toBe(false)

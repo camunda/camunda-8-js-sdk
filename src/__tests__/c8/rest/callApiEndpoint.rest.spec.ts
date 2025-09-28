@@ -28,6 +28,7 @@ test.runIf(
 			variables: {
 				name: 'camunda',
 			},
+			tenantId: '<default>',
 		},
 	})
 	expect(res2).toBeTruthy()

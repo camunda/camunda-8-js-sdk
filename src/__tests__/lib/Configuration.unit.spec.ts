@@ -30,7 +30,6 @@ describe('CamundaEnvironmentConfigurator', () => {
 		process.env.ZEEBE_CLIENT_SECRET = 'secret'
 		process.env.ZEEBE_CLIENT_ID = 'clientid'
 		process.env.CAMUNDA_OAUTH_URL = 'url'
-		console.log(process.cwd())
 		const { CamundaEnvironmentConfigurator } = (await vi.importActual(
 			'../../lib'
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -22,10 +22,7 @@ function cancelProcessesC8Run(processDefinitionKey: string) {
 					.cancelProcessInstance({
 						processInstanceKey: item.processInstanceKey,
 					})
-					.catch((e) => {
-						console.log(`Failed to delete process ${item.processInstanceKey}`)
-						console.log(e)
-					})
+					.catch(() => {})
 			})
 		)
 	})

@@ -241,7 +241,6 @@ jobs:
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
-          CAMUNDA_UNIT_TEST: true
           CAMUNDA_TENANT_ID: <default>
 
       - name: Cleanup
