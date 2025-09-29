@@ -51,7 +51,7 @@ test.runIf(
 )('getJSONVariablesforProcess works', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
-	const _res = await zeebe.deployResource({
+	await zeebe.deployResource({
 		processFilename: 'src/__tests__/testdata/Operate-StraightThrough.bpmn',
 	})
 	const p = await zeebe.createProcessInstanceWithResult({
@@ -173,8 +173,6 @@ test.runIf(
 		.getProcessInstance(`${p.processInstanceKey}1`)
 		.catch((e) => {
 			expect((e.response?.body as string).includes('404')).toBe(true)
-			// Logging this out for debugging on 8.8 SaaS in GitHub CI
-			console.log(e)
 			if (e instanceof HTTPError) {
 				expect(e.statusCode).toBe(404)
 			}
