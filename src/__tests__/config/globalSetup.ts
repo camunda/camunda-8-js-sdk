@@ -33,12 +33,12 @@ async function cleanup() {
 	)
 
 	if (process.env.TEST_VERSION === '8.8') {
-		cleanup8_8(processIds)
+		console.log(`Searching for existing process instances using 8.8 client`)
+		return cleanup8_8(processIds).then(() => wtf.dump())
 	} else {
-		cleanup8_7(processIds)
+		console.log(`Searching for existing process instances using 8.7 client`)
+		return cleanup8_7(processIds).then(() => wtf.dump())
 	}
-
-	wtf.dump()
 }
 
 async function cleanup8_8(processIds) {
@@ -49,17 +49,23 @@ async function cleanup8_8(processIds) {
 			const multiTenant = !!process.env.CAMUNDA_TENANT_ID
 			const tenantIds = multiTenant
 				? ['<default>', 'red', 'green']
-				: [undefined]
+				: ['<default>']
 			for (const tenantId of tenantIds) {
 				const camunda = c8.getCamundaRestClient({
 					CAMUNDA_TENANT_ID: tenantId,
 				})
-				const processes = await camunda.searchProcessInstances({
-					filter: {
-						processDefinitionId: id,
-						state: 'ACTIVE',
-					},
-				})
+				const processes = await camunda
+					.searchProcessInstances({
+						filter: {
+							processDefinitionId: id,
+							state: 'ACTIVE',
+						},
+					})
+					.catch((e) => {
+						console.log(`Error searching for process instances`)
+						console.log(e.message)
+						return { items: [] }
+					})
 				const instancesKeys = processes.items.map(
 					(instance) => instance.processInstanceKey
 				)
@@ -70,10 +76,11 @@ async function cleanup8_8(processIds) {
 				}
 				for (const key of instancesKeys) {
 					try {
-						await camunda.cancelProcessInstance({
+						const res = await camunda.cancelProcessInstance({
 							processInstanceKey: key,
 						})
 						console.log(`[setup] Cancelled process instance ${key}`)
+						console.log('res', JSON.stringify(res, null, 2))
 					} catch (e) {
 						if (!(e as HTTPError).message.includes('404')) {
 							console.log('[setup] Failed to cancel process instance', key)
@@ -89,14 +96,14 @@ async function cleanup8_8(processIds) {
 async function cleanup8_7(processIds) {
 	const zeebe = new ZeebeGrpcClient({
 		config: {
-			zeebeGrpcSettings: { ZEEBE_CLIENT_LOG_LEVEL: 'NONE' },
+			zeebeGrpcSettings: { ZEEBE_GRPC_CLIENT_EAGER_CONNECT: false },
 		},
 	})
 	// Wait for the zeebe.connected property to be true
-	while (!zeebe.connected) {
-		// console.log('Waiting for Zeebe connection...')
-		await new Promise((resolve) => setTimeout(resolve, 100))
-	}
+	// while (!zeebe.connected) {
+	// 	// console.log('Waiting for Zeebe connection...')
+	// 	await new Promise((resolve) => setTimeout(resolve, 100))
+	// }
 	for (const id of processIds) {
 		if (id) {
 			// Are we running in a multi-tenant environment?
@@ -108,21 +115,24 @@ async function cleanup8_7(processIds) {
 				const operate = new OperateApiClient({
 					config: {
 						CAMUNDA_TENANT_ID: tenantId,
+						CAMUNDA_LOG_LEVEL: 'debug',
 					},
 				})
 				const res = await operate.searchProcessInstances({
 					filter: { bpmnProcessId: id, state: 'ACTIVE' },
 				})
+
 				const instancesKeys = res.items.map((instance) => instance.key)
 				if (instancesKeys.length > 0) {
 					console.log(
-						`[setup] Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
+						`[setup] Canceling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
 					)
 				}
 				for (const key of instancesKeys) {
 					try {
+						// await operate.deleteProcessInstance(key)
 						await zeebe.cancelProcessInstance(key)
-						console.log(`[setup] Cancelled process instance ${key}`)
+						console.log(`[setup] Canceled process instance ${key}`)
 					} catch (e) {
 						if (!(e as Error).message.startsWith('5 NOT_FOUND')) {
 							console.log(`[setup] Failed to cancel process instance`, key)
@@ -132,8 +142,8 @@ async function cleanup8_7(processIds) {
 				}
 			}
 		}
-		await zeebe.close()
 	}
+	await zeebe.close()
 }
 let previousLogState: string | undefined
 

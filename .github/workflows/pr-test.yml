@@ -235,6 +235,19 @@ jobs:
         run: |
           docker compose -f docker/docker-compose-8.8.yaml up -d
 
+      - name: Wait for Services Healthy
+        run: |
+          set -e
+          attempts=0
+          max_attempts=60
+          while [ $attempts -lt $max_attempts ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9600/actuator/health/status || true)
+            [ "$code" = "200" ] && echo "Broker healthy" && break
+            attempts=$((attempts+1))
+            sleep 5
+          done
+          [ $attempts -ge $max_attempts ] && echo "Broker not healthy" && exit 1 || true
+
       - name: Run Integration Tests
         run: |
           npm run test:8.8:sm

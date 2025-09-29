@@ -122,7 +122,7 @@ const mainEnv = createEnv({
 	CAMUNDA_TENANT_ID: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: '<default>',
 	},
 	/**
 	 * The audience parameter for a Zeebe OAuth token request.

@@ -1126,6 +1126,7 @@ export class CamundaRestClient {
 	}) {
 		const headers = await this.getHeaders()
 		const { resourceKey, operationReference } = req
+
 		return this.rest.then((rest) =>
 			rest.post(`resources/${resourceKey}/deletion`, {
 				headers,
@@ -1407,9 +1408,6 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		request: ModifyProcessInstanceRequest
 	): Promise<''> {
 		const { processInstanceKey, ...req } = request
-		// tslint:disable-next-line: no-console
-		console.log('req', req) // @DEBUG
-
 		return this.callApiEndpoint<
 			Omit<ModifyProcessInstanceRequest, 'processInstanceKey'>,
 			''

@@ -115,12 +115,10 @@ test('can communicate with a gRPC server with self-signed certificate', async ()
 	const zbc = new ZeebeGrpcClient({
 		config: {
 			CAMUNDA_OAUTH_DISABLED: true,
-			ZEEBE_GRPC_ADDRESS: `localhost:${port}`,
+			ZEEBE_GRPC_ADDRESS: `grpcs://localhost:${port}`,
 			CAMUNDA_CUSTOM_ROOT_CERT_PATH: serverCertFile,
-			CAMUNDA_SECURE_CONNECTION: true,
 			zeebeGrpcSettings: {
 				ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
-				ZEEBE_INSECURE_CONNECTION: false,
 			},
 		},
 	})
@@ -144,7 +142,6 @@ test('can connect to a gRPC server with self-signed certificate provided via str
 			CAMUNDA_CUSTOM_ROOT_CERT_STRING: serverCertString,
 			zeebeGrpcSettings: {
 				ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
-				ZEEBE_INSECURE_CONNECTION: false,
 			},
 		},
 	})

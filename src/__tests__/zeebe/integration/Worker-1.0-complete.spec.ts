@@ -61,22 +61,16 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 			bpmnProcessId: bpmnProcessId1,
 			variables: {},
 		})
-
 		let worker: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
 		// Use a promise to wait for the worker task to complete
-		await new Promise((resolve, reject) => {
+		await new Promise<void>((resolve) => {
 			worker = zbc.createWorker({
 				taskType: 'console-log',
 				taskHandler: async (job) => {
-					try {
-						expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
-						const res = await job.complete()
-						resolve(null) // Resolve the promise when the job is successfully completed
-						return res
-					} catch (error) {
-						reject(error) // Reject the promise if there's an error
-						return job.complete().catch((e) => e)
-					}
+					const res = await job.complete()
+					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
+					resolve() // Resolve the promise when the job is successfully completed
+					return res
 				},
 				loglevel: 'NONE',
 			})
