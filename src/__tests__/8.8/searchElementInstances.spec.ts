@@ -1,10 +1,20 @@
 import { CamundaRestClient, PollingOperation } from '../../'
+import { matrix } from '../../test-support/testTags'
 
-const c8 = new CamundaRestClient()
+vi.setConfig({ testTimeout: 10_000 })
 
-jest.setTimeout(10000)
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can search Element Instances', async () => {
+	const c8 = new CamundaRestClient()
 
-test('It can search Element Instances', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/rest-search-element-instances-test.bpmn',
 	])

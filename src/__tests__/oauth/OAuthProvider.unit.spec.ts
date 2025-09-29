@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { execSync } from 'child_process'
 import fs from 'fs'
 import http from 'http'
@@ -17,7 +16,7 @@ import {
 	EnvironmentStorage,
 } from '../../lib/EnvironmentSetup'
 
-jest.setTimeout(10000)
+vi.setConfig({ testTimeout: 10_000 })
 let server: http.Server
 let storedEnvironment: EnvironmentStorage
 
@@ -31,7 +30,7 @@ beforeEach(() => {
 	// This is important because the tests modify the environment variables
 	// and the SDK reads the environment variables at runtime when the module is loaded
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/451
-	jest.resetModules()
+	vi.resetModules()
 	EnvironmentSetup.wipeEnv()
 })
 
@@ -51,8 +50,11 @@ afterAll(() => {
 // }
 
 describe('OAuthProvider', () => {
-	it('Throws in the constructor if there in no clientId credentials', () => {
-		const { OAuthProvider } = require('../../oauth')
+	it('Throws in the constructor if there in no clientId credentials', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 
 		let thrown = false
 		let message = ''
@@ -71,8 +73,11 @@ describe('OAuthProvider', () => {
 		).toBe(true)
 	})
 
-	it('Throws in the constructor if there in no clientSecret credentials', () => {
-		const { OAuthProvider } = require('../../oauth')
+	it('Throws in the constructor if there in no clientSecret credentials', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		let thrown = false
 		let message = ''
 		try {
@@ -93,8 +98,11 @@ describe('OAuthProvider', () => {
 		).toBe(true)
 	})
 
-	it('Throws in the constructor if there are insufficient credentials', () => {
-		const { OAuthProvider } = require('../../oauth')
+	it('Throws in the constructor if there are insufficient credentials', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		let thrown = false
 		let message = ''
 		try {
@@ -115,10 +123,13 @@ describe('OAuthProvider', () => {
 		).toBe(true)
 	})
 
-	it('Gets the token cache dir from the environment', () => {
+	it('Gets the token cache dir from the environment', async () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		OAuthProvider.clearCacheDir(tokenCacheDir)
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 
@@ -138,10 +149,13 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
 
-	it('Creates the token cache dir if it does not exist', () => {
+	it('Creates the token cache dir if it does not exist', async () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		OAuthProvider.clearCacheDir(tokenCacheDir)
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 
@@ -161,10 +175,13 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
 	})
 
-	it('Throws in the constructor if the token cache is not writable', () => {
+	it('Throws in the constructor if the token cache is not writable', async () => {
 		const tokenCacheDir = path.join(__dirname, '.token-cache')
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCacheDir
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		OAuthProvider.clearCacheDir(tokenCacheDir)
 
 		expect(fs.existsSync(tokenCacheDir)).toBe(false)
@@ -211,145 +228,166 @@ describe('OAuthProvider', () => {
 	// "Can not renew expired token"
 	// Updated test for https://github.com/camunda/camunda-8-js-sdk/issues/3
 	// "Remove expiry timer from oAuth token implementation"
-	it('In-memory cache is populated and evicted after expiry', (done) => {
-		const { OAuthProvider } = require('../../oauth')
-		const delay = (timeout: number) =>
-			new Promise((res) => setTimeout(() => res(null), timeout))
-		const serverPort3002 = 3002
+	test('In-memory cache is populated and evicted after expiry', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
+		// eslint-disable-next-line no-async-promise-executor
+		new Promise<void>((done) => {
+			const delay = (timeout: number) =>
+				new Promise((res) => setTimeout(() => res(null), timeout))
+			const serverPort3002 = 3002
 
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId6',
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
-				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-				CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
-			},
-		})
-
-		const secret = 'YOUR_SECRET'
-		const ttl = 2 // 2 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-
-		// On subsequent requests, we will return a different token
-		let requested = false
-
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					req.on('data', (/*chunk*/) => {
-						// body += chunk
-						trace('data')
-						// This function does nothing, but if no listener is registered then the server will hang
-						// and not call the end event
-					})
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						const expiresIn = 2 // seconds
-						const token = requested
-							? jwt.sign(payload, secret, { expiresIn: ttl })
-							: access_token
-						requested = true
-						res.end(`{"access_token": "${token}", "expires_in": ${expiresIn}}`)
-					})
-				}
+			const o = new OAuthProvider({
+				config: {
+					CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+					ZEEBE_CLIENT_ID: 'clientId6',
+					ZEEBE_CLIENT_SECRET: 'clientSecret',
+					CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
+					CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+					CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
+				},
 			})
-			.listen(serverPort3002)
 
-		o.getHeaders('ZEEBE').then(async (token) => {
-			const token1 = token
-			expect(token).toStrictEqual(token1)
-			await delay(500)
-			const token2 = await o.getHeaders('ZEEBE')
-			expect(token2).toStrictEqual(token1)
-			await delay(1600)
-			const token3 = await o.getHeaders('ZEEBE')
-			expect(token3).not.toStrictEqual(token1)
-			done()
+			const secret = 'YOUR_SECRET'
+			const ttl = 2 // 2 seconds
+			const payload = { id: 1 }
+			const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+
+			// On subsequent requests, we will return a different token
+			let requested = false
+
+			server = http
+				.createServer((req, res) => {
+					if (req.method === 'POST') {
+						req.on('data', (/*chunk*/) => {
+							// body += chunk
+							trace('data')
+							// This function does nothing, but if no listener is registered then the server will hang
+							// and not call the end event
+						})
+						req.on('end', () => {
+							res.writeHead(200, { 'Content-Type': 'application/json' })
+							const expiresIn = 2 // seconds
+							const token = requested
+								? jwt.sign(payload, secret, { expiresIn: ttl })
+								: access_token
+							requested = true
+							res.end(
+								`{"access_token": "${token}", "expires_in": ${expiresIn}}`
+							)
+						})
+					}
+				})
+				.listen(serverPort3002)
+
+			o.getHeaders('ZEEBE').then(async (token) => {
+				const token1 = token
+				expect(token).toStrictEqual(token1)
+				await delay(500)
+				const token2 = await o.getHeaders('ZEEBE')
+				expect(token2).toStrictEqual(token1)
+				await delay(1600)
+				const token3 = await o.getHeaders('ZEEBE')
+				expect(token3).not.toStrictEqual(token1)
+				done()
+			})
 		})
 	})
 
-	it('Uses form encoding for request', (done) => {
-		const { OAuthProvider } = require('../../oauth')
-		const serverPort3010 = 3010
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId8',
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3010}`,
-			},
-		})
-		const secret = 'YOUR_SECRET'
-		const ttl = 2 // 2 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
-
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
-						server.close()
-						expect(body).toEqual(
-							'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials'
-						)
-						done()
-					})
-				}
+	test('Uses form encoding for request', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
+		new Promise<void>((done) => {
+			const serverPort3010 = 3010
+			const o = new OAuthProvider({
+				config: {
+					CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+					ZEEBE_CLIENT_ID: 'clientId8',
+					ZEEBE_CLIENT_SECRET: 'clientSecret',
+					CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3010}`,
+				},
 			})
-			.listen(serverPort3010)
-		o.getHeaders('OPERATE')
+			const secret = 'YOUR_SECRET'
+			const ttl = 2 // 2 seconds
+			const payload = { id: 1 }
+			const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+			server = http
+				.createServer((req, res) => {
+					if (req.method === 'POST') {
+						let body = ''
+						req.on('data', (chunk) => {
+							body += chunk
+						})
+
+						req.on('end', () => {
+							res.writeHead(200, { 'Content-Type': 'application/json' })
+							res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
+							server.close()
+							expect(body).toEqual(
+								'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials'
+							)
+							done()
+						})
+					}
+				})
+				.listen(serverPort3010)
+			o.getHeaders('OPERATE')
+		})
 	})
 
-	it('Uses a custom audience for an Operate token, if one is configured', (done) => {
-		const { OAuthProvider } = require('../../oauth')
-		const serverPort3003 = 3003
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId9',
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3003}`,
-				CAMUNDA_OPERATE_OAUTH_AUDIENCE: 'custom.operate.audience',
-			},
-		})
-		const secret = 'YOUR_SECRET'
-		const ttl = 2 // 2 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
-
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
-						server.close()
-						expect(body).toEqual(
-							'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials'
-						)
-						done()
-					})
-				}
+	it('Uses a custom audience for an Operate token, if one is configured', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
+		new Promise<void>((done) => {
+			const serverPort3003 = 3003
+			const o = new OAuthProvider({
+				config: {
+					CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+					ZEEBE_CLIENT_ID: 'clientId9',
+					ZEEBE_CLIENT_SECRET: 'clientSecret',
+					CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3003}`,
+					CAMUNDA_OPERATE_OAUTH_AUDIENCE: 'custom.operate.audience',
+				},
 			})
-			.listen(serverPort3003)
-		o.getHeaders('OPERATE')
+			const secret = 'YOUR_SECRET'
+			const ttl = 2 // 2 seconds
+			const payload = { id: 1 }
+			const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+			server = http
+				.createServer((req, res) => {
+					if (req.method === 'POST') {
+						let body = ''
+						req.on('data', (chunk) => {
+							body += chunk
+						})
+
+						req.on('end', () => {
+							res.writeHead(200, { 'Content-Type': 'application/json' })
+							res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
+							server.close()
+							expect(body).toEqual(
+								'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials'
+							)
+							done()
+						})
+					}
+				})
+				.listen(serverPort3003)
+			o.getHeaders('OPERATE')
+		})
 	})
 
-	it('Passes scope, if provided', () => {
-		const { OAuthProvider } = require('../../oauth')
+	it('Passes scope, if provided', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		const serverPort3004 = 3004
 		const o = new OAuthProvider({
 			config: {
@@ -387,10 +425,13 @@ describe('OAuthProvider', () => {
 		return o.getHeaders('ZEEBE')
 	})
 
-	it('Can get scope from environment', () => {
+	it('Can get scope from environment', async () => {
 		const serverPort3005 = 3005
 		process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -427,8 +468,11 @@ describe('OAuthProvider', () => {
 		return o.getHeaders('ZEEBE')
 	})
 
-	it('Creates the token cache dir if it does not exist', () => {
-		const { OAuthProvider } = require('../../oauth')
+	it('Creates the token cache dir if it does not exist', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		const tokenCache = path.join(__dirname, '.token-cache')
 		if (fs.existsSync(tokenCache)) {
 			/** force directory removal */
@@ -454,14 +498,17 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCache)).toBe(false)
 	})
 
-	it('Gets the token cache dir from the environment', () => {
+	it('Gets the token cache dir from the environment', async () => {
 		const tokenCache = path.join(__dirname, '.token-cache')
 		if (fs.existsSync(tokenCache)) {
 			fs.rmSync(tokenCache, { recursive: true, force: true })
 		}
 		expect(fs.existsSync(tokenCache)).toBe(false)
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -479,7 +526,7 @@ describe('OAuthProvider', () => {
 		expect(fs.existsSync(tokenCache)).toBe(false)
 	})
 
-	it('Uses an explicit token cache over the environment', () => {
+	it('Uses an explicit token cache over the environment', async () => {
 		const tokenCache1 = path.join(__dirname, '.token-cache1')
 		const tokenCache2 = path.join(__dirname, '.token-cache2')
 		;[tokenCache1, tokenCache2].forEach((tokenCache) => {
@@ -489,7 +536,10 @@ describe('OAuthProvider', () => {
 			expect(fs.existsSync(tokenCache)).toBe(false)
 		})
 		process.env.CAMUNDA_TOKEN_CACHE_DIR = tokenCache1
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -511,8 +561,11 @@ describe('OAuthProvider', () => {
 		})
 	})
 
-	it('Can set a custom user agent', () => {
-		const { OAuthProvider } = require('../../oauth')
+	it('Can set a custom user agent', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
@@ -527,47 +580,55 @@ describe('OAuthProvider', () => {
 	})
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
-	it('Passes no audience for Modeler API when self-hosted', (done) => {
-		const { OAuthProvider } = require('../../oauth')
-		const serverPort3006 = 3006
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId17',
-				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3006}`,
-			},
-		})
-		const secret = 'YOUR_SECRET'
-		const ttl = 5 // 5 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
-
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}"}`)
-						expect(body).toEqual(
-							'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
-						)
-						done()
-					})
-				}
+	it('Passes no audience for Modeler API when self-hosted', async () => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
+		new Promise<void>((done) => {
+			const serverPort3006 = 3006
+			const o = new OAuthProvider({
+				config: {
+					CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+					ZEEBE_CLIENT_ID: 'clientId17',
+					CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+					ZEEBE_CLIENT_SECRET: 'clientSecret',
+					CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3006}`,
+				},
 			})
-			.listen(serverPort3006)
-		o.getHeaders('MODELER')
+			const secret = 'YOUR_SECRET'
+			const ttl = 5 // 5 seconds
+			const payload = { id: 1 }
+			const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+			server = http
+				.createServer((req, res) => {
+					if (req.method === 'POST') {
+						let body = ''
+						req.on('data', (chunk) => {
+							body += chunk
+						})
+
+						req.on('end', () => {
+							res.writeHead(200, { 'Content-Type': 'application/json' })
+							res.end(`{"access_token": "${access_token}"}`)
+							expect(body).toEqual(
+								'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
+							)
+							done()
+						})
+					}
+				})
+				.listen(serverPort3006)
+			o.getHeaders('MODELER')
+		})
 	})
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 	it('Throws if you try to get a Modeler token from SaaS without console creds', async () => {
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		let thrown = false
 		const o = new OAuthProvider({
 			config: {
@@ -591,7 +652,10 @@ describe('OAuthProvider', () => {
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
 	it('Throws if you try to get a Modeler token from Self-hosted without application creds', async () => {
-		const { OAuthProvider } = require('../../oauth')
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
 		let thrown = false
 		const o = new OAuthProvider({
 			config: {
@@ -613,7 +677,10 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Can use Basic Auth as a strategy', async () => {
-		const { constructOAuthProvider } = require('../../lib')
+		const { constructOAuthProvider } = (await vi.importActual('../../lib')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			constructOAuthProvider: any
+		}
 		const server = http.createServer((req, res) => {
 			const credentials = auth(req)
 
@@ -652,7 +719,10 @@ describe('OAuthProvider', () => {
 	})
 
 	it('Can use Bearer Token Auth as a strategy', async () => {
-		const { constructOAuthProvider } = require('../../lib')
+		const { constructOAuthProvider } = (await vi.importActual(
+			'../../lib'
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		)) as any
 		const server = http.createServer((req, res) => {
 			const authHeader = req.headers['authorization']
 

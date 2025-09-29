@@ -60,7 +60,15 @@ const admin = c8.getAdminApiClient()
 
 The configuration for the SDK can be done by any combination of environment variables and explicit configuration passed to the `Camunda8` constructor.
 
-The complete documentation of all configuration parameters can be found [here](https://camunda.github.io/camunda-8-js-sdk/variables/index.CamundaSDKConfiguration.html).
+The recommended method of configuration is using the zero-conf constructor, which hydrates the configuration completely from the environment:
+
+```typescript
+const camunda = new Camunda8()
+```
+
+This allows you to cleanly separate the concern of configuration from your code and locate it purely in environment variable management.
+
+The complete documentation of all configuration parameters (environment variables) can be found [here](https://camunda.github.io/camunda-8-js-sdk/variables/index.CamundaSDKConfiguration.html).
 
 Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment. The configuration object fields and the environment variables have exactly the same names.
 

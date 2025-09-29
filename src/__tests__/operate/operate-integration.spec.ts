@@ -1,14 +1,16 @@
 import { LosslessNumber } from 'lossless-json'
+import { describe, expect, test, vi } from 'vitest'
 
 import { HTTPError } from '../../lib'
 import { PollingOperation } from '../../lib/PollingOperation'
 import { OperateApiClient } from '../../operate'
 import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
+import { matrix } from '../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../zeebe'
 
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20_000 })
 describe('Operate Integration', () => {
-	xtest('It can get the Incident', async () => {
+	test.skip('It can get the Incident', async () => {
 		const c = new OperateApiClient()
 
 		const res = await c.searchIncidents({
@@ -16,10 +18,9 @@ describe('Operate Integration', () => {
 				processInstanceKey: new LosslessNumber('2251799816400111'),
 			},
 		})
-		console.log(JSON.stringify(res, null, 2))
 		expect(res.total).toBe(1)
 	})
-	xtest('It can search process definitions', async () => {
+	test.skip('It can search process definitions', async () => {
 		const c = new OperateApiClient()
 
 		const query: Query<ProcessDefinition> = {
@@ -37,7 +38,17 @@ describe('Operate Integration', () => {
 	})
 })
 
-test('getJSONVariablesforProcess works', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+		exclude: [{ version: '8.8', deployment: 'self-managed' }],
+	})
+)('getJSONVariablesforProcess works', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({
@@ -69,7 +80,17 @@ test('getJSONVariablesforProcess works', async () => {
 	expect(res.foo).toBe('bar')
 })
 
-test('getVariablesforProcess paging works', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+		exclude: [{ version: '8.8', deployment: 'self-managed' }],
+	})
+)('getVariablesforProcess paging works', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({
@@ -121,7 +142,17 @@ test('getVariablesforProcess paging works', async () => {
 	expect(nextPage.items[0].name).toBe('foo4')
 })
 
-test('test error type', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+		exclude: [{ version: '8.8', deployment: 'self-managed' }],
+	})
+)('test error type', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({

@@ -3,9 +3,15 @@
 		"composite": true /* Required because referenced by src/tsconfig.json */,
 		/* Basic Options */
 		"target": "es2020" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
-		"module": "commonjs" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
-		"types": ["node", "jest"],
-		"lib": ["es2020"],
+		"module": "commonjs", /* Revert to commonjs for stable CJS build */
+		"moduleResolution": "node",
+		"types": [
+			"node"
+		],
+		"lib": [
+			"es2020",
+			"webworker"
+		],
 		"declaration": true /* Generates corresponding '.d.ts' file. */,
 		"sourceMap": true /* Generates corresponding '.map' file. */,
 		"outDir": "./dist" /* Redirect output structure to the directory. */,
@@ -27,5 +33,10 @@
 			}
 		]
 	},
-	"exclude": ["node_modules", "src/__tests__/*", "test-d", "dist"]
+	"exclude": [
+		"node_modules",
+		"src/__tests__/*",
+		"test-d",
+		"dist"
+	]
 }

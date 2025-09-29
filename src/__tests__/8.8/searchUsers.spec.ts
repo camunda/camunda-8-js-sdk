@@ -2,11 +2,24 @@
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 import { PollingOperation } from '../../lib/PollingOperation'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(10000)
-test('It can search users', async () => {
+vi.setConfig({ testTimeout: 10_000 })
+
+// This test requires a specific setup related to OIDC
+// Effectively turning it off for now — saas + multi-tenant is not a thing yet.
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['saas'],
+			tenancy: ['multi-tenant'],
+			security: ['secured'],
+		},
+	})
+)('It can search users', async () => {
 	// const uuid = randomUUID()
 	await c8
 		.createUser({

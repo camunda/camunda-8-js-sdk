@@ -220,8 +220,11 @@ export class CamundaJobWorker<
 
 		const remainingJobCapacity =
 			this.config.maxJobsToActivate - this.currentlyActiveJobCount
+
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { pollIntervalMs: _, ...req } = this.config
 		this.activePoll = this.restClient.activateJobs({
-			...this.config,
+			...req,
 			maxJobsToActivate: remainingJobCapacity,
 		})
 

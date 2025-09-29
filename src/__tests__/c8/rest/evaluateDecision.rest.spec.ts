@@ -1,8 +1,9 @@
 import path from 'node:path'
 
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { matrix } from '../../../test-support/testTags'
 
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
 const c8 = new CamundaRestClient()
 
@@ -11,8 +12,16 @@ beforeAll(async () => {
 		path.join('.', 'src', '__tests__', 'testdata', `test-drd.dmn`),
 	])
 })
-
-test('can evaluate a decision', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('can evaluate a decision', async () => {
 	const output = await c8.evaluateDecision({
 		decisionDefinitionId: 'test-decision',
 		variables: {

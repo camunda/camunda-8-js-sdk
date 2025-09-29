@@ -1,3 +1,4 @@
+import { allowAny } from '../../test-support/testTags'
 import {
 	parseVariables,
 	stringifyVariables,
@@ -40,31 +41,67 @@ const jobDictionary = {
 	type: 'sub-task',
 }
 
-test('stringifyVariables returns a new object', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('stringifyVariables returns a new object', () => {
 	expect(stringifyVariables(jobObject)).not.toEqual(jobObject)
 })
 
-test('stringifyVariables stringifies the variables key of a job object', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('stringifyVariables stringifies the variables key of a job object', () => {
 	const stringified = stringifyVariables(jobObject)
 	expect(typeof stringified.variables).toBe('string')
 	expect(stringified.variables).toBe(expectedStringifiedVariables)
 })
 
-test('stringifyVariables throws an error when passed an array', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('stringifyVariables throws an error when passed an array', () => {
 	const arrayInput = { variables: ['something'] }
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	expect(() => stringifyVariables(arrayInput as any)).toThrow(Error)
 })
 
-test('parseVariables returns a new object', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('parseVariables returns a new object', () => {
 	expect(parseVariables(jobDictionary)).not.toEqual(jobDictionary)
 })
 
-test('parseVariables parses the payload key of a job object to JSON', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('parseVariables parses the payload key of a job object to JSON', () => {
 	expect(typeof parseVariables(jobDictionary).variables).toBe('object')
 })
 
-test('parseVariables correctly parses the payload string', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('parseVariables correctly parses the payload string', () => {
 	const parsed = parseVariables(jobDictionary)
 	expect(parsed.variables.jobId).toEqual('7ead71d8-30c9-4eda-81e7-f2ada6d7d0da')
 	expect(parsed.variables.subtaskCount).toEqual(200)
@@ -72,7 +109,13 @@ test('parseVariables correctly parses the payload string', () => {
 	expect(Object.keys(parsed.variables).length).toBe(3)
 })
 
-test('parseVariables returns an object with all the keys of the original', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('parseVariables returns an object with all the keys of the original', () => {
 	const parsed = parseVariables(jobDictionary)
 	expect(Object.keys(parsed).length).toBe(7)
 	expect(parsed.key).toBe('37274')

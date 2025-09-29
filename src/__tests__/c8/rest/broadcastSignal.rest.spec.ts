@@ -1,8 +1,9 @@
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
+import { matrix } from '../../../test-support/testTags'
 import { cancelProcesses as cancelProcessesSMandSaaS } from '../../../zeebe/lib/cancelProcesses'
 
-jest.setTimeout(60000)
+vi.setConfig({ testTimeout: 60_000 })
 
 const c8 = new CamundaRestClient()
 let pid: string
@@ -21,10 +22,7 @@ function cancelProcessesC8Run(processDefinitionKey: string) {
 					.cancelProcessInstance({
 						processInstanceKey: item.processInstanceKey,
 					})
-					.catch((e) => {
-						console.log(`Failed to delete process ${item.processInstanceKey}`)
-						console.log(e)
-					})
+					.catch(() => {})
 			})
 		)
 	})
@@ -47,7 +45,16 @@ afterAll(async () => {
 	await cancelProcesses(pid)
 })
 
-test('Can start a process with a signal', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('Can start a process with a signal', async () => {
 	await c8.deployResourcesFromFiles(['./src/__tests__/testdata/Signal.bpmn'])
 
 	const res = await c8.broadcastSignal({

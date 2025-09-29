@@ -7,8 +7,9 @@ import path from 'node:path'
 
 import { Camunda8 } from '../../../c8/index'
 import { NullLogger } from '../../../c8/lib/C8Logger'
+import { matrix } from '../../../test-support/testTags'
 
-jest.setTimeout(15000)
+vi.setConfig({ testTimeout: 15_000 })
 
 // Suppress logging
 process.env.ZEEBE_CLIENT_LOG_LEVEL = 'NONE'
@@ -24,7 +25,16 @@ const zeebe = c8.getZeebeGrpcApiClient()
 afterAll(() => zeebe.close())
 
 describe('Invalid credentials gRPC client (default tenant)', () => {
-	test('cannot deploy process', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8', '8.7'],
+				deployments: ['saas', 'self-managed'],
+				tenancy: ['multi-tenant', 'single-tenant'],
+				security: ['secured'],
+			},
+		})
+	)('cannot deploy process', async () => {
 		await expect(async () =>
 			zeebe.deployResource({
 				processFilename: path.join(

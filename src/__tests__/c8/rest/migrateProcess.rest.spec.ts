@@ -3,16 +3,25 @@ import path from 'path'
 import { CamundaJobWorker } from '../../../c8/lib/CamundaJobWorker'
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
 import { LosslessDto } from '../../../lib'
+import { matrix } from '../../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
-
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20_000 })
 
 class CustomHeaders extends LosslessDto {
 	ProcessVersion!: number
 }
 
-test('RestClient can migrate a process instance', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('RestClient can migrate a process instance', async () => {
 	// Deploy a process model
 	await c8.deployResourcesFromFiles([
 		path.join(
