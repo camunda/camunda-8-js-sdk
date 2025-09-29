@@ -8,12 +8,14 @@ const c8 = new CamundaRestClient()
 
 vi.setConfig({ testTimeout: 10_000 })
 
+// This test requires a specific setup related to OIDC
+// Effectively turning it off for now — saas + multi-tenant is not a thing yet.
 test.runIf(
 	matrix({
 		include: {
 			versions: ['8.8'],
 			deployments: ['saas'],
-			tenancy: ['single-tenant', 'multi-tenant'],
+			tenancy: ['multi-tenant'],
 			security: ['secured'],
 		},
 	})

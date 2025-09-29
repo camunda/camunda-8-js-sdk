@@ -173,6 +173,8 @@ test.runIf(
 		.getProcessInstance(`${p.processInstanceKey}1`)
 		.catch((e) => {
 			expect((e.response?.body as string).includes('404')).toBe(true)
+			// Logging this out for debugging on 8.8 SaaS in GitHub CI
+			console.log(e)
 			if (e instanceof HTTPError) {
 				expect(e.statusCode).toBe(404)
 			}
