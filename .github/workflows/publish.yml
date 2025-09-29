@@ -55,6 +55,7 @@ jobs:
       - name: Set up Docker Compose
         run: |
           docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml up -d
+        timeout-minutes: 10
 
       - name: Run Integration Tests
         run: |
@@ -100,6 +101,7 @@ jobs:
       - name: Set up Docker Compose
         run: |
           docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d
+        timeout-minutes: 10
 
       - name: Run Integration Tests
         run: |

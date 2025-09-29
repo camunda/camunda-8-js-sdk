@@ -160,6 +160,10 @@ services:
       - "8085:8080"
     environment:
       - ZEEBE_CLIENT_BROKER_GATEWAY-ADDRESS=grpc://zeebe:26500
+      - CAMUNDA_CLIENT_MODE=self-managed
+      # - OPERATE_CLIENT_PROFILE=simple
+      - CAMUNDA_CLIENT_ZEEBE_RESTADDRESS=http://zeebe:8080
+      - CAMUNDA_CLIENT_ZEEBE_GRPCADDRESS=http://zeebe:26500
       - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
       - ZEEBE_CLIENT_ID=${ZEEBE_CLIENT_ID}
       - ZEEBE_CLIENT_SECRET=${ZEEBE_CLIENT_SECRET}
@@ -170,6 +174,14 @@ services:
       - CAMUNDA_OPERATE_CLIENT_CLIENT-SECRET=XALaRPl5qwTEItdwCMiPS62nVpKs7dL7
       - CAMUNDA_OPERATE_CLIENT_KEYCLOAK-REALM=camunda-platform
       - CAMUNDA_OPERATE_CLIENT_URL=http://operate:8080
+      # Operate connection
+      - OPERATE_CLIENT_BASEURL=http://operate:8080
+      - OPERATE_CLIENT_AUTHURL=http://keycloak:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+      - OPERATE_CLIENT_AUDIENCE=operate-api
+      - OPERATE_CLIENT_PROFILE=oidc
+      - OPERATE_CLIENT_CLIENTID=connectors
+      - OPERATE_CLIENT_CLIENTSECRET=XALaRPl5qwTEItdwCMiPS62nVpKs7dL7
+      - JAVA_TOOL_OPTIONS=-Dlogging.level.io.camunda.zeebe.client.impl.ZeebeCallCredentials=ERROR
       - management.endpoints.web.exposure.include=health
       - management.endpoint.health.probes.enabled=true
     env_file: connector-secrets.txt
@@ -339,7 +351,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/auth"]
+      test: ["CMD", "curl", "-f", "http://localhost:18080/auth"]
       interval: 30s
       timeout: 15s
       retries: 5

@@ -89,7 +89,13 @@ export class OperateApiClient {
 		trace('options.config', options?.config)
 		trace('config', config)
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_OPERATE_BASE_URL,
