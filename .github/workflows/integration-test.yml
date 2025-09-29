@@ -16,7 +16,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "22" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -60,7 +60,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "22" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -76,6 +76,7 @@ jobs:
       - name: Set up Docker Compose
         run: |
           docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml up -d
+        timeout-minutes: 10
 
       - name: Run Integration Tests
         run: |
@@ -105,7 +106,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "22" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -121,6 +122,7 @@ jobs:
       - name: Set up Docker Compose
         run: |
           docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d
+        timeout-minutes: 10
 
       - name: Run Integration Tests
         run: |
@@ -151,7 +153,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "22" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -187,7 +189,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify a Node.js version
+          node-version: "22" # Specify a Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -213,6 +215,52 @@ jobs:
           CAMUNDA_CONSOLE_BASE_URL: ${{ secrets.CAMUNDA_CONSOLE_BASE_URL_8_8 }}
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ secrets.CAMUNDA_CONSOLE_OAUTH_AUDIENCE_8_8 }}
 
+  local_integration_8_8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22" # Specify a Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/docker-compose-8.8.yaml up -d
+
+      - name: Wait for Services Healthy
+        run: |
+          set -e
+          attempts=0
+          max_attempts=60
+          while [ $attempts -lt $max_attempts ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9600/actuator/health/status || true)
+            [ "$code" = "200" ] && echo "Broker healthy" && break
+            attempts=$((attempts+1))
+            sleep 5
+          done
+          [ $attempts -ge $max_attempts ] && echo "Broker not healthy" && exit 1 || true
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:8.8:sm
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          CAMUNDA_AUTH_STRATEGY: NONE
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/docker-compose-8.8.yaml down
   # saas_integration_windows:
   # needs: saas_integration
   # runs-on: windows-2019

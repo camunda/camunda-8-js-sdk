@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs'
+import { randomUUID as uuid } from 'node:crypto'
 import * as path from 'path'
 
 import chalk from 'chalk'
@@ -6,7 +7,6 @@ import d from 'debug'
 import { LosslessNumber } from 'lossless-json'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
-import { v4 as uuid } from 'uuid'
 
 import {
 	CamundaEnvironmentConfigurator,
@@ -221,7 +221,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.onConnectionError = this.options.onConnectionError
 		this.onReady = this.options.onReady
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 
 		this.maxRetries = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES
 

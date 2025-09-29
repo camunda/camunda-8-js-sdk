@@ -8,10 +8,20 @@ import {
 	ProcessDeployment,
 } from '../../../c8/lib/C8Dto'
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { matrix } from '../../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-test('can deploy resources and validate complete response DTO', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('can deploy resources and validate complete response DTO', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		path.join(
 			'.',

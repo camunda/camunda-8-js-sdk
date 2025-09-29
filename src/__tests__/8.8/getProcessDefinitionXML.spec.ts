@@ -1,8 +1,20 @@
+import { expect, test } from 'vitest'
+
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-test('It can get the Process Definition XML', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can get the Process Definition XML', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/SearchProcessInstances.bpmn',
 	])

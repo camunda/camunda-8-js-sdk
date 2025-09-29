@@ -6,8 +6,9 @@
 import path from 'node:path'
 
 import { Camunda8 } from '../../../c8/index'
+import { matrix } from '../../../test-support/testTags'
 
-jest.setTimeout(15000)
+vi.setConfig({ testTimeout: 15_000 })
 
 const c8 = new Camunda8({
 	CAMUNDA_TENANT_ID: 'green',
@@ -17,7 +18,16 @@ const c8 = new Camunda8({
 const restClientAuthed = c8.getCamundaRestClient()
 
 describe('Authenticated REST client (green tenant)', () => {
-	test('can deploy process', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8', '8.7'],
+				deployments: ['saas', 'self-managed'],
+				tenancy: ['multi-tenant'],
+				security: ['secured'],
+			},
+		})
+	)('can deploy process', async () => {
 		const res = await restClientAuthed.deployResourcesFromFiles([
 			path.join(
 				'.',

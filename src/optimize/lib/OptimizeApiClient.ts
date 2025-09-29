@@ -72,7 +72,13 @@ export class OptimizeApiClient {
 			'CAMUNDA_OPTIMIZE_BASE_URL' as const
 		)
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 
 		const prefixUrl = `${baseUrl}/api`
 

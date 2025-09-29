@@ -55,7 +55,6 @@ import {
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FormDeployment,
-	GetDecisionInstanceResponse,
 	GetProcessDefinitionResponse,
 	GetVariableResponse,
 	JobUpdateChangeset,
@@ -66,8 +65,6 @@ import {
 	ProcessDeployment,
 	PublishMessageResponse,
 	RestJob,
-	SearchDecisionInstancesRequest,
-	SearchDecisionInstancesResponse,
 	SearchElementInstancesRequest,
 	SearchElementInstancesResponse,
 	SearchIncidentsRequest,
@@ -148,7 +145,13 @@ export class CamundaRestClient {
 		trace('options.config', options?.config)
 		trace('config', config)
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 		this.userAgentString = createUserAgentString(config)
 		this.tenantId = config.CAMUNDA_TENANT_ID
 
@@ -1129,6 +1132,7 @@ export class CamundaRestClient {
 	}) {
 		const headers = await this.getHeaders()
 		const { resourceKey, operationReference } = req
+
 		return this.rest.then((rest) =>
 			rest.post(`resources/${resourceKey}/deletion`, {
 				headers,
@@ -1410,7 +1414,10 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		request: ModifyProcessInstanceRequest
 	): Promise<''> {
 		const { processInstanceKey, ...req } = request
-		return this.callApiEndpoint<UnknownRequestBody, ''>({
+		return this.callApiEndpoint<
+			Omit<ModifyProcessInstanceRequest, 'processInstanceKey'>,
+			''
+		>({
 			method: 'POST',
 			urlPath: `process-instances/${processInstanceKey}/modification`,
 			body: req,
@@ -1433,7 +1440,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		>({
 			method: 'POST',
 			urlPath: `decision-definitions/evaluation`,
-			body: request,
+			body: this.addDefaultTenantId(request),
 		})
 	}
 
@@ -1549,40 +1556,42 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		})
 	}
 
+	// Disabled due to refactoring of API endpoint
 	/**
 	 * @description Search for decision instances based on given criteria.
 	 * Documentation: https://docs.camunda.io/docs/next/apis-tools/orchestration-cluster-api-rest/specifications/search-decision-instances/
 	 * @since 8.8.0
 	 */
-	public async searchDecisionInstances(
-		request: SearchDecisionInstancesRequest
-	): Promise<SearchDecisionInstancesResponse> {
-		return this.callApiEndpoint<
-			SearchDecisionInstancesRequest,
-			SearchDecisionInstancesResponse
-		>({
-			method: 'POST',
-			urlPath: `decision-instances/search`,
-			body: request,
-		})
-	}
+	// public async searchDecisionInstances(
+	// 	request: SearchDecisionInstancesRequest
+	// ): Promise<SearchDecisionInstancesResponse> {
+	// 	return this.callApiEndpoint<
+	// 		SearchDecisionInstancesRequest,
+	// 		SearchDecisionInstancesResponse
+	// 	>({
+	// 		method: 'POST',
+	// 		urlPath: `decision-instances/search`,
+	// 		body: request,
+	// 	})
+	// }
 
+	// Disabled due to refactoring of API endpoint
 	/**
 	 * Get a decision instance by key.
 	 * @param decisionInstanceKey The key of the decision instance to get
 	 * @returns Decision instance details
 	 */
-	public async getDecisionInstance(
-		decisionInstanceKey: string
-	): Promise<GetDecisionInstanceResponse> {
-		return this.callApiEndpoint<
-			UnknownRequestBody,
-			GetDecisionInstanceResponse
-		>({
-			method: 'GET',
-			urlPath: `decision-instances/${decisionInstanceKey}`,
-		})
-	}
+	// public async getDecisionInstance(
+	// 	decisionInstanceKey: string
+	// ): Promise<GetDecisionInstanceResponse> {
+	// 	return this.callApiEndpoint<
+	// 		UnknownRequestBody,
+	// 		GetDecisionInstanceResponse
+	// 	>({
+	// 		method: 'GET',
+	// 		urlPath: `decision-instances/${decisionInstanceKey}`,
+	// 	})
+	// }
 
 	/**
 	 * This is a generic method to call an API endpoint. Use this method to call any REST API endpoint in the Camunda 8 cluster.
@@ -1624,9 +1633,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 					headers: request.headers
 						? { ...headers, ...request.headers }
 						: headers,
-					body: body
-						? losslessStringify(this.addDefaultTenantId(body))
-						: undefined,
+					body: body ? losslessStringify(body) : undefined,
 					searchParams: queryParams ?? {},
 					parseJson: request.parseJson ?? losslessParse,
 				}

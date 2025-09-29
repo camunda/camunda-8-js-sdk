@@ -1,11 +1,12 @@
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
-let zbc = new ZeebeGrpcClient()
+let zbc: ZeebeGrpcClient
 let wf: CreateProcessInstanceResponse
 let id: string | null
 let bpmnProcessId: string
@@ -14,6 +15,8 @@ let processKey: string
 let processKey2: string
 
 beforeAll(async () => {
+	zbc = new ZeebeGrpcClient({ config: { CAMUNDA_LOG_LEVEL: 'none' } })
+
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/hello-world.bpmn',
 	})
@@ -52,31 +55,38 @@ afterAll(async () => {
 	await cancelProcesses(processKey2)
 })
 
-test('Can start a process', async () => {
-	wf = await zbc.createProcessInstance({
-		bpmnProcessId,
-		variables: {},
-	})
-	await zbc.cancelProcessInstance(wf.processInstanceKey)
-	expect(wf.bpmnProcessId).toBe(bpmnProcessId)
-	expect(wf.processInstanceKey).toBeTruthy()
-})
-
-test('Can start a process at an arbitrary point', (done) => {
-	const random = Math.random()
-	const worker = zbc.createWorker({
-		taskType: 'second_service_task',
-		taskHandler: (job) => {
-			expect(job.variables.id).toBe(random)
-			return job.complete().then(finish)
-		},
-	})
-	const finish = () => worker.close().then(() => done())
-	zbc
-		.createProcessInstance({
-			bpmnProcessId: bpmnProcessId2,
-			variables: { id: random },
-			startInstructions: [{ elementId: 'second_service_task' }],
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can start a process',
+	async () => {
+		wf = await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: {},
 		})
-		.then((res) => (id = res.processInstanceKey))
-})
+		await zbc.cancelProcessInstance(wf.processInstanceKey)
+		expect(wf.bpmnProcessId).toBe(bpmnProcessId)
+		expect(wf.processInstanceKey).toBeTruthy()
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can start a process at an arbitrary point',
+	() =>
+		new Promise<void>((done) => {
+			const random = Math.random()
+			const worker = zbc.createWorker({
+				taskType: 'second_service_task',
+				taskHandler: (job) => {
+					expect(job.variables.id).toBe(random)
+					return job.complete().then(finish)
+				},
+			})
+			const finish = () => worker.close().then(() => done())
+			zbc
+				.createProcessInstance({
+					bpmnProcessId: bpmnProcessId2,
+					variables: { id: random },
+					startInstructions: [{ elementId: 'second_service_task' }],
+				})
+				.then((res) => (id = res.processInstanceKey))
+		})
+)

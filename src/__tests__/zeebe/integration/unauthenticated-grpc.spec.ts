@@ -1,6 +1,7 @@
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
 afterAll(() => {
 	unauthenticatedGrpcClient.close()
@@ -9,15 +10,26 @@ afterAll(() => {
 const unauthenticatedGrpcClient = new ZeebeGrpcClient({
 	config: {
 		CAMUNDA_AUTH_STRATEGY: 'NONE',
+		CAMUNDA_LOG_LEVEL: 'none',
 	},
 })
-test('Unauthenticated gRPC client cannot get Topology', async () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'saas', security: 'secured' },
+		{ deployment: 'self-managed', security: 'secured' },
+	])
+)('Unauthenticated gRPC client cannot get Topology', async () => {
 	await expect(async () => {
 		const topologyGrpc = await unauthenticatedGrpcClient.topology()
 		return topologyGrpc
 	}).rejects.toThrow()
 })
-test('Unauthenticated gRPC client cannot activate jobs', async () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'saas', security: 'secured' },
+		{ deployment: 'self-managed', security: 'secured' },
+	])
+)('Unauthenticated gRPC client cannot activate jobs', async () => {
 	await expect(async () => {
 		const jobs = await unauthenticatedGrpcClient.activateJobs({
 			maxJobsToActivate: 10,
@@ -29,7 +41,12 @@ test('Unauthenticated gRPC client cannot activate jobs', async () => {
 		return jobs
 	}).rejects.toThrow()
 })
-test('Unauthenticated gRPC client cannot deploy resources', async () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'saas', security: 'secured' },
+		{ deployment: 'self-managed', security: 'secured' },
+	])
+)('Unauthenticated gRPC client cannot deploy resources', async () => {
 	await expect(async () => {
 		const deployment = await unauthenticatedGrpcClient.deployResources([
 			{ processFilename: './src/__tests__/testdata/rest-message-test.bpmn' },

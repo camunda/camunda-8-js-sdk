@@ -10,8 +10,18 @@ import {
 	TopologyResponse,
 } from '../../../generated/zeebe_pb'
 import { BearerAuthProvider } from '../../../oauth'
+import { matrix } from '../../../test-support/testTags'
 
-test('it can refresh the bearer token with a custom OAuth provider', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('it can refresh the bearer token with a custom OAuth provider', async () => {
 	let currentToken = ''
 
 	function createServer(): Promise<{ server: Server; port: number }> {

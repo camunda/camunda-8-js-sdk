@@ -1,18 +1,20 @@
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 /**
  * Note: This test needs to be modified to leave its process instance active so the incident can be manually verified
  */
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
 let processInstanceKey: string
 
-const zbc = new ZeebeGrpcClient()
+let zbc: ZeebeGrpcClient
 let bpmnProcessId: string
 let processDefinitionKey: string
 
 beforeAll(async () => {
+	zbc = new ZeebeGrpcClient()
 	const res = await zbc.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-RaiseIncident.bpmn',
 	})
@@ -26,48 +28,51 @@ afterAll(async () => {
 	await cancelProcesses(processDefinitionKey)
 })
 
-test('Can raise an Operate incident with complete.failure()', async () => {
-	const wf = await zbc.createProcessInstance({
-		bpmnProcessId,
-		variables: {
-			conditionVariable: true,
-		},
-	})
-	processInstanceKey = wf.processInstanceKey
-	expect(processInstanceKey).toBeTruthy()
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can raise an Operate incident with complete.failure()',
+	async () => {
+		const wf = await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: {
+				conditionVariable: true,
+			},
+		})
+		processInstanceKey = wf.processInstanceKey
+		expect(processInstanceKey).toBeTruthy()
 
-	await zbc.setVariables({
-		elementInstanceKey: processInstanceKey,
-		local: false,
-		variables: {
-			conditionVariable: false,
-		},
-	})
+		await zbc.setVariables({
+			elementInstanceKey: processInstanceKey,
+			local: false,
+			variables: {
+				conditionVariable: false,
+			},
+		})
 
-	zbc.createWorker({
-		taskType: 'wait-raise-incident',
-		taskHandler: async (job) => {
-			expect(job.processInstanceKey).toBe(processInstanceKey)
-			return job.complete(job.variables)
-		},
-		loglevel: 'NONE',
-	})
-
-	await new Promise((resolve) =>
 		zbc.createWorker({
-			taskType: 'pathB-raise-incident',
+			taskType: 'wait-raise-incident',
 			taskHandler: async (job) => {
 				expect(job.processInstanceKey).toBe(processInstanceKey)
-				expect(job.variables.conditionVariable).toBe(false)
-				const res1 = await job.fail('Raise an incident in Operate', 0)
-				/* @TODO: delay, then check for incident in Operate via the API */
-				await job.cancelWorkflow()
-				// comment out the preceding line for the verification test
-				resolve(null)
-				return res1
+				return job.complete(job.variables)
 			},
-			maxJobsToActivate: 1,
 			loglevel: 'NONE',
 		})
-	)
-})
+
+		await new Promise((resolve) =>
+			zbc.createWorker({
+				taskType: 'pathB-raise-incident',
+				taskHandler: async (job) => {
+					expect(job.processInstanceKey).toBe(processInstanceKey)
+					expect(job.variables.conditionVariable).toBe(false)
+					const res1 = await job.fail('Raise an incident in Operate', 0)
+					/* @TODO: delay, then check for incident in Operate via the API */
+					await job.cancelWorkflow()
+					// comment out the preceding line for the verification test
+					resolve(null)
+					return res1
+				},
+				maxJobsToActivate: 1,
+				loglevel: 'NONE',
+			})
+		)
+	}
+)

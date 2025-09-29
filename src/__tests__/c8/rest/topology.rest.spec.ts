@@ -1,6 +1,16 @@
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { matrix } from '../../../test-support/testTags'
 
-test('The REST client can get the topology', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('The REST client can get the topology', async () => {
 	const c8 = new CamundaRestClient()
 	const topology = await c8.getTopology()
 

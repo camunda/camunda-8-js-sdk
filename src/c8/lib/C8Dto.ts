@@ -593,21 +593,21 @@ export interface SearchTasksRequest
 		SearchUserTasksRequestFilter
 	> {}
 
-export interface UserTaskDetails {
-	/** The key of the user task. */
-	userTaskKey: string
-	/** The key of the element instance. */
-	elementInstanceKey: string
-	/** The key of the process definition. */
-	processDefinitionKey: string
-	/** The key of the process instance. */
-	processInstanceKey: string
-	/** The key of the form. */
-	formKey: string
-}
+// export interface UserTaskDetails {
+// 	/** The key of the user task. */
+// 	userTaskKey: string
+// 	/** The key of the element instance. */
+// 	elementInstanceKey: string
+// 	/** The key of the process definition. */
+// 	processDefinitionKey: string
+// 	/** The key of the process instance. */
+// 	processInstanceKey: string
+// 	/** The key of the form. */
+// 	formKey: string
+// }
 
 export interface SearchUserTasksResponse
-	extends PaginatedSearchResponse<UserTaskDetails> {}
+	extends PaginatedSearchResponse<UserTask> {}
 
 export interface UserTask {
 	/** The name for this user task. */
@@ -912,11 +912,11 @@ export type EvaluateDecisionRequest =
 			variables: JSONDoc
 			/** The tenant ID of the decision. */
 			tenantId?: string
-			/** The unique key identifying the decision to be evaluated. */
+			/** Never. The unique key identifying the decision to be evaluated. Cannot be used with decisionDefinitionId */
 			decisionDefinitionKey?: never
 	  }
 	| {
-			/** The ID of the decision to be evaluated. */
+			/** Never. The ID of the decision to be evaluated. */
 			decisionDefinitionId?: never
 			/** The message variables as JSON document. */
 			variables: JSONDoc
@@ -995,8 +995,10 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	decisionDefinitionKey!: string
 	/** The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
 	decisionRequirementsKey!: string
-	/** The unique key identifying this decision evaluation. */
+	/** Deprecated, please refer to decisionEvaluationKey. */
 	decisionInstanceKey!: string
+	/* The unique key identifying this decision evaluation. */
+	decisionEvaluationKey!: string
 	@ChildDto(EvaluatedDecision)
 	evaluatedDecisions!: EvaluatedDecision[]
 }
@@ -1334,144 +1336,153 @@ interface IncidentDetails {
 export interface SearchIncidentsResponse
 	extends PaginatedSearchResponse<IncidentDetails> {}
 
-export interface DecisionInstanceSearchFilter {
-	/** The decision instance key. */
-	decisionInstanceKey?: string | AdvancedStringFilter
-	/** The decision definition ID. */
-	decisionDefinitionId?: string | AdvancedStringFilter
-	/** The decision definition key. */
-	decisionDefinitionKey?: string | AdvancedStringFilter
-	/** The decision definition name. */
-	decisionDefinitionName?: string | AdvancedStringFilter
-	/** The decision definition version. */
-	decisionDefinitionVersion?: number | AdvancedNumberFilter
-	/** The process definition key associated to this decision instance. */
-	processDefinitionKey?: string | AdvancedStringFilter
-	/** The process instance key associated to this decision instance. */
-	processInstanceKey?: string | AdvancedStringFilter
-	/** The state of the decision instance. */
-	state?: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
-	/** The evaluation date. */
-	evaluationDate?: string | AdvancedDateTimeFilter
-	/** The tenant ID. */
-	tenantId?: string | AdvancedStringFilter
-	/** The decision type. */
-	decisionType?:
-		| 'DECISION_TABLE'
-		| 'LITERAL_EXPRESSION'
-		| 'UNSPECIFIED'
-		| 'UNKNOWN'
-}
+// export interface DecisionInstanceSearchFilter {
+// 	/** System-generated key for a decision evaluation instance. */
+// 	decisionEvaluationInstanceKey?: string | AdvancedStringFilter
+// 	/** The state of the decision instance. */
+// 	state?: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+// 	/* The evaluation failure of the decision instance. */
+// 	evaluationFailure?: string
+// 	/** The evaluation date. */
+// 	evaluationDate?: string | AdvancedDateTimeFilter
+// 	/** The decision definition ID. */
+// 	decisionDefinitionId?: string | AdvancedStringFilter
+// 	/** The decision definition key. */
+// 	decisionDefinitionKey?: string | AdvancedStringFilter
+// 	/** The decision definition name. */
+// 	decisionDefinitionName?: string | AdvancedStringFilter
+// 	/** The decision definition version. */
+// 	decisionDefinitionVersion?: number | AdvancedNumberFilter
+// 	/** The process definition key associated to this decision instance. */
+// 	processDefinitionKey?: string | AdvancedStringFilter
+// 	/** The process instance key associated to this decision instance. */
+// 	processInstanceKey?: string | AdvancedStringFilter
+// 	/** The key of the parent decision evaluation. Note that this is not the identifier of an individual decision instance; the decisionEvaluationInstanceKey is the identifier for a decision instance. */
+// 	decisionEvaluationKey?: string
+// 	/** The key of the element instance this decision instance is linked to. */
+// 	elementInstanceKey?: string | AdvancedStringFilter
+// 	/** The tenant ID. */
+// 	tenantId?: string | AdvancedStringFilter
+// 	/** The decision type. */
+// 	decisionDefinitionType?:
+// 		| 'DECISION_TABLE'
+// 		| 'LITERAL_EXPRESSION'
+// 		| 'UNSPECIFIED'
+// 		| 'UNKNOWN'
+// }
 
-export interface SearchDecisionInstancesRequest
-	extends BaseSearchRequest<
-		| 'decisionInstanceKey'
-		| 'decisionDefinitionId'
-		| 'decisionDefinitionKey'
-		| 'decisionDefinitionName'
-		| 'decisionDefinitionVersion'
-		| 'processDefinitionKey'
-		| 'processInstanceKey'
-		| 'state'
-		| 'evaluationDate'
-		| 'tenantId'
-		| 'decisionType',
-		DecisionInstanceSearchFilter
-	> {}
+// export interface SearchDecisionInstancesRequest
+// 	extends BaseSearchRequest<
+// 		| 'decisionDefinitionId'
+// 		| 'decisionDefinitionKey'
+// 		| 'decisionDefinitionName'
+// 		| 'decisionDefinitionType'
+// 		| 'decisionDefinitionVersion'
+// 		| 'decisionEvaluationInstanceKey'
+// 		| 'decisionEvaluationKey'
+// 		| 'elementInstanceKey'
+// 		| 'evaluationDate'
+// 		| 'evaluationFailure'
+// 		| 'processDefinitionKey'
+// 		| 'processInstanceKey'
+// 		| 'state'
+// 		| 'tenantId',
+// 		DecisionInstanceSearchFilter
+// 	> {}
 
-interface DecisionInstanceDetails {
-	/** The decision instance key. */
-	decisionInstanceKey: string
-	/** The decision definition ID. */
-	decisionDefinitionId: string
-	/** The decision definition key. */
-	decisionDefinitionKey: string
-	/** The decision definition name. */
-	decisionDefinitionName: string
-	/** The decision definition version. */
-	decisionDefinitionVersion: number
-	/** The process definition key associated to this decision instance. */
-	processDefinitionKey: string
-	/** The process instance key associated to this decision instance. */
-	processInstanceKey: string
-	/** The state of the decision instance. */
-	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
-	/** The evaluation date. */
-	evaluationDate: string
-	/** The evaluation failure message, if any. */
-	evaluationFailure?: string
-	/** The tenant ID. */
-	tenantId: string
-	/** The decision type. */
-	decisionType:
-		| 'DECISION_TABLE'
-		| 'LITERAL_EXPRESSION'
-		| 'UNSPECIFIED'
-		| 'UNKNOWN'
-	/** The result of the decision evaluation. */
-	result: string
-	/** The ID of the decision instance. */
-	decisionInstanceId: string
-}
+// interface DecisionInstanceDetails {
+// 	/** The decision evaluation instance key. */
+// 	decisionEvaluationInstanceKey: string
+// 	/** The decision definition ID. */
+// 	decisionDefinitionId: string
+// 	/** The decision definition key. */
+// 	decisionDefinitionKey: string
+// 	/** The decision definition name. */
+// 	decisionDefinitionName: string
+// 	/** The decision definition version. */
+// 	decisionDefinitionVersion: number
+// 	/** The process definition key associated to this decision instance. */
+// 	processDefinitionKey: string
+// 	/** The process instance key associated to this decision instance. */
+// 	processInstanceKey: string
+// 	/** The state of the decision instance. */
+// 	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+// 	/** The evaluation date. */
+// 	evaluationDate: string
+// 	/** The evaluation failure message, if any. */
+// 	evaluationFailure?: string
+// 	/** The tenant ID. */
+// 	tenantId: string
+// 	/** The decision type. */
+// 	decisionDefinitionType:
+// 		| 'DECISION_TABLE'
+// 		| 'LITERAL_EXPRESSION'
+// 		| 'UNSPECIFIED'
+// 		| 'UNKNOWN'
+// 	/** The result of the decision evaluation. */
+// 	result: string
+// 	/** The ID of the decision instance. */
+// 	decisionInstanceId: string
+// }
 
-export interface SearchDecisionInstancesResponse
-	extends PaginatedSearchResponse<DecisionInstanceDetails> {}
+// export interface SearchDecisionInstancesResponse
+// 	extends PaginatedSearchResponse<DecisionInstanceDetails> {}
 
 /**
  * Response from getting a single decision instance by its key.
  */
-export interface GetDecisionInstanceResponse {
-	/** The decision instance key. Note that this is not the unique identifier of the entity itself; the decisionInstanceId serves as the primary identifier. */
-	decisionInstanceKey: string
-	/** The decision definition ID. */
-	decisionDefinitionId: string
-	/** The decision definition key. */
-	decisionDefinitionKey: string
-	/** The decision definition name. */
-	decisionDefinitionName: string
-	/** The decision definition version. */
-	decisionDefinitionVersion: number
-	/** The process definition key associated to this decision instance. */
-	processDefinitionKey: string
-	/** The process instance key associated to this decision instance. */
-	processInstanceKey: string
-	/** The state of the decision instance. */
-	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
-	/** The evaluation date. */
-	evaluationDate: string
-	/** The evaluation failure message, if any. */
-	evaluationFailure?: string
-	/** The tenant ID. */
-	tenantId: string
-	/** The decision type. */
-	decisionDefinitionType:
-		| 'DECISION_TABLE'
-		| 'LITERAL_EXPRESSION'
-		| 'UNSPECIFIED'
-		| 'UNKNOWN'
-	/** The result of the decision evaluation. */
-	result: string
-	/** The evaluated inputs of the decision instance. */
-	evaluatedInputs: Array<{
-		/** The ID of the evaluated decision input. */
-		inputId: string
-		/** The name of the evaluated decision input. */
-		inputName: string
-		/** The value of the evaluated decision input. */
-		inputValue: string
-	}>
-	matchedRules: Array<{
-		/** The ID of the matched rule. */
-		ruleId: string
-		/** The index of the matched rule. */
-		ruleIndex: number
-		evaluatedOutputs: Array<{
-			/** The ID of the evaluated decision output. */
-			outputId: string
-			/** The name of the evaluated decision output. */
-			outputName: string
-			/** The value of the evaluated decision output. */
-			outputValue: string
-		}>
-	}>
-}
+// export interface GetDecisionInstanceResponse {
+// 	/** The decision instance key. Note that this is not the unique identifier of the entity itself; the decisionInstanceId serves as the primary identifier. */
+// 	decisionInstanceKey: string
+// 	/** The decision definition ID. */
+// 	decisionDefinitionId: string
+// 	/** The decision definition key. */
+// 	decisionDefinitionKey: string
+// 	/** The decision definition name. */
+// 	decisionDefinitionName: string
+// 	/** The decision definition version. */
+// 	decisionDefinitionVersion: number
+// 	/** The process definition key associated to this decision instance. */
+// 	processDefinitionKey: string
+// 	/** The process instance key associated to this decision instance. */
+// 	processInstanceKey: string
+// 	/** The state of the decision instance. */
+// 	state: 'EVALUATED' | 'FAILED' | 'UNKNOWN' | 'UNSPECIFIED'
+// 	/** The evaluation date. */
+// 	evaluationDate: string
+// 	/** The evaluation failure message, if any. */
+// 	evaluationFailure?: string
+// 	/** The tenant ID. */
+// 	tenantId: string
+// 	/** The decision type. */
+// 	decisionDefinitionType:
+// 		| 'DECISION_TABLE'
+// 		| 'LITERAL_EXPRESSION'
+// 		| 'UNSPECIFIED'
+// 		| 'UNKNOWN'
+// 	/** The result of the decision evaluation. */
+// 	result: string
+// 	/** The evaluated inputs of the decision instance. */
+// 	evaluatedInputs: Array<{
+// 		/** The ID of the evaluated decision input. */
+// 		inputId: string
+// 		/** The name of the evaluated decision input. */
+// 		inputName: string
+// 		/** The value of the evaluated decision input. */
+// 		inputValue: string
+// 	}>
+// 	matchedRules: Array<{
+// 		/** The ID of the matched rule. */
+// 		ruleId: string
+// 		/** The index of the matched rule. */
+// 		ruleIndex: number
+// 		evaluatedOutputs: Array<{
+// 			/** The ID of the evaluated decision output. */
+// 			outputId: string
+// 			/** The name of the evaluated decision output. */
+// 			outputName: string
+// 			/** The value of the evaluated decision output. */
+// 			outputValue: string
+// 		}>
+// 	}>
+// }

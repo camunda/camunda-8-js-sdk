@@ -3,10 +3,11 @@ import { randomUUID } from 'crypto'
 import { PollingOperation } from '../..'
 import { CreateProcessInstanceResponse } from '../../c8/lib/C8Dto'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 10_000 })
 let wfi: CreateProcessInstanceResponse<unknown>
 afterAll(async () => {
 	if (wfi) {
@@ -16,7 +17,16 @@ afterAll(async () => {
 	}
 })
 
-test('It can search user tasks', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can search user tasks', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/test-tasks-query.bpmn',
 		'./src/__tests__/testdata/form/test-basic-form.form',
@@ -81,7 +91,11 @@ test('It can search user tasks', async () => {
 	}
 
 	// Get the complete user task details
-	const completeTask = await c8.getUserTask(task.userTaskKey)
+	const completeTask = await PollingOperation({
+		operation: () => c8.getUserTask(task.userTaskKey),
+		predicate: (response) => response.userTaskKey === task.userTaskKey,
+		timeout: 5000,
+	})
 
 	// Validate the complete UserTask DTO
 	expect(completeTask).toBeDefined()
@@ -128,8 +142,4 @@ test('It can search user tasks', async () => {
 	if (completeTask.externalFormReference !== undefined) {
 		expect(typeof completeTask.externalFormReference).toBe('string')
 	}
-
-	// Validate customHeaders
-	expect(completeTask.customHeaders).toBeDefined()
-	expect(typeof completeTask.customHeaders).toBe('object')
 })

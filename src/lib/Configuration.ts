@@ -122,7 +122,7 @@ const mainEnv = createEnv({
 	CAMUNDA_TENANT_ID: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: '<default>',
 	},
 	/**
 	 * The audience parameter for a Zeebe OAuth token request.
@@ -252,7 +252,7 @@ const mainEnv = createEnv({
 	CAMUNDA_OPERATE_BASE_URL: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: 'http://localhost:8080/operate',
 	},
 	/** The base url for the Optimize API */
 	CAMUNDA_OPTIMIZE_BASE_URL: {
@@ -264,7 +264,7 @@ const mainEnv = createEnv({
 	CAMUNDA_TASKLIST_BASE_URL: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: 'http://localhost:8080/tasklist',
 	},
 	/**
 	 * The base url for the Modeler API. Defaults to Camunda Saas - https://modeler.camunda.io/api
@@ -319,7 +319,7 @@ const mainEnv = createEnv({
 	CAMUNDA_AUTH_STRATEGY: {
 		type: 'string',
 		choices: ['BASIC', 'OAUTH', 'BEARER', 'COOKIE', 'NONE'],
-		default: 'OAUTH',
+		default: 'NONE',
 	},
 	/** Set to true to enable an output log file with debugging information and diagnostic traces to assist Camunda Support in technical support. */
 	CAMUNDA_SUPPORT_LOG_ENABLED: {

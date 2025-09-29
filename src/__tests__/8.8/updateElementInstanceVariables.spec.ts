@@ -1,11 +1,21 @@
 import { CamundaJobWorker, CamundaRestClient, PollingOperation } from '../..'
 import { LosslessDto } from '../../lib'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(15000)
+vi.setConfig({ testTimeout: 15_000 })
 
-test('It can update the variables of an Element Instance', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can update the variables of an Element Instance', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/rest-search-element-instances-test.bpmn',
 	])
@@ -30,6 +40,7 @@ test('It can update the variables of an Element Instance', async () => {
 		timeout: 10000,
 	})
 	expect(elementInstances.items.length).toBe(1)
+
 	const { elementInstanceKey } = elementInstances.items[0]
 	await c8.updateElementInstanceVariables({
 		elementInstanceKey: elementInstanceKey,

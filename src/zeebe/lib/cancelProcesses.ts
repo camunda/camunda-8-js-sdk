@@ -1,42 +1,42 @@
+import { Camunda8 } from '../../c8'
 import { OperateApiClient } from '../../operate'
 
-const operate = createClient()
+const operate = new OperateApiClient()
+const camunda = new Camunda8().getCamundaRestClient()
+const topology = camunda.getTopology()
 
 export async function cancelProcesses(processDefinitionKey: string) {
-	if (!operate) {
-		return
-	}
-	const processes = await operate
-		.searchProcessInstances({
-			filter: {
-				processDefinitionKey,
-				state: 'ACTIVE',
-			},
-		})
-		.catch((e) => {
-			console.log(
-				`Failed to search for process instances for ${processDefinitionKey}`
-			)
-			console.log(e)
-		})
+	const { searchProcessInstances, cancelProcessInstance } = (
+		await topology
+	).gatewayVersion.includes('8.8')
+		? {
+				searchProcessInstances: camunda.searchProcessInstances.bind(camunda),
+				cancelProcessInstance: (pid) =>
+					camunda.cancelProcessInstance({ processInstanceKey: pid }),
+			}
+		: {
+				searchProcessInstances: operate.searchProcessInstances.bind(operate),
+				cancelProcessInstance: operate.deleteProcessInstance.bind(operate),
+			}
+
+	const processes = await searchProcessInstances({
+		filter: {
+			processDefinitionKey,
+			state: 'ACTIVE',
+		},
+	}).catch((e) => {
+		console.log(
+			`Failed to search for process instances for ${processDefinitionKey}`
+		)
+		console.log(e)
+	})
 	if (processes) {
 		await Promise.all(
 			processes.items.map((item) => {
-				return operate.deleteProcessInstance(item.key).catch((e) => {
-					console.log(`Failed to delete process ${item.key}`)
-					console.log(e)
-				})
+				return cancelProcessInstance(item.key ?? item.processInstanceKey).catch(
+					() => {} // Swallow exception
+				)
 			})
 		)
-	}
-}
-
-function createClient() {
-	try {
-		return new OperateApiClient()
-	} catch (e: unknown) {
-		console.log((e as Error).message)
-		console.log(`Running without access to Operate`)
-		return null
 	}
 }

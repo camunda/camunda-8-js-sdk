@@ -1,8 +1,10 @@
 import fs from 'fs'
 
 import { ModelerApiClient } from '../../modeler'
+import { matrix } from '../../test-support/testTags'
 
-jest.setTimeout(10000)
+vi.setConfig({ testTimeout: 10_000 })
+
 describe('ModelerApiClient', () => {
 	let modeler: ModelerApiClient
 
@@ -28,26 +30,62 @@ describe('ModelerApiClient', () => {
 	})
 
 	describe('createProject', () => {
-		it('should create a new project', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should create a new project', async () => {
 			const projectResponse = await modeler.createProject('__test__')
 			expect(projectResponse.name).toBe('__test__')
 		})
 	})
 
 	describe('getProject', () => {
-		it('should retrieve an existing project', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should retrieve an existing project', async () => {
 			const projectResponse = await modeler.createProject('__test__')
 			const retrievedProject = await modeler.getProject(projectResponse.id)
 			expect(retrievedProject.metadata.name).toBe('__test__')
 		})
 
-		it('should throw an error if the project does not exist', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should throw an error if the project does not exist', async () => {
 			await expect(modeler.getProject('non-existent-id')).rejects.toThrow()
 		})
 	})
 
 	describe('updateProject', () => {
-		it('should update an existing project', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should update an existing project', async () => {
 			const projectResponse = await modeler.createProject('__test__')
 			const updatedProject = await modeler.renameProject(
 				projectResponse.id,
@@ -56,7 +94,16 @@ describe('ModelerApiClient', () => {
 			expect(updatedProject.name).toBe('__test__ updated')
 		})
 
-		it('should throw an error if the project does not exist', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should throw an error if the project does not exist', async () => {
 			await expect(
 				modeler.renameProject('non-existent-id', 'Updated name')
 			).rejects.toThrow()
@@ -64,19 +111,46 @@ describe('ModelerApiClient', () => {
 	})
 
 	describe('deleteProject', () => {
-		it('should delete an existing project', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should delete an existing project', async () => {
 			const projectResponse = await modeler.createProject('__test__')
 			await modeler.deleteProject(projectResponse.id)
 			await expect(modeler.getProject(projectResponse.id)).rejects.toThrow()
 		})
 
-		it('should throw an error if the project does not exist', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should throw an error if the project does not exist', async () => {
 			await expect(modeler.deleteProject('non-existent-id')).rejects.toThrow()
 		})
 	})
 
 	describe('searchProjects', () => {
-		it('should return a list of projects matching the filter', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should return a list of projects matching the filter', async () => {
 			await modeler.createProject('__test__')
 			const searchResponse = await modeler.searchProjects({
 				filter: { name: '__test__' },
@@ -85,16 +159,37 @@ describe('ModelerApiClient', () => {
 			expect(searchResponse.items[0].name).toBe('__test__')
 		})
 
-		it('should return an empty list if no projects match the filter', async () => {
-			const searchResponse = await modeler.searchProjects({
-				filter: { name: 'non-existent-project' },
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
 			})
-			expect(searchResponse.items.length).toBe(0)
-		})
+		)(
+			'should return an empty list if no projects match the filter',
+			async () => {
+				const searchResponse = await modeler.searchProjects({
+					filter: { name: 'non-existent-project' },
+				})
+				expect(searchResponse.items.length).toBe(0)
+			}
+		)
 	})
 
 	describe('createFolder', () => {
-		it('should create a new folder in an existing project', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should create a new folder in an existing project', async () => {
 			const projectResponse = await modeler.createProject('__test__')
 			const folderResponse = await modeler.createFolder({
 				projectId: projectResponse.id,
@@ -103,7 +198,16 @@ describe('ModelerApiClient', () => {
 			expect(folderResponse.name).toBe('Test Folder')
 		})
 
-		it('should throw an error if the project does not exist', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should throw an error if the project does not exist', async () => {
 			await expect(
 				modeler.createFolder({
 					projectId: 'non-existent-project-id',
@@ -114,7 +218,16 @@ describe('ModelerApiClient', () => {
 	})
 
 	describe('createFile', () => {
-		it('should create a new file in an existing folder', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should create a new file in an existing folder', async () => {
 			const projectResponse = await modeler.createProject('__test__')
 			const folderResponse = await modeler.createFolder({
 				projectId: projectResponse.id,
@@ -133,7 +246,16 @@ describe('ModelerApiClient', () => {
 			expect(fileResponse.name).toBe('Test File')
 		})
 
-		it('should throw an error if the folder does not exist', async () => {
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)('should throw an error if the folder does not exist', async () => {
 			await expect(
 				modeler.createFile({
 					folderId: 'non-existent-folder-id',

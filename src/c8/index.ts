@@ -110,7 +110,13 @@ export class Camunda8 {
 		// Allow custom oAuthProvider to be passed in.
 		// See: https://github.com/camunda/camunda-8-js-sdk/issues/448
 		this.oAuthProvider =
-			config.oAuthProvider ?? constructOAuthProvider(this.configuration)
+			config.oAuthProvider ??
+			constructOAuthProvider(this.configuration, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 		this.defaultCached = options.defaultCached ?? true
 		this.log = getLogger(config)
 		this.log.debug('Camunda8 SDK initialized')

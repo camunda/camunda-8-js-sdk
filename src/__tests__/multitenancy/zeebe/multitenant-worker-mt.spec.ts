@@ -1,8 +1,18 @@
+import { matrix } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 
-jest.setTimeout(10000)
+vi.setConfig({ testTimeout: 10_000 })
 
-test('A worker can be multi-tenant', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant'],
+			security: ['secured'],
+		},
+	})
+)('A worker can be multi-tenant', async () => {
 	const client = new ZeebeGrpcClient()
 
 	await client.deployResource({
@@ -47,7 +57,16 @@ test('A worker can be multi-tenant', async () => {
 	await client.close()
 })
 
-test('A stream worker can be multi-tenant', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant'],
+			security: ['secured'],
+		},
+	})
+)('A stream worker can be multi-tenant', async () => {
 	const client = new ZeebeGrpcClient()
 
 	await client.deployResource({

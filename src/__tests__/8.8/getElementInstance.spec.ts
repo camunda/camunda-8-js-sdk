@@ -1,11 +1,23 @@
+import { expect, test, vi } from 'vitest'
+
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
 import { PollingOperation } from '../../lib/PollingOperation'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-jest.setTimeout(10000)
+vi.setConfig({ testTimeout: 10_000 })
 
-test('It can get an Element Instance', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can get an Element Instance', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/rest-search-element-instances-test.bpmn',
 	])
