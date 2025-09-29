@@ -42,7 +42,7 @@ describe('CamundaRestClient.updateJob integration', () => {
 			const start1 = Date.now()
 			const jobs1 = await restClient.activateJobs({
 				maxJobsToActivate: 1,
-				requestTimeout: 10000,
+				requestTimeout: 20000,
 				timeout: 5000,
 				type: TEST_TASK_TYPE,
 				worker: 'test-worker',
@@ -57,7 +57,7 @@ describe('CamundaRestClient.updateJob integration', () => {
 			const start2 = Date.now()
 			const jobs2 = await restClient.activateJobs({
 				maxJobsToActivate: 1,
-				requestTimeout: 10000,
+				requestTimeout: 20000,
 				timeout: 5000,
 				type: TEST_TASK_TYPE,
 				worker: 'test-worker',

@@ -47,7 +47,6 @@ test.runIf(
 		{ deployment: 'self-managed', security: 'secured' },
 	])
 )('Unauthenticated gRPC client cannot deploy resources', async () => {
-	console.log(unauthenticatedGrpcClient)
 	await expect(async () => {
 		const deployment = await unauthenticatedGrpcClient.deployResources([
 			{ processFilename: './src/__tests__/testdata/rest-message-test.bpmn' },
