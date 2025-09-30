@@ -64,11 +64,17 @@ test.runIf(
 		timeout: 7000,
 	})
 	expect(tasks.items[0].processInstanceKey).toBe(wfi.processInstanceKey)
-	const task = await c8.getUserTask(tasks.items[0].userTaskKey)
+	const task = await PollingOperation({
+		operation: () => c8.getUserTask(tasks.items[0].userTaskKey),
+		predicate: (res) => res.processInstanceKey === wfi.processInstanceKey,
+	})
 	expect(task.processInstanceKey).toBe(wfi.processInstanceKey)
-	const variables = await c8.searchUserTaskVariables({
-		userTaskKey: tasks.items[0].userTaskKey,
-		sort: [{ field: 'name', order: 'ASC' }],
+	const variables = await PollingOperation({
+		operation: () =>
+			c8.searchUserTaskVariables({
+				userTaskKey: tasks.items[0].userTaskKey,
+				sort: [{ field: 'name', order: 'ASC' }],
+			}),
 	})
 	expect(variables.items[0].value).toBe(`"${uuid}"`)
 })
