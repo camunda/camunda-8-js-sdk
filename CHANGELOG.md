@@ -1,3 +1,19 @@
+## [8.7.30](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.29...v8.7.30) (2025-09-30)
+
+
+### Bug Fixes
+
+* add typed-emitter to deps ([1b42edc](https://github.com/camunda/camunda-8-js-sdk/commit/1b42edc49911ec1d94bf468c67ad3b4f25523296))
+* allow explicit override of auth strategy ([67031ab](https://github.com/camunda/camunda-8-js-sdk/commit/67031ab925d5d61b519318d32729908833c40152))
+* searchUserTasks signature expansion ([7422e18](https://github.com/camunda/camunda-8-js-sdk/commit/7422e18cd0672aef2c44f7eb4da30633a267c06a))
+* set AUTH strategy to OAUTH if OAUTH url set ([53185ed](https://github.com/camunda/camunda-8-js-sdk/commit/53185edaeba80df9f7c3c0766b9e22c979e94049))
+* update DecisionEvaluation signatures ([ca9c050](https://github.com/camunda/camunda-8-js-sdk/commit/ca9c0509d118dfc683c2afbcf3c9819fa1ba5ef3))
+
+
+### Features
+
+* add default Operate and Tasklist urls ([2d4acc0](https://github.com/camunda/camunda-8-js-sdk/commit/2d4acc0230ff01b8b6e90658ba0c8f10bf9fb46b))
+
 ## [8.7.29](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.28...v8.7.29) (2025-09-12)
 
 
