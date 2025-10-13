@@ -6,7 +6,7 @@ import path from 'path'
 
 import auth from 'basic-auth'
 import debug from 'debug'
-import got from 'got'
+import got, { HTTPError } from 'got'
 import jwt from 'jsonwebtoken'
 
 const trace = debug('test:oauth')
@@ -753,5 +753,34 @@ describe('OAuthProvider', () => {
 				server.close()
 				expect(res).toBeTruthy()
 			})
+	})
+
+	it('Fails immediately when status code is 401', async () => {
+		const { constructOAuthProvider } = (await vi.importActual(
+			'../../lib'
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		)) as any
+		const server = http.createServer((_, res) => {
+			res.statusCode = 401
+			res.end('Access denied')
+		})
+
+		server.listen(3033)
+
+		const oAuthProvider = constructOAuthProvider({
+			ZEEBE_CLIENT_ID: 'ZEEBE',
+			ZEEBE_CLIENT_SECRET: 'zecret',
+			CAMUNDA_OAUTH_URL: 'http://localhost:3033',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any)
+
+		// multiple failures to show immediate failures
+		for (let i = 0; i < 15; i++) {
+			try {
+				await oAuthProvider.getHeaders('ZEEBE')
+			} catch (error) {
+				expect((error as HTTPError).code).toEqual('ERR_NON_2XX_3XX_RESPONSE')
+			}
+		}
 	})
 })
