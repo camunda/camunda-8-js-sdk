@@ -3,6 +3,8 @@
  *
  * We expect this case to fail, and it will fail at the point of attempting to get a token, so the actual method endpoint is never addressed.
  */
+import { randomUUID } from 'node:crypto'
+
 import { Camunda8 } from '../../../c8/index'
 import { NullLogger } from '../../../c8/lib/C8Logger'
 import { matrix } from '../../../test-support/testTags'
@@ -14,8 +16,8 @@ process.env.ZEEBE_CLIENT_LOG_LEVEL = 'NONE'
 
 const c8 = new Camunda8({
 	CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-	ZEEBE_CLIENT_ID: 'invalid',
-	ZEEBE_CLIENT_SECRET: 'invalid',
+	ZEEBE_CLIENT_ID: randomUUID(),
+	ZEEBE_CLIENT_SECRET: randomUUID(),
 	CAMUNDA_TENANT_ID: '<default>',
 	logger: NullLogger,
 })

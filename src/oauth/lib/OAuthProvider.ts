@@ -74,6 +74,7 @@ export class OAuthProvider implements IHeadersProvider {
 	private refreshWindow: number
 	private rest: Promise<typeof got>
 	private log: Logger
+	private failOnError: boolean
 
 	/**
 	 *
@@ -116,6 +117,21 @@ export class OAuthProvider implements IHeadersProvider {
 		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
 
 		this.refreshWindow = config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
+
+		// https://github.com/camunda/camunda-8-js-sdk/issues/605
+		// The SaaS token endpoint returns successive 401 responses after a 30s cooldown now. So we turn off token endpoint backoff when
+		// running against SaaS unless the user explicitly turns it on. Otherwise, the token endpoint backoff is enabled by default for Self-Managed
+		// to prevent DDOS of the endpoint by misconfigured workers.
+		this.failOnError =
+			config.CAMUNDA_OAUTH_FAIL_ON_ERROR ??
+			(() => {
+				try {
+					const urlObj = new URL(config.CAMUNDA_OAUTH_URL ?? '')
+					return urlObj.host === 'login.cloud.camunda.io'
+				} catch (e) {
+					return false
+				}
+			})()
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
@@ -257,33 +273,34 @@ export class OAuthProvider implements IHeadersProvider {
 					BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
 					15000
 				)
+				const delay = this.failOnError ? 0 : this.failed ? failureBackoff : 0
+
 				if (this.failed) {
 					this.log.warn(
 						`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
 					)
 				}
-				setTimeout(
-					() => {
-						this.makeDebouncedTokenRequest({
-							audienceType,
-							clientIdToUse,
-							clientSecretToUse,
+				setTimeout(() => {
+					this.makeDebouncedTokenRequest({
+						audienceType,
+						clientIdToUse,
+						clientSecretToUse,
+					})
+						.then((res) => {
+							this.failed = false
+							this.failureCount = 0
+							this.inflightTokenRequest = undefined
+							resolve(res)
 						})
-							.then((res) => {
-								this.failed = false
-								this.failureCount = 0
-								this.inflightTokenRequest = undefined
-								resolve(res)
-							})
-							.catch((e) => {
+						.catch((e) => {
+							if (!this.failOnError) {
 								this.failureCount++
 								this.failed = true
-								this.inflightTokenRequest = undefined
-								reject(e)
-							})
-					},
-					this.failed ? failureBackoff : 0
-				)
+							}
+							this.inflightTokenRequest = undefined
+							reject(e)
+						})
+				}, delay)
 			})
 		}
 		return this.inflightTokenRequest
