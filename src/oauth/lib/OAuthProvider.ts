@@ -124,7 +124,14 @@ export class OAuthProvider implements IHeadersProvider {
 		// to prevent DDOS of the endpoint by misconfigured workers.
 		this.failOnError =
 			config.CAMUNDA_OAUTH_FAIL_ON_ERROR ??
-			config.CAMUNDA_OAUTH_URL?.includes('login.cloud.camunda.io')
+			(() => {
+				try {
+					const urlObj = new URL(config.CAMUNDA_OAUTH_URL ?? '')
+					return urlObj.host === 'login.cloud.camunda.io'
+				} catch (e) {
+					return false
+				}
+			})()
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
