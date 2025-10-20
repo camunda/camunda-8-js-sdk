@@ -118,7 +118,13 @@ export class OAuthProvider implements IHeadersProvider {
 
 		this.refreshWindow = config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
 
-		this.failOnError = config.CAMUNDA_OAUTH_FAIL_ON_ERROR ?? false
+		// https://github.com/camunda/camunda-8-js-sdk/issues/605
+		// The SaaS token endpoint returns successive 401 responses after a 30s cooldown now. So we turn off token endpoint backoff when
+		// running against SaaS unless the user explicitly turns it on. Otherwise, the token endpoint backoff is enabled by default for Self-Managed
+		// to prevent DDOS of the endpoint by misconfigured workers.
+		this.failOnError =
+			config.CAMUNDA_OAUTH_FAIL_ON_ERROR ??
+			config.CAMUNDA_OAUTH_URL?.includes('login.cloud.camunda.io')
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
