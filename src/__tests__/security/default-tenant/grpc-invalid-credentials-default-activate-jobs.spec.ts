@@ -5,9 +5,8 @@
  */
 import { randomUUID } from 'node:crypto'
 
-import { NullLogger } from 'c8/lib/C8Logger'
-
 import { Camunda8 } from '../../../c8/index'
+import { NullLogger } from '../../../c8/lib/C8Logger'
 import { matrix } from '../../../test-support/testTags'
 
 vi.setConfig({ testTimeout: 15_000 })
