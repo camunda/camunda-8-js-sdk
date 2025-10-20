@@ -333,7 +333,10 @@ const mainEnv = createEnv({
 		optional: true,
 		default: undefined,
 	},
-	/** When set to true, a 401 response from the token endpoint will result in an immediate failure. False by default, leading to exponential backoff. */
+	/**
+	 * When set to true, a 401 response from the token endpoint will result in an immediate failure, rather than a backoff and retry. This is false by default on Self-Managed, to avoid DDOS by misconfigured workers.
+	 * It is true by default on SaaS, as the SaaS token endpoint has a 30s cooldown for subsequent requests with the same credentials.
+	 */
 	CAMUNDA_OAUTH_FAIL_ON_ERROR: {
 		type: 'boolean',
 		optional: true,
