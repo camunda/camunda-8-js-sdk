@@ -333,6 +333,12 @@ const mainEnv = createEnv({
 		optional: true,
 		default: undefined,
 	},
+	/** When set to true, a 401 response from the token endpoint will result in an immediate failure. False by default, leading to exponential backoff. */
+	CAMUNDA_OAUTH_FAIL_ON_ERROR: {
+		type: 'boolean',
+		optional: true,
+		default: false,
+	},
 })
 const zeebeEnv = createEnv({
 	/**

@@ -10,6 +10,12 @@ This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and r
 
 See the [Getting Started Example](https://docs.camunda.io/docs/next/guides/getting-started-example/) in the Camunda Docs for a quick start.
 
+## Which API should I use?
+
+The SDK provides clients for several Camunda 8 APIs.
+
+If you are doing a greenfield project on Camunda 8.8.0 or later, then you should use the Camunda Orchestration Cluster API with the `OrchestrationClusterApiClient`. This is a REST API that provides complete functionality in one API surface.
+
 ## What does "supported" mean?
 
 This is the official supported-by-Camunda Nodejs SDK for Camunda Platform 8.
