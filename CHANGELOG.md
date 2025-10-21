@@ -1,3 +1,11 @@
+## [8.7.31](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.30...v8.7.31) (2025-10-21)
+
+
+### Features
+
+* apply OAuth backoff adjustments ([c1d5659](https://github.com/camunda/camunda-8-js-sdk/commit/c1d5659b0761ab06e0e8d6b430a2f7b7e7fbfafb))
+* disable token backoff on SaaS by default ([5bbb85d](https://github.com/camunda/camunda-8-js-sdk/commit/5bbb85d608afb3c3726ad53993dc380f1577ec85))
+
 ## [8.7.30](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.29...v8.7.30) (2025-09-30)
 
 
