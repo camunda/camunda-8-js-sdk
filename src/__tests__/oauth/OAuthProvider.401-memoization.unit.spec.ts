@@ -72,14 +72,18 @@ describe('OAuthProvider SaaS persistent 401 tarpit', () => {
 		expect(secondError!.message).toMatch(/tarpit/i)
 		expect(requestCount).toBe(1)
 		// Verify tarpit file exists
-		// Derive tarpit file path (replicates internal logic): truncated sha256 of secret
+		// Derive tarpit file path (replicates internal logic): truncated PBKDF2 of secret
 		const cacheDir: string = (provider as unknown as { cacheDir: string })
 			.cacheDir
-
 		const hash = crypto
-			.createHash('sha256')
-			.update('secret')
-			.digest('hex')
+			.pbkdf2Sync(
+				'secret',
+				'camunda-oauth-tarpit-filename-salt-v1',
+				100_000,
+				32,
+				'sha256'
+			)
+			.toString('hex')
 			.slice(0, 16)
 		const tarpitFile = path.join(
 			cacheDir,

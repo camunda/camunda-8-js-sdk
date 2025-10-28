@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'crypto'
+import { createHash, pbkdf2Sync, randomUUID } from 'crypto'
 import * as fs from 'fs'
 import * as os from 'os'
 import path from 'path'
@@ -689,15 +689,25 @@ export class OAuthProvider implements IHeadersProvider {
 	}
 
 	private hashSecret(secret: string) {
-		// We store only a truncated SHA-256 hash to avoid leaking credential
+		// Deterministic, computationally expensive derivation using PBKDF2.
+		// We use a constant salt for filename determinism while increasing cost via iterations.
+		// Output truncated to 16 hex chars (same length as previous SHA-256 truncation) to keep filename compact.
+		// NOTE: This is not for security storage of the secret (never store raw secret); just obfuscation + cost hardening.
+		const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
 		try {
-			return createHash('sha256').update(secret).digest('hex').slice(0, 16)
+			const derived = pbkdf2Sync(secret, SALT, 100_000, 32, 'sha256')
+			return derived.toString('hex').slice(0, 16)
 		} catch (_) {
-			let h = 0
-			for (let i = 0; i < secret.length; i++) {
-				h = (Math.imul(31, h) + secret.charCodeAt(i)) | 0
+			// Fallback to lightweight hash if pbkdf2 unavailable for some reason
+			try {
+				return createHash('sha256').update(secret).digest('hex').slice(0, 16)
+			} catch (_) {
+				let h = 0
+				for (let i = 0; i < secret.length; i++) {
+					h = (Math.imul(31, h) + secret.charCodeAt(i)) | 0
+				}
+				return Math.abs(h).toString(16)
 			}
-			return Math.abs(h).toString(16)
 		}
 	}
 
@@ -751,10 +761,28 @@ export class OAuthProvider implements IHeadersProvider {
 		audienceType: TokenGrantAudienceType
 	}) {
 		try {
-			const hash = createHash('sha256')
-				.update(clientSecret)
-				.digest('hex')
-				.slice(0, 16)
+			// Reuse instance hashing logic deterministically (without needing an instance): replicate PBKDF2 parameters.
+			const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
+			let hash: string
+			try {
+				hash = pbkdf2Sync(clientSecret, SALT, 100_000, 32, 'sha256')
+					.toString('hex')
+					.slice(0, 16)
+			} catch (_) {
+				// Fallback to SHA256
+				try {
+					hash = createHash('sha256')
+						.update(clientSecret)
+						.digest('hex')
+						.slice(0, 16)
+				} catch (_) {
+					let h = 0
+					for (let i = 0; i < clientSecret.length; i++) {
+						h = (Math.imul(31, h) + clientSecret.charCodeAt(i)) | 0
+					}
+					hash = Math.abs(h).toString(16)
+				}
+			}
 			const file = path.join(
 				cacheDir,
 				`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
