@@ -211,6 +211,37 @@ const customAuthProvider = new MyCustomAuthProvider()
 const c8 = new Camunda8({ oauthProvider: customAuthProvider })
 ```
 
+### Camunda SaaS 401 cooldown memoization
+
+Camunda SaaS enforces a cooldown period (currently 30 seconds) after returning a `401 Unauthorized` response from the token endpoint for a given client credential + audience pair. During this cooldown window, repeated token requests will continue to yield `401` responses.
+
+The SDK protects your application from locking up for 30 seconds in this scenario by memoizing the first `401` response for each unique credential & audience combination. Subsequent attempts to obtain a token within the cooldown window short‑circuit locally and immediately surface the cached error, without issuing any network request. This prevents unnecessary load and log noise while you correct configuration issues.
+
+Key points:
+
+- Scope: Applies only when the endpoint is detected as Camunda SaaS (`login.cloud.camunda.io`) and a `401` error is received.
+- Granularity: Memoization key is `clientId::audienceType` so different audiences (e.g. `ZEEBE` vs `OPERATE`) do not block each other.
+- Cooldown duration: 30 seconds by default. (Exposed internally as a static `SAAS_401_COOLDOWN_MS`; not intended for production override.)
+- Backoff suppression: The normal token endpoint backoff (`+1000ms` per failure up to 15s) and failure counters are NOT incremented for memoized SaaS `401` responses; once a valid token is acquired the memoized error is cleared and normal behavior resumes.
+- Disk cache: The `401` is only memoized in memory; successful tokens still leverage disk caching when enabled.
+
+Configuration interactions:
+
+- Set `CAMUNDA_OAUTH_FAIL_ON_ERROR=false` if you want the legacy backoff behavior for other kinds of failures while still benefiting from SaaS `401` memoization.
+- If you correct credentials (e.g. updating `ZEEBE_CLIENT_SECRET`) you do not need to wait for the cooldown; the next successful token response automatically clears the memoized error.
+
+Observing the behavior:
+
+- Enable `DEBUG=camunda:oauth` to see when a memoized `401` is served vs when a fresh token request is made.
+- A memoized response will log only the original network error; subsequent attempts within the window will not show additional POST requests.
+
+Implications for worker backoff:
+
+- Polling workers encountering an auth failure will not compound token endpoint backoff during the cooldown (since `failureCount` is not incremented). This accelerates recovery once credentials are fixed.
+
+No action is required to enable this; it is automatic for Camunda SaaS environments starting from this SDK version.
+
+
 You can use this approach to wrap one of the existing strategy classes using a facade pattern to encapsulate and extend it.
 
 ## TLS

@@ -11,7 +11,6 @@ import {
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
-	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 import { AuthHeader } from '../../oauth/lib/IHeadersProvider'
@@ -92,11 +91,6 @@ export class OptimizeApiClient {
 					},
 					handlers: [beforeCallHook],
 					hooks: {
-						beforeRetry: [
-							makeBeforeRetryHandlerFor401TokenRetry(
-								this.getHeaders.bind(this)
-							),
-						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: config.middleware ?? [],
 					},

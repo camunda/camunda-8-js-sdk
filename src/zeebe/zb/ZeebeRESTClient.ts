@@ -12,7 +12,6 @@ import {
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
-	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 import { TopologyResponse } from '../types'
@@ -79,11 +78,6 @@ export class ZeebeRestClient {
 					},
 					handlers: [beforeCallHook],
 					hooks: {
-						beforeRetry: [
-							makeBeforeRetryHandlerFor401TokenRetry(
-								this.getHeaders.bind(this)
-							),
-						],
 						beforeError: [gotBeforeErrorHook(config)],
 					},
 				})

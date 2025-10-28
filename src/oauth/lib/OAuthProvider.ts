@@ -63,7 +63,11 @@ export class OAuthProvider implements IHeadersProvider {
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
 	private failureCount = 0
-	private inflightTokenRequest?: HeadersPromise
+	private inflightTokenRequests: { [key: string]: HeadersPromise } = {}
+	/** Memoized 401 responses for SaaS cooldown buffering */
+	private memoized401: {
+		[key: string]: { timestamp: number; error: Error }
+	} = {}
 	public userAgentString: string
 	private scope: string | undefined
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
@@ -267,43 +271,75 @@ export class OAuthProvider implements IHeadersProvider {
 			}
 		}
 
-		if (!this.inflightTokenRequest) {
-			this.inflightTokenRequest = new Promise((resolve, reject) => {
-				const failureBackoff = Math.min(
-					BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
-					15000
-				)
-				const delay = this.failOnError ? 0 : this.failed ? failureBackoff : 0
-
-				if (this.failed) {
-					this.log.warn(
-						`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
-					)
-				}
-				setTimeout(() => {
-					this.makeDebouncedTokenRequest({
-						audienceType,
-						clientIdToUse,
-						clientSecretToUse,
-					})
-						.then((res) => {
-							this.failed = false
-							this.failureCount = 0
-							this.inflightTokenRequest = undefined
-							resolve(res)
-						})
-						.catch((e) => {
-							if (!this.failOnError) {
-								this.failureCount++
-								this.failed = true
-							}
-							this.inflightTokenRequest = undefined
-							reject(e)
-						})
-				}, delay)
-			})
+		// Check for memoized SaaS 401 response for this credential set + audience
+		const credentialKey = this.getCredentialAudienceKey({
+			clientId: clientIdToUse,
+			audienceType,
+		})
+		const memo = this.memoized401[credentialKey]
+		if (memo) {
+			const now = Date.now()
+			if (now - memo.timestamp < OAuthProvider.SAAS_401_COOLDOWN_MS) {
+				// Within cooldown window: surface cached error without hitting endpoint
+				throw memo.error
+			} else {
+				// Expired memoization; remove and continue to request
+				delete this.memoized401[credentialKey]
+			}
 		}
-		return this.inflightTokenRequest
+
+		if (!this.inflightTokenRequests[credentialKey]) {
+			this.inflightTokenRequests[credentialKey] = new Promise(
+				(resolve, reject) => {
+					const failureBackoff = Math.min(
+						BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
+						15000
+					)
+					const delay = this.failOnError ? 0 : this.failed ? failureBackoff : 0
+
+					if (this.failed) {
+						this.log.warn(
+							`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
+						)
+					}
+					setTimeout(() => {
+						this.makeDebouncedTokenRequest({
+							audienceType,
+							clientIdToUse,
+							clientSecretToUse,
+						})
+							.then((res) => {
+								// Successful token acquisition clears any memoized 401 for this credential/audience
+								delete this.memoized401[credentialKey]
+								this.failed = false
+								this.failureCount = 0
+								delete this.inflightTokenRequests[credentialKey]
+								resolve(res)
+							})
+							.catch((e) => {
+								// Memoize SaaS 401 responses to buffer cooldown period and suppress backoff
+								if (this.isCamundaSaaS && this.is401Error(e)) {
+									this.memoized401[credentialKey] = {
+										timestamp: Date.now(),
+										error: e,
+									}
+									// Do NOT mark failure/backoff for SaaS 401 cooldown buffering
+									this.failed = false
+									delete this.inflightTokenRequests[credentialKey]
+									return reject(e)
+								}
+								if (!this.failOnError) {
+									this.failureCount++
+									this.failed = true
+								}
+								delete this.inflightTokenRequests[credentialKey]
+								reject(e)
+							})
+					}, delay)
+				}
+			)
+		}
+		return this.inflightTokenRequests[credentialKey]
 	}
 
 	public flushMemoryCache() {
@@ -377,6 +413,16 @@ export class OAuthProvider implements IHeadersProvider {
 		return this.rest.then((rest) =>
 			rest
 				.post(this.authServerUrl, options)
+				.then((res) => {
+					// If status 401 from SaaS, throw to trigger memoization upstream
+					if (this.isCamundaSaaS && res.statusCode === 401) {
+						const err = new Error(
+							`401 Unauthorized requesting token for Client Id ${clientIdToUse}`
+						)
+						throw err
+					}
+					return JSON.parse(res.body)
+				})
 				.catch((e) => {
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
 					this.log.error(
@@ -385,7 +431,6 @@ export class OAuthProvider implements IHeadersProvider {
 					this.log.error(e)
 					throw e
 				})
-				.then((res) => JSON.parse(res.body))
 				.then((t) => {
 					trace(
 						`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
@@ -401,7 +446,7 @@ export class OAuthProvider implements IHeadersProvider {
 							`Failed to get token: ${t.error} - ${t.error_description}`
 						)
 					}
-					if (t.access_token === undefined) {
+					if ((t as Token).access_token === undefined) {
 						console.error(audienceType, t)
 						throw new Error('Failed to get token: no access_token in response')
 					}
@@ -550,5 +595,34 @@ export class OAuthProvider implements IHeadersProvider {
 
 	private addBearer(token: string) {
 		return { authorization: `Bearer ${token}` }
+	}
+
+	// Mutable for test overrides; 30s SaaS cooldown window
+	public static SAAS_401_COOLDOWN_MS = 30000
+
+	private getCredentialAudienceKey({
+		clientId,
+		audienceType,
+	}: {
+		clientId: string
+		audienceType: TokenGrantAudienceType
+	}) {
+		return `${clientId}::${audienceType}`
+	}
+
+	private is401Error(e: unknown): e is Error {
+		if (!e || typeof e !== 'object') {
+			return false
+		}
+		const obj = e as {
+			statusCode?: number
+			response?: { statusCode?: number }
+			message?: string
+		}
+		const statusCode = obj.statusCode ?? obj.response?.statusCode
+		const msg = obj.message ?? ''
+		return (
+			statusCode === 401 || /\b401\b/.test(msg) || /Unauthorized/i.test(msg)
+		)
 	}
 }
