@@ -15,12 +15,10 @@ import {
 	createUserAgentString,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
-	gotBeforeRetryHook,
 	GotRetryConfig,
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
-	makeBeforeRetryHandlerFor401TokenRetry,
 	RequireConfiguration,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
@@ -172,12 +170,6 @@ export class CamundaRestClient {
 					},
 					handlers: [beforeCallHook],
 					hooks: {
-						beforeRetry: [
-							makeBeforeRetryHandlerFor401TokenRetry(
-								this.getHeaders.bind(this)
-							),
-							gotBeforeRetryHook,
-						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: [
 							(options) => {
@@ -1628,6 +1620,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 			try {
 				const headers = await this.getHeaders()
 				const { method, urlPath, body, queryParams } = request
+				trace(`Constructing request for API endpoint: [${method}] ${urlPath}`)
 				const req = {
 					method,
 					headers: request.headers

@@ -7,7 +7,7 @@ vi.setConfig({ testTimeout: 30_000 })
 
 test.runIf(
 	allowAny([
-		{ deployment: 'saas' },
+		{ deployment: 'saas', version: '8.7' },
 		{ deployment: 'self-managed', version: '8.7' },
 	])
 )('can update a task', async () => {

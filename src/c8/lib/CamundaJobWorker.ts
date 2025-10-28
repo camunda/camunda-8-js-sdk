@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events'
+import util from 'util'
 
 import PCancelable from 'p-cancelable'
 import TypedEmitter from 'typed-emitter'
@@ -221,8 +222,15 @@ export class CamundaJobWorker<
 		const remainingJobCapacity =
 			this.config.maxJobsToActivate - this.currentlyActiveJobCount
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { pollIntervalMs: _, ...req } = this.config
+		const req: ActivateJobsRequest = {
+			maxJobsToActivate: this.config.maxJobsToActivate,
+			timeout: this.config.timeout,
+			type: this.config.type,
+			worker: this.config.worker,
+			fetchVariable: this.config.fetchVariable,
+			requestTimeout: this.config.requestTimeout,
+			tenantIds: this.config.tenantIds,
+		}
 		this.activePoll = this.restClient.activateJobs({
 			...req,
 			maxJobsToActivate: remainingJobCapacity,
@@ -235,7 +243,7 @@ export class CamundaJobWorker<
 				this.log.debug(`Activated ${count} jobs`, this.logMeta())
 				this.emit('work', jobs)
 				// The job handlers for the activated jobs will run in parallel
-				jobs.forEach((job) => this.handleJob(job))
+				jobs.forEach(this.handleJob.bind(this)) // if the handler throws, the job will be failed and the error logged
 				this.pollLock = false
 				this.backoffRetryCount = 0
 			})
@@ -248,8 +256,22 @@ export class CamundaJobWorker<
 				// This can throw a 400, 401, or 500 REST Error with the Content-Type application/problem+json
 				// The schema is:
 				// { type: string, title: string, status: number, detail: string, instance: string }
-				this.log.error('Error during job worker poll')
-				this.log.error(e)
+				if (
+					e.statusCode === 500 &&
+					e.toString().includes('RESOURCE_EXHAUSTED')
+				) {
+					this.log.warn(
+						'The server responded with a back pressure signal. Check the server resource allocation and current load.'
+					)
+				} else {
+					const formattedError = util.inspect(e, {
+						depth: 10, // Increase depth if needed
+						colors: false,
+						customInspect: true,
+					})
+					this.log.error('Error during job worker poll')
+					this.log.error(formattedError)
+				}
 				this.emit('pollError', e)
 				this.activePoll = undefined
 				const backoffDuration = Math.min(
