@@ -211,38 +211,51 @@ const customAuthProvider = new MyCustomAuthProvider()
 const c8 = new Camunda8({ oauthProvider: customAuthProvider })
 ```
 
-### Camunda SaaS 401 cooldown memoization
+### Camunda SaaS persistent 401 tarpit
 
-Camunda SaaS enforces a cooldown period (currently 30 seconds) after returning a `401 Unauthorized` response from the token endpoint for a given client credential + audience pair. During this cooldown window, repeated token requests will continue to yield `401` responses.
+Camunda SaaS continues returning `401 Unauthorized` for a misconfigured credential & audience pair, but with a 30-second delay for subsequent requests (server-side cooldown). The SDK proactively creates a persistent "tarpit" marker on the first SaaS `401` to prevent network call delays.
 
-The SDK protects your application from locking up for 30 seconds in this scenario by memoizing the first `401` response for each unique credential & audience combination. Subsequent attempts to obtain a token within the cooldown window short‑circuit locally and immediately surface the cached error, without issuing any network request. This prevents unnecessary load and log noise while you correct configuration issues.
+Behavior:
 
-Key points:
+- First `401` for `(clientId, clientSecret, audienceType)` creates `oauth-401-tarpit-<clientId>-<audience>-<hash>.json` in the cache directory (`$HOME/.camunda` by default). `<hash>` is a truncated SHA-256 of the secret.
+- Subsequent `getHeaders()` calls for that tuple immediately throw a tarpit error without hitting the token endpoint.
+- The tarpit does not auto-expire.
 
-- Scope: Applies only when the endpoint is detected as Camunda SaaS (`login.cloud.camunda.io`) and a `401` error is received.
-- Granularity: Memoization key is `clientId::audienceType` so different audiences (e.g. `ZEEBE` vs `OPERATE`) do not block each other.
-- Cooldown duration: 30 seconds by default. (Exposed internally as a static `SAAS_401_COOLDOWN_MS`; not intended for production override.)
-- Backoff suppression: The normal token endpoint backoff (`+1000ms` per failure up to 15s) and failure counters are NOT incremented for memoized SaaS `401` responses; once a valid token is acquired the memoized error is cleared and normal behavior resumes.
-- Disk cache: The `401` is only memoized in memory; successful tokens still leverage disk caching when enabled.
+Isolation & rotation:
 
-Configuration interactions:
+- Keyed on clientId + secret hash + audience; different audiences are independent.
+- Rotating the secret produces a new hash (old tarpit file can be removed manually if desired).
 
-- Set `CAMUNDA_OAUTH_FAIL_ON_ERROR=false` if you want the legacy backoff behavior for other kinds of failures while still benefiting from SaaS `401` memoization.
-- If you correct credentials (e.g. updating `ZEEBE_CLIENT_SECRET`) you do not need to wait for the cooldown; the next successful token response automatically clears the memoized error.
+Clearing a tarpit:
 
-Observing the behavior:
+```typescript
+import { Auth } from '@camunda8/sdk'
+Auth.OAuthProvider.clear401Tarpit({
+  clientId: 'myClientId',
+  clientSecret: 'currentSecret',
+  audienceType: 'ZEEBE',
+})
+```
 
-- Enable `DEBUG=camunda:oauth` to see when a memoized `401` is served vs when a fresh token request is made.
-- A memoized response will log only the original network error; subsequent attempts within the window will not show additional POST requests.
+After clearing, the next call attempts a real token request.
 
-Implications for worker backoff:
+Backoff interaction:
 
-- Polling workers encountering an auth failure will not compound token endpoint backoff during the cooldown (since `failureCount` is not incremented). This accelerates recovery once credentials are fixed.
+- Token endpoint backoff/failure counters are suppressed for tarpit 401s to surface configuration issues quickly.
+- Other error types retain normal backoff behavior.
 
-No action is required to enable this; it is automatic for Camunda SaaS environments starting from this SDK version.
+Observability:
 
+- `DEBUG=camunda:oauth` logs creation: `Created persistent 401 tarpit file ...`
+- Inspect cache dir for `oauth-401-tarpit-*` files.
 
-You can use this approach to wrap one of the existing strategy classes using a facade pattern to encapsulate and extend it.
+Remediation steps:
+
+1. Fix credential / audience configuration.
+2. Clear the tarpit file via helper (or delete manually).
+3. Retry token acquisition.
+
+This persistent tarpit behavior is automatic for SaaS environments in this SDK version.
 
 ## TLS
 

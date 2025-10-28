@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import * as fs from 'fs'
 import * as os from 'os'
 import path from 'path'
@@ -53,6 +53,8 @@ const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
  */
 export class OAuthProvider implements IHeadersProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
+	// Track live instances for best-effort in-memory tarpit clearing
+	private static instances: OAuthProvider[] = []
 	private cacheDir: string
 	private authServerUrl: string
 	private mTLSPrivateKey: string | undefined
@@ -68,6 +70,8 @@ export class OAuthProvider implements IHeadersProvider {
 	private memoized401: {
 		[key: string]: { timestamp: number; error: Error }
 	} = {}
+	/** Persistent tarpit flag files for SaaS 401 (keyed by clientId+secret+audience) */
+	private tarpit401: Set<string> = new Set()
 	public userAgentString: string
 	private scope: string | undefined
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
@@ -218,6 +222,22 @@ export class OAuthProvider implements IHeadersProvider {
 		this.isCamundaSaaS = this.authServerUrl.includes(
 			'https://login.cloud.camunda.io/oauth/token'
 		)
+
+		// Load any existing tarpit files (persistent 401 memoization)
+		if (this.useFileCache) {
+			try {
+				const files = fs.readdirSync(this.cacheDir)
+				for (const f of files) {
+					if (f.startsWith('oauth-401-tarpit-')) {
+						this.tarpit401.add(path.join(this.cacheDir, f))
+					}
+				}
+			} catch (_) {
+				/* ignore */
+			}
+		}
+		// Register instance for static clear401Tarpit cleanup
+		OAuthProvider.instances.push(this)
 	}
 
 	public async getHeaders(audienceType: TokenGrantAudienceType) {
@@ -271,7 +291,19 @@ export class OAuthProvider implements IHeadersProvider {
 			}
 		}
 
-		// Check for memoized SaaS 401 response for this credential set + audience
+		// Persistent tarpit check (SaaS 401 permanent memoization)
+		const tarpitFile = this.getTarpitFilePath({
+			clientId: clientIdToUse,
+			clientSecret: clientSecretToUse,
+			audienceType,
+		})
+		if (this.isCamundaSaaS && this.isTarpitted(tarpitFile)) {
+			throw new Error(
+				`401 Unauthorized (tarpit) for clientId ${clientIdToUse}. Persistent memoization in effect. Clear with OAuthProvider.clear401Tarpit().`
+			)
+		}
+
+		// Legacy in-memory cooldown memoization (will be deprecated by tarpit behaviour)
 		const credentialKey = this.getCredentialAudienceKey({
 			clientId: clientIdToUse,
 			audienceType,
@@ -317,13 +349,22 @@ export class OAuthProvider implements IHeadersProvider {
 								resolve(res)
 							})
 							.catch((e) => {
-								// Memoize SaaS 401 responses to buffer cooldown period and suppress backoff
+								// Permanent tarpit SaaS 401 responses; create persistent file & suppress backoff
 								if (this.isCamundaSaaS && this.is401Error(e)) {
+									try {
+										this.createTarpitFile({
+											clientId: clientIdToUse,
+											clientSecret: clientSecretToUse,
+											audienceType,
+											reason: e.message,
+										})
+									} catch (_) {
+										/* ignore file write errors */
+									}
 									this.memoized401[credentialKey] = {
 										timestamp: Date.now(),
 										error: e,
 									}
-									// Do NOT mark failure/backoff for SaaS 401 cooldown buffering
 									this.failed = false
 									delete this.inflightTokenRequests[credentialKey]
 									return reject(e)
@@ -597,7 +638,7 @@ export class OAuthProvider implements IHeadersProvider {
 		return { authorization: `Bearer ${token}` }
 	}
 
-	// Mutable for test overrides; 30s SaaS cooldown window
+	// Mutable for test overrides; legacy cooldown window (no longer used for tarpit persistence, retained for backward compatibility of tests)
 	public static SAAS_401_COOLDOWN_MS = 30000
 
 	private getCredentialAudienceKey({
@@ -624,5 +665,118 @@ export class OAuthProvider implements IHeadersProvider {
 		return (
 			statusCode === 401 || /\b401\b/.test(msg) || /Unauthorized/i.test(msg)
 		)
+	}
+
+	/** Persistent 401 tarpit helpers */
+	private getTarpitFilePath({
+		clientId,
+		clientSecret,
+		audienceType,
+	}: {
+		clientId: string
+		clientSecret: string
+		audienceType: TokenGrantAudienceType
+	}) {
+		const hash = this.hashSecret(clientSecret)
+		return path.join(
+			this.cacheDir,
+			`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
+		)
+	}
+
+	private isTarpitted(file: string) {
+		return this.tarpit401.has(file) && fs.existsSync(file)
+	}
+
+	private hashSecret(secret: string) {
+		// We store only a truncated SHA-256 hash to avoid leaking credential
+		try {
+			return createHash('sha256').update(secret).digest('hex').slice(0, 16)
+		} catch (_) {
+			let h = 0
+			for (let i = 0; i < secret.length; i++) {
+				h = (Math.imul(31, h) + secret.charCodeAt(i)) | 0
+			}
+			return Math.abs(h).toString(16)
+		}
+	}
+
+	private createTarpitFile({
+		clientId,
+		clientSecret,
+		audienceType,
+		reason,
+	}: {
+		clientId: string
+		clientSecret: string
+		audienceType: TokenGrantAudienceType
+		reason: string
+	}) {
+		if (!this.useFileCache) return
+		const file = this.getTarpitFilePath({
+			clientId,
+			clientSecret,
+			audienceType,
+		})
+		if (fs.existsSync(file)) {
+			this.tarpit401.add(file)
+			return
+		}
+		const payload = {
+			createdAt: new Date().toISOString(),
+			clientId,
+			audienceType,
+			reason,
+			message: 'Persistent 401 tarpit – clear manually to retry',
+		}
+		try {
+			fs.writeFileSync(file, JSON.stringify(payload, null, 2))
+			this.tarpit401.add(file)
+			trace(`Created persistent 401 tarpit file ${file}`)
+		} catch (e) {
+			trace(`Failed to write tarpit file ${file}: ${(e as Error).message}`)
+		}
+	}
+
+	/** Public static helper to clear a specific persistent 401 tarpit */
+	public static clear401Tarpit({
+		cacheDir = OAuthProvider.defaultTokenCache,
+		clientId,
+		clientSecret,
+		audienceType,
+	}: {
+		cacheDir?: string
+		clientId: string
+		clientSecret: string
+		audienceType: TokenGrantAudienceType
+	}) {
+		try {
+			const hash = createHash('sha256')
+				.update(clientSecret)
+				.digest('hex')
+				.slice(0, 16)
+			const file = path.join(
+				cacheDir,
+				`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
+			)
+			if (fs.existsSync(file)) {
+				fs.unlinkSync(file)
+			}
+			// Best-effort in-memory cleanup for existing instances
+			for (const inst of OAuthProvider.instances ?? []) {
+				try {
+					inst.tarpit401?.delete(file)
+					const credentialKey = inst.getCredentialAudienceKey({
+						clientId,
+						audienceType,
+					})
+					delete inst.memoized401?.[credentialKey]
+				} catch (_) {
+					/* ignore */
+				}
+			}
+		} catch (_) {
+			/* ignore */
+		}
 	}
 }
