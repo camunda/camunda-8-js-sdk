@@ -85,9 +85,11 @@ describe('OAuthProvider SaaS persistent 401 tarpit', () => {
 			)
 			.toString('hex')
 			.slice(0, 16)
+		const clientId = 'ZEEBE'
+		const audienceType = 'ZEEBE'
 		const tarpitFile = path.join(
 			cacheDir,
-			`oauth-401-tarpit-ZEEBE-ZEEBE-${hash}.json`
+			`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
 		)
 		expect(fs.existsSync(tarpitFile)).toBe(true)
 		server.close()

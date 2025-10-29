@@ -217,7 +217,7 @@ Camunda SaaS continues returning `401 Unauthorized` for a misconfigured credenti
 
 Behavior:
 
-- First `401` for `(clientId, clientSecret, audienceType)` creates `oauth-401-tarpit-<clientId>-<audience>-<hash>.json` in the cache directory (`$HOME/.camunda` by default). `<hash>` is a truncated SHA-256 of the secret.
+- First `401` for `(clientId, clientSecret, audienceType)` creates `oauth-401-tarpit-<clientId>-<audience>-<hash>.json` in the cache directory (`$HOME/.camunda` by default). `<hash>` is a truncated PBKDF2 (100K iterations) hash of the secret.
 - Subsequent `getHeaders()` calls for that tuple immediately throw a tarpit error without hitting the token endpoint.
 - The tarpit does not auto-expire.
 

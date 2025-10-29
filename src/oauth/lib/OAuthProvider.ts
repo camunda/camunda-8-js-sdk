@@ -365,6 +365,8 @@ export class OAuthProvider implements IHeadersProvider {
 										timestamp: Date.now(),
 										error: e,
 									}
+									// Suppress token endpoint backoff/failure counters for permanent SaaS 401 responses.
+									// This ensures we do not apply retry delays for credentials that are permanently invalid.
 									this.failed = false
 									delete this.inflightTokenRequests[credentialKey]
 									return reject(e)
@@ -786,14 +788,14 @@ export class OAuthProvider implements IHeadersProvider {
 				fs.unlinkSync(file)
 			}
 			// Best-effort in-memory cleanup for existing instances
-			for (const inst of OAuthProvider.instances ?? []) {
+			for (const inst of OAuthProvider.instances) {
 				try {
-					inst.tarpit401?.delete(file)
+					inst.tarpit401.delete(file)
 					const credentialKey = inst.getCredentialAudienceKey({
 						clientId,
 						audienceType,
 					})
-					delete inst.memoized401?.[credentialKey]
+					delete inst.memoized401[credentialKey]
 				} catch (_) {
 					/* ignore */
 				}
