@@ -1,3 +1,16 @@
+## [8.7.32](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.31...v8.7.32) (2025-10-29)
+
+
+### Features
+
+* memoize 401 response on SaaS ([c65a71c](https://github.com/camunda/camunda-8-js-sdk/commit/c65a71c51a3200ba310464b1980bd6369f9d5f36))
+* persistent 401 tar pit memoization ([1446488](https://github.com/camunda/camunda-8-js-sdk/commit/144648850b7119d15356164f33399edae924bb73))
+
+
+### Reverts
+
+* fix job.fail regression ([264552a](https://github.com/camunda/camunda-8-js-sdk/commit/264552aabbdf313609d9864b56bfb827b2520228))
+
 ## [8.7.31](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.30...v8.7.31) (2025-10-21)
 
 
