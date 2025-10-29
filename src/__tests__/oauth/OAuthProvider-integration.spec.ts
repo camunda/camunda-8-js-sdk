@@ -27,16 +27,10 @@ test.runIf(
 		},
 	})
 	const now = new Date()
-	try {
-		await o1.getHeaders('ZEEBE')
-	} catch (e) {
-		console.log(e)
-	}
-	try {
-		await o1.getHeaders('ZEEBE')
-	} catch (e) {
-		console.log(e)
-	}
+
+	await o1.getHeaders('ZEEBE').catch((e) => e)
+	await o1.getHeaders('ZEEBE').catch((e) => e)
+
 	const elapsed = new Date().getTime() - now.getTime()
 	expect(elapsed).toBeLessThan(2000) // Less than 2s means no tarpit delay
 })
