@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events'
-import util from 'util'
 
 import PCancelable from 'p-cancelable'
 import TypedEmitter from 'typed-emitter'
@@ -243,7 +242,7 @@ export class CamundaJobWorker<
 				this.log.debug(`Activated ${count} jobs`, this.logMeta())
 				this.emit('work', jobs)
 				// The job handlers for the activated jobs will run in parallel
-				jobs.forEach(this.handleJob.bind(this)) // if the handler throws, the job will be failed and the error logged
+				jobs.forEach((job) => this.handleJob(job)) // if the handler throws, the job will be failed and the error logged
 				this.pollLock = false
 				this.backoffRetryCount = 0
 			})
@@ -264,13 +263,8 @@ export class CamundaJobWorker<
 						'The server responded with a back pressure signal. Check the server resource allocation and current load.'
 					)
 				} else {
-					const formattedError = util.inspect(e, {
-						depth: 10, // Increase depth if needed
-						colors: false,
-						customInspect: true,
-					})
 					this.log.error('Error during job worker poll')
-					this.log.error(formattedError)
+					this.log.error(e)
 				}
 				this.emit('pollError', e)
 				this.activePoll = undefined

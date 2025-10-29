@@ -1664,7 +1664,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 	 * @param job The job to add the methods to
 	 * @returns The job with the added methods
 	 */
-	private addJobMethods = <Variables, CustomHeaders>(
+	private readonly addJobMethods = <Variables, CustomHeaders>(
 		job: RestJob<Variables, CustomHeaders>
 	): ActivatedJob<Variables, CustomHeaders> => {
 		return {

@@ -6,13 +6,13 @@ import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 
 vi.setConfig({ testTimeout: 40_000 })
 
-let processId: string
+let processDefinitionKey: string
 
 let zbcLongPoll: ZeebeGrpcClient
 
 afterAll(async () => {
 	await zbcLongPoll.close()
-	await cancelProcesses(processId)
+	await cancelProcesses(processDefinitionKey)
 })
 
 beforeAll(async () => {
@@ -22,8 +22,8 @@ beforeAll(async () => {
 	const res = await zbcLongPoll.deployResource({
 		processFilename: './src/__tests__/testdata/Worker-LongPoll.bpmn',
 	})
-	processId = res.deployments[0].process.processDefinitionKey
-	await cancelProcesses(processId)
+	processDefinitionKey = res.deployments[0].process.processDefinitionKey
+	await cancelProcesses(processDefinitionKey)
 })
 
 test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
