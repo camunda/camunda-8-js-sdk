@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto'
+
 import { OAuthProvider } from '../../oauth/lib/OAuthProvider'
 import { matrix } from '../../test-support/testTags'
 
@@ -6,6 +8,37 @@ let o: OAuthProvider
 beforeAll(() => {
 	o = new OAuthProvider()
 	o.flushFileCache()
+})
+
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured'],
+		},
+	})
+)('Does not fall into the SaaS tarpit', async () => {
+	const clientId = randomUUID()
+	const o1 = new OAuthProvider({
+		config: {
+			ZEEBE_CLIENT_ID: clientId,
+		},
+	})
+	const now = new Date()
+	try {
+		await o1.getHeaders('ZEEBE')
+	} catch (e) {
+		console.log(e)
+	}
+	try {
+		await o1.getHeaders('ZEEBE')
+	} catch (e) {
+		console.log(e)
+	}
+	const elapsed = new Date().getTime() - now.getTime()
+	expect(elapsed).toBeLessThan(2000) // Less than 2s means no tarpit delay
 })
 
 test.runIf(

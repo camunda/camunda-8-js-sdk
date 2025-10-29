@@ -9,6 +9,8 @@ import {
 	RequestError,
 } from 'got'
 
+import { CamundaRestError } from '../c8/lib/C8Dto'
+
 import { asyncOperationContext } from './AsyncTrace'
 import { CamundaSupportLogger } from './CamundaSupportLogger'
 import { CamundaPlatform8Configuration } from './Configuration'
@@ -52,11 +54,13 @@ export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
 		JSON.stringify(Object.keys(error as unknown as object))
 	)
 	if (error instanceof RequestError) {
-		const is401 = error.response?.statusCode === 401
+		const errorDetail = error.response?.body as CamundaRestError
+		const statusCode = errorDetail?.status
+		const is401 = statusCode === 401
 		const hasRetried = retryCount && retryCount > 0
-		trace('gotBeforeRetryHook: HTTPError detected:', error.response?.statusCode)
+		trace('gotBeforeRetryHook: HTTPError detected: ', statusCode)
 		// If we have a 401 error, we handle it by retrying the request only once.
-		if (is401 || error.code === '401') {
+		if (is401) {
 			// If we get a 401 error, we will retry the request only once.
 			if (hasRetried) {
 				// If we have already retried, we throw the error to stop retrying.
@@ -139,25 +143,16 @@ export const gotBeforeErrorHook =
 	}
 
 /**
- *
- * This function is used on a 401 response to retry the request with a new token, one single time.
- * https://github.com/camunda/camunda-8-js-sdk/issues/125
- */
-export const makeBeforeRetryHandlerFor401TokenRetry =
-	(getHeadersFn) => async (context) => {
-		context.headers.authorization = (await getHeadersFn()).authorization
-	}
-
-/**
  * Retry configuration for got requests.
  * This configuration is used to retry requests on certain status codes and methods.
  * We will retry on 429 (Too Many Requests) and 503 (Service Unavailable) status codes.
- * 503 is used for Camunda 8 to indicate server backpressure. See: https://github.com/camunda/camunda-8-js-sdk/issues/509
+ * 503 and 500 with a specific title or detail string is used for Camunda 8 to indicate server backpressure.
+ *    See: https://github.com/camunda/camunda-8-js-sdk/issues/509 and https://github.com/camunda/camunda-8-js-sdk/issues/612
  * 401 (Unauthorized) is used for OAuth token refreshes.
  * We will retry only once on 401 (see the BeforeRetryHook), because the worker polls continuously, and a worker that is misconfigured with an invalid secret will retry indefinitely.
  * This is not ideal, but it is the current behaviour. We need to ensure that such a worker does not flood the broker, so we cause a backoff.
  */
 export const GotRetryConfig = {
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as Method[],
-	statusCodes: [401, 429, 503],
+	statusCodes: [429, 503],
 }

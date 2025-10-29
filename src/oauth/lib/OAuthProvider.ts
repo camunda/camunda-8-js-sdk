@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { pbkdf2Sync, randomUUID } from 'crypto'
 import * as fs from 'fs'
 import * as os from 'os'
 import path from 'path'
@@ -53,6 +53,8 @@ const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
  */
 export class OAuthProvider implements IHeadersProvider {
 	private static readonly defaultTokenCache = `${homedir}/.camunda`
+	// Track live instances for best-effort in-memory tarpit clearing
+	private static instances: OAuthProvider[] = []
 	private cacheDir: string
 	private authServerUrl: string
 	private mTLSPrivateKey: string | undefined
@@ -63,7 +65,13 @@ export class OAuthProvider implements IHeadersProvider {
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
 	private failureCount = 0
-	private inflightTokenRequest?: HeadersPromise
+	private inflightTokenRequests: { [key: string]: HeadersPromise } = {}
+	/** Memoized 401 responses for SaaS cooldown buffering */
+	private memoized401: {
+		[key: string]: { timestamp: number; error: Error }
+	} = {}
+	/** Persistent tarpit flag files for SaaS 401 (keyed by clientId+secret+audience) */
+	private tarpit401: Set<string> = new Set()
 	public userAgentString: string
 	private scope: string | undefined
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
@@ -214,6 +222,22 @@ export class OAuthProvider implements IHeadersProvider {
 		this.isCamundaSaaS = this.authServerUrl.includes(
 			'https://login.cloud.camunda.io/oauth/token'
 		)
+
+		// Load any existing tarpit files (persistent 401 memoization)
+		if (this.useFileCache) {
+			try {
+				const files = fs.readdirSync(this.cacheDir)
+				for (const f of files) {
+					if (f.startsWith('oauth-401-tarpit-')) {
+						this.tarpit401.add(path.join(this.cacheDir, f))
+					}
+				}
+			} catch (_) {
+				/* ignore */
+			}
+		}
+		// Register instance for static clear401Tarpit cleanup
+		OAuthProvider.instances.push(this)
 	}
 
 	public async getHeaders(audienceType: TokenGrantAudienceType) {
@@ -267,43 +291,98 @@ export class OAuthProvider implements IHeadersProvider {
 			}
 		}
 
-		if (!this.inflightTokenRequest) {
-			this.inflightTokenRequest = new Promise((resolve, reject) => {
-				const failureBackoff = Math.min(
-					BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
-					15000
-				)
-				const delay = this.failOnError ? 0 : this.failed ? failureBackoff : 0
-
-				if (this.failed) {
-					this.log.warn(
-						`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
-					)
-				}
-				setTimeout(() => {
-					this.makeDebouncedTokenRequest({
-						audienceType,
-						clientIdToUse,
-						clientSecretToUse,
-					})
-						.then((res) => {
-							this.failed = false
-							this.failureCount = 0
-							this.inflightTokenRequest = undefined
-							resolve(res)
-						})
-						.catch((e) => {
-							if (!this.failOnError) {
-								this.failureCount++
-								this.failed = true
-							}
-							this.inflightTokenRequest = undefined
-							reject(e)
-						})
-				}, delay)
-			})
+		// Persistent tarpit check (SaaS 401 permanent memoization)
+		const tarpitFile = this.getTarpitFilePath({
+			clientId: clientIdToUse,
+			clientSecret: clientSecretToUse,
+			audienceType,
+		})
+		if (this.isCamundaSaaS && this.isTarpitted(tarpitFile)) {
+			throw new Error(
+				`401 Unauthorized (tarpit) for clientId ${clientIdToUse}. Persistent memoization in effect. Clear with OAuthProvider.clear401Tarpit().`
+			)
 		}
-		return this.inflightTokenRequest
+
+		// Legacy in-memory cooldown memoization (will be deprecated by tarpit behaviour)
+		const credentialKey = this.getCredentialAudienceKey({
+			clientId: clientIdToUse,
+			audienceType,
+		})
+		const memo = this.memoized401[credentialKey]
+		if (memo) {
+			const now = Date.now()
+			if (now - memo.timestamp < OAuthProvider.SAAS_401_COOLDOWN_MS) {
+				// Within cooldown window: surface cached error without hitting endpoint
+				throw memo.error
+			} else {
+				// Expired memoization; remove and continue to request
+				delete this.memoized401[credentialKey]
+			}
+		}
+
+		if (!this.inflightTokenRequests[credentialKey]) {
+			this.inflightTokenRequests[credentialKey] = new Promise(
+				(resolve, reject) => {
+					const failureBackoff = Math.min(
+						BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
+						15000
+					)
+					const delay = this.failOnError ? 0 : this.failed ? failureBackoff : 0
+
+					if (this.failed) {
+						this.log.warn(
+							`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
+						)
+					}
+					setTimeout(() => {
+						this.makeDebouncedTokenRequest({
+							audienceType,
+							clientIdToUse,
+							clientSecretToUse,
+						})
+							.then((res) => {
+								// Successful token acquisition clears any memoized 401 for this credential/audience
+								delete this.memoized401[credentialKey]
+								this.failed = false
+								this.failureCount = 0
+								delete this.inflightTokenRequests[credentialKey]
+								resolve(res)
+							})
+							.catch((e) => {
+								// Permanent tarpit SaaS 401 responses; create persistent file & suppress backoff
+								if (this.isCamundaSaaS && this.is401Error(e)) {
+									try {
+										this.createTarpitFile({
+											clientId: clientIdToUse,
+											clientSecret: clientSecretToUse,
+											audienceType,
+											reason: e.message,
+										})
+									} catch (_) {
+										/* ignore file write errors */
+									}
+									this.memoized401[credentialKey] = {
+										timestamp: Date.now(),
+										error: e,
+									}
+									// Suppress token endpoint backoff/failure counters for permanent SaaS 401 responses.
+									// This ensures we do not apply retry delays for credentials that are permanently invalid.
+									this.failed = false
+									delete this.inflightTokenRequests[credentialKey]
+									return reject(e)
+								}
+								if (!this.failOnError) {
+									this.failureCount++
+									this.failed = true
+								}
+								delete this.inflightTokenRequests[credentialKey]
+								reject(e)
+							})
+					}, delay)
+				}
+			)
+		}
+		return this.inflightTokenRequests[credentialKey]
 	}
 
 	public flushMemoryCache() {
@@ -377,6 +456,16 @@ export class OAuthProvider implements IHeadersProvider {
 		return this.rest.then((rest) =>
 			rest
 				.post(this.authServerUrl, options)
+				.then((res) => {
+					// If status 401 from SaaS, throw to trigger memoization upstream
+					if (this.isCamundaSaaS && res.statusCode === 401) {
+						const err = new Error(
+							`401 Unauthorized requesting token for Client Id ${clientIdToUse}`
+						)
+						throw err
+					}
+					return JSON.parse(res.body)
+				})
 				.catch((e) => {
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
 					this.log.error(
@@ -385,7 +474,6 @@ export class OAuthProvider implements IHeadersProvider {
 					this.log.error(e)
 					throw e
 				})
-				.then((res) => JSON.parse(res.body))
 				.then((t) => {
 					trace(
 						`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
@@ -401,7 +489,7 @@ export class OAuthProvider implements IHeadersProvider {
 							`Failed to get token: ${t.error} - ${t.error_description}`
 						)
 					}
-					if (t.access_token === undefined) {
+					if ((t as Token).access_token === undefined) {
 						console.error(audienceType, t)
 						throw new Error('Failed to get token: no access_token in response')
 					}
@@ -550,5 +638,154 @@ export class OAuthProvider implements IHeadersProvider {
 
 	private addBearer(token: string) {
 		return { authorization: `Bearer ${token}` }
+	}
+
+	// Mutable for test overrides; legacy cooldown window (no longer used for tarpit persistence, retained for backward compatibility of tests)
+	public static SAAS_401_COOLDOWN_MS = 30000
+
+	private getCredentialAudienceKey({
+		clientId,
+		audienceType,
+	}: {
+		clientId: string
+		audienceType: TokenGrantAudienceType
+	}) {
+		return `${clientId}::${audienceType}`
+	}
+
+	private is401Error(e: unknown): e is Error {
+		if (!e || typeof e !== 'object') {
+			return false
+		}
+		const obj = e as {
+			statusCode?: number
+			response?: { statusCode?: number }
+			message?: string
+		}
+		const statusCode = obj.statusCode ?? obj.response?.statusCode
+		const msg = obj.message ?? ''
+		return (
+			statusCode === 401 || /\b401\b/.test(msg) || /Unauthorized/i.test(msg)
+		)
+	}
+
+	/** Persistent 401 tarpit helpers */
+	private getTarpitFilePath({
+		clientId,
+		clientSecret,
+		audienceType,
+	}: {
+		clientId: string
+		clientSecret: string
+		audienceType: TokenGrantAudienceType
+	}) {
+		const hash = this.hashSecret(clientSecret)
+		return path.join(
+			this.cacheDir,
+			`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
+		)
+	}
+
+	private isTarpitted(file: string) {
+		return this.tarpit401.has(file) && fs.existsSync(file)
+	}
+
+	private hashSecret(secret: string) {
+		// Deterministic, computationally expensive derivation using PBKDF2.
+		// We use a constant salt for filename determinism while increasing cost via iterations.
+		// Output truncated to 16 hex chars (same length as previous SHA-256 truncation) to keep filename compact.
+		// NOTE: This is not for security storage of the secret (never store raw secret); just obfuscation + cost hardening.
+		const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
+		try {
+			const derived = pbkdf2Sync(secret, SALT, 100_000, 32, 'sha256')
+			return derived.toString('hex').slice(0, 16)
+		} catch (err) {
+			// Fail if PBKDF2 is unavailable; do not fall back to insecure hash.
+			throw new Error(
+				'PBKDF2 algorithm is unavailable for hashing secret: ' +
+					(err instanceof Error ? err.message : String(err))
+			)
+		}
+	}
+
+	private createTarpitFile({
+		clientId,
+		clientSecret,
+		audienceType,
+		reason,
+	}: {
+		clientId: string
+		clientSecret: string
+		audienceType: TokenGrantAudienceType
+		reason: string
+	}) {
+		if (!this.useFileCache) return
+		const file = this.getTarpitFilePath({
+			clientId,
+			clientSecret,
+			audienceType,
+		})
+		if (fs.existsSync(file)) {
+			this.tarpit401.add(file)
+			return
+		}
+		const payload = {
+			createdAt: new Date().toISOString(),
+			clientId,
+			audienceType,
+			reason,
+			message: 'Persistent 401 tarpit – clear manually to retry',
+		}
+		try {
+			fs.writeFileSync(file, JSON.stringify(payload, null, 2))
+			this.tarpit401.add(file)
+			trace(`Created persistent 401 tarpit file ${file}`)
+		} catch (e) {
+			trace(`Failed to write tarpit file ${file}: ${(e as Error).message}`)
+		}
+	}
+
+	/** Public static helper to clear a specific persistent 401 tarpit */
+	public static clear401Tarpit({
+		cacheDir = OAuthProvider.defaultTokenCache,
+		clientId,
+		clientSecret,
+		audienceType,
+	}: {
+		cacheDir?: string
+		clientId: string
+		clientSecret: string
+		audienceType: TokenGrantAudienceType
+	}) {
+		try {
+			// Reuse instance hashing logic deterministically (without needing an instance): replicate PBKDF2 parameters.
+			const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
+			const hash = pbkdf2Sync(clientSecret, SALT, 100_000, 32, 'sha256')
+				.toString('hex')
+				.slice(0, 16)
+
+			const file = path.join(
+				cacheDir,
+				`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
+			)
+			if (fs.existsSync(file)) {
+				fs.unlinkSync(file)
+			}
+			// Best-effort in-memory cleanup for existing instances
+			for (const inst of Array.from(OAuthProvider.instances)) {
+				try {
+					inst.tarpit401.delete(file)
+					const credentialKey = inst.getCredentialAudienceKey({
+						clientId,
+						audienceType,
+					})
+					delete inst.memoized401[credentialKey]
+				} catch (_) {
+					/* ignore */
+				}
+			}
+		} catch (_) {
+			/* ignore */
+		}
 	}
 }

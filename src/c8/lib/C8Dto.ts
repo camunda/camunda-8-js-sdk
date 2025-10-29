@@ -1336,6 +1336,14 @@ interface IncidentDetails {
 export interface SearchIncidentsResponse
 	extends PaginatedSearchResponse<IncidentDetails> {}
 
+export interface CamundaRestError {
+	type: 'about:blank'
+	title: string
+	status: number
+	detail: string
+	instance: string
+}
+
 // export interface DecisionInstanceSearchFilter {
 // 	/** System-generated key for a decision evaluation instance. */
 // 	decisionEvaluationInstanceKey?: string | AdvancedStringFilter

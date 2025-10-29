@@ -211,7 +211,51 @@ const customAuthProvider = new MyCustomAuthProvider()
 const c8 = new Camunda8({ oauthProvider: customAuthProvider })
 ```
 
-You can use this approach to wrap one of the existing strategy classes using a facade pattern to encapsulate and extend it.
+### Camunda SaaS persistent 401 tarpit
+
+Camunda SaaS continues returning `401 Unauthorized` for a misconfigured credential & audience pair, but with a 30-second delay for subsequent requests (server-side cooldown). The SDK proactively creates a persistent "tarpit" marker on the first SaaS `401` to prevent network call delays.
+
+Behavior:
+
+- First `401` for `(clientId, clientSecret, audienceType)` creates `oauth-401-tarpit-<clientId>-<audience>-<hash>.json` in the cache directory (`$HOME/.camunda` by default). `<hash>` is a truncated PBKDF2 (100K iterations) hash of the secret.
+- Subsequent `getHeaders()` calls for that tuple immediately throw a tarpit error without hitting the token endpoint.
+- The tarpit does not auto-expire.
+
+Isolation & rotation:
+
+- Keyed on clientId + secret hash + audience; different audiences are independent.
+- Rotating the secret produces a new hash (old tarpit file can be removed manually if desired).
+
+Clearing a tarpit:
+
+```typescript
+import { Auth } from '@camunda8/sdk'
+Auth.OAuthProvider.clear401Tarpit({
+  clientId: 'myClientId',
+  clientSecret: 'currentSecret',
+  audienceType: 'ZEEBE',
+})
+```
+
+After clearing, the next call attempts a real token request.
+
+Backoff interaction:
+
+- Token endpoint backoff/failure counters are suppressed for tarpit 401s to surface configuration issues quickly.
+- Other error types retain normal backoff behavior.
+
+Observability:
+
+- `DEBUG=camunda:oauth` logs creation: `Created persistent 401 tarpit file ...`
+- Inspect cache dir for `oauth-401-tarpit-*` files.
+
+Remediation steps:
+
+1. Fix credential / audience configuration.
+2. Clear the tarpit file via helper (or delete manually).
+3. Retry token acquisition.
+
+This persistent tarpit behavior is automatic for SaaS environments in this SDK version.
 
 ## TLS
 

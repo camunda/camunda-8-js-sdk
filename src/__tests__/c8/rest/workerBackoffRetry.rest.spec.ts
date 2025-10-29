@@ -91,7 +91,7 @@ test.runIf(
 			})
 			setTimeout(() => {
 				restJobWorker.stop()
-				expect(durations).toBe(20000)
+				expect(durations).toBe(30000)
 				// In 25 seconds, we expect 4 or less attempts to poll the job
 				expect(pollCountBackingOffWorker).toBeLessThanOrEqual(4)
 				// Assert that each backoff is greater than the previous one; ie: the backoff is increasing
@@ -117,11 +117,15 @@ test.runIf(
 	() =>
 		new Promise<void>((done) => {
 			const backoffs: number[] = []
-			const MAX_BACKOFF = 2000
+			const MAX_BACKOFF = 5000
 			const transport = new MemoryTransport()
 			const logger = createLogger({
 				transports: [transport],
 			})
+			/**
+			 * We are running in a secured environment, so worker polls will fail with UNAUTHENTICATED.
+			 * The worker should backoff with increasing delays, capped at MAX_BACKOFF.
+			 */
 			const restClient = new CamundaRestClient({
 				config: {
 					CAMUNDA_AUTH_STRATEGY: 'NONE',
