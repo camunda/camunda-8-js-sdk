@@ -697,17 +697,12 @@ export class OAuthProvider implements IHeadersProvider {
 		try {
 			const derived = pbkdf2Sync(secret, SALT, 100_000, 32, 'sha256')
 			return derived.toString('hex').slice(0, 16)
-		} catch (_) {
-			// Fallback to lightweight hash if pbkdf2 unavailable for some reason
-			try {
-				return createHash('sha256').update(secret).digest('hex').slice(0, 16)
-			} catch (_) {
-				let h = 0
-				for (let i = 0; i < secret.length; i++) {
-					h = (Math.imul(31, h) + secret.charCodeAt(i)) | 0
-				}
-				return Math.abs(h).toString(16)
-			}
+		} catch (err) {
+			// Fail if PBKDF2 is unavailable; do not fall back to insecure hash.
+			throw new Error(
+				'PBKDF2 algorithm is unavailable for hashing secret: ' +
+					(err instanceof Error ? err.message : String(err))
+			)
 		}
 	}
 
