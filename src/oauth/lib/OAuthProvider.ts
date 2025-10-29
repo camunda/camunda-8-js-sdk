@@ -1,4 +1,4 @@
-import { createHash, pbkdf2Sync, randomUUID } from 'crypto'
+import { pbkdf2Sync, randomUUID } from 'crypto'
 import * as fs from 'fs'
 import * as os from 'os'
 import path from 'path'
@@ -760,26 +760,10 @@ export class OAuthProvider implements IHeadersProvider {
 		try {
 			// Reuse instance hashing logic deterministically (without needing an instance): replicate PBKDF2 parameters.
 			const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
-			let hash: string
-			try {
-				hash = pbkdf2Sync(clientSecret, SALT, 100_000, 32, 'sha256')
-					.toString('hex')
-					.slice(0, 16)
-			} catch (_) {
-				// Fallback to SHA256
-				try {
-					hash = createHash('sha256')
-						.update(clientSecret)
-						.digest('hex')
-						.slice(0, 16)
-				} catch (_) {
-					let h = 0
-					for (let i = 0; i < clientSecret.length; i++) {
-						h = (Math.imul(31, h) + clientSecret.charCodeAt(i)) | 0
-					}
-					hash = Math.abs(h).toString(16)
-				}
-			}
+			const hash = pbkdf2Sync(clientSecret, SALT, 100_000, 32, 'sha256')
+				.toString('hex')
+				.slice(0, 16)
+
 			const file = path.join(
 				cacheDir,
 				`oauth-401-tarpit-${clientId}-${audienceType}-${hash}.json`
@@ -788,7 +772,7 @@ export class OAuthProvider implements IHeadersProvider {
 				fs.unlinkSync(file)
 			}
 			// Best-effort in-memory cleanup for existing instances
-			for (const inst of OAuthProvider.instances) {
+			for (const inst of Array.from(OAuthProvider.instances)) {
 				try {
 					inst.tarpit401.delete(file)
 					const credentialKey = inst.getCredentialAudienceKey({
