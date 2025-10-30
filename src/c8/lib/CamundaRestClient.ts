@@ -16,6 +16,7 @@ import {
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
 	GotRetryConfig,
+	HTTPError,
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
@@ -709,7 +710,29 @@ export class CamundaRestClient {
 						activatedJobs.map(this.addJobMethods)
 					)
 					.then(resolve)
-					.catch(reject)
+					.catch((error) => {
+						// Normalise and wrap backpressure errors in a specific error type for clarity for users
+						// See: https://github.com/camunda/camunda/issues/25806#issuecomment-3459961630
+						if (error instanceof HTTPError) {
+							const RESOURCE_EXHAUSTED = 'RESOURCE_EXHAUSTED'
+							const isBackpressureError =
+								(error.statusCode === 429 &&
+									error.title === RESOURCE_EXHAUSTED) || // 8.6.0-8.6.29 / 8.7.0-8.7.16
+								(error.statusCode === 503 &&
+									error.title === RESOURCE_EXHAUSTED) || // 8.8.3+
+								(error.statusCode === 500 &&
+									error.detail?.includes(RESOURCE_EXHAUSTED)) // 8.8.0-8.8.2 for job activation only
+							if (!isBackpressureError) {
+								reject(error)
+							}
+							if (error.statusCode === 500) {
+								error.code = '503'
+								error.statusCode = 503
+							}
+							error.message = `Server is experiencing backpressure and cannot accept job activations at this time: ${error.message}`
+						}
+						reject(error)
+					})
 			}
 		)
 	}

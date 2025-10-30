@@ -173,7 +173,7 @@ export class CamundaJobWorker<
 					`Failed to drain all jobs in ${deadlineMs}ms`,
 					this.logMeta()
 				)
-				return reject(`Failed to drain all jobs in ${deadlineMs}ms`)
+				return reject(new Error(`Failed to drain all jobs in ${deadlineMs}ms`))
 			}, deadlineMs)
 			/** Check every 500ms to see if our active job count has hit zero, i.e: all active work is stopped */
 			const wait = setInterval(() => {
@@ -260,7 +260,7 @@ export class CamundaJobWorker<
 					e.toString().includes('RESOURCE_EXHAUSTED')
 				) {
 					this.log.warn(
-						'The server responded with a back pressure signal. Check the server resource allocation and current load.'
+						'The server responded with a back pressure signal RESOURCE_EXHAUSTED. Check the server resource allocation and current load.'
 					)
 				} else {
 					this.log.error('Error during job worker poll')

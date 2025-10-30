@@ -94,7 +94,7 @@ export const gotBeforeErrorHook =
 				)
 				error.statusCode = details.status
 				detail = details ?? ''
-			} catch (e) {
+			} catch {
 				error.statusCode = 0
 			}
 		}
@@ -112,7 +112,9 @@ export const gotBeforeErrorHook =
 		if (error.message.includes('Invalid header token')) {
 			// This is a parse error, which means the response header was not valid JSON.
 			// Debugging for https://github.com/camunda/camunda-8-js-sdk/issues/491
-			error.message += ` (response headers: ${error.response?.headers})`
+			error.message += ` (response headers: ${JSON.stringify(
+				error.response?.headers
+			)})`
 		}
 		if (error.code === '401') {
 			// the call was unauthorized
@@ -154,5 +156,10 @@ export const gotBeforeErrorHook =
  */
 export const GotRetryConfig = {
 	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as Method[],
+	// 429 is the backpressure status code on 8.7
+	// 503 is the backpressure status code on 8.8.3+
+	// 500 is the backpressure status code on 8.7 + 8.8.0-2 for job activation only
+	// - we handle Job activation backpressure in the worker directly
+	// See: https://github.com/camunda/camunda/issues/25806#issuecomment-3459961630
 	statusCodes: [429, 503],
 }
