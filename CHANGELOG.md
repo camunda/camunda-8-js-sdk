@@ -1,3 +1,10 @@
+## [8.7.33](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.32...v8.7.33) (2025-10-30)
+
+
+### Bug Fixes
+
+* normalise error message ([e1158d4](https://github.com/camunda/camunda-8-js-sdk/commit/e1158d455b8f72dd2a8e02ac1222678e03b528d9))
+
 ## [8.7.32](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.31...v8.7.32) (2025-10-29)
 
 
