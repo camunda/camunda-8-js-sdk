@@ -321,17 +321,13 @@ export class OperateApiClient {
 		const json = this.addTenantIdToFilter(query)
 		const rest = await this.rest
 
-		try {
-			return rest
-				.post('process-instances/search', {
-					json,
-					headers,
-					parseJson: (text) => parseSearchResults(text, ProcessInstance),
-				})
-				.json()
-		} catch (e) {
-			throw new Error((e as Error).message)
-		}
+		return rest
+			.post('process-instances/search', {
+				json,
+				headers,
+				parseJson: (text) => parseSearchResults(text, ProcessInstance),
+			})
+			.json()
 	}
 
 	/**

@@ -27,8 +27,6 @@ export const beforeCallHook: HandlerFunction = (options, next) => {
 	const obj = {}
 	Error.captureStackTrace(obj, beforeCallHook)
 	Error.stackTraceLimit = 100
-	const error = new Error('stack trace capture')
-	console.log(error.stack)
 	options.context.stack = creationStack
 		? `${creationStack}\n${(obj as any).stack as string}`
 		: ((obj as any).stack as string)
