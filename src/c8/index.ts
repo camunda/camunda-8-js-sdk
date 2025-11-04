@@ -1,3 +1,10 @@
+import {
+	CamundaClient,
+	CamundaClientLoose,
+	createCamundaClient,
+	createCamundaClientLoose,
+} from '@camunda8/orchestration-cluster-api'
+
 import { AdminApiClient } from '../admin'
 import {
 	Camunda8ClientConfiguration,
@@ -11,6 +18,8 @@ import { OperateApiClient } from '../operate'
 import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
+// Progressive adoption bridge: translate existing SDK config into OCA env-style overrides
+import { translateToOcaEnvOverrides } from '../lib/CamundaClientConfigTranslator'
 
 import { getLogger, Logger } from './lib/C8Logger'
 import { CamundaRestClient } from './lib/CamundaRestClient'
@@ -25,6 +34,8 @@ type ApiClient =
 	| AdminApiClient
 	| ModelerApiClient
 	| ZeebeRestClient
+	| CamundaClient
+	| CamundaClientLoose
 
 /** Options interface for client creation */
 interface ClientOptions {
@@ -59,27 +70,32 @@ interface Camunda8Options {
  */
 export class Camunda8 {
 	// Enhanced configuration-based caching (new functionality)
-	private zeebeGrpcApiClients = new Map<string, ZeebeGrpcClient>()
-	private camundaRestClients = new Map<string, CamundaRestClient>()
-	private operateApiClients = new Map<string, OperateApiClient>()
-	private tasklistApiClients = new Map<string, TasklistApiClient>()
-	private optimizeApiClients = new Map<string, OptimizeApiClient>()
-	private adminApiClients = new Map<string, AdminApiClient>()
-	private modelerApiClients = new Map<string, ModelerApiClient>()
-	private zeebeRestClients = new Map<string, ZeebeRestClient>()
+	private readonly zeebeGrpcApiClients = new Map<string, ZeebeGrpcClient>()
+	private readonly camundaRestClients = new Map<string, CamundaRestClient>()
+	private readonly operateApiClients = new Map<string, OperateApiClient>()
+	private readonly tasklistApiClients = new Map<string, TasklistApiClient>()
+	private readonly optimizeApiClients = new Map<string, OptimizeApiClient>()
+	private readonly adminApiClients = new Map<string, AdminApiClient>()
+	private readonly modelerApiClients = new Map<string, ModelerApiClient>()
+	private readonly zeebeRestClients = new Map<string, ZeebeRestClient>()
+	private readonly orchestrationRestClients = new Map<string, CamundaClient>()
+	private readonly orchestrationLooseClients = new Map<
+		string,
+		CamundaClientLoose
+	>()
 
 	// Client tracking for lifecycle management
-	private createdClients = new Set<ApiClient>()
+	private readonly createdClients = new Set<ApiClient>()
 
 	// Private framework integration hook
 	private __apiClientCreationListener?: (client: ApiClient) => void
 
 	// Global cache configuration
-	private defaultCached: boolean
+	private readonly defaultCached: boolean
 
 	// Core configuration
-	private configuration: CamundaPlatform8Configuration
-	private oAuthProvider: IHeadersProvider
+	private readonly configuration: CamundaPlatform8Configuration
+	private readonly oAuthProvider: IHeadersProvider
 	public log: Logger
 
 	/**
@@ -477,6 +493,77 @@ export class Camunda8 {
 		const client = this.createNewCamundaRestClient(config)
 		this.camundaRestClients.set(configKey, client)
 
+		return client
+	}
+
+	public getOrchestrationClusterApiClient(
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
+	): CamundaClient {
+		const { cached = this.defaultCached } = options
+
+		if (!cached) {
+			return this.createNewOrchestrationClusterApiClient(config)
+		}
+
+		const configKey = this.createConfigKey(config)
+
+		if (this.orchestrationRestClients.has(configKey)) {
+			return this.orchestrationRestClients.get(configKey)!
+		}
+
+		const client = this.createNewOrchestrationClusterApiClient(config)
+		this.orchestrationRestClients.set(configKey, client)
+
+		return client
+	}
+
+	/**
+	 * Returns a loosely-typed Orchestration Cluster API client.
+	 * This variant widens branded key types to primitive strings for progressive adoption.
+	 */
+	public getOrchestrationClusterApiClientLoose(
+		config: Camunda8ClientConfiguration = {},
+		options: ClientOptions = {}
+	): CamundaClientLoose {
+		const { cached = this.defaultCached } = options
+		if (!cached) {
+			return this.createNewOrchestrationClusterApiClientLoose(config)
+		}
+		const configKey = this.createConfigKey(config)
+		if (this.orchestrationLooseClients.has(configKey)) {
+			return this.orchestrationLooseClients.get(configKey)!
+		}
+		const client = this.createNewOrchestrationClusterApiClientLoose(config)
+		this.orchestrationLooseClients.set(configKey, client)
+		return client
+	}
+
+	private createNewOrchestrationClusterApiClientLoose(
+		config: Camunda8ClientConfiguration
+	): CamundaClientLoose {
+		const sdkMergedConfig = { ...this.configuration, ...config }
+		const envOverrides = translateToOcaEnvOverrides({
+			sdkConfig: sdkMergedConfig,
+		})
+		const client = createCamundaClientLoose({ config: envOverrides })
+		this.createdClients.add(client as unknown as ApiClient)
+		this.__apiClientCreationListener?.(client as unknown as ApiClient)
+		return client
+	}
+
+	private createNewOrchestrationClusterApiClient(
+		config: Camunda8ClientConfiguration
+	): CamundaClient {
+		// Progressive adoption: translate existing SDK config to OCA overrides and pass directly.
+		// No mutation of process.env required now that CamundaOptions.config is exposed upstream.
+		const sdkMergedConfig = { ...this.configuration, ...config }
+		const envOverrides = translateToOcaEnvOverrides({
+			sdkConfig: sdkMergedConfig,
+		})
+		const client = createCamundaClient({ config: envOverrides })
+		this.createdClients.add(client)
+		this.__apiClientCreationListener?.(client)
 		return client
 	}
 

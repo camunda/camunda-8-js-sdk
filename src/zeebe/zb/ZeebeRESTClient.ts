@@ -35,7 +35,8 @@ interface TaskChangeSet {
 }
 
 /**
- * @deprecated Since 8.6. Please use `CamundaRestClient` instead.
+ * @deprecated Since 8.6. For 8.7 use `CamundaRestClient` instead. For 8.8, use the Orchestration Cluster API client.
+ * ZeebeRESTClient
  */
 export class ZeebeRestClient {
 	private userAgentString: string

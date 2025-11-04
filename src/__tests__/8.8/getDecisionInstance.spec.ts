@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
 import { PollingOperation } from '../../'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
@@ -121,6 +121,7 @@ test.skip('CamundaRestClient.getDecisionInstance', () => {
 
 		let errorOccurred = false
 		try {
+			// @ts-expect-error Waiting for migration to OCA client
 			await client.getDecisionInstance(INVALID_KEY)
 		} catch (error) {
 			errorOccurred = true

@@ -14,7 +14,9 @@ See the [Getting Started Example](https://docs.camunda.io/docs/next/guides/getti
 
 The SDK provides clients for several Camunda 8 APIs.
 
-If you are doing a greenfield project on Camunda 8.8.0 or later, then you should use the Camunda Orchestration Cluster API with the `OrchestrationClusterApiClient`. This is a REST API that provides complete functionality in one API surface.
+If you are doing a greenfield project on Camunda 8.8.0 or later, then you should use the Camunda Orchestration Cluster API with the `getOrchestrationClusterApiClient`. This is a REST API that provides complete cluster functionality in one API surface. This client is strongly typed and provides strong types for request and response fields (eg: `ProcessInstanceKey`, `ProcessDefinitionId`, etc).
+
+To progressively adopt this client in existing projects alongside previous clients, you can call `getOrchestrationClusterApiClientLoose` to get a client that does not strongly type the request and response fields (they remain primitive scalar `string` type).
 
 ## What does "supported" mean?
 
@@ -48,8 +50,14 @@ import type { CamundaRestTypes} from '@camunda8/sdk'
 
 const c8 = new Camunda8()
 
-// Camunda 8 Orchestration API - recommended API from 8.8.0
-const restClient = c8.getCamundaRestClient()
+// Camunda 8 Orchestration Cluster API (STRICT client) - recommended from 8.8.0
+// Provides strongly typed request & response IDs (e.g. ProcessInstanceKey, ProcessDefinitionId)
+const orchestration = c8.getOrchestrationClusterApiClient()
+
+// Camunda 8 Orchestration Cluster API (LOOSE client) - progressive adoption variant
+// Same methods, but all IDs are plain string. Start here in existing codebases, then
+// migrate to the strict client when convenient.
+const orchestrationLoose = c8.getOrchestrationClusterApiClientLoose()
 
 // Zeebe gRPC client - not recommended for new users
 const zeebe = c8.getZeebeGrpcApiClient()
@@ -77,6 +85,77 @@ This allows you to cleanly separate the concern of configuration from your code 
 The complete documentation of all configuration parameters (environment variables) can be found [here](https://camunda.github.io/camunda-8-js-sdk/variables/index.CamundaSDKConfiguration.html).
 
 Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment. The configuration object fields and the environment variables have exactly the same names.
+
+## Orchestration Cluster API: Strict vs Loose Clients
+
+From Camunda 8.8 onwards the unified Orchestration Cluster API is the preferred interface. This SDK exposes it via two factory methods to enable smooth, incremental migration:
+
+| Factory | Purpose | ID / Key Types | Recommended Use |
+| ------- | ------- | -------------- | --------------- |
+| `getOrchestrationClusterApiClient()` | Strict (strongly typed) client | Branded TypeScript types (e.g. `ProcessInstanceKey`, `ProcessDefinitionId`) | Greenfield projects or code already prepared for branded types |
+| `getOrchestrationClusterApiClientLoose()` | Loose client | Plain `string` | Progressive adoption in existing code expecting raw string IDs |
+
+### Why two clients?
+
+Branded (nominal) types significantly reduce accidental mixing of unrelated IDs (for example passing a decision definition id where a process instance key is expected). However, adopting them in an existing codebase can require refactors across many modules. The loose client lets you start calling the new endpoints immediately without touching those modules. You can then migrate incrementally to the strict client as you update code.
+
+### Migration Path
+1. Introduce the loose client alongside existing v1 component clients: `const ocaLoose = c8.getOrchestrationClusterApiClientLoose()`.
+2. Replace calls to older clients (Operate / Tasklist / Optimize for read operations, Zeebe REST for workflow interactions) with equivalent Orchestration API calls using the loose client.
+3. When convenient, switch a module to the strict client: change imports to use `getOrchestrationClusterApiClient()` and address TypeScript compile errors by adopting the branded ID types (usually by propagating the type instead of `string`).
+4. Remove the loose client usage once all modules compile cleanly with the strict client.
+
+### REST Address Normalization (/v2)
+
+Set `ZEEBE_REST_ADDRESS` without the version suffix; the SDK will append `/v2` exactly once:
+
+```bash
+export ZEEBE_REST_ADDRESS='http://localhost:8888'
+```
+
+Results in effective base URL: `http://localhost:8888/v2`.
+
+If you include `/v2` already:
+
+```bash
+export ZEEBE_REST_ADDRESS='http://localhost:8888/v2'
+```
+
+It is preserved (not duplicated). Trailing slashes are stripped before normalization (`http://localhost:8888/` -> `http://localhost:8888/v2`).
+
+### Choosing Between Clients
+
+Use the strict client for new code, libraries, or examples where type safety improves clarity. Use the loose client when:
+- You need a rapid drop-in replacement without changing existing function signatures.
+- You are migrating many modules gradually.
+- You want to defer adoption of branded ID types until later.
+
+Both clients expose identical method names and behaviors; only the TypeScript surface differs. Runtime semantics and responses are otherwise equivalent.
+
+### Example (Strict vs Loose)
+
+```typescript
+import { Camunda8 } from '@camunda8/sdk'
+const c8 = new Camunda8()
+
+// Strict client (preferred once migrated)
+const oca = c8.getOrchestrationClusterApiClient()
+const proc = await oca.createProcessInstance({
+  bpmnProcessId: 'order-process',
+  variables: { orderId: 'A123' },
+})
+// proc.processInstanceKey is a branded type (not a plain string)
+
+// Loose client (progressive adoption)
+const ocaLoose = c8.getOrchestrationClusterApiClientLoose()
+const procLoose = await ocaLoose.createProcessInstance({
+  bpmnProcessId: 'order-process',
+  variables: { orderId: 'B456' },
+})
+// procLoose.processInstanceKey is a plain string
+```
+
+When converting code from loose to strict, remove unnecessary casts like `(key as string)` and allow the compiler to guide corrections where branded types surface.
 
 ## A note on how int64 is handled in the JavaScript SDK
 
