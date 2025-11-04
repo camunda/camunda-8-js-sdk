@@ -14,7 +14,7 @@ See the [Getting Started Example](https://docs.camunda.io/docs/next/guides/getti
 
 The SDK provides clients for several Camunda 8 APIs.
 
-If you are doing a greenfield project on Camunda 8.8.0 or later, then you should use the Camunda Orchestration Cluster API with the `getOrchestrationClusterApiClient`. This is a REST API that provides complete cluster functionality in one API surface. This client is strongly typed and provides strong types for request and response fields (eg: `ProcessInstanceKey`, `ProcessDefinitionId`, etc).
+If you are doing a greenfield project on Camunda 8.8.0 or later, then you should use the Camunda Orchestration Cluster API with `getOrchestrationClusterApiClient`. This is a REST API that provides complete cluster functionality in one API surface. This client is strongly typed and provides strong types for request and response fields (eg: `ProcessInstanceKey`, `ProcessDefinitionId`, etc).
 
 To progressively adopt this client in existing projects alongside previous clients, you can call `getOrchestrationClusterApiClientLoose` to get a client that does not strongly type the request and response fields (they remain primitive scalar `string` type).
 
@@ -45,9 +45,6 @@ The functionality of Camunda 8 is exposed via dedicated clients for the componen
 ```typescript
 import { Camunda8 } from '@camunda8/sdk'
 
-// Optional: Import types for CamundaRestClient requests and responses
-import type { CamundaRestTypes} from '@camunda8/sdk'
-
 const c8 = new Camunda8()
 
 // Camunda 8 Orchestration Cluster API (STRICT client) - recommended from 8.8.0
@@ -58,16 +55,6 @@ const orchestration = c8.getOrchestrationClusterApiClient()
 // Same methods, but all IDs are plain string. Start here in existing codebases, then
 // migrate to the strict client when convenient.
 const orchestrationLoose = c8.getOrchestrationClusterApiClientLoose()
-
-// Zeebe gRPC client - not recommended for new users
-const zeebe = c8.getZeebeGrpcApiClient()
-
-// Camunda v1 REST API clients
-const operate = c8.getOperateApiClient()
-const optimize = c8.getOptimizeApiClient()
-const tasklist = c8.getTasklistApiClient()
-const modeler = c8.getModelerApiClient()
-const admin = c8.getAdminApiClient()
 ```
 
 ## Configuration
@@ -141,7 +128,7 @@ const c8 = new Camunda8()
 // Strict client (preferred once migrated)
 const oca = c8.getOrchestrationClusterApiClient()
 const proc = await oca.createProcessInstance({
-  bpmnProcessId: 'order-process',
+  processDefinitionId: ProcessDefinitionId.assumeExists('order-process'),
   variables: { orderId: 'A123' },
 })
 // proc.processInstanceKey is a branded type (not a plain string)
@@ -149,13 +136,43 @@ const proc = await oca.createProcessInstance({
 // Loose client (progressive adoption)
 const ocaLoose = c8.getOrchestrationClusterApiClientLoose()
 const procLoose = await ocaLoose.createProcessInstance({
-  bpmnProcessId: 'order-process',
+  processDefinitionId: 'order-process',
   variables: { orderId: 'B456' },
 })
 // procLoose.processInstanceKey is a plain string
 ```
 
 When converting code from loose to strict, remove unnecessary casts like `(key as string)` and allow the compiler to guide corrections where branded types surface.
+
+### Lifting Legacy String IDs
+
+To migrate existing code that uses plain strings for identifiers without immediately switching every module to the strict client, you can "lift" those strings into branded key types incrementally.
+
+All branded key lifter namespaces are grouped under `OrchestrationLifters` so the root SDK export surface stays tidy:
+
+```typescript
+import { OrchestrationLifters } from '@camunda8/sdk'
+
+// Suppose you previously passed raw strings:
+const rawProcessInstanceKey = '2251799813685249'
+
+// Lift it to the branded type (runtime value is still a string, but type safety now applies):
+const processInstanceKey = OrchestrationLifters.ProcessInstanceKey.assumeExists(rawProcessInstanceKey)
+
+// Use with strict client
+const c8 = new Camunda8()
+const oca = c8.getOrchestrationClusterApiClient()
+await oca.cancelProcessInstance({ processInstanceKey })
+```
+
+Common helper: `assumeExists(value: string)` turns a known-valid legacy identifier into its branded equivalent. Use this when you are certain the ID refers to an existing entity (the lifter does not perform a network validation; it is purely nominal typing).
+
+Suggested incremental approach:
+1. Start by replacing output values first (e.g. responses from `createProcessInstance`) where the strict client already returns branded types.
+2. Introduce lifters at the boundaries where you still receive legacy strings (configuration, environment, persistence layer, legacy SDK modules).
+3. Remove lifters once those boundaries natively produce branded types.
+
+All available lifters (examples): `ProcessInstanceKey`, `ProcessDefinitionId`, `JobKey`, `ElementInstanceKey`, `DecisionDefinitionKey`, `FormKey`, `UserTaskKey`, `VariableKey`, etc. See `OrchestrationLifters` export for the complete list.
 
 ## A note on how int64 is handled in the JavaScript SDK
 

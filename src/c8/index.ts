@@ -20,6 +20,7 @@ import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
 // Progressive adoption bridge: translate existing SDK config into OCA env-style overrides
 import { translateToOcaEnvOverrides } from '../lib/CamundaClientConfigTranslator'
+import { CamundaSupportLogger } from '../lib/CamundaSupportLogger'
 
 import { getLogger, Logger } from './lib/C8Logger'
 import { CamundaRestClient } from './lib/CamundaRestClient'
@@ -546,7 +547,11 @@ export class Camunda8 {
 		const envOverrides = translateToOcaEnvOverrides({
 			sdkConfig: sdkMergedConfig,
 		})
-		const client = createCamundaClientLoose({ config: envOverrides })
+		// Pass existing support logger instance so OCA client reuses singleton (no duplicate init)
+		const client = createCamundaClientLoose({
+			config: envOverrides,
+			supportLogger: CamundaSupportLogger.getInstance(),
+		})
 		this.createdClients.add(client as unknown as ApiClient)
 		this.__apiClientCreationListener?.(client as unknown as ApiClient)
 		return client
@@ -561,7 +566,11 @@ export class Camunda8 {
 		const envOverrides = translateToOcaEnvOverrides({
 			sdkConfig: sdkMergedConfig,
 		})
-		const client = createCamundaClient({ config: envOverrides })
+		// Inject singleton support logger for unified diagnostic logging
+		const client = createCamundaClient({
+			config: envOverrides,
+			supportLogger: CamundaSupportLogger.getInstance(),
+		})
 		this.createdClients.add(client)
 		this.__apiClientCreationListener?.(client)
 		return client
