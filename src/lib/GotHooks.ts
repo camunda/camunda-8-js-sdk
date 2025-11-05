@@ -1,24 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { debug } from 'debug'
-import {
-	BeforeErrorHook,
-	BeforeRetryHook,
-	HTTPError as GotHTTPError,
-	HandlerFunction,
-	Method,
-	RequestError,
-} from 'got'
+import { BeforeRetryHook, HandlerFunction, Method, RequestError } from 'got'
 
 import { CamundaRestError } from '../c8/lib/C8Dto'
 
 import { asyncOperationContext } from './AsyncTrace'
 import { CamundaSupportLogger } from './CamundaSupportLogger'
-import { CamundaPlatform8Configuration } from './Configuration'
-import { HTTPError } from './GotErrors'
 
 const trace = debug('camunda:gotHooks')
 
-const supportLogger = CamundaSupportLogger.getInstance()
+export const supportLogger = CamundaSupportLogger.getInstance()
 
 /**
  * Capturing useful async stack traces is challenging with got.
@@ -35,6 +26,7 @@ export const beforeCallHook: HandlerFunction = (options, next) => {
 	const creationStack = asyncOperationContext.getStore()?.creationStack
 	const obj = {}
 	Error.captureStackTrace(obj, beforeCallHook)
+	Error.stackTraceLimit = 100
 	options.context.stack = creationStack
 		? `${creationStack}\n${(obj as any).stack as string}`
 		: ((obj as any).stack as string)
@@ -69,80 +61,6 @@ export const gotBeforeRetryHook: BeforeRetryHook = (_, error, retryCount) => {
 		}
 	}
 }
-
-/**
- * This function adds the call point to the error stack trace of got errors.
- * This enables users to see where the error originated from.
- *
- * It also logs the error to the Camunda Support log.
- * This is useful for debugging and support purposes.
- */
-export const gotBeforeErrorHook =
-	(config: CamundaPlatform8Configuration): BeforeErrorHook =>
-	(
-		error: RequestError & { statusCode?: number; source?: string[] } & {
-			options: { context: { stack?: string } }
-		}
-	) => {
-		const { request } = error
-		let detail = ''
-		if (error instanceof GotHTTPError) {
-			error = new HTTPError(error.response)
-			try {
-				const details = JSON.parse(
-					(error.response?.body as string) || '{detail:""}'
-				)
-				error.statusCode = details.status
-				detail = details ?? ''
-			} catch {
-				error.statusCode = 0
-			}
-		}
-		const enhancedStack = error.options.context.stack?.split('\n')
-		error.source = enhancedStack ?? ['No enhanced stack trace available']
-		const method = request?.options.method
-		const url = request?.options.url.href
-		error.message += ` (${method} ${url}). ${JSON.stringify(detail)}`
-		if (enhancedStack) {
-			error.message += `. Enhanced stack trace available as error.source.`
-		}
-
-		/** Hinting for error messages. See https://github.com/camunda/camunda-8-js-sdk/issues/456 */
-		/** Here we reason over the error and the configuration to enrich the message with hints */
-		if (error.message.includes('Invalid header token')) {
-			// This is a parse error, which means the response header was not valid JSON.
-			// Debugging for https://github.com/camunda/camunda-8-js-sdk/issues/491
-			error.message += ` (response headers: ${JSON.stringify(
-				error.response?.headers
-			)})`
-		}
-		if (error.code === '401') {
-			// the call was unauthorized
-			if (config.CAMUNDA_AUTH_STRATEGY === 'OAUTH') {
-				if (request?.options.headers?.authorization) {
-					/** This is a 401 error, but the token is set in the header */
-					error.message +=
-						' (this may be due to the client credentials not being authorized to access the resource)'
-					if (config.CAMUNDA_TENANT_ID) {
-						/** We're *probably* making a multi-tenant call. It might have been overridden in the call, but we don't have access to the body */
-						error.message += `. Is the client credential authorized in the tenant?`
-					}
-				}
-			}
-		}
-
-		/** Log details of errors to the Camunda Support log */
-		supportLogger.log('**ERROR**: Got error during Rest call:')
-		supportLogger.log({
-			code: error.code,
-			message: error.message,
-			stack: error.stack,
-			requestOptions: error.request?.options,
-			source: (error as any).source,
-		})
-
-		return error
-	}
 
 /**
  * Retry configuration for got requests.
