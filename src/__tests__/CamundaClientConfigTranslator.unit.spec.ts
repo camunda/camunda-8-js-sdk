@@ -13,7 +13,7 @@ describe('CamundaClientConfigTranslator.translateToOcaEnvOverrides', () => {
 	it('throws on unsupported auth strategy BEARER', () => {
 		expect(() =>
 			translateToOcaEnvOverrides({
-				sdkConfig: { CAMUNDA_AUTH_STRATEGY: 'BEARER' as any },
+				sdkConfig: { CAMUNDA_AUTH_STRATEGY: 'BEARER' },
 			})
 		).toThrow()
 	})
