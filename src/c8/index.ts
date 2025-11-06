@@ -17,7 +17,7 @@ import { IHeadersProvider } from '../oauth'
 import { OperateApiClient } from '../operate'
 import { OptimizeApiClient } from '../optimize'
 import { TasklistApiClient } from '../tasklist'
-import { ZeebeGrpcClient, ZeebeRestClient } from '../zeebe'
+import { ZeebeGrpcClient } from '../zeebe'
 // Progressive adoption bridge: translate existing SDK config into OCA env-style overrides
 import { translateToOcaEnvOverrides } from '../lib/CamundaClientConfigTranslator'
 import { CamundaSupportLogger } from '../lib/CamundaSupportLogger'
@@ -34,7 +34,6 @@ type ApiClient =
 	| OptimizeApiClient
 	| AdminApiClient
 	| ModelerApiClient
-	| ZeebeRestClient
 	| CamundaClient
 	| CamundaClientLoose
 
@@ -78,7 +77,6 @@ export class Camunda8 {
 	private readonly optimizeApiClients = new Map<string, OptimizeApiClient>()
 	private readonly adminApiClients = new Map<string, AdminApiClient>()
 	private readonly modelerApiClients = new Map<string, ModelerApiClient>()
-	private readonly zeebeRestClients = new Map<string, ZeebeRestClient>()
 	private readonly orchestrationRestClients = new Map<string, CamundaClient>()
 	private readonly orchestrationLooseClients = new Map<
 		string,
@@ -189,7 +187,6 @@ export class Camunda8 {
 		this.optimizeApiClients.clear()
 		this.adminApiClients.clear()
 		this.modelerApiClients.clear()
-		this.zeebeRestClients.clear()
 	}
 
 	/**
@@ -422,45 +419,6 @@ export class Camunda8 {
 		config: Camunda8ClientConfiguration
 	): ZeebeGrpcClient {
 		const client = new ZeebeGrpcClient({
-			config: { ...this.configuration, ...config },
-			oAuthProvider: this.oAuthProvider,
-		})
-
-		this.createdClients.add(client)
-		this.__apiClientCreationListener?.(client)
-
-		return client
-	}
-
-	/**
-	 * @deprecated from 8.6.0. Please use getCamundaRestClient() instead.
-	 */
-	public getZeebeRestClient(
-		config: Camunda8ClientConfiguration = {},
-		options: ClientOptions = {}
-	): ZeebeRestClient {
-		const { cached = this.defaultCached } = options
-
-		if (!cached) {
-			return this.createNewZeebeRestClient(config)
-		}
-
-		const configKey = this.createConfigKey(config)
-
-		if (this.zeebeRestClients.has(configKey)) {
-			return this.zeebeRestClients.get(configKey)!
-		}
-
-		const client = this.createNewZeebeRestClient(config)
-		this.zeebeRestClients.set(configKey, client)
-
-		return client
-	}
-
-	private createNewZeebeRestClient(
-		config: Camunda8ClientConfiguration
-	): ZeebeRestClient {
-		const client = new ZeebeRestClient({
 			config: { ...this.configuration, ...config },
 			oAuthProvider: this.oAuthProvider,
 		})

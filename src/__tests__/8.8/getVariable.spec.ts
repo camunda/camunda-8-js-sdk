@@ -15,7 +15,7 @@ const restClient = new CamundaRestClient()
 vi.setConfig({ testTimeout: 30_000 })
 
 afterAll(() => {
-	worker && worker.stop()
+	worker?.stop()
 })
 
 beforeAll(async () => {
