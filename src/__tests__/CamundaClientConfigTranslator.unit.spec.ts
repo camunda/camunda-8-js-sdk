@@ -3,6 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { translateToOcaEnvOverrides } from '../lib/CamundaClientConfigTranslator'
 
 describe('CamundaClientConfigTranslator.translateToOcaEnvOverrides', () => {
+	it('derived sdk client id overrides process env CAMUNDA_CLIENT_ID', () => {
+		const original = process.env.CAMUNDA_CLIENT_ID
+		process.env.CAMUNDA_CLIENT_ID = 'env-client'
+		const result = translateToOcaEnvOverrides({
+			sdkConfig: { ZEEBE_CLIENT_ID: 'abc' },
+		})
+		process.env.CAMUNDA_CLIENT_ID = original
+		expect(result.CAMUNDA_CLIENT_ID).toBe('abc')
+	})
 	it('maps auth strategy NONE', () => {
 		const result = translateToOcaEnvOverrides({
 			sdkConfig: { CAMUNDA_AUTH_STRATEGY: 'NONE' },
@@ -31,12 +40,22 @@ describe('CamundaClientConfigTranslator.translateToOcaEnvOverrides', () => {
 	})
 
 	it('falls back to console client id if Zeebe id absent', () => {
+		const stored = process.env.ZEEBE_CLIENT_ID
+		const storedCamundaClient = process.env.CAMUNDA_CLIENT_ID
+		const storedConsoleClient = process.env.CAMUNDA_CONSOLE_CLIENT_ID
+		delete process.env.ZEEBE_CLIENT_ID
+		delete process.env.CAMUNDA_CLIENT_ID
+		delete process.env.CAMUNDA_CONSOLE_CLIENT_ID
 		const result = translateToOcaEnvOverrides({
 			sdkConfig: {
 				CAMUNDA_AUTH_STRATEGY: 'OAUTH',
 				CAMUNDA_CONSOLE_CLIENT_ID: 'console-id',
 			},
 		})
+		process.env.ZEEBE_CLIENT_ID = stored
+		if (storedCamundaClient) process.env.CAMUNDA_CLIENT_ID = storedCamundaClient
+		if (storedConsoleClient)
+			process.env.CAMUNDA_CONSOLE_CLIENT_ID = storedConsoleClient
 		expect(result.CAMUNDA_CLIENT_ID).toBe('console-id')
 	})
 
@@ -111,7 +130,7 @@ describe('CamundaClientConfigTranslator.translateToOcaEnvOverrides', () => {
 		expect(result.CAMUNDA_DEFAULT_TENANT_ID).toBe('t-123')
 	})
 
-	it('OCA env key shadows SDK derived value', () => {
+	it('explicit env param shadows SDK derived value (maintains precedence)', () => {
 		const result = translateToOcaEnvOverrides({
 			env: { CAMUNDA_CLIENT_ID: 'env-client' },
 			sdkConfig: { ZEEBE_CLIENT_ID: 'sdk-client' },

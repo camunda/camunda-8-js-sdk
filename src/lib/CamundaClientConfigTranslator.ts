@@ -72,28 +72,41 @@ export function translateToOcaEnvOverrides(
 ): EnvOverrides {
 	const { sdkConfig, ocaOverrides, env } = options
 	const sourceEnv = env ?? process.env
+	const explicitEnvProvided = env !== undefined
 
 	// Merge SDK config with environment
 	const mergedSdk = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 		sdkConfig ?? {}
 	) as Camunda8ClientConfiguration
 
-	const overrides: EnvOverrides = { ...(ocaOverrides ?? {}) }
+	const overrides: EnvOverrides = ocaOverrides ? { ...ocaOverrides } : {}
 
 	const setIfAbsent = (
 		key: keyof EnvOverrides,
 		value: string | number | boolean | undefined
 	) => {
-		// If an explicit override already exists, do nothing.
+		// If already explicitly overridden, skip
 		if (overrides[key] !== undefined) return
-		const existingEnv = normalizeEmpty(sourceEnv[key as string])
-		if (existingEnv !== undefined) {
-			// Promote existing OCA env value into overrides for explicitness
-			overrides[key] = existingEnv
+		const existingEnv = normalizeEmpty(sourceEnv[key])
+		if (explicitEnvProvided) {
+			// Explicit env argument wins over derived value
+			if (existingEnv !== undefined) {
+				overrides[key] = existingEnv
+				return
+			}
+			if (value !== undefined) {
+				overrides[key] = value
+			}
 			return
 		}
-		if (value === undefined) return
-		overrides[key] = value
+		// No explicit env provided: derived value wins over process.env, unless derived is undefined.
+		if (value !== undefined) {
+			overrides[key] = value
+			return
+		}
+		if (existingEnv !== undefined) {
+			overrides[key] = existingEnv
+		}
 	}
 
 	// Auth strategy
@@ -108,10 +121,22 @@ export function translateToOcaEnvOverrides(
 	setIfAbsent('CAMUNDA_AUTH_STRATEGY', sdkAuth)
 
 	// Client credentials
-	const clientId =
-		normalizeEmpty(mergedSdk.ZEEBE_CLIENT_ID) ??
-		normalizeEmpty(mergedSdk.CAMUNDA_CONSOLE_CLIENT_ID)
-	setIfAbsent('CAMUNDA_CLIENT_ID', clientId)
+	const deriveClientId = (): string | undefined => {
+		const envClientId = normalizeEmpty(sourceEnv.CAMUNDA_CLIENT_ID)
+		const sdkProvided = sdkConfig ? Object.keys(sdkConfig) : []
+		const zeebeExplicit = sdkProvided.includes('ZEEBE_CLIENT_ID')
+		const sdkZeebe = zeebeExplicit
+			? normalizeEmpty(mergedSdk.ZEEBE_CLIENT_ID)
+			: undefined // ignore environment-sourced Zeebe ID if not explicitly provided
+		const sdkConsole = normalizeEmpty(mergedSdk.CAMUNDA_CONSOLE_CLIENT_ID)
+		if (explicitEnvProvided && envClientId) return envClientId // explicit env wins
+		if (sdkZeebe) return sdkZeebe // Zeebe credentials take precedence
+		if (sdkConsole) return sdkConsole // fallback to console client id
+		if (!explicitEnvProvided && envClientId) return envClientId // ambient env last resort
+		return undefined
+	}
+	const resolvedClientId = deriveClientId()
+	if (resolvedClientId) overrides.CAMUNDA_CLIENT_ID = resolvedClientId
 	const clientSecret =
 		normalizeEmpty(mergedSdk.ZEEBE_CLIENT_SECRET) ??
 		normalizeEmpty(mergedSdk.CAMUNDA_CONSOLE_CLIENT_SECRET)
