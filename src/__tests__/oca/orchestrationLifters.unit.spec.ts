@@ -9,8 +9,11 @@ describe('OrchestrationLifters', () => {
 	it('lifts a raw process instance key string to a branded type', () => {
 		const raw = '2251799813685249'
 		const lifted = OrchestrationLifters.ProcessInstanceKey.assumeExists(raw)
+		// Type-level check: assignment should compile (ProcessInstanceKey brand)
+		const branded: OrchestrationLifters.ProcessInstanceKey = lifted
 		// Runtime value should be identical to the original string
 		expect(lifted).toBe(raw)
+		expect(branded).toBe(lifted)
 	})
 
 	it('exposes multiple lifter namespaces (spot check)', () => {

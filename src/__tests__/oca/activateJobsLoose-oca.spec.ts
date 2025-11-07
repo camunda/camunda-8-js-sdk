@@ -1,11 +1,11 @@
 import path from 'node:path'
 
-import { Camunda8, OrchestrationLifters } from '../../index'
+import { Camunda8 } from '../../index'
 import { matrix } from '../../test-support/testTags'
 
-let processDefinitionId: OrchestrationLifters.ProcessDefinitionId
+let processDefinitionId: string
 const camunda = new Camunda8()
-const ocaClient = camunda.getOrchestrationClusterApiClient()
+const ocaClient = camunda.getOrchestrationClusterApiClientLoose()
 
 beforeAll(async () => {
 	const res = await ocaClient.deployResourcesFromFiles([
@@ -31,10 +31,7 @@ test.runIf(
 	})
 )('Can service a job via OCA', async () => {
 	await ocaClient.createProcessInstance({
-		processDefinitionId:
-			OrchestrationLifters.ProcessDefinitionId.assumeExists(
-				processDefinitionId
-			),
+		processDefinitionId,
 		variables: {
 			someNumberField: 8,
 		},

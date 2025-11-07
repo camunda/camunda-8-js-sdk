@@ -50,3 +50,8 @@ export const Dto = {
 
 export * as CamundaRestApiTypes from './c8/lib/C8Dto'
 export { OrchestrationLifters } from './oca/lifters'
+
+// Progressive adoption: re-export selected Orchestration Cluster API types so users can
+// import from '@camunda8/sdk' instead of reaching into the underlying package.
+// Keeps branded IDs consistent while hiding implementation detail.
+export type { ProcessDefinitionId } from '@camunda8/orchestration-cluster-api'

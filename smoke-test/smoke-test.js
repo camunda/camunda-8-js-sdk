@@ -43,7 +43,9 @@ const operate = camunda.getOperateApiClient()
 
 // console.log(operate)
 
-const zeebeRest = camunda.getZeebeRestClient()
+const getOrchestrationClusterApiClient = camunda.getOrchestrationClusterApiClient()
+
+const getOrchestrationClusterApiClientLoose = camunda.getOrchestrationClusterApiClientLoose()
 
 // console.log(zeebeRest)
 
