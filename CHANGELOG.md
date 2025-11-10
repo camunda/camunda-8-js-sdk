@@ -1,3 +1,10 @@
+## [8.8.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.0...v8.8.1) (2025-11-10)
+
+
+### Bug Fixes
+
+* update oca client ([0a9d716](https://github.com/camunda/camunda-8-js-sdk/commit/0a9d7162a687a8f5f1b92239153a2d495fc9748e))
+
 # [8.8.0](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.33...v8.8.0) (2025-11-10)
 
 
