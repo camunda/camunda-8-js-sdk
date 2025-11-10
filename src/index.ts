@@ -1,6 +1,6 @@
-import * as Admin from './admin'
-import { Camunda8 } from './c8'
-import { CamundaRestClient } from './c8/lib/CamundaRestClient'
+export * as Admin from './admin'
+export { Camunda8 } from './c8'
+export { CamundaRestClient } from './c8/lib/CamundaRestClient'
 import {
 	BigIntValue,
 	BigIntValueArray,
@@ -11,12 +11,13 @@ import {
 	createDtoInstance,
 } from './lib'
 import { CamundaSupportLogger } from './lib/CamundaSupportLogger'
-import * as Modeler from './modeler'
-import * as Auth from './oauth'
-import * as Operate from './operate'
-import * as Optimize from './optimize'
-import * as Tasklist from './tasklist'
-import * as Zeebe from './zeebe'
+
+export * as Modeler from './modeler'
+export * as Auth from './oauth'
+export * as Operate from './operate'
+export * as Optimize from './optimize'
+export * as Tasklist from './tasklist'
+export * as Zeebe from './zeebe'
 
 export { PollingOperation } from './lib/PollingOperation'
 export { QuerySubscription } from './lib/QuerySubscription'
@@ -47,16 +48,10 @@ export const Dto = {
 	createDtoInstance,
 }
 
-export {
-	Admin,
-	Auth,
-	Camunda8,
-	CamundaRestClient,
-	Modeler,
-	Operate,
-	Optimize,
-	Tasklist,
-	Zeebe,
-}
-
 export * as CamundaRestApiTypes from './c8/lib/C8Dto'
+export { OrchestrationLifters } from './oca/lifters'
+
+// Progressive adoption: re-export selected Orchestration Cluster API types so users can
+// import from '@camunda8/sdk' instead of reaching into the underlying package.
+// Keeps branded IDs consistent while hiding implementation detail.
+export type { ProcessDefinitionId } from '@camunda8/orchestration-cluster-api'

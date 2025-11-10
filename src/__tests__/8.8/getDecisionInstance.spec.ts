@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
 import { PollingOperation } from '../../'
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
@@ -51,13 +51,16 @@ test.skip('CamundaRestClient.getDecisionInstance', () => {
 	test.skip('should fetch a decision instance and return all documented fields', async () => {
 		const res = await PollingOperation({
 			operation: () =>
+				// @ts-expect-error Waiting for migration to OCA client
 				client.searchDecisionInstances({ filter: { decisionEvaluationKey } }),
 			interval: 100,
 			timeout: 6000,
 		})
 
 		// Now use the created decision instance key
+		// @ts-expect-error Waiting for migration to OCA client
 		const result = await client.getDecisionInstance(
+			// @ts-expect-error Waiting for migration to OCA client
 			res.items[0].decisionInstanceId
 		)
 
@@ -121,6 +124,7 @@ test.skip('CamundaRestClient.getDecisionInstance', () => {
 
 		let errorOccurred = false
 		try {
+			// @ts-expect-error Waiting for migration to OCA client
 			await client.getDecisionInstance(INVALID_KEY)
 		} catch (error) {
 			errorOccurred = true
