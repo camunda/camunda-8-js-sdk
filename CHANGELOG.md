@@ -1,3 +1,20 @@
+# [8.8.0](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.33...v8.8.0) (2025-11-10)
+
+
+### Bug Fixes
+
+* export OrchestrationLifter types as namespace ([8d86756](https://github.com/camunda/camunda-8-js-sdk/commit/8d8675613c9d668cc59b530aa2bd481ee8e60f98))
+* oca config translation precedence ([20721a9](https://github.com/camunda/camunda-8-js-sdk/commit/20721a9d4577d8805a03d04ddf2a1a57c6fba6fc))
+* update oca client ([8d5f1f4](https://github.com/camunda/camunda-8-js-sdk/commit/8d5f1f40ceba927932a9e3f16fa2ee4c0b65d26e))
+* update oca dep ([2b88f8c](https://github.com/camunda/camunda-8-js-sdk/commit/2b88f8ca9440eae5192074a582c71d6ac57c3973))
+* update oca dependency ([22d2438](https://github.com/camunda/camunda-8-js-sdk/commit/22d24381a059bf0195da3e807f7d71c739791607))
+
+
+### Features
+
+* improve async error trace ([9f00874](https://github.com/camunda/camunda-8-js-sdk/commit/9f00874a5322f6279ae44441f9c90c190018a1c5))
+* integrate new OCA client ([278731a](https://github.com/camunda/camunda-8-js-sdk/commit/278731a27238fa614ba955bdbe575c5e81519c93))
+
 ## [8.7.33](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.32...v8.7.33) (2025-10-30)
 
 
