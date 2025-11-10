@@ -1,6 +1,6 @@
-import fs from 'fs'
-import * as os from 'os'
-import path from 'path'
+import fs from 'node:fs'
+import * as os from 'node:os'
+import path from 'node:path'
 
 import mergeWith from 'lodash.mergewith'
 
@@ -15,8 +15,8 @@ import {
 
 export class CamundaSupportLogger {
 	private static instance: CamundaSupportLogger
-	private enabled: boolean | undefined
-	private filepath: string
+	private readonly enabled: boolean | undefined
+	private readonly filepath: string
 
 	private constructor(config?: DeepPartial<CamundaPlatform8Configuration>) {
 		const mergedConfig =

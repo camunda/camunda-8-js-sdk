@@ -15,7 +15,7 @@ const restClient = new CamundaRestClient()
 vi.setConfig({ testTimeout: 30_000 })
 
 afterAll(() => {
-	worker && worker.stop()
+	worker?.stop()
 })
 
 beforeAll(async () => {
@@ -58,7 +58,8 @@ test.runIf(
 						interval: 500,
 						timeout: 5000,
 					})
-
+					expect(variables.items.length).toBeGreaterThanOrEqual(1)
+					expect(variables.items[0].name).toBe('someVariableField')
 					const { variableKey } = variables.items[0]
 
 					const variable = await PollingOperation({

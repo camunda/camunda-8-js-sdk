@@ -536,7 +536,7 @@ type ConfigWithMiddleware = CamundaPlatform8Configuration & {
 }
 
 export class CamundaEnvironmentConfigurator {
-	public static mergeConfigWithEnvironment = (
+	public static readonly mergeConfigWithEnvironment = (
 		config: DeepPartial<ConfigWithMiddleware>
 	): ConfigWithMiddleware => {
 		const mergedConfig = mergeWith({}, CamundaSDKConfiguration, config)

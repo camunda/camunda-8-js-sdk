@@ -7,7 +7,6 @@ import { parse, stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
 import {
-	beforeCallHook,
 	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -97,14 +96,20 @@ import {
 } from './C8DtoInternal'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaJobWorker, CamundaJobWorkerConfig } from './CamundaJobWorker'
+import { TraceOrigin } from './OriginTracing'
 import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
+import { createTrackedGot } from './TrackedGot'
 
 const trace = debug('camunda:orchestration-rest')
+
+// Storage moved to TrackedGot.ts and imported above
 
 const CAMUNDA_REST_API_VERSION = 'v2'
 
 class DefaultLosslessDto extends LosslessDto {}
+
+// createTrackedGot imported from TrackedGot.ts
 
 /**
  * The client for the unified Camunda 8 Orchestration Cluster REST API.
@@ -117,16 +122,17 @@ class DefaultLosslessDto extends LosslessDto {}
  *
  * @since 8.6.0
  */
+@TraceOrigin
 export class CamundaRestClient {
-	private userAgentString: string
+	private readonly userAgentString: string
 	protected oAuthProvider: IHeadersProvider
-	private rest: Promise<typeof got>
-	private tenantId?: string
+	private readonly rest: Promise<typeof got>
+	private readonly tenantId?: string
 	public log: Logger
-	private config: CamundaPlatform8Configuration
-	private prefixUrl: string
+	private readonly config: CamundaPlatform8Configuration
+	private readonly prefixUrl: string
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	private workers: CamundaJobWorker<any, any>[] = []
+	private readonly workers: CamundaJobWorker<any, any>[] = []
 
 	/**
 	 * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
@@ -163,29 +169,55 @@ export class CamundaRestClient {
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
-					prefixUrl: this.prefixUrl,
-					retry: GotRetryConfig,
-					https: {
-						certificateAuthority,
-					},
-					handlers: [beforeCallHook],
-					hooks: {
-						beforeError: [gotBeforeErrorHook(config)],
-						beforeRequest: [
-							(options) => {
-								const body = options.body
-								const path = options.url.href
-								const method = options.method
-								trace(`${method} ${path}`)
-								trace(body)
-								this.log.debug(`${method} ${path}`)
-								this.log.trace(body?.toString())
-							},
-							...(config.middleware ?? []),
-						],
-					},
-				})
+				createTrackedGot(
+					got.extend({
+						prefixUrl: this.prefixUrl,
+						retry: GotRetryConfig,
+						https: {
+							certificateAuthority,
+						},
+						handlers: [],
+						hooks: {
+							beforeError: [gotBeforeErrorHook(config)],
+							beforeRequest: [
+								(options) => {
+									const body = options.body
+									const path = options.url.href
+									const method = options.method
+									trace(`${method} ${path}`)
+									trace(body)
+									this.log.debug(`${method} ${path}`)
+									this.log.trace(body?.toString())
+
+									const traceData = options.context?.__stackTrace as
+										| {
+												stacks: { location: string }[]
+												requestId: string
+												capturedAt: number
+										  }
+										| undefined
+
+									if (traceData) {
+										this.log.debug(`\n${'='.repeat(70)}`)
+										this.log.debug(`HTTP Request [${traceData.requestId}]`)
+										this.log.debug(`${'='.repeat(70)}`)
+										this.log.debug(`URL: ${options.method} ${options.url.href}`)
+										this.log.debug(
+											`\nCall Chain (${traceData.stacks.length} frames):`
+										)
+
+										traceData.stacks.forEach((entry, i) => {
+											this.log.debug(`  ${i + 1}. ${entry.location}`)
+										})
+
+										this.log.debug(`${'='.repeat(70)}\n`)
+									}
+								},
+								...(config.middleware ?? []),
+							],
+						},
+					})
+				)
 		)
 	}
 
@@ -729,7 +761,7 @@ export class CamundaRestClient {
 								error.code = '503'
 								error.statusCode = 503
 							}
-							error.message = `Server is experiencing backpressure and cannot accept job activations at this time: ${error.message}`
+							error.message = `Server is experiencing backpressure and cannot accept job activations at this time: ${error.originalMessage}\n`
 						}
 						reject(error)
 					})
@@ -1636,7 +1668,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 			onCancel.shouldReject = false
 			onCancel(() => {
 				cancelled = true
-				if (gotRequest && !gotRequest.isCanceled) {
+				if (gotRequest !== undefined && !gotRequest.isCanceled) {
 					gotRequest.cancel(`REST operation cancelled`)
 				}
 			})

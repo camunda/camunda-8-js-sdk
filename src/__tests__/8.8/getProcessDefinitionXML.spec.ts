@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { PollingOperation } from '../../lib/PollingOperation'
 import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
@@ -19,7 +20,12 @@ test.runIf(
 		'./src/__tests__/testdata/SearchProcessInstances.bpmn',
 	])
 	const key = res.processes[0].processDefinitionKey
-	const processXML = await c8.getProcessDefinitionXML(key)
+	const processXML = await PollingOperation({
+		operation: () => c8.getProcessDefinitionXML(key),
+		predicate: (xml) => typeof xml === 'string' && xml.length > 0,
+		timeout: 10_000,
+		interval: 500,
+	})
 
 	// Validate the XML string response
 	expect(typeof processXML).toBe('string')

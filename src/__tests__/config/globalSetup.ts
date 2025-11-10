@@ -1,8 +1,7 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 
 // eslint-disable-next-line import/order
-import wtf from 'wtfnode'
 
 import { HTTPError } from 'got'
 
@@ -11,15 +10,20 @@ import { OAuthProvider } from '../../oauth'
 import { OperateApiClient } from '../../operate'
 import { BpmnParser, ZeebeGrpcClient } from '../../zeebe'
 
+function log(message: string) {
+	if (process.env.CAMUNDA_TEST_VERBOSE_LOGGING === 'true')
+		log(`[globalSetup] ${message}`)
+}
+
 async function cleanup() {
 	// Your cleanup process here.
-	console.log('Removing all cached OAuth tokens...')
+	log('Removing all cached OAuth tokens...')
 	OAuthProvider.clearCacheDir()
 	if (process.env.CAMUNDA_UNIT_TEST == 'true') {
 		// We are not running in an integration environment, so we can skip the rest of the cleanup
 		return
 	}
-	console.log('[setup] Removing any running test process instances...')
+	log('Removing any running test process instances...')
 	const filePath = path.join(__dirname, '..', 'testdata')
 	const files = fs
 		.readdirSync(filePath)
@@ -33,11 +37,15 @@ async function cleanup() {
 	)
 
 	if (process.env.TEST_VERSION === '8.8') {
-		console.log(`Searching for existing process instances using 8.8 client`)
-		return cleanup8_8(processIds).then(() => wtf.dump())
+		log(`Searching for existing process instances using 8.8 client`)
+		return cleanup8_8(processIds).then(() => {
+			/* wtf.dump() */
+		})
 	} else {
-		console.log(`Searching for existing process instances using 8.7 client`)
-		return cleanup8_7(processIds).then(() => wtf.dump())
+		log(`Searching for existing process instances using 8.7 client`)
+		return cleanup8_7(processIds).then(() => {
+			/* wtf.dump() */
+		})
 	}
 }
 
@@ -62,16 +70,16 @@ async function cleanup8_8(processIds) {
 						},
 					})
 					.catch((e) => {
-						console.log(`Error searching for process instances`)
-						console.log(e.message)
+						log(`Error searching for process instances`)
+						log(e.message)
 						return { items: [] }
 					})
 				const instancesKeys = processes.items.map(
 					(instance) => instance.processInstanceKey
 				)
 				if (instancesKeys.length > 0) {
-					console.log(
-						`[setup] Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
+					log(
+						`Cancelling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
 					)
 				}
 				for (const key of instancesKeys) {
@@ -79,12 +87,14 @@ async function cleanup8_8(processIds) {
 						const res = await camunda.cancelProcessInstance({
 							processInstanceKey: key,
 						})
-						console.log(`[setup] Cancelled process instance ${key}`)
-						console.log('res', JSON.stringify(res, null, 2))
+						log(`Cancelled process instance ${key}`)
+						log('res')
+						log(JSON.stringify(res, null, 2))
 					} catch (e) {
 						if (!(e as HTTPError).message.includes('404')) {
-							console.log('[setup] Failed to cancel process instance', key)
-							console.log((e as Error).message)
+							log('Failed to cancel process instance')
+							log(key)
+							log((e as Error).message)
 						}
 					}
 				}
@@ -101,7 +111,7 @@ async function cleanup8_7(processIds) {
 	})
 	// Wait for the zeebe.connected property to be true
 	// while (!zeebe.connected) {
-	// 	// console.log('Waiting for Zeebe connection...')
+	// 	// log('Waiting for Zeebe connection...')
 	// 	await new Promise((resolve) => setTimeout(resolve, 100))
 	// }
 	for (const id of processIds) {
@@ -124,19 +134,20 @@ async function cleanup8_7(processIds) {
 
 				const instancesKeys = res.items.map((instance) => instance.key)
 				if (instancesKeys.length > 0) {
-					console.log(
-						`[setup] Canceling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
+					log(
+						`Canceling ${instancesKeys.length} instances for ${id} in tenant '${tenantId}'...`
 					)
 				}
 				for (const key of instancesKeys) {
 					try {
 						// await operate.deleteProcessInstance(key)
 						await zeebe.cancelProcessInstance(key)
-						console.log(`[setup] Canceled process instance ${key}`)
+						log(`Canceled process instance ${key}`)
 					} catch (e) {
 						if (!(e as Error).message.startsWith('5 NOT_FOUND')) {
-							console.log(`[setup] Failed to cancel process instance`, key)
-							console.log((e as Error).message)
+							log(`Failed to cancel process instance`)
+							log(key)
+							log((e as Error).message)
 						}
 					}
 				}

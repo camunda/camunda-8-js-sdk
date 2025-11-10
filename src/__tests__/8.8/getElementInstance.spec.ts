@@ -39,9 +39,13 @@ test.runIf(
 	})
 
 	expect(elementInstances).toBeDefined()
-	const elementInstance = await c8.getElementInstance(
-		elementInstances.items[0].elementInstanceKey
-	)
+	const elementInstance = await PollingOperation({
+		operation: () =>
+			c8.getElementInstance(elementInstances.items[0].elementInstanceKey),
+		predicate: (ei) => ei !== undefined,
+		timeout: 5000,
+		interval: 500,
+	})
 
 	// Assertions for every field in ElementInstanceDetails
 	expect(elementInstance.elementId).toBe('StartEvent_1')
