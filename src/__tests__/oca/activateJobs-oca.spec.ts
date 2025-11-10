@@ -100,3 +100,42 @@ test.runIf(
 	res.cancel()
 	await expect(res).rejects.toMatchObject({ name: 'CancelSdkError' })
 })
+
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('Can service a job via a job worker', async () => {
+	const worker = ocaClient.createJobWorker({
+		jobType: 'console-log-complete-rest',
+		workerName: 'test-worker',
+		maxParallelJobs: 20,
+		pollIntervalMs: 1000,
+		pollTimeoutMs: 5000,
+		jobTimeoutMs: 5000,
+		jobHandler: (job) => {
+			// Validate job fields
+			expect(job.jobKey).toBeDefined()
+			expect(job.type).toBe('console-log-complete-rest')
+			expect(job.variables['someNumberField']).toBe(8)
+			// Complete the job
+			return job.complete({
+				someNumberField: -1,
+			})
+		},
+	})
+	const result = await ocaClient.createProcessInstance({
+		processDefinitionId,
+		variables: {
+			someNumberField: 8,
+		},
+		awaitCompletion: true,
+	})
+	expect(result.variables.someNumberField).toBe(-1)
+	worker.stop()
+})
