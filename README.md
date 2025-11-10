@@ -4,17 +4,21 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-[Full API Docs](https://camunda.github.io/camunda-8-js-sdk/).
+[SDK API docs](https://camunda.github.io/camunda-8-js-sdk/).
+[Orchestration Cluster API Client full API docs](https://camunda.github.io/orchestration-cluster-api-js/classes/index.CamundaClient.html).
 
-This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79). If you need to run an application in the web browser, then look at [@camunda8/orchestration-cluster-api](https://www.npmjs.com/package/@camunda8/orchestration-cluster-api).
+This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this SDK does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
+
+If you need to run an application in the web browser, then look at using the [@camunda8/orchestration-cluster-api](https://www.npmjs.com/package/@camunda8/orchestration-cluster-api) package directly.
 
 See the [Getting Started Example](https://docs.camunda.io/docs/next/guides/getting-started-example/) in the Camunda Docs for a quick start.
 
 ## Which package should I use?
 
-This SDK provides API clients for various versions of Camunda 8. If you are doing a greenfield project on Camunda 8.8 or later, then you should consider using [@camunda8/orchestration-cluster-api](https://www.npmjs.com/package/@camunda8/orchestration-cluster-api). That package provides a client for the Camunda 8 Orchestration Cluster API, a REST API with (almost) complete functionality.
+This SDK provides API clients for various versions of Camunda 8. If you are doing a greenfield project on Camunda 8.8 or later, then you should consider directly using the [@camunda8/orchestration-cluster-api](https://www.npmjs.com/package/@camunda8/orchestration-cluster-api) package. That package provides a client for the Camunda 8 Orchestration Cluster API, a REST API with full functionality.
 
 This SDK includes that client, but relying on this SDK package pulls in other API clients, which - if you are not using them - exposes you to several factors:
+
 * Increased dependency size for dependencies that are irrelevant to your application
 * Node.js only. The other package runs in the browser.
 
@@ -62,7 +66,7 @@ npm i @camunda8/sdk
 
 ## Usage
 
-The functionality of Camunda 8 is exposed via dedicated clients for the component APIs. The recommended API client for Camunda 8.8 is the Orchestration Cluster API, using the `CamundaRestClient`.
+The functionality of Camunda 8 is exposed via dedicated clients for the component APIs. The recommended API client for Camunda 8.8 is the Orchestration Cluster API, using the `CamundaClient` returned by `getOrchestrationClusterApiClient()`.
 
 ```typescript
 import { Camunda8 } from '@camunda8/sdk'
