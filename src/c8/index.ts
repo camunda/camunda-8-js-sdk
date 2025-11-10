@@ -455,6 +455,20 @@ export class Camunda8 {
 		return client
 	}
 
+	/**
+	 * Returns a strongly-typed Orchestration Cluster API client.
+	 * See [here](https://camunda.github.io/orchestration-cluster-api-js/classes/index.CamundaClient.html) for full API documentation of the client.
+	 *
+	 * This client exposes branded identifier types (e.g. {@link OrchestrationLifters.ProcessInstanceKey})
+	 * to provide additional compile-time safety when interacting with the Orchestration Cluster API.
+	 *
+	 * The configuration passed here is merged with environment variables (see {@link CamundaSDKConfiguration}).
+	 * When `options.cached` (default) is true, a client instance keyed by its effective configuration is reused.
+	 *
+	 * @param config Optional explicit SDK configuration overrides.
+	 * @param options Client creation options (e.g. caching control).
+	 * @returns {@link CamundaClient} A branded Orchestration Cluster API client instance.
+	 */
 	public getOrchestrationClusterApiClient(
 		config: Camunda8ClientConfiguration = {},
 		options: ClientOptions = {}
@@ -480,6 +494,17 @@ export class Camunda8 {
 	/**
 	 * Returns a loosely-typed Orchestration Cluster API client.
 	 * This variant widens branded key types to primitive strings for progressive adoption.
+	 */
+	/**
+	 * Returns a loosely-typed Orchestration Cluster API client.
+	 *
+	 * This variant widens branded identifier types to plain strings to make incremental adoption easier
+	 * in existing codebases that already use raw string IDs. Use this when you prefer flexibility over
+	 * the additional type safety provided by {@link getOrchestrationClusterApiClient}.
+	 *
+	 * @param config Optional explicit SDK configuration overrides.
+	 * @param options Client creation options (e.g. caching control).
+	 * @returns {@link CamundaClientLoose} A loose Orchestration Cluster API client instance.
 	 */
 	public getOrchestrationClusterApiClientLoose(
 		config: Camunda8ClientConfiguration = {},
