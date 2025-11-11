@@ -59,13 +59,21 @@ interface Camunda8Options {
  * import { Camunda8 } from '@camunda8/sdk'
  *
  * const c8 = new Camunda8()
+ * // 8.8 REST API client - recommended
+ * const camunda = c8.getOrchestrationClusterApiClient() // returns `CamundaClient`
+ * // Loosely-typed 8.8 REST API client, for migration
+ * const camundaLoose = c8.getOrchestrationClusterApiClientLoose() // returns `CamundaClientLoose`
+ * // 8.7 REST API client
  * const c8Rest = c8.getCamundaRestClient()
+ * // gRPC API client
  * const zeebe = c8.getZeebeGrpcApiClient()
+ * // Infrastructure APIs
+ * const modeler = c8.getModelerApiClient()
+ * const admin = c8.getAdminApiClient()
+ * // Legacy v1 API clients
  * const operate = c8.getOperateApiClient()
  * const optimize = c8.getOptimizeApiClient()
  * const tasklist = c8.getTasklistApiClient()
- * const modeler = c8.getModelerApiClient()
- * const admin = c8.getAdminApiClient()
  * ```
  */
 export class Camunda8 {
@@ -456,8 +464,8 @@ export class Camunda8 {
 	}
 
 	/**
-	 * Returns a strongly-typed Orchestration Cluster API client.
-	 * See [here](https://camunda.github.io/orchestration-cluster-api-js/classes/index.CamundaClient.html) for full API documentation of the client.
+	 * Returns a strongly-typed Orchestration Cluster API client, of type `CamundaClient`.
+	 * See [here](https://camunda.github.io/orchestration-cluster-api-js/classes/index.CamundaClient.html) for full API documentation of the `CamundaClient`.
 	 *
 	 * This client exposes branded identifier types (e.g. {@link OrchestrationLifters.ProcessInstanceKey})
 	 * to provide additional compile-time safety when interacting with the Orchestration Cluster API.
