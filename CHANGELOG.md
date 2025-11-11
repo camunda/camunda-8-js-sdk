@@ -1,3 +1,10 @@
+## [8.8.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.2...v8.8.3) (2025-11-11)
+
+
+### Bug Fixes
+
+* update deps ([bc7b731](https://github.com/camunda/camunda-8-js-sdk/commit/bc7b7315c1b5ac3941d34a53331460e30b5bbbc5))
+
 ## [8.8.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.1...v8.8.2) (2025-11-11)
 
 
