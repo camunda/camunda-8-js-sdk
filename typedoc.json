@@ -8,6 +8,6 @@
 	"plugin": [
 		"typedoc-plugin-missing-exports",
 	],
-	"excludeExternals": false,
+	"excludeExternals": true,
 	"out": "docs"
 }
