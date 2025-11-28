@@ -6,18 +6,18 @@ const camunda = new Camunda8().getCamundaRestClient()
 const topology = camunda.getTopology()
 
 export async function cancelProcesses(processDefinitionKey: string) {
-	const { searchProcessInstances, cancelProcessInstance } = (
-		await topology
-	).gatewayVersion.includes('8.8')
-		? {
-				searchProcessInstances: camunda.searchProcessInstances.bind(camunda),
-				cancelProcessInstance: (pid) =>
-					camunda.cancelProcessInstance({ processInstanceKey: pid }),
-			}
-		: {
-				searchProcessInstances: operate.searchProcessInstances.bind(operate),
-				cancelProcessInstance: operate.deleteProcessInstance.bind(operate),
-			}
+	const serverVersion = (await topology).gatewayVersion
+	const { searchProcessInstances, cancelProcessInstance } =
+		serverVersion.includes('8.8') || serverVersion.includes('8.9')
+			? {
+					searchProcessInstances: camunda.searchProcessInstances.bind(camunda),
+					cancelProcessInstance: (pid) =>
+						camunda.cancelProcessInstance({ processInstanceKey: pid }),
+				}
+			: {
+					searchProcessInstances: operate.searchProcessInstances.bind(operate),
+					cancelProcessInstance: operate.deleteProcessInstance.bind(operate),
+				}
 
 	const processes = await searchProcessInstances({
 		filter: {
