@@ -1,9 +1,10 @@
+import { delay } from '../../../lib'
 import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe/index'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
-vi.setConfig({ testTimeout: 15_000 })
+vi.setConfig({ testTimeout: 20_000 })
 
 let res: DeployResourceResponse<ProcessDeployment> | undefined
 let res1: DeployResourceResponse<ProcessDeployment> | undefined
@@ -59,6 +60,8 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		res1 = await zbc.deployResource({
 			processFilename: './src/__tests__/testdata/MigrateProcess-Version-2.bpmn',
 		})
+
+		await delay(5000) // Wait 5 seconds for the new process definition to propagate
 
 		// Migrate the process instance to the updated process model
 

@@ -777,12 +777,12 @@ export class CamundaRestClient {
 	 * @since 8.6.0
 	 */
 	public async failJob(failJobRequest: FailJobRequest) {
-		const { jobKey } = failJobRequest
+		const { jobKey, ...body } = failJobRequest
 		const headers = await this.getHeaders()
 		return this.rest.then((rest) =>
 			rest
 				.post(`jobs/${jobKey}/failure`, {
-					body: losslessStringify(failJobRequest),
+					body: losslessStringify(body),
 					headers,
 				})
 				.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
