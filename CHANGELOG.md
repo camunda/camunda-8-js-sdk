@@ -1,3 +1,12 @@
+## [8.8.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.3...v8.8.4) (2025-12-01)
+
+
+### Bug Fixes
+
+* remove jobKey from failure request body ([42b2ce5](https://github.com/camunda/camunda-8-js-sdk/commit/42b2ce54726f06ce5f875c2caa21535c6e8f6c55))
+* update oca client ([9e3b4eb](https://github.com/camunda/camunda-8-js-sdk/commit/9e3b4eb76f11356a4dfe9a31cdc6b0abe714d17f))
+* update OCA client ([0515bac](https://github.com/camunda/camunda-8-js-sdk/commit/0515bac238a7a853d07a5494a1fa5ae7a89debe4))
+
 ## [8.8.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.2...v8.8.3) (2025-11-11)
 
 
