@@ -110,7 +110,7 @@
 		"single-line-log": "^1.1.2",
 		"ts-protoc-gen": "^0.15.0",
 		"tsconfig-paths": "^4.2.0",
-		"tsd": "^0.31.0",
+		"tsd": "^0.33.0",
 		"typedoc": "^0.28.13",
 		"typedoc-plugin-include-example": "^2.1.2",
 		"typedoc-plugin-missing-exports": "^4.0.0",
