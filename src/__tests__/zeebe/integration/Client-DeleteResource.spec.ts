@@ -1,3 +1,4 @@
+import { delay } from '../../../lib'
 import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 
@@ -15,8 +16,10 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		const resourceKey = deployment.deployments[0].process.processDefinitionKey
 
+		await delay(5000) // Wait 5 seconds for the deployment to propagate
+
 		const process = await zbc.createProcessInstance({
-			bpmnProcessId: 'delete-me',
+			bpmnProcessId: deployment.deployments[0].process.bpmnProcessId, // 'delete-me',
 			variables: {},
 		})
 
