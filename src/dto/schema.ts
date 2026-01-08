@@ -6210,6 +6210,8 @@ export interface components {
 				| 'state'
 				| 'startDate'
 				| 'endDate'
+				| 'actorId'
+				| 'actorType'
 			order?: components['schemas']['SortOrderEnum']
 		}
 		/** @description Batch operation search request. */
@@ -6227,6 +6229,10 @@ export interface components {
 			operationType?: components['schemas']['BatchOperationTypeFilterProperty']
 			/** @description The state of the batch operation. */
 			state?: components['schemas']['BatchOperationStateFilterProperty']
+			/** @description The ID of the actor who created the batch operation. */
+			actorId?: components['schemas']['BasicStringFilterProperty']
+			/** @description The type of the actor who created the batch operation. */
+			actorType?: components['schemas']['BasicStringFilterProperty']
 		}
 		/** @description BatchOperationTypeEnum property with full advanced search capabilities. */
 		BatchOperationTypeFilterProperty:
@@ -6349,6 +6355,10 @@ export interface components {
 				| 'CANCELED'
 				| 'INCOMPLETED'
 			batchOperationType?: components['schemas']['BatchOperationTypeEnum']
+			/** @description The ID of the actor who created the batch operation. */
+			actorId?: string
+			/** @description The type of the actor who created the batch operation. */
+			actorType?: string
 			/**
 			 * Format: date-time
 			 * @description The start date of the batch operation.
