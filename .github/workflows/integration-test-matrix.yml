@@ -1,0 +1,457 @@
+name: Integration Tests - Version Matrix
+
+on:
+  schedule:
+    # Runs at 02:00 every day https://crontab.guru/#0_2_*_*_*
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      client_version:
+        description: 'Client SDK version to test (e.g., 8.8.0). Leave empty to test all discovered versions.'
+        required: false
+        type: string
+      server_version:
+        description: 'Server version to test (e.g., 8.8.0 or 8.8-SNAPSHOT). Leave empty to test all discovered versions.'
+        required: false
+        type: string
+      skip_cache:
+        description: 'Skip version cache and retest all combinations'
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prepare-versions:
+    name: Prepare Version Matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout SDK repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current SDK version from package.json
+        id: current-version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current SDK version: $CURRENT_VERSION"
+
+          # Extract major.minor for filtering
+          if [[ "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)\. ]]; then
+            echo "major=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "minor=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+            echo "Current major.minor: ${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+          fi
+
+      - name: Get client versions from local SDK tags
+        id: get-client-versions
+        run: |
+          CURRENT_MAJOR="${{ steps.current-version.outputs.major }}"
+          CURRENT_MINOR="${{ steps.current-version.outputs.minor }}"
+
+          # SDK tags use v prefix (e.g., v8.8.0)
+          ALL_TAGS=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V)
+
+          CLIENT_LIST=""
+          CLIENT_COUNT=0
+          SKIPPED_COUNT=0
+          for tag in $ALL_TAGS; do
+            # Skip alpha/beta/rc releases
+            if [[ "$tag" =~ -alpha|-beta|-rc ]]; then
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+              continue
+            fi
+
+            # Strip v prefix and extract major.minor
+            version="${tag#v}"
+            if [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              TAG_MAJOR="${BASH_REMATCH[1]}"
+              TAG_MINOR="${BASH_REMATCH[2]}"
+
+              if (( TAG_MAJOR > CURRENT_MAJOR )) || \
+                 (( TAG_MAJOR == CURRENT_MAJOR && TAG_MINOR >= CURRENT_MINOR )); then
+                CLIENT_LIST+="$version"$'\n'
+                CLIENT_COUNT=$((CLIENT_COUNT + 1))
+              fi
+            fi
+          done
+
+          echo "Found $CLIENT_COUNT client versions (skipped $SKIPPED_COUNT alpha/beta/rc)"
+          echo "$CLIENT_LIST" > /tmp/client_list.txt
+          echo "CLIENT_LIST:"
+          cat /tmp/client_list.txt
+
+      - name: Checkout camunda/camunda repository
+        uses: actions/checkout@v4
+        with:
+          repository: camunda/camunda
+          path: camunda-repo
+          fetch-depth: 0
+
+      - name: Get server versions from camunda/camunda tags
+        id: get-server-versions
+        run: |
+          cd camunda-repo
+
+          CURRENT_MAJOR="${{ steps.current-version.outputs.major }}"
+          CURRENT_MINOR="${{ steps.current-version.outputs.minor }}"
+          NEXT_MINOR=$((CURRENT_MINOR + 1))
+
+          # Server tags have no prefix (e.g., 8.8.0)
+          ALL_TAGS=$(git tag -l '[0-9]*.[0-9]*.[0-9]*' | sort -V)
+
+          SERVER_LIST=""
+          SERVER_COUNT=0
+          SKIPPED_COUNT=0
+          for tag in $ALL_TAGS; do
+            # Skip alpha/beta/rc releases
+            if [[ "$tag" =~ -alpha|-beta|-rc ]]; then
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+              continue
+            fi
+
+            if [[ "$tag" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              TAG_MAJOR="${BASH_REMATCH[1]}"
+              TAG_MINOR="${BASH_REMATCH[2]}"
+
+              # Only include tags from the next minor release onwards
+              if (( TAG_MAJOR > CURRENT_MAJOR )) || \
+                 (( TAG_MAJOR == CURRENT_MAJOR && TAG_MINOR >= NEXT_MINOR )); then
+                SERVER_LIST+="$tag"$'\n'
+                SERVER_COUNT=$((SERVER_COUNT + 1))
+              fi
+            fi
+          done
+
+          # Add the latest SNAPSHOT (Docker image tag is just 'SNAPSHOT')
+          SERVER_LIST+="SNAPSHOT"$'\n'
+
+          echo "Found $SERVER_COUNT server tags + SNAPSHOT (skipped $SKIPPED_COUNT alpha/beta/rc)"
+          echo "Server versions start from ${CURRENT_MAJOR}.${NEXT_MINOR}.x"
+          echo "$SERVER_LIST" > /tmp/server_list.txt
+          echo "SERVER_LIST:"
+          cat /tmp/server_list.txt
+
+      - name: Restore tested combinations cache
+        if: ${{ inputs.skip_cache != true }}
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/compatibility-state
+          key: tested-combinations-${{ github.run_id }}
+          restore-keys: |
+            tested-combinations-
+
+      - name: Load tested combinations
+        id: load-tested
+        run: |
+          mkdir -p /tmp/compatibility-state
+
+          if [[ "${{ inputs.skip_cache }}" == "true" ]]; then
+            touch /tmp/compatibility-state/tested-combinations.txt
+            echo "Skipping cache - will test all combinations"
+          elif [[ -f /tmp/compatibility-state/tested-combinations.txt ]]; then
+            echo "Loaded $(wc -l < /tmp/compatibility-state/tested-combinations.txt) previously tested combinations"
+            cat /tmp/compatibility-state/tested-combinations.txt
+          else
+            touch /tmp/compatibility-state/tested-combinations.txt
+            echo "No previous test history found - starting fresh"
+          fi
+
+      - name: Create version matrix
+        id: create-matrix
+        run: |
+          CLIENT_VERSION="${{ inputs.client_version }}"
+          SERVER_VERSION="${{ inputs.server_version }}"
+          SKIP_CACHE="${{ inputs.skip_cache }}"
+
+          if [[ -n "$CLIENT_VERSION" ]] && [[ -n "$SERVER_VERSION" ]]; then
+            echo "Manual trigger: Testing client $CLIENT_VERSION against server $SERVER_VERSION"
+            MATRIX_JSON=$(jq -nc --arg client "$CLIENT_VERSION" --arg server "$SERVER_VERSION" '{"include": [{"client": $client, "server": $server}]}')
+            echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          elif [[ -n "$CLIENT_VERSION" ]]; then
+            echo "Manual trigger: Testing client $CLIENT_VERSION against all servers"
+            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt)
+            MATRIX_ITEMS="[]"
+            for server in $SERVER_LIST; do
+              MATRIX_ITEMS=$(echo "$MATRIX_ITEMS" | jq -c --arg c "$CLIENT_VERSION" --arg s "$server" '. += [{"client": $c, "server": $s}]')
+            done
+            MATRIX_JSON=$(jq -nc --argjson items "$MATRIX_ITEMS" '{"include": $items}')
+            echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          elif [[ -n "$SERVER_VERSION" ]]; then
+            echo "Manual trigger: Testing all clients against server $SERVER_VERSION"
+            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt)
+            MATRIX_ITEMS="[]"
+            for client in $CLIENT_LIST; do
+              MATRIX_ITEMS=$(echo "$MATRIX_ITEMS" | jq -c --arg c "$client" --arg s "$SERVER_VERSION" '. += [{"client": $c, "server": $s}]')
+            done
+            MATRIX_JSON=$(jq -nc --argjson items "$MATRIX_ITEMS" '{"include": $items}')
+            echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          else
+            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt)
+            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt)
+
+            MATRIX_ITEMS="[]"
+            ADDED_COUNT=0
+            SKIPPED_COUNT=0
+
+            for client in $CLIENT_LIST; do
+              for server in $SERVER_LIST; do
+                COMBO="$client-$server"
+
+                # Skip if combination already tested (unless skip_cache is true or server is SNAPSHOT)
+                if [[ "$SKIP_CACHE" != "true" ]]; then
+                  if grep -q "^$COMBO$" /tmp/compatibility-state/tested-combinations.txt 2>/dev/null; then
+                    if [[ "$server" != *"-SNAPSHOT" ]]; then
+                      SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+                      continue
+                    fi
+                  fi
+                fi
+
+                MATRIX_ITEMS=$(echo "$MATRIX_ITEMS" | jq -c --arg c "$client" --arg s "$server" '. += [{"client": $c, "server": $s}]')
+                ADDED_COUNT=$((ADDED_COUNT + 1))
+              done
+            done
+
+            echo "Matrix contains $ADDED_COUNT combinations (skipped $SKIPPED_COUNT already tested)"
+            MATRIX_JSON=$(jq -nc --argjson items "$MATRIX_ITEMS" '{"include": $items}')
+            echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+            echo "Generated matrix:"
+            echo "$MATRIX_JSON" | jq '.'
+          fi
+
+  integration-tests:
+    name: SDK ${{ matrix.client }} → Server ${{ matrix.server }}
+    needs: prepare-versions
+    if: ${{ needs.prepare-versions.outputs.matrix != '{"include":[]}' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-versions.outputs.matrix) }}
+    steps:
+      - name: Check out the SDK repo at client version
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ matrix.client }}
+
+      - name: Fetch docker-compose-matrix.yaml from current branch
+        run: |
+          git fetch origin ${{ github.ref_name }}
+          git checkout origin/${{ github.ref_name }} -- docker/docker-compose-matrix.yaml
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Determine test command
+        id: docker-config
+        run: |
+          client="${{ matrix.client }}"
+
+          # Extract major.minor from client version (e.g., 8.8 from 8.8.5)
+          major_minor=$(echo "$client" | grep -oE '^[0-9]+\.[0-9]+')
+
+          echo "compose_file=docker/docker-compose-matrix.yaml" >> "$GITHUB_OUTPUT"
+          echo "test_command=test:${major_minor}:sm" >> "$GITHUB_OUTPUT"
+
+          echo "Using compose file: docker/docker-compose-matrix.yaml"
+          echo "Using test command: test:${major_minor}:sm"
+          echo "Testing SDK ${{ matrix.client }} against Camunda ${{ matrix.server }}"
+
+      - name: Check if Docker image exists
+        id: check-image
+        run: |
+          version="${{ matrix.server }}"
+          echo "Checking if Docker image exists: camunda/camunda:$version"
+
+          if docker manifest inspect "camunda/camunda:$version" > /dev/null 2>&1; then
+            echo "Image exists"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Image does not exist - skipping version $version"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pull Camunda images for version ${{ matrix.server }}
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          export CAMUNDA_VERSION="${{ matrix.server }}"
+          echo "Pulling images for Camunda version: $CAMUNDA_VERSION"
+          docker compose -f docker/docker-compose-matrix.yaml pull
+
+      - name: Start Docker Compose
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          export CAMUNDA_VERSION="${{ matrix.server }}"
+          docker compose -f docker/docker-compose-matrix.yaml up -d
+        timeout-minutes: 10
+
+      - name: Wait for Services Healthy
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          set -e
+          attempts=0
+          max_attempts=60
+          echo "Waiting for Camunda ${{ matrix.server }} to be healthy..."
+
+          while [ $attempts -lt $max_attempts ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9600/actuator/health/status || true)
+            if [ "$code" = "200" ]; then
+              echo "Broker healthy after $((attempts * 5)) seconds"
+              break
+            fi
+            attempts=$((attempts+1))
+            echo "Attempt $attempts/$max_attempts - Status: $code"
+            sleep 5
+          done
+
+          if [ $attempts -ge $max_attempts ]; then
+            echo "Broker not healthy after $((max_attempts * 5)) seconds"
+            docker compose -f docker/docker-compose-matrix.yaml logs
+            exit 1
+          fi
+
+      - name: Run Integration Tests against Camunda ${{ matrix.server }}
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          npm run ${{ steps.docker-config.outputs.test_command }}
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          CAMUNDA_AUTH_STRATEGY: NONE
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always() && steps.check-image.outputs.exists == 'true'
+        run: |
+          export CAMUNDA_VERSION="${{ matrix.server }}"
+          docker compose -f docker/docker-compose-matrix.yaml down
+          docker compose -f docker/docker-compose-matrix.yaml down -v
+
+      - name: Capture Docker logs on failure
+        if: failure() && steps.check-image.outputs.exists == 'true'
+        run: |
+          export CAMUNDA_VERSION="${{ matrix.server }}"
+          docker compose -f docker/docker-compose-matrix.yaml logs > docker-compose-logs-${{ matrix.client }}-${{ matrix.server }}.txt 2>&1 || true
+
+      - name: Record tested combination
+        if: success() && steps.check-image.outputs.exists == 'true'
+        run: |
+          mkdir -p /tmp/compatibility-state
+          echo "${{ matrix.client }}-${{ matrix.server }}" > /tmp/compatibility-state/combo.txt
+          echo "Recorded tested combination: ${{ matrix.client }}-${{ matrix.server }}"
+
+      - name: Upload tested combination marker
+        if: success() && steps.check-image.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tested-combo-${{ matrix.client }}-${{ matrix.server }}
+          path: /tmp/compatibility-state/combo.txt
+
+  notify-failure:
+    name: Notify on failure
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [prepare-versions, integration-tests]
+    if: always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+    permissions: {}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Notify failure
+        uses: slackapi/slack-github-action@v2.1.1
+        if: env.SLACK_CAMUNDA_EX_CI_WEBHOOK != ''
+        env:
+          SLACK_CAMUNDA_EX_CI_WEBHOOK: ${{ secrets.SLACK_CAMUNDA_EX_CI_WEBHOOK }}
+        with:
+          webhook: ${{ secrets.SLACK_CAMUNDA_EX_CI_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+               "blocks": [
+                 {
+                   "type": "section",
+                   "text": {
+                     "type": "mrkdwn",
+                     "text": ":alarm: *Camunda Node SDK Compatibility Tests Failed*"
+                   }
+                 },
+                 {
+                   "type": "section",
+                   "text": {
+                     "type": "mrkdwn",
+                     "text": "Branch: `${{ github.ref_name }}`\nPlease check: https://github.com/camunda/camunda/actions/runs/${{ github.run_id }}"
+                   }
+                 }
+               ]
+             }
+
+  update-tested-combinations:
+    name: Update Tested Combinations
+    needs: integration-tests
+    if: always() && needs.integration-tests.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Restore previous tested combinations from cache
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/compatibility-state
+          key: tested-combinations-dummy
+          restore-keys: |
+            tested-combinations-
+
+      - name: Download new tested combination markers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tested-combo-*
+          path: /tmp/new-markers
+          merge-multiple: true
+
+      - name: Merge tested combinations
+        run: |
+          mkdir -p /tmp/compatibility-state
+          touch /tmp/compatibility-state/tested-combinations.txt
+
+          echo "Previous combinations: $(wc -l < /tmp/compatibility-state/tested-combinations.txt)"
+
+          # Append new markers from this run
+          if [[ -d /tmp/new-markers ]]; then
+            for f in /tmp/new-markers/*.txt; do
+              cat "$f" >> /tmp/compatibility-state/tested-combinations.txt
+            done
+          fi
+
+          # Sort and deduplicate
+          sort -u /tmp/compatibility-state/tested-combinations.txt -o /tmp/compatibility-state/tested-combinations.txt
+
+          echo "Updated tested combinations:"
+          cat /tmp/compatibility-state/tested-combinations.txt
+          echo "Total: $(wc -l < /tmp/compatibility-state/tested-combinations.txt) combinations"
+
+      - name: Save updated tested combinations to cache
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/compatibility-state
+          key: tested-combinations-${{ github.run_id }}
