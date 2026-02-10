@@ -26,6 +26,16 @@ The repository uses [`semantic-release`](https://github.com/semantic-release/sem
 
 Creating a commit with a `feat` commit message will cause the package version patch release number to increment. To update the minor version, a commit with the type `minor` is needed.
 
+## Publishing
+
+Publishing to npm is automated by the GitHub Actions workflow in `.github/workflows/publish.yml`.
+
+This repository is configured to publish using npm **Trusted Publishing** via GitHub Actions **OIDC** (the workflow requests an `id-token`). As a result:
+
+- The workflow does **not** use an `NPM_TOKEN` secret.
+- For publishing to succeed, the npm package `@camunda8/sdk` must be configured in npm to trust this GitHub repository/workflow.
+- If publishing fails with auth-related errors, check the npm Trusted Publishing configuration rather than adding an `NPM_TOKEN`.
+
 ## Running tests
 
 Run all the unit tests with `npm run test`.
