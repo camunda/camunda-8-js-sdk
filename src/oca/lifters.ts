@@ -32,7 +32,6 @@ import {
 	FormKey,
 	IncidentKey,
 	JobKey,
-	MessageCorrelationKey,
 	MessageKey,
 	MessageSubscriptionKey,
 	ProcessDefinitionId,
@@ -66,7 +65,6 @@ export const OrchestrationLifters = {
 	FormKey,
 	IncidentKey,
 	JobKey,
-	MessageCorrelationKey,
 	MessageKey,
 	MessageSubscriptionKey,
 	ProcessDefinitionId,
@@ -116,8 +114,6 @@ export namespace OrchestrationLifters {
 	export type IncidentKey =
 		import('@camunda8/orchestration-cluster-api').IncidentKey
 	export type JobKey = import('@camunda8/orchestration-cluster-api').JobKey
-	export type MessageCorrelationKey =
-		import('@camunda8/orchestration-cluster-api').MessageCorrelationKey
 	export type MessageKey =
 		import('@camunda8/orchestration-cluster-api').MessageKey
 	export type MessageSubscriptionKey =
