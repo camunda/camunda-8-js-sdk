@@ -219,9 +219,16 @@ export class OAuthProvider implements IHeadersProvider {
 			}
 		}
 
-		this.isCamundaSaaS = this.authServerUrl.includes(
-			'https://login.cloud.camunda.io/oauth/token'
-		)
+		try {
+			const parsedAuthUrl = new URL(this.authServerUrl)
+			const normalizedAuthUrl = `${parsedAuthUrl.origin}${parsedAuthUrl.pathname}`
+			this.isCamundaSaaS =
+				normalizedAuthUrl === 'https://login.cloud.camunda.io/oauth/token' ||
+				normalizedAuthUrl ===
+					'https://login.cloud.dev.ultrawombat.com/oauth/token'
+		} catch {
+			this.isCamundaSaaS = false
+		}
 
 		// Load any existing tarpit files (persistent 401 memoization)
 		if (this.useFileCache) {
