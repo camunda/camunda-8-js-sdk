@@ -660,6 +660,84 @@ test('Throws if you try to get a Modeler token from Self-hosted without applicat
 		})
 })
 
+test('Non-prod SaaS OAuth URL is auto-detected as SaaS (ultrawombat) and CONSOLE tokens use console credentials', async () => {
+	const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		OAuthProvider: any
+	}
+	const secret = 'YOUR_SECRET'
+	const access_token = jwt.sign({ id: 1 }, secret, { expiresIn: 60 })
+
+	const post = vi.fn().mockResolvedValue({
+		statusCode: 200,
+		body: JSON.stringify({ access_token, expires_in: 60 }),
+	})
+
+	const o = new OAuthProvider({
+		config: {
+			CAMUNDA_CONSOLE_CLIENT_ID: 'console-id',
+			CAMUNDA_CONSOLE_CLIENT_SECRET: 'console-secret',
+			ZEEBE_CLIENT_ID: 'zeebe-id',
+			ZEEBE_CLIENT_SECRET: 'zeebe-secret',
+			CAMUNDA_OAUTH_URL: 'https://login.cloud.dev.ultrawombat.com/oauth/token',
+			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+			CAMUNDA_OAUTH_FAIL_ON_ERROR: true,
+			CAMUNDA_CONSOLE_OAUTH_AUDIENCE: 'api.cloud.dev.ultrawombat.com',
+		},
+	})
+
+	// Prevent real network I/O; capture the token request body.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	;(o as any).rest = Promise.resolve({ post })
+
+	await o.getHeaders('CONSOLE')
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	expect((o as any).isCamundaSaaS).toBe(true)
+	expect(post).toHaveBeenCalledTimes(1)
+	const [, options] = post.mock.calls[0]
+	expect(options.body).toContain('client_id=console-id')
+	expect(options.body).toContain('client_secret=console-secret')
+})
+
+test('Prod SaaS OAuth URL is detected as SaaS and CONSOLE tokens use console credentials', async () => {
+	const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		OAuthProvider: any
+	}
+	const secret = 'YOUR_SECRET'
+	const access_token = jwt.sign({ id: 1 }, secret, { expiresIn: 60 })
+
+	const post = vi.fn().mockResolvedValue({
+		statusCode: 200,
+		body: JSON.stringify({ access_token, expires_in: 60 }),
+	})
+
+	const o = new OAuthProvider({
+		config: {
+			CAMUNDA_CONSOLE_CLIENT_ID: 'console-id',
+			CAMUNDA_CONSOLE_CLIENT_SECRET: 'console-secret',
+			ZEEBE_CLIENT_ID: 'zeebe-id',
+			ZEEBE_CLIENT_SECRET: 'zeebe-secret',
+			CAMUNDA_OAUTH_URL: 'https://login.cloud.camunda.io/oauth/token',
+			CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+			CAMUNDA_OAUTH_FAIL_ON_ERROR: true,
+		},
+	})
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	;(o as any).rest = Promise.resolve({ post })
+
+	await o.getHeaders('CONSOLE')
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	expect((o as any).isCamundaSaaS).toBe(true)
+	expect(post).toHaveBeenCalledTimes(1)
+	const [, options] = post.mock.calls[0]
+	expect(options.body).toContain('client_id=console-id')
+	expect(options.body).toContain('client_secret=console-secret')
+})
+
 test('Can use Basic Auth as a strategy', async () => {
 	const { constructOAuthProvider } = (await vi.importActual('../../lib')) as {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
