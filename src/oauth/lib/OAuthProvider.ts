@@ -224,7 +224,8 @@ export class OAuthProvider implements IHeadersProvider {
 			const normalizedAuthUrl = `${parsedAuthUrl.origin}${parsedAuthUrl.pathname}`
 			this.isCamundaSaaS =
 				normalizedAuthUrl === 'https://login.cloud.camunda.io/oauth/token' ||
-				normalizedAuthUrl === 'https://login.cloud.dev.ultrawombat.com/oauth/token'
+				normalizedAuthUrl ===
+					'https://login.cloud.dev.ultrawombat.com/oauth/token'
 		} catch {
 			this.isCamundaSaaS = false
 		}
