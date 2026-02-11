@@ -132,14 +132,7 @@ export class OAuthProvider implements IHeadersProvider {
 		// to prevent DDOS of the endpoint by misconfigured workers.
 		this.failOnError =
 			config.CAMUNDA_OAUTH_FAIL_ON_ERROR ??
-			(() => {
-				try {
-					const urlObj = new URL(config.CAMUNDA_OAUTH_URL ?? '')
-					return urlObj.host === 'login.cloud.camunda.io'
-				} catch (e) {
-					return false
-				}
-			})()
+			OAuthProvider.isSaaSUrl(config.CAMUNDA_OAUTH_URL)
 
 		if (!this.clientId && !this.consoleClientId) {
 			throw new Error(
@@ -219,9 +212,7 @@ export class OAuthProvider implements IHeadersProvider {
 			}
 		}
 
-		this.isCamundaSaaS = this.authServerUrl.includes(
-			'https://login.cloud.camunda.io/oauth/token'
-		)
+		this.isCamundaSaaS = OAuthProvider.isSaaSUrl(this.authServerUrl)
 
 		// Load any existing tarpit files (persistent 401 memoization)
 		if (this.useFileCache) {
@@ -642,6 +633,32 @@ export class OAuthProvider implements IHeadersProvider {
 
 	// Mutable for test overrides; legacy cooldown window (no longer used for tarpit persistence, retained for backward compatibility of tests)
 	public static SAAS_401_COOLDOWN_MS = 30000
+
+	/**
+	 * Known Camunda SaaS OAuth hosts. Used for centralised SaaS detection.
+	 */
+	private static readonly SAAS_OAUTH_HOSTS = [
+		'login.cloud.camunda.io',
+		'login.cloud.dev.ultrawombat.com',
+	]
+
+	/**
+	 * Determines whether the given OAuth URL belongs to a Camunda SaaS environment.
+	 * Normalises the URL by stripping trailing slashes, query params, and fragments
+	 * so that logically equivalent URLs are detected consistently.
+	 */
+	private static isSaaSUrl(oauthUrl: string | undefined): boolean {
+		try {
+			const parsed = new URL(oauthUrl ?? '')
+			const normalizedPath = parsed.pathname.replace(/\/+$/, '')
+			return (
+				OAuthProvider.SAAS_OAUTH_HOSTS.includes(parsed.host) &&
+				normalizedPath === '/oauth/token'
+			)
+		} catch {
+			return false
+		}
+	}
 
 	private getCredentialAudienceKey({
 		clientId,

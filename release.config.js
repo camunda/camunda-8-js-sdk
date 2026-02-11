@@ -29,15 +29,27 @@ module.exports = {
 
 		'@semantic-release/release-notes-generator',
 		'@semantic-release/changelog',
-		['@semantic-release/npm', {}],
+		[
+			'@semantic-release/npm',
+			{
+				// Publishing is handled via OIDC in the GitHub Actions workflow.
+				// Keeping the npm plugin for versioning / package metadata preparation.
+				npmPublish: false,
+			},
+		],
+		[
+			'@semantic-release/exec',
+			{
+				publishCmd: 'npm publish --provenance --access public',
+			},
+		],
 		[
 			'@semantic-release/git',
 			{
-				assets: ['package.json'],
+				assets: ['package.json', 'package-lock.json', 'CHANGELOG.md'],
 				message:
 					'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
 			},
 		],
-		'@semantic-release/git',
 	],
 }
