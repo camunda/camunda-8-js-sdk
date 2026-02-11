@@ -1,3 +1,13 @@
+## [8.8.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.4...v8.8.5) (2026-02-11)
+
+
+### Bug Fixes
+
+* detect ultrawombat ([7cb51eb](https://github.com/camunda/camunda-8-js-sdk/commit/7cb51eb506579671dab760db00c03be513102f3d))
+* remove MessageCorrelationKey from types ([d6c4b88](https://github.com/camunda/camunda-8-js-sdk/commit/d6c4b885622aaa28ed06eeb807e6fa0f6f4153bd))
+* update JS SDK dependency ([8d62dea](https://github.com/camunda/camunda-8-js-sdk/commit/8d62deac1868497ef31b1b45f8653b261587acfe))
+* update publishing to use OIDC ([a308d6c](https://github.com/camunda/camunda-8-js-sdk/commit/a308d6c8db66525a69ffdc64879bbb686dec8f55))
+
 ## [8.8.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.3...v8.8.4) (2025-12-01)
 
 
