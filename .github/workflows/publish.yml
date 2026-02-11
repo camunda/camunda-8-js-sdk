@@ -262,13 +262,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "22.14.0"
+          node-version: "24.x"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
       - name: Install
