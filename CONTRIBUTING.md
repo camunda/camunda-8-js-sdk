@@ -9,26 +9,51 @@ To get started with contributing, please follow these steps:
 It's a good idea to discuss your contribution in an issue in the repository first, to align on the approach - particularly if it is a new feature.
 
 1. Fork the repository and clone it to your local machine.
-2. Check out the `alpha` branch. This is the development branch.
+2. Check out the `main` branch. This is the development branch.
 3. Install the dependencies by running `npm install`.
 4. Make your changes or additions to the codebase.
 5. Write tests to cover your changes and ensure existing tests pass.
 6. Run the tests using `npm test` to make sure everything is working correctly. See below for details on running integration tests.
 7. Commit your changes and push them to your forked repository. Use [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/) format for the commit message. See the note below.
-8. Submit a pull request against `alpha`.
+8. Submit a pull request against `main`.
 9. If any changes are needed they will be requested.
-10. Your PR will be merged to `alpha` and the integration tests run in CI.
-11. When the `alpha` branch is merged into `main`, a new package is published to NPM.
+10. Your PR will be merged to `main` and the integration tests run in CI.
+11. When the PR is merged to `main`, an alpha pre-release is published to npm (dist-tag `alpha`).
+12. Stable releases are published from `stable/<major>.<minor>` branches by cherry-picking or merging changes from `main`.
 
 ## A note on commit messages
 
 The repository uses [`semantic-release`](https://github.com/semantic-release/semantic-release) to create releases. Because we track the Camunda 8 Platform minor version, we treat feature implementation during a minor release cycle as a patch release rather than a minor release.
 
-Creating a commit with a `feat` commit message will cause the package version patch release number to increment. To update the minor version, a commit with the type `minor` is needed.
+Creating a commit with a `feat` or `fix` commit message will cause the package version patch release number to increment. To bump the minor version (for a new Camunda Platform minor line), use a commit with the type `server`. To bump the major version (for a new Camunda Platform major line), use a commit with the type `server-major`.
 
-## Publishing
+## Branching & Releases
 
-Publishing to npm is automated by the GitHub Actions workflow in `.github/workflows/publish.yml`.
+Releases are performed by GitHub Actions using semantic-release:
+
+- `main` publishes **alpha** pre-releases to npm dist-tag `alpha`.
+- `stable/<major>.<minor>` publishes **stable** patch releases for that minor line.
+- The currently promoted stable minor is configured via the GitHub repo variable `CAMUNDA_SDK_CURRENT_STABLE_MINOR` (e.g. `8.8`). That branch publishes to npm dist-tag `latest`.
+- Older stable branches (e.g. `stable/8.7`) publish to npm dist-tag `<major>.<minor>-stable`.
+
+### Branch model
+
+| Branch | Type | npm dist-tag |
+|--------|------|--------------|
+| `main` | prerelease | `alpha` |
+| `stable/<major>.<minor>` (current) | stable | `latest` |
+| `stable/<major>.<minor>` (older) | maintenance | `<major>.<minor>-stable` |
+
+### Promotion procedure (switch current stable line)
+
+To promote a new stable line (e.g. `8.8` → `8.9`):
+
+1. Create the new stable branch: `git checkout main && git checkout -b stable/8.9 && git push -u origin stable/8.9`
+2. Update the GitHub repo variable `CAMUNDA_SDK_CURRENT_STABLE_MINOR` to `8.9`.
+
+### Publishing
+
+Publishing to npm is automated by the GitHub Actions workflow in `.github/workflows/release.yml`.
 
 This repository is configured to publish using npm **Trusted Publishing** via GitHub Actions **OIDC** (the workflow requests an `id-token`). As a result:
 

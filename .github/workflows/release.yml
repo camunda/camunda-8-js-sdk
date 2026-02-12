@@ -1,13 +1,22 @@
-name: Publish a new version
+name: Release
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+      - 'stable/**'
+  workflow_dispatch:
+
+concurrency:
+  group: camunda-8-js-sdk-release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+  id-token: write
 
 jobs:
   unit-tests:
@@ -19,17 +28,16 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Specify a Node.js version
+          node-version: "22"
 
       - name: Install dependencies
-        run: npm i
+        run: npm install
 
       - name: Build and Smoke Test
         run: npm run test:smoketest
 
       - name: Run Unit Tests
-        run: |
-          npm run test
+        run: npm run test
 
   local_integration:
     runs-on: ubuntu-latest
@@ -42,7 +50,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Specify a Node.js version
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -88,7 +96,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Specify a Node.js version
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -135,7 +143,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Specify a Node.js version
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -170,7 +178,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Specify a Node.js version
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -204,7 +212,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22" # Specify a Node.js version
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -243,15 +251,13 @@ jobs:
         run: docker compose -f docker/docker-compose-8.8.yaml down
 
   tag-and-publish:
-    needs: [
-        saas_integration,
-        # saas_integration_windows,
-        local_multitenancy_integration,
-        local_integration,
-        local_integration_8_8,
-        saas_integration_8_8,
-        unit-tests,
-      ]
+    needs:
+      - unit-tests
+      - local_integration
+      - local_multitenancy_integration
+      - saas_integration
+      - saas_integration_8_8
+      - local_integration_8_8
     runs-on: ubuntu-latest
     environment:
       name: publish
@@ -259,29 +265,47 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: Fetch remote refs for semantic-release
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          git fetch origin '+refs/notes/*:refs/notes/*' || true
+
+      - name: Export stable line config
+        run: |
+          echo "CAMUNDA_SDK_CURRENT_STABLE_MINOR=${{ vars['CAMUNDA_SDK_CURRENT_STABLE_MINOR'] }}" >> $GITHUB_ENV
+
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: "24.x"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
+
       - name: Install
-        run: npm i
+        run: npm ci
+
       - name: Build
         run: npm run build
-      - name: Build Docs
-        run: npm run docs
+
       - name: Semantic Release
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
           HUSKY: 0
+
+      - name: Build Docs
+        run: npm run docs
 
       - name: Deploy Docs
         if: github.ref == 'refs/heads/main'

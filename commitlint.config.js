@@ -19,7 +19,8 @@ module.exports = {
 				'style',
 				'test',
 				'release', // force a new patch release regardless of the commit message
-				'minor', // create a new minor release to match the Camunda Platform version
+				'server', // create a new minor release to match a Camunda Platform minor bump
+				'server-major', // create a new major release to match a Camunda Platform major bump
 			],
 		],
 	},
