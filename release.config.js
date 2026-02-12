@@ -75,11 +75,11 @@ module.exports = {
 		// The configured current stable line publishes to npm dist-tag `latest`.
 		...(currentStableMinor
 			? [
-					{
-						name: `stable/${currentStableMinor}`,
-						channel: 'latest',
-					},
-				]
+				{
+					name: `stable/${currentStableMinor}`,
+					channel: 'latest',
+				},
+			]
 			: []),
 
 		// Any other stable/* branch publishes as a maintenance line.
