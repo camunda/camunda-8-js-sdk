@@ -1,0 +1,45 @@
+services:
+  camunda:
+    image: camunda/camunda:${CAMUNDA_VERSION:-8.8.0}
+    container_name: camunda-engine-matrix
+    environment:
+      SPRING_PROFILES_ACTIVE: "broker,consolidated-auth"
+      ZEEBE_CLOCK_CONTROLLED: "true"
+      ZEEBE_LOG_APPENDER: "Stackdriver"
+      CAMUNDA_SECURITY_AUTHENTICATION_UNPROTECTEDAPI: "true"
+      CAMUNDA_SECURITY_AUTHORIZATIONS_ENABLED: "false"
+      # H2 / in-memory config (mirrors H2Configuration)
+      CAMUNDA_DATABASE_URL: "jdbc:h2:mem:cpt;DB_CLOSE_DELAY=-1;MODE=PostgreSQL"
+      CAMUNDA_DATABASE_TYPE: "rdbms"
+      CAMUNDA_DATABASE_USERNAME: "sa"
+      CAMUNDA_DATABASE_PASSWORD: ""
+      CAMUNDA_DATA_SECONDARY_STORAGE_TYPE: "rdbms"
+      ZEEBE_BROKER_EXPORTERS_RDBMS_CLASSNAME: "io.camunda.exporter.rdbms.RdbmsExporter"
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_FLUSH_INTERVAL: "PT0S"
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_DEFAULT_HISTORY_TTL: "PT2S"
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_MIN_HISTORY_CLEANUP_INTERVAL: "PT2S"
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_MAX_HISTORY_CLEANUP_INTERVAL: "PT5S"
+      LOGGING_LEVEL_IO_CAMUNDA_DB_RDBMS: "INFO"
+      LOGGING_LEVEL_ORG_MYBATIS: "INFO"
+    ports:
+      - "8080:8080" # REST API (ZEEBE_REST_ADDRESS -> http://localhost:8080)
+      - "26500:26500" # gRPC Gateway
+      - "9600:9600" # Monitoring / actuator / test time control
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO",
+          "-",
+          "http://localhost:9600/actuator/health/status",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      - camunda-matrix-net
+
+networks:
+  camunda-matrix-net:
+    name: camunda-matrix-net
