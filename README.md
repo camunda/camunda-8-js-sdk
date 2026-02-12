@@ -401,6 +401,7 @@ This is the configuration for [Camunda 8 Run](https://developers.camunda.com/ins
 ```bash
 export ZEEBE_REST_ADDRESS='http://localhost:8080'
 export ZEEBE_GRPC_ADDRESS='grpc://localhost:26500'
+export CAMUNDA_TASKLIST_BASE_URL='http://localhost:8080/tasklist'
 export CAMUNDA_AUTH_STRATEGY=NONE
 ```
 
