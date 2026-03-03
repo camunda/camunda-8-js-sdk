@@ -725,13 +725,32 @@ The SDK supports the Zeebe REST API. Be sure to set the `ZEEBE_REST_ADDRESS` eit
 
 The Zeebe gRPC API supports streaming available jobs, rather than polling for them.
 
-The ZeebeGrpcClient method `StreamJobs` allows you to use this API.
+The ZeebeGrpcClient method `streamJobs` allows you to use this API.
 
-Please note that only jobs that become available _after_ the stream is opened are pushed to the client. For jobs that were already activatable _before_ the method is called, you need to use a polling worker.
+When `streamJobs` is called, it first opens a stream to receive any newly created jobs, then performs an initial poll (via `activateJobs`) to pick up any jobs that were already queued before the stream was established. This "subscribe then backfill" approach ensures no jobs are missed — the stream catches anything created after it opens, the poll catches anything that existed before, and the broker's single-activation guarantee prevents duplicates.
 
-In this release, this is not handled for you. You must both poll and stream jobs to make sure that you get jobs that were available before your application started as well as jobs that become available after your application starts.
+You can optionally pass a `jitter` parameter (in milliseconds) to delay the start by a random period up to that value. This is useful when starting multiple stream workers simultaneously, to avoid saturating the gateway at application startup.
 
-In a subsequent release, the ZeebeWorker will transparently handle this for you.
+You can also pass `initialPollMaxJobsToActivate` to control how many pre-existing jobs the initial poll will pick up (defaults to 32).
+
+Example:
+
+```typescript
+client.streamJobs({
+	type: 'payment-service',
+	worker: 'my-worker',
+	timeout: 30000,
+	tenantIds: ['<default>'],
+	taskHandler: async (job) => {
+		// business logic
+		return job.complete()
+	},
+	// Optional: stagger startup across workers
+	jitter: 2000,
+	// Optional: control initial poll batch size (default: 32)
+	initialPollMaxJobsToActivate: 64,
+})
+```
 
 ## Multi-tenant workers
 
