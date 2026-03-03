@@ -1,5 +1,7 @@
+import { ICustomHeaders, IInputVariables, IOutputVariables } from 'zeebe/types'
+
 import { allowAny } from '../../../test-support/testTags'
-import { ZeebeGrpcClient } from '../../../zeebe'
+import { ZBWorker, ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
@@ -14,7 +16,7 @@ let bpmnProcessId: string
 beforeAll(async () => {
 	zbc = new ZeebeGrpcClient()
 	const res = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/hello-world.bpmn',
+		processFilename: './src/__tests__/testdata/hello-world-fv.bpmn',
 	})
 	;({ processDefinitionKey, bpmnProcessId } = res.deployments[0].process)
 	await cancelProcesses(processDefinitionKey)
@@ -33,31 +35,29 @@ afterAll(async () => {
 
 test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 	'Can retrieve only specified variables using fetchVariable',
-	() =>
-		new Promise<void>((done) => {
-			zbc
-				.createProcessInstance({
-					bpmnProcessId,
-					variables: {
-						var1: 'foo',
-						var2: 'bar',
-					},
-				})
-				.then((res) => {
-					wf = res
-					zbc.createWorker({
-						fetchVariable: ['var2'],
-						taskType: 'console-log',
-						taskHandler: async (job) => {
-							expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
-							expect(job.variables.var2).toEqual('bar')
-							expect(Object.keys(job.variables).indexOf('var1')).toEqual(-1)
-							const res1 = await job.complete(job.variables)
-							done()
-							return res1
-						},
-						loglevel: 'NONE',
-					})
-				})
+	async () => {
+		wf = await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: {
+				var1: 'foo',
+				var2: 'bar',
+			},
 		})
+		let worker: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
+		await new Promise<void>((resolve) => {
+			worker = zbc.createWorker({
+				fetchVariable: ['var2'],
+				taskType: 'console-log-fv',
+				taskHandler: async (job) => {
+					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
+					expect(job.variables.var2).toEqual('bar')
+					expect(Object.keys(job.variables).indexOf('var1')).toEqual(-1)
+					const res1 = await job.complete(job.variables)
+					resolve()
+					return res1
+				},
+				loglevel: 'NONE',
+			})
+		}).finally(() => worker.close())
+	}
 )
