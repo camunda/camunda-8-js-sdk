@@ -1293,6 +1293,18 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
 			tenantIds?: string[]
 			fetchVariables?: string[]
+			/**
+			 * Optional jitter in milliseconds. When provided, the worker will wait
+			 * a random period up to this value before polling and opening the stream.
+			 * Useful for staggering multiple stream workers.
+			 */
+			jitter?: number
+			/**
+			 * Maximum number of jobs to activate in the initial poll before opening
+			 * the stream. This picks up jobs that were created before the stream was
+			 * established. Defaults to 32.
+			 */
+			initialPollMaxJobsToActivate?: number
 			taskHandler: ZBWorkerTaskHandler<
 				WorkerInputVariables,
 				CustomHeaderShape,

@@ -55,48 +55,101 @@ export class ZBStreamWorker implements IZBJobWorker {
 				CustomHeaderShape,
 				WorkerOutputVariables
 			>
+			/**
+			 * Optional jitter in milliseconds. When provided, the worker will wait
+			 * a random period up to this value before polling and opening the stream.
+			 * Useful for staggering multiple stream workers.
+			 */
+			jitter?: number
+			/**
+			 * Maximum number of jobs to activate in the initial poll before opening
+			 * the stream. This picks up jobs that were created before the stream was
+			 * established. Defaults to 32.
+			 */
+			initialPollMaxJobsToActivate?: number
 		}
 	) {
-		const { taskHandler, inputVariableDto, customHeadersDto, ...streamReq } =
-			req
-		return this.grpcClient
-			.streamActivatedJobsStream(streamReq)
-			.then((stream) => {
-				stream.on('error', (e) => {
-					console.error(e)
-				})
-				stream.on('data', (res: ActivatedJob) => {
-					parseVariablesAndCustomHeadersToJSON<
-						WorkerInputVariables,
-						CustomHeaderShape
-					>(res, inputVariableDto, customHeadersDto)
-						.then((job: Job<WorkerInputVariables, CustomHeaderShape>) => {
-							taskHandler(
-								{
-									...job,
-									// eslint-disable-next-line @typescript-eslint/no-explicit-any
-									...this.makeCompleteHandlers(job as any, req.type),
-								},
-								this
-							)
-						})
-						.catch((e) =>
-							this.zbClient.failJob({
-								jobKey: res.key,
-								errorMessage: `Error parsing variable payload ${e}`,
-								retries: res.retries - 1,
-								retryBackOff: 0,
-							})
-						)
-				})
-				this.streams.push(stream)
-				return {
-					close: () => {
-						stream.cancel()
-						stream.destroy()
-					},
-				}
+		const {
+			taskHandler,
+			inputVariableDto,
+			customHeadersDto,
+			jitter,
+			initialPollMaxJobsToActivate = 32,
+			...streamReq
+		} = req
+
+		const handleJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+			taskHandler(
+				{
+					...job,
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					...this.makeCompleteHandlers(job as any, req.type),
+				},
+				this
+			)
+		}
+
+		const pollAndStream = async () => {
+			// Optional jitter to stagger multiple workers
+			if (jitter) {
+				await new Promise((resolve) =>
+					setTimeout(resolve, Math.random() * jitter)
+				)
+			}
+
+			// Open the stream first so no new jobs are missed
+			const stream = await this.grpcClient.streamActivatedJobsStream(streamReq)
+			stream.on('error', (e) => {
+				console.error(e)
 			})
+			stream.on('data', (res: ActivatedJob) => {
+				parseVariablesAndCustomHeadersToJSON<
+					WorkerInputVariables,
+					CustomHeaderShape
+				>(res, inputVariableDto, customHeadersDto)
+					.then(handleJob)
+					.catch((e) =>
+						this.zbClient.failJob({
+							jobKey: res.key,
+							errorMessage: `Error parsing variable payload ${e}`,
+							retries: res.retries - 1,
+							retryBackOff: 0,
+						})
+					)
+			})
+			this.streams.push(stream)
+
+			// Now poll for any jobs that existed before the stream was opened.
+			// The broker guarantees single activation, so there is no risk of
+			// duplicate delivery between the poll and the stream.
+			const existingJobs = await this.zbClient.activateJobs<
+				WorkerInputVariables,
+				CustomHeaderShape
+			>({
+				type: req.type,
+				worker: req.worker,
+				timeout: req.timeout,
+				maxJobsToActivate: initialPollMaxJobsToActivate,
+				tenantIds: req.tenantIds,
+				fetchVariable: req.fetchVariable,
+				inputVariableDto,
+				customHeadersDto,
+				requestTimeout: -1,
+			})
+
+			for (const job of existingJobs) {
+				handleJob(job)
+			}
+
+			return {
+				close: () => {
+					stream.cancel()
+					stream.destroy()
+				},
+			}
+		}
+
+		return pollAndStream()
 	}
 
 	close() {
