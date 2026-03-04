@@ -24,6 +24,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private logger: StatefulLogInterceptor
 	private zbClient: ZeebeGrpcClient
 	private streams: ClientReadableStream<unknown>[] = []
+	private pollTimers: ReturnType<typeof setTimeout>[] = []
 	constructor({
 		grpcClient,
 		log,
@@ -62,11 +63,20 @@ export class ZBStreamWorker implements IZBJobWorker {
 			 */
 			jitter?: number
 			/**
-			 * Maximum number of jobs to activate in the initial poll before opening
-			 * the stream. This picks up jobs that were created before the stream was
-			 * established. Defaults to 32.
+			 * Maximum number of jobs to activate per poll cycle (both the initial
+			 * backfill and the recurring sidecar polls). Defaults to 32.
 			 */
-			initialPollMaxJobsToActivate?: number
+			pollMaxJobsToActivate?: number
+			/**
+			 * Interval in milliseconds between sidecar poll cycles. The sidecar poll
+			 * is a low-frequency safety net that picks up jobs the stream may have
+			 * missed (e.g. jobs re-queued after a timeout). Each poll is a command on
+			 * the broker, so keep this value high to minimise load.
+			 *
+			 * Defaults to 30000 (30 seconds). Set to 0 or -1 to disable recurring
+			 * polling (the initial backfill poll still runs).
+			 */
+			pollInterval?: number
 		}
 	) {
 		const {
@@ -74,7 +84,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 			inputVariableDto,
 			customHeadersDto,
 			jitter,
-			initialPollMaxJobsToActivate = 32,
+			pollMaxJobsToActivate = 32,
+			pollInterval = 30_000,
 			...streamReq
 		} = req
 
@@ -119,30 +130,58 @@ export class ZBStreamWorker implements IZBJobWorker {
 			})
 			this.streams.push(stream)
 
-			// Now poll for any jobs that existed before the stream was opened.
+			// Helper to run a single poll cycle and feed results to handleJob.
+			const runPoll = async () => {
+				const jobs = await this.zbClient.activateJobs<
+					WorkerInputVariables,
+					CustomHeaderShape
+				>({
+					type: req.type,
+					worker: req.worker,
+					timeout: req.timeout,
+					maxJobsToActivate: pollMaxJobsToActivate,
+					tenantIds: req.tenantIds,
+					fetchVariable: req.fetchVariable,
+					inputVariableDto,
+					customHeadersDto,
+					requestTimeout: -1,
+				})
+				for (const job of jobs) {
+					handleJob(job)
+				}
+			}
+
+			// Initial backfill poll: pick up jobs that existed before the stream.
 			// The broker guarantees single activation, so there is no risk of
 			// duplicate delivery between the poll and the stream.
-			const existingJobs = await this.zbClient.activateJobs<
-				WorkerInputVariables,
-				CustomHeaderShape
-			>({
-				type: req.type,
-				worker: req.worker,
-				timeout: req.timeout,
-				maxJobsToActivate: initialPollMaxJobsToActivate,
-				tenantIds: req.tenantIds,
-				fetchVariable: req.fetchVariable,
-				inputVariableDto,
-				customHeadersDto,
-				requestTimeout: -1,
-			})
+			await runPoll()
 
-			for (const job of existingJobs) {
-				handleJob(job)
+			// Recurring sidecar poll: a low-frequency safety net that catches
+			// jobs the stream may have missed (e.g. jobs re-queued after a
+			// timeout or during a brief stream reconnect). Uses a setTimeout
+			// chain so each cycle waits for the previous poll to finish before
+			// scheduling the next, preventing overlapping polls.
+			let sidecarTimer: ReturnType<typeof setTimeout> | undefined
+			if (pollInterval > 0) {
+				const schedulePoll = () => {
+					sidecarTimer = setTimeout(() => {
+						runPoll()
+							.catch(() => {
+								// Swallow errors — the stream is the primary channel.
+								// The next poll cycle will retry.
+							})
+							.finally(schedulePoll)
+					}, pollInterval)
+					this.pollTimers.push(sidecarTimer)
+				}
+				schedulePoll()
 			}
 
 			return {
 				close: () => {
+					if (sidecarTimer) {
+						clearTimeout(sidecarTimer)
+					}
 					stream.cancel()
 					stream.destroy()
 				},
@@ -153,6 +192,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 	}
 
 	close() {
+		this.pollTimers.forEach((t) => clearTimeout(t))
+		this.pollTimers = []
 		this.streams.forEach((s) => {
 			s.cancel()
 			s.destroy()
