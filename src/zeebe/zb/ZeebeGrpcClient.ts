@@ -1226,8 +1226,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	/**
 	 *
 	 * Create a worker that uses the StreamActivatedJobs RPC to activate jobs.
-	 * **NOTE**: This will only stream jobs created *after* the worker is started.
-	 * To activate existing jobs, use `activateJobs` or `createWorker`.
+	 *
+	 * The worker opens a stream for newly created jobs, then performs an initial
+	 * backfill poll (via `activateJobs`) to pick up any jobs that were already
+	 * queued before the stream was established. A low-frequency sidecar poll
+	 * continues running alongside the stream as a safety net for re-queued jobs.
+	 *
 	 * @example
 	 * ```
 	 * const zbc = new ZB.ZeebeGrpcClient()
@@ -1300,11 +1304,20 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			 */
 			jitter?: number
 			/**
-			 * Maximum number of jobs to activate in the initial poll before opening
-			 * the stream. This picks up jobs that were created before the stream was
-			 * established. Defaults to 32.
+			 * Maximum number of jobs to activate per poll cycle (both the initial
+			 * backfill and the recurring sidecar polls). Defaults to 32.
 			 */
-			initialPollMaxJobsToActivate?: number
+			pollMaxJobsToActivate?: number
+			/**
+			 * Interval in milliseconds between sidecar poll cycles. The sidecar poll
+			 * is a low-frequency safety net that picks up jobs the stream may have
+			 * missed (e.g. jobs re-queued after a timeout). Each poll is a command on
+			 * the broker, so keep this value high to minimise load.
+			 *
+			 * Defaults to 30000 (30 seconds). Set to 0 or -1 to disable recurring
+			 * polling (the initial backfill poll still runs).
+			 */
+			pollInterval?: number
 			taskHandler: ZBWorkerTaskHandler<
 				WorkerInputVariables,
 				CustomHeaderShape,

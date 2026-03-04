@@ -729,9 +729,18 @@ The ZeebeGrpcClient method `streamJobs` allows you to use this API.
 
 When `streamJobs` is called, it first opens a stream to receive any newly created jobs, then performs an initial poll (via `activateJobs`) to pick up any jobs that were already queued before the stream was established. This "subscribe then backfill" approach ensures no jobs are missed — the stream catches anything created after it opens, the poll catches anything that existed before, and the broker's single-activation guarantee prevents duplicates.
 
-You can optionally pass a `jitter` parameter (in milliseconds) to delay the start by a random period up to that value. This is useful when starting multiple stream workers simultaneously, to avoid saturating the gateway at application startup.
+### Sidecar polling
 
-You can also pass `initialPollMaxJobsToActivate` to control how many pre-existing jobs the initial poll will pick up (defaults to 32).
+After the initial backfill, a low-frequency sidecar poll runs alongside the stream as a safety net. This catches edge cases the stream alone cannot handle — for example, jobs that are re-queued after a worker fails to complete them within the timeout, or jobs that arrive during a brief stream reconnect.
+
+Each poll is a command on the broker, so the default interval is deliberately long (30 seconds) to minimise server load. The stream remains the primary delivery mechanism.
+
+Configure the sidecar poll with:
+
+- **`pollInterval`** — milliseconds between sidecar poll cycles. Defaults to `30000` (30 s). Set to `0` or `-1` to disable recurring polling entirely (the initial backfill poll still runs).
+- **`pollMaxJobsToActivate`** — maximum jobs per poll cycle (both initial and recurring). Defaults to `32`.
+
+You can optionally pass a `jitter` parameter (in milliseconds) to delay the start by a random period up to that value. This is useful when starting multiple stream workers simultaneously, to avoid saturating the gateway at application startup.
 
 Example:
 
@@ -747,8 +756,10 @@ client.streamJobs({
 	},
 	// Optional: stagger startup across workers
 	jitter: 2000,
-	// Optional: control initial poll batch size (default: 32)
-	initialPollMaxJobsToActivate: 64,
+	// Optional: control poll batch size (default: 32)
+	pollMaxJobsToActivate: 64,
+	// Optional: sidecar poll every 60 s instead of the default 30 s
+	pollInterval: 60_000,
 })
 ```
 

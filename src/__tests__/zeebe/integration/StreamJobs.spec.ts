@@ -124,3 +124,54 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		})
 	}
 )
+
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Sidecar poll is accepted and worker still handles jobs',
+	async () => {
+		const zbc = new ZeebeGrpcClient({ config: { CAMUNDA_LOG_LEVEL: 'none' } })
+
+		// Create a process instance BEFORE the stream worker starts so the
+		// initial backfill poll picks it up.
+		await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: { foo: 'bar' },
+		})
+
+		await new Promise((resolve) => {
+			let counter = 0
+			const expectedTotal = 2 // 1 pre-existing + 1 created after stream opens
+
+			zbc.streamJobs({
+				type: 'stream-job',
+				worker: 'test-worker',
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					counter++
+					expect(job.variables.foo).toBe('bar')
+					const res = job.complete({})
+					if (counter === expectedTotal) {
+						zbc.close()
+						resolve(null)
+					}
+					return res
+				},
+				inputVariableDto: class {
+					foo!: string
+				},
+				fetchVariables: [],
+				timeout: 30000,
+				// Explicitly set sidecar poll parameters
+				pollMaxJobsToActivate: 10,
+				pollInterval: 3000,
+			})
+
+			// Create 1 more after the stream is open
+			new Promise((resolve) => setTimeout(resolve, 2000)).then(() => {
+				zbc.createProcessInstance({
+					bpmnProcessId,
+					variables: { foo: 'bar' },
+				})
+			})
+		})
+	}
+)
