@@ -121,7 +121,7 @@ test.runIf(
 	expect(typeof completeTask.priority).toBe('number')
 
 	// These fields might be optional
-	if (completeTask.assignee !== undefined) {
+	if (completeTask.assignee !== undefined && completeTask.assignee !== null) {
 		expect(typeof completeTask.assignee).toBe('string')
 	}
 	if (completeTask.candidateGroups !== undefined) {

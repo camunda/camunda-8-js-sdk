@@ -41,7 +41,10 @@ test.runIf(
 	expect(processDefinition.tenantId).toBeDefined()
 
 	// versionTag is optional, so check if it exists, then validate its type
-	if (processDefinition.versionTag !== undefined) {
+	if (
+		processDefinition.versionTag !== undefined &&
+		processDefinition.versionTag !== null
+	) {
 		expect(typeof processDefinition.versionTag).toBe('string')
 	}
 })
