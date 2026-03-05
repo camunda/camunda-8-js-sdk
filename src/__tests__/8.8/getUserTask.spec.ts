@@ -92,7 +92,9 @@ test.runIf(
 	// Nullable/optional fields - in 8.9+ these are required but nullable (value is null),
 	// in 8.8 they are optional (value is undefined). Accept string or null.
 	expect(
-		task.assignee === null || typeof task.assignee === 'string',
+		task.assignee === null /* 8.9 nullable */ ||
+			typeof task.assignee === 'string' /* 8.8 / 8.9 */ ||
+			typeof task.assignee === 'undefined' /* 8.8 missing */,
 		'assignee should be string or null'
 	).toBe(true)
 	expect(
