@@ -20,21 +20,21 @@ beforeAll(async () => {
 	zbc = new ZeebeGrpcClient()
 
 	const res1 = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/hello-world.bpmn',
+		processFilename: './src/__tests__/testdata/hello-world-10c.bpmn',
 	})
 	processDefinitionKey1 = res1.deployments[0].process.processDefinitionKey
 	bpmnProcessId1 = res1.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processDefinitionKey1)
 
 	const res2 = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/hello-world-complete.bpmn',
+		processFilename: './src/__tests__/testdata/hello-world-complete-10c.bpmn',
 	})
 	processDefinitionKey2 = res2.deployments[0].process.processDefinitionKey
 	bpmnProcessId2 = res2.deployments[0].process.bpmnProcessId
 	await cancelProcesses(processDefinitionKey2)
 
 	const res3 = await zbc.deployResource({
-		processFilename: './src/__tests__/testdata/conditional-pathway.bpmn',
+		processFilename: './src/__tests__/testdata/conditional-pathway-10c.bpmn',
 	})
 	processDefinitionKey3 = res3.deployments[0].process.processDefinitionKey
 	bpmnProcessId3 = res3.deployments[0].process.bpmnProcessId
@@ -65,7 +65,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		// Use a promise to wait for the worker task to complete
 		await new Promise<void>((resolve) => {
 			worker = zbc.createWorker({
-				taskType: 'console-log',
+				taskType: 'console-log-10c',
 				taskHandler: async (job) => {
 					const res = await job.complete()
 					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
@@ -87,7 +87,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		let worker: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
 		await new Promise((resolve) => {
 			worker = zbc.createWorker({
-				taskType: 'console-log-complete',
+				taskType: 'console-log-complete-10c',
 				taskHandler: async (job) => {
 					expect(job.processInstanceKey).toBe(wf?.processInstanceKey)
 					const res1 = await job.complete(job.variables)
@@ -113,7 +113,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		expect(wfi).toBeTruthy()
 
 		const worker1 = zbc.createWorker({
-			taskType: 'wait',
+			taskType: 'wait-10c',
 			taskHandler: async (job) => {
 				expect(job.processInstanceKey).toBe(wfi)
 				return job.complete({
@@ -126,7 +126,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		let worker2: ZBWorker<IInputVariables, ICustomHeaders, IOutputVariables>
 		await new Promise((resolve) => {
 			worker2 = zbc.createWorker({
-				taskType: 'pathB',
+				taskType: 'pathB-10c',
 				taskHandler: async (job) => {
 					expect(job.processInstanceKey).toBe(wfi)
 					expect(job.variables.conditionVariable).toBe(false)
