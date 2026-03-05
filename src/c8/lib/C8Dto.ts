@@ -217,7 +217,7 @@ export class PublishMessageResponse extends LosslessDto {
 	tenantId!: string
 }
 
-interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
+export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	/**
 	 * the version of the process; if not specified it will use the latest version
 	 */
@@ -273,7 +273,7 @@ export interface ProcessInstanceCreationRuntimeInstruction {
 	afterElementId: string
 }
 
-interface CreateProcessInstanceFromProcessDefinitionId<
+export interface CreateProcessInstanceFromProcessDefinitionId<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
@@ -282,7 +282,7 @@ interface CreateProcessInstanceFromProcessDefinitionId<
 	processDefinitionId: string
 }
 
-interface CreateProcessInstanceFromProcessDefinitionKey<
+export interface CreateProcessInstanceFromProcessDefinitionKey<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
@@ -374,7 +374,7 @@ export type ActivatedJob<VariablesDto, CustomHeadersDto> = RestJob<
 > &
 	JobCompletionInterfaceRest<IProcessVariables>
 
-interface SearchPageRequestSearchAfter {
+export interface SearchPageRequestSearchAfter {
 	/** The index of items to start searching from. */
 	from: number
 	/** The maximum number of items to return in one request. Defaults to 100. */
@@ -383,7 +383,7 @@ interface SearchPageRequestSearchAfter {
 	after?: string
 }
 
-interface SearchPageRequestSearchBefore {
+export interface SearchPageRequestSearchBefore {
 	/** The index of items to start searching from. */
 	from: number
 	/** The maximum number of items to return in one request. Defaults to 100. */
@@ -397,7 +397,7 @@ export type SearchPageRequest =
 	| SearchPageRequestSearchBefore
 
 /** Generic search request interface that can be used for most search operations */
-interface BaseSearchRequest<TSortFields extends string, TFilter> {
+export interface BaseSearchRequest<TSortFields extends string, TFilter> {
 	/** Pagination criteria. */
 	page?: SearchPageRequest
 	/** Sort field criteria. */
@@ -468,7 +468,7 @@ export interface VariableSearchRequestFilter {
 	isTruncated?: boolean
 }
 
-interface SearchResponsePagination {
+export interface SearchResponsePagination {
 	/** Total items matching the criteria. */
 	totalItems: number
 	/** The cursor for the first item in the result set. Use this in the searchBefore field of an ensuing request. */
@@ -477,7 +477,7 @@ interface SearchResponsePagination {
 	endCursor: string
 }
 
-interface PaginatedSearchResponse<T> {
+export interface PaginatedSearchResponse<T> {
 	/** Pagination information about the search results. */
 	page: SearchResponsePagination
 	/** The matching items. */
@@ -992,7 +992,7 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	evaluatedDecisions!: EvaluatedDecision[]
 }
 
-class UserItem extends LosslessDto {
+export class UserItem extends LosslessDto {
 	/** The ID of the user. */
 	@Int64String
 	id!: string
@@ -1280,7 +1280,7 @@ export interface SearchIncidentsRequest
 		IncidentSearchRequestFilter
 	> {}
 
-interface IncidentDetails {
+export interface IncidentDetails {
 	/* The process definition ID associated to this incident. */
 	processDefinitionId: string
 	/* Incident error type with a defined set of values. */
