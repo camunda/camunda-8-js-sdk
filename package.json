@@ -16,6 +16,8 @@
 		"sm:st:stop": "docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml down && docker/cleanup-volumes.sh",
 		"sm:stop:8.8": "docker compose -f docker/docker-compose-8.8.yaml down",
 		"sm:start:8.8": "docker compose -f docker/docker-compose-8.8.yaml up -d",
+		"sm:start:8.9": "docker compose -f docker/8.9/docker-compose.yaml up -d",
+		"sm:stop:8.9": "docker compose -f docker/8.9/docker-compose.yaml down",
 		"test": "TEST_DEPLOYMENT=unit-test CAMUNDA_UNIT_TEST=true vitest run --sequence.concurrent=false",
 		"test:8.8:sm": "TEST_VERSION=8.8 TEST_DEPLOYMENT=self-managed TEST_TENANCY=single-tenant TEST_SECURITY=unsecured vitest run --sequence.concurrent=false",
 		"test:8.8:saas": "TEST_VERSION=8.8 TEST_DEPLOYMENT=saas TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false --sequence.setupFiles=list",
