@@ -28,6 +28,8 @@ CamundaSupportLogger.getInstance()
 
 export { CamundaSDKConfiguration } from './lib'
 
+export { LosslessDto } from './lib'
+
 export { HTTPError } from './lib'
 
 /**
