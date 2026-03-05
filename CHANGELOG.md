@@ -1,3 +1,11 @@
+## [8.8.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.5...v8.8.6) (2026-03-05)
+
+
+### Features
+
+* implement sidecar polling in streamJobs ([2130687](https://github.com/camunda/camunda-8-js-sdk/commit/2130687e04b74ffcce62d8a2bff44531e476b33d))
+* streamWorker jitter startup and subscribe -> backfill ([7207d85](https://github.com/camunda/camunda-8-js-sdk/commit/7207d850c0f21227d52d29e606efe8cfdbf837b1))
+
 ## [8.8.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.4...v8.8.5) (2026-02-11)
 
 
