@@ -1,3 +1,10 @@
+## [8.8.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.6...v8.8.7) (2026-03-05)
+
+
+### Bug Fixes
+
+* export types. fixes Missing types in export ([20857c3](https://github.com/camunda/camunda-8-js-sdk/commit/20857c320736239f38aa2624933bd4e6799365ba)), closes [#570](https://github.com/camunda/camunda-8-js-sdk/issues/570)
+
 ## [8.8.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.5...v8.8.6) (2026-03-05)
 
 
