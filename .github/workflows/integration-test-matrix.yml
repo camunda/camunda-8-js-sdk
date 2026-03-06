@@ -30,7 +30,7 @@ jobs:
   prepare-versions:
     name: Prepare Version Matrix
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 60
     permissions:
       contents: read
     outputs:
@@ -93,24 +93,20 @@ jobs:
           echo "CLIENT_LIST:"
           cat /tmp/client_list.txt
 
-      - name: Checkout camunda/camunda repository
-        uses: actions/checkout@v4
-        with:
-          repository: camunda/camunda
-          path: camunda-repo
-          fetch-depth: 0
-
       - name: Get server versions from camunda/camunda tags
         id: get-server-versions
         run: |
-          cd camunda-repo
-
+          # Use git ls-remote to list tags without cloning the large camunda/camunda repo
           CURRENT_MAJOR="${{ steps.current-version.outputs.major }}"
           CURRENT_MINOR="${{ steps.current-version.outputs.minor }}"
           NEXT_MINOR=$((CURRENT_MINOR + 1))
 
-          # Server tags have no prefix (e.g., 8.8.0)
-          ALL_TAGS=$(git tag -l '[0-9]*.[0-9]*.[0-9]*' | sort -V)
+          # Fetch tags via ls-remote (lightweight, no clone needed)
+          ALL_TAGS=$(git ls-remote --tags https://github.com/camunda/camunda.git \
+            | grep -oE 'refs/tags/[0-9]+\.[0-9]+\.[0-9]+[^ ]*$' \
+            | sed 's|refs/tags/||' \
+            | grep -v '\^{}' \
+            | sort -V)
 
           SERVER_LIST=""
           SERVER_COUNT=0
@@ -214,7 +210,7 @@ jobs:
                 # Skip if combination already tested (unless skip_cache is true or server is SNAPSHOT)
                 if [[ "$SKIP_CACHE" != "true" ]]; then
                   if grep -q "^$COMBO$" /tmp/compatibility-state/tested-combinations.txt 2>/dev/null; then
-                    if [[ "$server" != *"-SNAPSHOT" ]]; then
+                    if [[ "$server" != *SNAPSHOT* ]]; then
                       SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
                       continue
                     fi
@@ -340,18 +336,18 @@ jobs:
           CAMUNDA_AUTH_STRATEGY: NONE
           CAMUNDA_TENANT_ID: <default>
 
+      - name: Print Docker logs on failure
+        if: failure() && steps.check-image.outputs.exists == 'true'
+        run: |
+          export CAMUNDA_VERSION="${{ matrix.server }}"
+          echo "=== Docker Compose logs for Camunda ${{ matrix.server }} ==="
+          docker compose -f docker/docker-compose-matrix.yaml logs 2>&1 || true
+
       - name: Cleanup
         if: always() && steps.check-image.outputs.exists == 'true'
         run: |
           export CAMUNDA_VERSION="${{ matrix.server }}"
-          docker compose -f docker/docker-compose-matrix.yaml down
           docker compose -f docker/docker-compose-matrix.yaml down -v
-
-      - name: Capture Docker logs on failure
-        if: failure() && steps.check-image.outputs.exists == 'true'
-        run: |
-          export CAMUNDA_VERSION="${{ matrix.server }}"
-          docker compose -f docker/docker-compose-matrix.yaml logs > docker-compose-logs-${{ matrix.client }}-${{ matrix.server }}.txt 2>&1 || true
 
       - name: Record tested combination
         if: success() && steps.check-image.outputs.exists == 'true'
@@ -423,6 +419,8 @@ jobs:
             tested-combinations-
 
       - name: Download new tested combination markers
+        id: download-markers
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           pattern: tested-combo-*
@@ -430,6 +428,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge tested combinations
+        if: steps.download-markers.outcome == 'success'
         run: |
           mkdir -p /tmp/compatibility-state
           touch /tmp/compatibility-state/tested-combinations.txt
@@ -451,7 +450,12 @@ jobs:
           echo "Total: $(wc -l < /tmp/compatibility-state/tested-combinations.txt) combinations"
 
       - name: Save updated tested combinations to cache
+        if: steps.download-markers.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: /tmp/compatibility-state
           key: tested-combinations-${{ github.run_id }}
+
+      - name: Report no new combinations
+        if: steps.download-markers.outcome != 'success'
+        run: echo "No tested-combo artifacts found — all matrix entries were skipped or none succeeded. Nothing to update."
