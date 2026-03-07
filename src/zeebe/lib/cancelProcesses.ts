@@ -6,9 +6,10 @@ const camunda = new Camunda8().getCamundaRestClient()
 const topology = camunda.getTopology()
 
 export async function cancelProcesses(processDefinitionKey: string) {
-	const { searchProcessInstances, cancelProcessInstance } = (
-		await topology
-	).gatewayVersion.includes('8.8')
+	const gatewayVersion = (await topology).gatewayVersion
+	const [major, minor] = gatewayVersion.split('.').map(Number)
+	const useCamundaRestClient = major > 8 || (major === 8 && minor >= 8)
+	const { searchProcessInstances, cancelProcessInstance } = useCamundaRestClient
 		? {
 				searchProcessInstances: camunda.searchProcessInstances.bind(camunda),
 				cancelProcessInstance: (pid) =>
