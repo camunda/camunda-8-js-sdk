@@ -93,33 +93,37 @@ test.runIf(
 	// in 8.8 they are optional (value is undefined). Accept string or null.
 	expect(
 		task.assignee === null /* 8.9 nullable */ ||
-			typeof task.assignee === 'string' /* 8.8 / 8.9 */ ||
-			typeof task.assignee === 'undefined' /* 8.8 missing */,
+			typeof task.assignee === 'string' /* 8.8+ */ ||
+			task.assignee === undefined /* 8.8 missing */,
 		'assignee should be string or null'
 	).toBe(true)
 	expect(
 		task.completionDate === null /* 8.9 */ ||
-			typeof task.completionDate === 'string' /* 8.8/ 8.9 */ ||
-			task.completionDate === undefined /* 8.8 */,
+			typeof task.completionDate === 'string' /* 8.8+ */ ||
+			task.completionDate === undefined /* 8.8 missing */,
 		'completionDate should be string or null'
 	).toBe(true)
 	expect(
-		task.followUpDate === null || typeof task.followUpDate === 'string',
+		task.followUpDate === null /* 8.9 */ ||
+			typeof task.followUpDate === 'string' /* 8.8+ */ ||
+			task.followUpDate === undefined /* 8.8 missing */,
 		'followUpDate should be string or null'
 	).toBe(true)
 	expect(
-		task.dueDate === null || typeof task.dueDate === 'string',
+		task.dueDate === null /* 8.9 */ ||
+			typeof task.dueDate === 'string' /* 8.8+ */ ||
+			task.dueDate === undefined /* 8.8 missing */,
 		'dueDate should be string or null'
 	).toBe(true)
 	expect(
-		task.formKey === null ||
-			task.formKey === undefined ||
+		task.formKey === null /* 8.9 */ ||
+			task.formKey === undefined /* 8.8 missing */ ||
 			typeof task.formKey === 'string',
 		'formKey should be string, null, or undefined'
 	).toBe(true)
 	expect(
-		task.externalFormReference === null ||
-			task.externalFormReference === undefined ||
+		task.externalFormReference === null /* 8.9 */ ||
+			task.externalFormReference === undefined /* 8.8 missing */ ||
 			typeof task.externalFormReference === 'string',
 		'externalFormReference should be string, null, or undefined'
 	).toBe(true)
