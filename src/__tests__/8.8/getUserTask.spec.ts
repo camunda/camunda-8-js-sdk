@@ -98,7 +98,9 @@ test.runIf(
 		'assignee should be string or null'
 	).toBe(true)
 	expect(
-		task.completionDate === null || typeof task.completionDate === 'string',
+		task.completionDate === null /* 8.9 */ ||
+			typeof task.completionDate === 'string' /* 8.8/ 8.9 */ ||
+			task.completionDate === undefined /* 8.8 */,
 		'completionDate should be string or null'
 	).toBe(true)
 	expect(
