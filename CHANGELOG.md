@@ -1,3 +1,16 @@
+# [8.9.0-alpha.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.1...v8.9.0-alpha.2) (2026-03-07)
+
+
+### Bug Fixes
+
+* export types. fixes Missing types in export ([bda4b97](https://github.com/camunda/camunda-8-js-sdk/commit/bda4b9705da03f63c9d9eed04a5dc99e5bda1ec1)), closes [#570](https://github.com/camunda/camunda-8-js-sdk/issues/570)
+* implement copilot suggestions ([fb25ca5](https://github.com/camunda/camunda-8-js-sdk/commit/fb25ca54025fdbdfe33fbd9b62b131ecf5714257))
+
+
+### Features
+
+* add new compatibility test workflow ([e8074c4](https://github.com/camunda/camunda-8-js-sdk/commit/e8074c42b47d05234a9cc37e7ac5d96b8b3efdd3))
+
 # [8.9.0-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.5...v8.9.0-alpha.1) (2026-03-05)
 
 
