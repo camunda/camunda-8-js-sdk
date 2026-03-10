@@ -1,3 +1,15 @@
+# [8.9.0-alpha.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.2...v8.9.0-alpha.3) (2026-03-10)
+
+
+### Bug Fixes
+
+* use semver comparison for gateway version check in cancelProcesses ([042e3a9](https://github.com/camunda/camunda-8-js-sdk/commit/042e3a9a9c147f4675b8af138164ee4458b9f8c5))
+
+
+### Features
+
+* add trigger for stable branches ([6344480](https://github.com/camunda/camunda-8-js-sdk/commit/6344480c373ec9beeb985242ed2ccaeefcb67705))
+
 # [8.9.0-alpha.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.1...v8.9.0-alpha.2) (2026-03-07)
 
 
