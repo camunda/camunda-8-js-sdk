@@ -41,12 +41,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get current SDK version from package.json
+      - name: Get current SDK version from latest stable tag
         id: current-version
         run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          # Derive version from the latest stable git tag rather than
+          # package.json, because semantic-release may have already bumped
+          # package.json to a pre-release (e.g. 8.9.0-alpha.3) before any
+          # stable tags exist for that minor, which would cause the client
+          # filter to find 0 versions.
+          LATEST_STABLE_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' \
+            | grep -v -E 'alpha|beta|rc' \
+            | sort -V \
+            | tail -1)
+
+          CURRENT_VERSION="${LATEST_STABLE_TAG#v}"
           echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Current SDK version: $CURRENT_VERSION"
+          echo "Latest stable SDK version: $CURRENT_VERSION (tag: $LATEST_STABLE_TAG)"
 
           # Extract major.minor for filtering
           if [[ "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)\. ]]; then
@@ -179,7 +189,7 @@ jobs:
             echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
           elif [[ -n "$CLIENT_VERSION" ]]; then
             echo "Manual trigger: Testing client $CLIENT_VERSION against all servers"
-            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt)
+            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt || true)
             MATRIX_ITEMS="[]"
             for server in $SERVER_LIST; do
               MATRIX_ITEMS=$(echo "$MATRIX_ITEMS" | jq -c --arg c "$CLIENT_VERSION" --arg s "$server" '. += [{"client": $c, "server": $s}]')
@@ -188,7 +198,7 @@ jobs:
             echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
           elif [[ -n "$SERVER_VERSION" ]]; then
             echo "Manual trigger: Testing all clients against server $SERVER_VERSION"
-            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt)
+            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt || true)
             MATRIX_ITEMS="[]"
             for client in $CLIENT_LIST; do
               MATRIX_ITEMS=$(echo "$MATRIX_ITEMS" | jq -c --arg c "$client" --arg s "$SERVER_VERSION" '. += [{"client": $c, "server": $s}]')
@@ -196,8 +206,8 @@ jobs:
             MATRIX_JSON=$(jq -nc --argjson items "$MATRIX_ITEMS" '{"include": $items}')
             echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
           else
-            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt)
-            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt)
+            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt || true)
+            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt || true)
 
             MATRIX_ITEMS="[]"
             ADDED_COUNT=0
