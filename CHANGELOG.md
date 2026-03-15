@@ -1,3 +1,16 @@
+# [8.9.0-alpha.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.3...v8.9.0-alpha.4) (2026-03-15)
+
+
+### Bug Fixes
+
+* address npm audit issues ([fea2510](https://github.com/camunda/camunda-8-js-sdk/commit/fea251013097768d0514a355ba95e768d5737de3))
+* use latest stable tag for version detection in compatibility workflow ([7591903](https://github.com/camunda/camunda-8-js-sdk/commit/75919032eee6bb794d9f5541bb97ecd3cde93229))
+
+
+### Features
+
+* add author as reviewer ([3c02ce6](https://github.com/camunda/camunda-8-js-sdk/commit/3c02ce6a46577a67c35cfdc9129dab8143f8f205))
+
 # [8.9.0-alpha.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.2...v8.9.0-alpha.3) (2026-03-10)
 
 
