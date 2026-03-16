@@ -24,27 +24,23 @@ export function parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	inputVariableDto: new (...args: any[]) => Readonly<Variables>,
 	customHeadersDto: new (...args: any[]) => Readonly<CustomHeaders>
-): Promise<Job<Variables, CustomHeaders>> {
-	return new Promise((resolve, reject) => {
-		try {
-			resolve(
-				Object.assign({}, response, {
-					customHeaders: losslessParse(
-						response.customHeaders,
-						customHeadersDto
-					) as CustomHeaders,
-					variables: losslessParse(
-						response.variables,
-						inputVariableDto
-					) as Readonly<Variables>,
-				}) as Job<Variables, CustomHeaders>
-			)
-		} catch (e) {
-			console.error(`Error parsing variables ${e}`)
-			console.error('Job', response)
-			reject(e)
-		}
-	})
+): Job<Variables, CustomHeaders> {
+	try {
+		return Object.assign({}, response, {
+			customHeaders: losslessParse(
+				response.customHeaders,
+				customHeadersDto
+			) as CustomHeaders,
+			variables: losslessParse(
+				response.variables,
+				inputVariableDto
+			) as Readonly<Variables>,
+		}) as Job<Variables, CustomHeaders>
+	} catch (e) {
+		console.error(`Error parsing variables ${e}`)
+		console.error('Job', response)
+		throw e
+	}
 }
 
 /**
