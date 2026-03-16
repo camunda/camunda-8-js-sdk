@@ -1,10 +1,7 @@
 import { EventEmitter } from 'events'
 import { randomUUID } from 'node:crypto'
 
-import {
-	ClientReadableStream,
-	ClientReadableStreamImpl,
-} from '@grpc/grpc-js/build/src/call'
+import { ClientReadableStream } from '@grpc/grpc-js'
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
@@ -100,7 +97,9 @@ export class ZBWorkerBase<
 	private stalled = false
 	private connected = true
 	private readied = false
-	private jobStream?: ClientReadableStreamImpl<unknown>
+	private jobStream?: ClientReadableStream<unknown> & {
+		destroy?: () => void
+	}
 	private activeJobsThresholdForReactivation: number
 	private pollInterval: MaybeTimeDuration
 	private pollLoop: NodeJS.Timeout
