@@ -1,10 +1,7 @@
 import { EventEmitter } from 'events'
 import { randomUUID } from 'node:crypto'
 
-import {
-	ClientReadableStream,
-	ClientReadableStreamImpl,
-} from '@grpc/grpc-js/build/src/call'
+import { ClientReadableStream } from '@grpc/grpc-js'
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
@@ -100,7 +97,9 @@ export class ZBWorkerBase<
 	private stalled = false
 	private connected = true
 	private readied = false
-	private jobStream?: ClientReadableStreamImpl<unknown>
+	private jobStream?: ClientReadableStream<unknown> & {
+		destroy?: () => void
+	}
 	private activeJobsThresholdForReactivation: number
 	private pollInterval: MaybeTimeDuration
 	private pollLoop: NodeJS.Timeout
@@ -664,28 +663,25 @@ You should call only one job action method in the worker handler. This is a bug 
 		this.backPressureRetryCount = 0
 		this.activeJobs += res.jobs.length
 
-		Promise.all(
-			res.jobs
-				.map((job) =>
+		const jobs: ZB.Job<WorkerInputVariables, CustomHeaderShape>[] = []
+		res.jobs.forEach((job) => {
+			try {
+				jobs.push(
 					parseVariablesAndCustomHeadersToJSON<
 						WorkerInputVariables,
 						CustomHeaderShape
 					>(job, this.inputVariableDto, this.customHeadersDto)
-						.then((job) => job)
-						.catch((e) => {
-							this.zbClient.failJob({
-								jobKey: job.key,
-								errorMessage: `Error parsing variable payload: ${e}`,
-								retries: job.retries - 1,
-								retryBackOff: 0,
-							})
-							return null
-						})
 				)
-				.filter(
-					(f): f is Promise<ZB.Job<WorkerInputVariables, CustomHeaderShape>> =>
-						!!f
-				)
-		).then((jobs) => this.handleJobs(jobs))
+			} catch (e) {
+				this.zbClient.failJob({
+					jobKey: job.key,
+					errorMessage: `Error parsing variable payload: ${e}`,
+					retries: job.retries - 1,
+					retryBackOff: 0,
+				})
+			}
+		})
+
+		this.handleJobs(jobs)
 	}
 }

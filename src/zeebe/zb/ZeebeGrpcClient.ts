@@ -386,22 +386,24 @@ export class ZeebeGrpcClient extends TypedEmitter<
 					reject(e)
 				})
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
-					res.jobs.forEach((job) =>
-						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
-							job,
-							inputVariableDtoToUse,
-							customHeadersDtoToUse
-						)
-							.then((parsedJob) => jobs.push(parsedJob))
-							.catch((e) =>
-								this.failJob({
-									jobKey: job.key,
-									errorMessage: `Error parsing job variables ${e}`,
-									retries: job.retries - 1,
-									retryBackOff: 0,
-								})
+					res.jobs.forEach((job) => {
+						try {
+							jobs.push(
+								parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
+									job,
+									inputVariableDtoToUse,
+									customHeadersDtoToUse
+								)
 							)
-					)
+						} catch (e) {
+							this.failJob({
+								jobKey: job.key,
+								errorMessage: `Error parsing job variables ${e}`,
+								retries: job.retries - 1,
+								retryBackOff: 0,
+							})
+						}
+					})
 				})
 
 				stream.on('end', () => {
