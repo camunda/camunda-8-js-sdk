@@ -1,3 +1,14 @@
+## [8.8.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.7...v8.8.8) (2026-03-18)
+
+
+### Bug Fixes
+
+* address npm audit issues ([c42e065](https://github.com/camunda/camunda-8-js-sdk/commit/c42e0653a110cda558f3a5ff2686255dca8d6e66))
+* do not arm client-side timeout on long-lived gRPC streams ([f8f249d](https://github.com/camunda/camunda-8-js-sdk/commit/f8f249d4d0c9938af332d0dfead1ed94549a2ca3))
+* remove Promise churn from job pathway ([dc1a12f](https://github.com/camunda/camunda-8-js-sdk/commit/dc1a12ff111c7d911b0360f75be3e2dccfa50c21))
+* update grpc dependencies ([df8336c](https://github.com/camunda/camunda-8-js-sdk/commit/df8336c474b4a9fa6d7d3a783f7fa658e8a538f5))
+* use semver comparison for gateway version check in cancelProcesses ([21f2ba6](https://github.com/camunda/camunda-8-js-sdk/commit/21f2ba62babc54888611f2aa29470bcf00a80260))
+
 ## [8.8.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.6...v8.8.7) (2026-03-05)
 
 
