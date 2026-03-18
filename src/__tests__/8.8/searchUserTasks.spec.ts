@@ -121,25 +121,43 @@ test.runIf(
 	expect(typeof completeTask.priority).toBe('number')
 
 	// These fields might be optional
-	if (completeTask.assignee !== undefined) {
+	if (completeTask.assignee !== undefined && completeTask.assignee !== null) {
 		expect(typeof completeTask.assignee).toBe('string')
 	}
-	if (completeTask.candidateGroups !== undefined) {
+	if (
+		completeTask.candidateGroups !== undefined &&
+		completeTask.candidateGroups !== null
+	) {
 		expect(Array.isArray(completeTask.candidateGroups)).toBe(true)
 	}
-	if (completeTask.candidateUsers !== undefined) {
+	if (
+		completeTask.candidateUsers !== undefined &&
+		completeTask.candidateUsers !== null
+	) {
 		expect(Array.isArray(completeTask.candidateUsers)).toBe(true)
 	}
-	if (completeTask.completionDate !== undefined) {
+	if (
+		completeTask.completionDate !== undefined &&
+		completeTask.completionDate !== null
+	) {
 		expect(typeof completeTask.completionDate).toBe('string')
 	}
-	if (completeTask.followUpDate !== undefined) {
+	if (
+		completeTask.followUpDate !== undefined &&
+		completeTask.followUpDate !== null
+	) {
 		expect(typeof completeTask.followUpDate).toBe('string')
 	}
-	if (completeTask.dueDate !== undefined) {
+	if (
+		completeTask.dueDate !== undefined &&
+		completeTask.followUpDate !== null
+	) {
 		expect(typeof completeTask.dueDate).toBe('string')
 	}
-	if (completeTask.externalFormReference !== undefined) {
+	if (
+		completeTask.externalFormReference !== undefined &&
+		completeTask.externalFormReference !== null
+	) {
 		expect(typeof completeTask.externalFormReference).toBe('string')
 	}
 })

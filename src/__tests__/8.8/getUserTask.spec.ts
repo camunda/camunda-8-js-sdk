@@ -84,25 +84,49 @@ test.runIf(
 	expect(task.state).toBe('CREATED')
 	expect(task.tenantId).toBeDefined()
 	expect(task.creationDate).toBeDefined()
-	expect(typeof task.creationDate).toBe('string')
+	expect(typeof task.creationDate, 'creationDate should be string').toBe(
+		'string'
+	)
 	expect(task.priority).toBeGreaterThanOrEqual(0)
 
-	// Optional fields - check type if they exist
-	if (task.assignee !== undefined) {
-		expect(typeof task.assignee).toBe('string')
-	}
-
-	if (task.completionDate !== undefined) {
-		expect(typeof task.completionDate).toBe('string')
-	}
-
-	if (task.followUpDate !== undefined) {
-		expect(typeof task.followUpDate).toBe('string')
-	}
-
-	if (task.dueDate !== undefined) {
-		expect(typeof task.dueDate).toBe('string')
-	}
+	// Nullable/optional fields - in 8.9+ these are required but nullable (value is null),
+	// in 8.8 they are optional (value is undefined). Accept string or null.
+	expect(
+		task.assignee === null /* 8.9 nullable */ ||
+			typeof task.assignee === 'string' /* 8.8+ */ ||
+			task.assignee === undefined /* 8.8 missing */,
+		'assignee should be string or null'
+	).toBe(true)
+	expect(
+		task.completionDate === null /* 8.9 */ ||
+			typeof task.completionDate === 'string' /* 8.8+ */ ||
+			task.completionDate === undefined /* 8.8 missing */,
+		'completionDate should be string or null'
+	).toBe(true)
+	expect(
+		task.followUpDate === null /* 8.9 */ ||
+			typeof task.followUpDate === 'string' /* 8.8+ */ ||
+			task.followUpDate === undefined /* 8.8 missing */,
+		'followUpDate should be string or null'
+	).toBe(true)
+	expect(
+		task.dueDate === null /* 8.9 */ ||
+			typeof task.dueDate === 'string' /* 8.8+ */ ||
+			task.dueDate === undefined /* 8.8 missing */,
+		'dueDate should be string or null'
+	).toBe(true)
+	expect(
+		task.formKey === null /* 8.9 */ ||
+			task.formKey === undefined /* 8.8 missing */ ||
+			typeof task.formKey === 'string',
+		'formKey should be string, null, or undefined'
+	).toBe(true)
+	expect(
+		task.externalFormReference === null /* 8.9 */ ||
+			task.externalFormReference === undefined /* 8.8 missing */ ||
+			typeof task.externalFormReference === 'string',
+		'externalFormReference should be string, null, or undefined'
+	).toBe(true)
 
 	if (task.candidateGroups !== undefined) {
 		expect(Array.isArray(task.candidateGroups)).toBe(true)
@@ -110,13 +134,5 @@ test.runIf(
 
 	if (task.candidateUsers !== undefined) {
 		expect(Array.isArray(task.candidateUsers)).toBe(true)
-	}
-
-	if (task.formKey !== undefined) {
-		expect(typeof task.formKey).toBe('string')
-	}
-
-	if (task.externalFormReference !== undefined) {
-		expect(typeof task.externalFormReference).toBe('string')
 	}
 })
