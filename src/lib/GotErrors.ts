@@ -57,6 +57,23 @@ export class HTTPError extends Got.HTTPError implements CamundaRestError {
 			this.message += ` - ${response.body}`
 		}
 	}
+
+	/**
+	 * Provides a rich string representation including method, URL, and response
+	 * detail for debugging (e.g. console.log, uncaught exception traces) while
+	 * keeping error.message static for error-monitoring grouping (Sentry, etc.).
+	 * See: https://github.com/camunda/camunda-8-js-sdk/issues/658
+	 */
+	toString(): string {
+		const parts = [this.message]
+		if (this.method || this.url) {
+			parts.push(`(${this.method ?? ''} ${this.url ?? ''})`)
+		}
+		if (this.detail) {
+			parts.push(this.detail)
+		}
+		return parts.join(' ')
+	}
 }
 
 export type RestError =
@@ -107,7 +124,18 @@ export const gotBeforeErrorHook =
 
 		const enhancedStack = error.options.context.stack?.split('\n')
 		error.source = enhancedStack ?? ['No enhanced stack trace available']
-		error.message += ` (${method} ${url}). ${JSON.stringify(detail)}`
+
+		// Attach request context as structured properties so error-monitoring
+		// tools (Sentry, Datadog, etc.) can group by the static error.message.
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/658
+		if (!(error instanceof HTTPError)) {
+			// HTTPError already has these from its constructor; for plain
+			// RequestErrors we attach them here.
+			;(error as RequestError & { method?: string }).method = method
+			;(error as RequestError & { url?: string }).url = url
+			;(error as RequestError & { detail?: string }).detail =
+				typeof detail === 'string' ? detail : JSON.stringify(detail)
+		}
 		if (enhancedStack) {
 			error.message += `. Enhanced stack trace available as error.source.`
 		}
@@ -168,6 +196,9 @@ export const gotBeforeErrorHook =
 		supportLogger.log({
 			code: error.code,
 			message: error.message,
+			method,
+			url,
+			detail,
 			stack: error.stack, // replaced stack
 			originalStack: (error as RequestError & { originalStack?: string })
 				.originalStack,
