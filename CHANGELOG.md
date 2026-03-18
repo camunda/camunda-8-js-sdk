@@ -1,3 +1,12 @@
+# [8.9.0-alpha.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.4...v8.9.0-alpha.5) (2026-03-18)
+
+
+### Bug Fixes
+
+* do not arm client-side timeout on long-lived gRPC streams ([a5ed433](https://github.com/camunda/camunda-8-js-sdk/commit/a5ed433a01043f1d36cca1de4afb17e993e618ea))
+* remove Promise churn from job pathway ([d763c89](https://github.com/camunda/camunda-8-js-sdk/commit/d763c896780a7aa17f9ec6d500745a806b8d3867))
+* update grpc dependencies ([ce7a450](https://github.com/camunda/camunda-8-js-sdk/commit/ce7a45008da4c505a8fa9bb2e807d864effcd267))
+
 # [8.9.0-alpha.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.3...v8.9.0-alpha.4) (2026-03-15)
 
 
