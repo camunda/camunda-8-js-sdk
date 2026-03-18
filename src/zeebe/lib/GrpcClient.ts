@@ -5,11 +5,11 @@ import {
 	ClientReadableStream,
 	InterceptingCall,
 	Metadata,
+	VerifyOptions,
 	credentials,
 	loadPackageDefinition,
 	status,
 } from '@grpc/grpc-js'
-import { VerifyOptions } from '@grpc/grpc-js/build/src/channel-credentials'
 import { Options, PackageDefinition, loadSync } from '@grpc/proto-loader'
 import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
