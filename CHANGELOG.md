@@ -1,3 +1,10 @@
+## [8.8.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.8...v8.8.9) (2026-03-19)
+
+
+### Bug Fixes
+
+* keep error.message static for error-monitoring grouping ([4124aac](https://github.com/camunda/camunda-8-js-sdk/commit/4124aac2f7138ebfc134f1082383ec5daed03b1f)), closes [#658](https://github.com/camunda/camunda-8-js-sdk/issues/658)
+
 ## [8.8.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.7...v8.8.8) (2026-03-18)
 
 
