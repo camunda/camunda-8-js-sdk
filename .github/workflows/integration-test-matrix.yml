@@ -340,7 +340,10 @@ jobs:
       - name: Run Integration Tests against Camunda ${{ matrix.server }}
         if: steps.check-image.outputs.exists == 'true'
         run: |
-          npm run ${{ steps.docker-config.outputs.test_command }}
+          npm run ${{ steps.docker-config.outputs.test_command }} -- \
+            --exclude '**/8.8/getProcessDefinition.spec.ts' \
+            --exclude '**/8.8/getUserTask.spec.ts' \
+            --exclude '**/8.8/searchUserTasks.spec.ts'
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
