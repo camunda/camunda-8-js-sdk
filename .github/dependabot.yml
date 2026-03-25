@@ -10,3 +10,13 @@ updates:
     schedule:
       interval: weekly
     target-branch: alpha
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "stable/8.8"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    target-branch: "stable/8.8"
