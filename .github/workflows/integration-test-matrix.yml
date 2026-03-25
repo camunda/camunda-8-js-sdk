@@ -153,7 +153,7 @@ jobs:
       - name: Restore tested combinations cache
         if: ${{ inputs.skip_cache != true }}
         id: restore-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /tmp/compatibility-state
           key: tested-combinations-${{ github.run_id }}
@@ -424,7 +424,7 @@ jobs:
     steps:
       - name: Restore previous tested combinations from cache
         id: restore-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /tmp/compatibility-state
           key: tested-combinations-dummy
@@ -464,7 +464,7 @@ jobs:
 
       - name: Save updated tested combinations to cache
         if: steps.download-markers.outcome == 'success'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: /tmp/compatibility-state
           key: tested-combinations-${{ github.run_id }}
