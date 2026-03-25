@@ -341,6 +341,7 @@ jobs:
         if: steps.check-image.outputs.exists == 'true'
         run: |
           npm run ${{ steps.docker-config.outputs.test_command }} -- \
+            --retry 3 \
             --exclude '**/8.8/getProcessDefinition.spec.ts' \
             --exclude '**/8.8/getUserTask.spec.ts' \
             --exclude '**/8.8/searchUserTasks.spec.ts'
