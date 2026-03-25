@@ -115,7 +115,7 @@
 		"tsconfig-paths": "^4.2.0",
 		"tsd": "^0.31.0",
 		"typedoc": "^0.28.13",
-		"typedoc-plugin-include-example": "^2.1.2",
+		"typedoc-plugin-include-example": "^3.0.2",
 		"typedoc-plugin-missing-exports": "^4.0.0",
 		"typescript": "^5.5.x",
 		"vitest": "^3.2.4",
