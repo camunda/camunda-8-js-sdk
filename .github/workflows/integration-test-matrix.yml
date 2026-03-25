@@ -37,7 +37,7 @@ jobs:
       matrix: ${{ steps.create-matrix.outputs.matrix }}
     steps:
       - name: Checkout SDK repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -252,7 +252,7 @@ jobs:
       matrix: ${{ fromJson(needs.prepare-versions.outputs.matrix) }}
     steps:
       - name: Check out the SDK repo at client version
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: v${{ matrix.client }}
 
