@@ -28,6 +28,7 @@ jobs:
         run: npm run lint
 
       - name: Commit and push if changes
+        if: github.actor != 'dependabot[bot]'
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'josh.wulf@camunda.com'
