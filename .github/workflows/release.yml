@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -45,7 +45,7 @@ jobs:
       name: selfhosted
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -91,7 +91,7 @@ jobs:
       name: selfhosted
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -138,7 +138,7 @@ jobs:
     environment: integration
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -173,7 +173,7 @@ jobs:
     environment: integration-8.8
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -270,7 +270,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
