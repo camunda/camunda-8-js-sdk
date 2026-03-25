@@ -29,6 +29,7 @@ jobs:
         run: npm run test
 
   local_integration:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment:
       name: selfhosted
@@ -75,6 +76,7 @@ jobs:
         run: docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml down
 
   local_multitenancy_integration:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment:
       name: selfhosted
@@ -123,6 +125,7 @@ jobs:
         run: docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down
 
   saas_integration:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: integration
     steps:
@@ -158,6 +161,7 @@ jobs:
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ vars.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
 
   saas_integration_8_8:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: integration-8.8
     steps:
