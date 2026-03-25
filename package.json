@@ -120,7 +120,7 @@
 		"typedoc-plugin-include-example": "^2.1.2",
 		"typedoc-plugin-missing-exports": "^4.0.0",
 		"typescript": "^5.5.x",
-		"vitest": "^3.2.4",
+		"vitest": "^4.1.1",
 		"wtfnode": "^0.10.0"
 	},
 	"optionalDependencies": {
