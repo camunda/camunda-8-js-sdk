@@ -2,16 +2,16 @@ import d from 'debug'
 import got from 'got'
 
 import {
-	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
-	GetCustomCertificateBuffer,
-	GotRetryConfig,
-	RequireConfiguration,
-	beforeCallHook,
-	constructOAuthProvider,
-	createUserAgentString,
-	gotBeforeErrorHook,
+    CamundaEnvironmentConfigurator,
+    CamundaPlatform8Configuration,
+    DeepPartial,
+    GetCustomCertificateBuffer,
+    GotRetryConfig,
+    RequireConfiguration,
+    beforeCallHook,
+    constructOAuthProvider,
+    createUserAgentString,
+    gotBeforeErrorHook,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 
@@ -351,5 +351,343 @@ export class AdminApiClient {
 				headers,
 			})
 			.json()
+	}
+
+	/**
+	 *
+	 * Get the egress IP ranges for Camunda SaaS. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetMeta) for more details.
+	 * @throws {RESTError}
+	 */
+	async getIpRanges(): Promise<Dto.MetaDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest('meta/ip-ranges', {
+			headers,
+		}).json()
+	}
+
+	/**
+	 *
+	 * Update a cluster's name, description, or stage label. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpdateCluster) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param updateRequest - The fields to update
+	 * @throws {RESTError}
+	 */
+	async updateCluster(
+		clusterUuid: string,
+		updateRequest: Dto.UpdateClusterBody
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.patch(`clusters/${clusterUuid}`, {
+			body: JSON.stringify(updateRequest),
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Upgrade a cluster to the latest available generation. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpgradeCluster) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async upgradeCluster(
+		clusterUuid: string
+	): Promise<Dto.GenerationUpgradeForClusterDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.put(`clusters/${clusterUuid}/upgrade`, {
+				headers,
+			})
+			.json()
+	}
+
+	/**
+	 *
+	 * Resume a suspended cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/Wake) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async wakeCluster(clusterUuid: string): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.put(`clusters/${clusterUuid}/wake`, {
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Update the IP allowlist for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpdateIpAllowlist) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param ipallowlist - Array of IP allowlist entries
+	 * @throws {RESTError}
+	 */
+	async updateIpAllowlist(
+		clusterUuid: string,
+		ipallowlist: Dto.IpAllowListEntry[]
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.put(`clusters/${clusterUuid}/ipallowlist`, {
+			body: JSON.stringify({ ipallowlist }),
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Update a connector secret value. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/UpdateSecret) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param secretName - The name of the secret to update
+	 * @param secretValue - The new secret value
+	 * @throws {RESTError}
+	 */
+	async updateSecret(
+		clusterUuid: string,
+		secretName: string,
+		secretValue: string
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.put(`clusters/${clusterUuid}/secrets/${secretName}`, {
+			body: JSON.stringify({ secretValue }),
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Activate Secure Connectivity for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/ActivateSecureConnectivity) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param request - The allowed principals and regions
+	 * @throws {RESTError}
+	 */
+	async activateSecureConnectivity(
+		clusterUuid: string,
+		request: Dto.ActivateSecureConnectivityBody
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.post(`clusters/${clusterUuid}/secure-connectivity`, {
+			body: JSON.stringify(request),
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Deactivate Secure Connectivity for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeactivateSecureConnectivity) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async deactivateSecureConnectivity(clusterUuid: string): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.delete(`clusters/${clusterUuid}/secure-connectivity`, {
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Get the Secure Connectivity status for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetSecureConnectivityStatus) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async getSecureConnectivityStatus(
+		clusterUuid: string
+	): Promise<Dto.SecureConnectivityStatusResponse> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`clusters/${clusterUuid}/secure-connectivity`, {
+			headers,
+		}).json()
+	}
+
+	/**
+	 *
+	 * Activate External Monitoring (BYOM) for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/ActivateMonitoring) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async activateMonitoring(clusterUuid: string): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.post(`clusters/${clusterUuid}/monitoring`, {
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Deactivate External Monitoring (BYOM) for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeactivateMonitoring) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async deactivateMonitoring(clusterUuid: string): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.delete(`clusters/${clusterUuid}/monitoring`, {
+			headers,
+		})
+	}
+
+	/**
+	 *
+	 * Get all External Monitoring clients for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetMonitoringClients) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async getMonitoringClients(
+		clusterUuid: string
+	): Promise<Dto.MonitoringClientsResponse> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`clusters/${clusterUuid}/monitoring/clients`, {
+			headers,
+		}).json()
+	}
+
+	/**
+	 *
+	 * Create a new External Monitoring client for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateMonitoringClient) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param username - The username for the monitoring client
+	 * @throws {RESTError}
+	 */
+	async createMonitoringClient(
+		clusterUuid: string,
+		username: string
+	): Promise<Dto.CreatedMonitoringClient> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.post(`clusters/${clusterUuid}/monitoring/clients`, {
+				body: JSON.stringify({ username }),
+				headers,
+			})
+			.json()
+	}
+
+	/**
+	 *
+	 * Rotate the password for an External Monitoring client. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/RotateMonitoringClientPassword) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param clientUuid - The monitoring client UUID
+	 * @throws {RESTError}
+	 */
+	async rotateMonitoringClientPassword(
+		clusterUuid: string,
+		clientUuid: string
+	): Promise<Dto.CreatedMonitoringClient> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.post(
+				`clusters/${clusterUuid}/monitoring/clients/${clientUuid}/rotate`,
+				{
+					headers,
+				}
+			)
+			.json()
+	}
+
+	/**
+	 *
+	 * Delete an External Monitoring client. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteMonitoringClient) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param clientUuid - The monitoring client UUID
+	 * @throws {RESTError}
+	 */
+	async deleteMonitoringClient(
+		clusterUuid: string,
+		clientUuid: string
+	): Promise<void> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		await rest.delete(
+			`clusters/${clusterUuid}/monitoring/clients/${clientUuid}`,
+			{
+				headers,
+			}
+		)
+	}
+
+	/**
+	 *
+	 * Get all backups for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetBackups) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async getBackups(clusterUuid: string): Promise<Dto.Backup[]> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`clusters/${clusterUuid}/backups`, {
+			headers,
+		}).json()
+	}
+
+	/**
+	 *
+	 * Create a new backup for a cluster. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/CreateBackup) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @throws {RESTError}
+	 */
+	async createBackup(clusterUuid: string): Promise<Dto.Backup> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.post(`clusters/${clusterUuid}/backups`, {
+				headers,
+			})
+			.json()
+	}
+
+	/**
+	 *
+	 * Delete a backup. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/DeleteBackup) for more details.
+	 * @param clusterUuid - The cluster UUID
+	 * @param backupId - The backup ID
+	 * @throws {RESTError}
+	 */
+	async deleteBackup(
+		clusterUuid: string,
+		backupId: string
+	): Promise<Dto.Backup> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.delete(`clusters/${clusterUuid}/backups/${backupId}`, {
+				headers,
+			})
+			.json()
+	}
+
+	/**
+	 *
+	 * Fetch all activity/audit events as JSON. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetJson) for more details.
+	 * @throws {RESTError}
+	 */
+	async getActivityEvents(): Promise<Dto.AuditEvent[]> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest('activity/json', {
+			headers,
+		}).json()
+	}
+
+	/**
+	 *
+	 * Fetch all activity/audit events as CSV. See [the API Documentation](https://console.cloud.camunda.io/customer-api/openapi/docs/#/default/GetCsv) for more details.
+	 * @throws {RESTError}
+	 */
+	async getActivityEventsCsv(): Promise<string> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest('activity/csv', {
+			headers,
+		}).text()
 	}
 }
