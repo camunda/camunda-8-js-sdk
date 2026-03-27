@@ -99,9 +99,17 @@ describe('AdminApiClient - new operations', () => {
 		test.runIf(saasMatrix)(
 			'getSecureConnectivityStatus returns status',
 			async () => {
-				const status = await c.getSecureConnectivityStatus(clusterUuid)
-				expect(status).toBeTruthy()
-				expect(status.status).toBeDefined()
+				try {
+					const status = await c.getSecureConnectivityStatus(clusterUuid)
+					expect(status).toBeTruthy()
+					expect(status.status).toBeDefined()
+				} catch (e: unknown) {
+					// 403 = feature not available on this plan
+					if ((e as { statusCode?: number }).statusCode === 403) {
+						return
+					}
+					throw e
+				}
 			}
 		)
 	})
@@ -110,10 +118,18 @@ describe('AdminApiClient - new operations', () => {
 		test.runIf(saasMatrix)(
 			'getMonitoringClients returns response',
 			async () => {
-				const res = await c.getMonitoringClients(clusterUuid)
-				expect(res).toBeTruthy()
-				expect(res.clients).toBeDefined()
-				expect(Array.isArray(res.clients)).toBe(true)
+				try {
+					const res = await c.getMonitoringClients(clusterUuid)
+					expect(res).toBeTruthy()
+					expect(res.clients).toBeDefined()
+					expect(Array.isArray(res.clients)).toBe(true)
+				} catch (e: unknown) {
+					// 403 = feature not available on this plan
+					if ((e as { statusCode?: number }).statusCode === 403) {
+						return
+					}
+					throw e
+				}
 			}
 		)
 	})
