@@ -2,16 +2,16 @@ import d from 'debug'
 import got from 'got'
 
 import {
-    CamundaEnvironmentConfigurator,
-    CamundaPlatform8Configuration,
-    DeepPartial,
-    GetCustomCertificateBuffer,
-    GotRetryConfig,
-    RequireConfiguration,
-    beforeCallHook,
-    constructOAuthProvider,
-    createUserAgentString,
-    gotBeforeErrorHook,
+	CamundaEnvironmentConfigurator,
+	CamundaPlatform8Configuration,
+	DeepPartial,
+	GetCustomCertificateBuffer,
+	GotRetryConfig,
+	RequireConfiguration,
+	beforeCallHook,
+	constructOAuthProvider,
+	createUserAgentString,
+	gotBeforeErrorHook,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 
@@ -585,12 +585,9 @@ export class AdminApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.post(
-				`clusters/${clusterUuid}/monitoring/clients/${clientUuid}/rotate`,
-				{
-					headers,
-				}
-			)
+			.post(`clusters/${clusterUuid}/monitoring/clients/${clientUuid}/rotate`, {
+				headers,
+			})
 			.json()
 	}
 
