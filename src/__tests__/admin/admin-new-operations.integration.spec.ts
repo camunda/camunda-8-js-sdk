@@ -105,7 +105,8 @@ describe('AdminApiClient - new operations', () => {
 					expect(status.status).toBeDefined()
 				} catch (e: unknown) {
 					// 403 = feature not available on this plan
-					if ((e as { statusCode?: number }).statusCode === 403) {
+					const err = e as { response?: { statusCode?: number } }
+					if (err.response?.statusCode === 403) {
 						return
 					}
 					throw e
@@ -125,7 +126,8 @@ describe('AdminApiClient - new operations', () => {
 					expect(Array.isArray(res.clients)).toBe(true)
 				} catch (e: unknown) {
 					// 403 = feature not available on this plan
-					if ((e as { statusCode?: number }).statusCode === 403) {
+					const err = e as { response?: { statusCode?: number } }
+					if (err.response?.statusCode === 403) {
 						return
 					}
 					throw e
