@@ -4,11 +4,45 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Full API Docs are [here](https://camunda.github.io/camunda-8-js-sdk/).
+[SDK API docs](https://camunda.github.io/camunda-8-js-sdk/).
+[Orchestration Cluster API Client full API docs](https://camunda.github.io/orchestration-cluster-api-js/classes/index.CamundaClient.html).
 
-This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
+This is the official Camunda 8 JavaScript SDK. It is written in TypeScript and runs on Node.js. See why [this SDK does not run in a web browser](https://github.com/camunda/camunda-8-js-sdk/issues/79).
 
-See the QUICKSTART.md file in [the repository](https://github.com/camunda/camunda-8-js-sdk) for a quick start.
+If you need to run an application in the web browser, then look at using the [@camunda8/orchestration-cluster-api](https://www.npmjs.com/package/@camunda8/orchestration-cluster-api) package directly.
+
+See the [Getting Started Example](https://docs.camunda.io/docs/next/guides/getting-started-example/) in the Camunda Docs for a quick start.
+
+## Which package should I use?
+
+This SDK provides API clients for various versions of Camunda 8. If you are doing a greenfield project on Camunda 8.8 or later, then you should consider directly using the [@camunda8/orchestration-cluster-api](https://www.npmjs.com/package/@camunda8/orchestration-cluster-api) package. That package provides a client for the Camunda 8 Orchestration Cluster API, a REST API with full functionality.
+
+This SDK includes that client, but relying on this SDK package pulls in other API clients, which - if you are not using them - exposes you to several factors:
+
+* Increased dependency size for dependencies that are irrelevant to your application
+* Node.js only. The other package runs in the browser.
+
+How to choose?
+
+Use the `@camunda8/sdk` package if:
+
+* You need the gRPC API to do Job Streaming.
+* Your server target is 8.7 or earlier.
+* You are progressively migrating an existing application to use the 8.8 Orchestration Cluster API.
+
+Use the `@camunda8/orchestration-cluster-api` package directly if:
+
+* You are developing a green-field application.
+* Your server target is 8.8 or later.
+* You do not need to use the gRPC API.
+
+## Which API should I use?
+
+The SDK provides clients for several Camunda 8 APIs.
+
+If you are doing a greenfield project on Camunda 8.8.0 or later, then you should use the Camunda Orchestration Cluster API with `getOrchestrationClusterApiClient`. This is a REST API that provides complete cluster functionality in one API surface. This client is strongly typed and provides strong types for request and response fields (eg: `ProcessInstanceKey`, `ProcessDefinitionId`, etc).
+
+To progressively adopt this client in existing projects alongside previous clients, you can call `getOrchestrationClusterApiClientLoose` to get a client that does not strongly type the request and response fields (they remain primitive scalar `string` type).
 
 ## What does "supported" mean?
 
@@ -32,35 +66,145 @@ npm i @camunda8/sdk
 
 ## Usage
 
-In this release, the functionality of Camunda 8 is exposed via dedicated clients for the component APIs.
+The functionality of Camunda 8 is exposed via dedicated clients for the component APIs. The recommended API client for Camunda 8.8 is the Orchestration Cluster API, using the `CamundaClient` returned by `getOrchestrationClusterApiClient()`.
 
 ```typescript
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8()
-const restClient = c8.getCamundaRestClient() // New REST API
-const zeebe = c8.getZeebeGrpcApiClient()
-const zeebeRest = c8.getZeebeRestClient() // Deprecated
-const operate = c8.getOperateApiClient()
-const optimize = c8.getOptimizeApiClient()
-const tasklist = c8.getTasklistApiClient()
-const modeler = c8.getModelerApiClient()
-const admin = c8.getAdminApiClient()
+
+// Camunda 8 Orchestration Cluster API (STRICT client) - recommended from 8.8.0
+// Provides strongly typed request & response IDs (e.g. ProcessInstanceKey, ProcessDefinitionId)
+const orchestration = c8.getOrchestrationClusterApiClient()
+
+// Camunda 8 Orchestration Cluster API (LOOSE client) - progressive adoption variant
+// Same methods, but all IDs are plain string. Start here in existing codebases, then
+// migrate to the strict client when convenient.
+const orchestrationLoose = c8.getOrchestrationClusterApiClientLoose()
 ```
 
 ## Configuration
 
 The configuration for the SDK can be done by any combination of environment variables and explicit configuration passed to the `Camunda8` constructor.
 
-The complete documentation of all configuration parameters can be found [here](https://camunda.github.io/camunda-8-js-sdk/variables/index.CamundaSDKConfiguration.html).
+The recommended method of configuration is using the zero-conf constructor, which hydrates the configuration completely from the environment:
+
+```typescript
+const camunda = new Camunda8()
+```
+
+This allows you to cleanly separate the concern of configuration from your code and locate it purely in environment variable management.
+
+The complete documentation of all configuration parameters (environment variables) can be found [here](https://camunda.github.io/camunda-8-js-sdk/variables/index.CamundaSDKConfiguration.html).
 
 Any configuration passed in to the `Camunda8` constructor is merged over any configuration in the environment. The configuration object fields and the environment variables have exactly the same names.
 
+## Orchestration Cluster API: Strict vs Loose Clients
+
+From Camunda 8.8 onwards the unified Orchestration Cluster API is the preferred interface. This SDK exposes it via two factory methods to enable smooth, incremental migration:
+
+| Factory | Purpose | ID / Key Types | Recommended Use |
+| ------- | ------- | -------------- | --------------- |
+| `getOrchestrationClusterApiClient()` | Strict (strongly typed) client | Branded TypeScript types (e.g. `ProcessInstanceKey`, `ProcessDefinitionId`) | Greenfield projects or code already prepared for branded types |
+| `getOrchestrationClusterApiClientLoose()` | Loose client | Plain `string` | Progressive adoption in existing code expecting raw string IDs |
+
+### Why two clients?
+
+Branded (nominal) types significantly reduce accidental mixing of unrelated IDs (for example passing a decision definition id where a process instance key is expected). However, adopting them in an existing codebase can require refactors across many modules. The loose client lets you start calling the new endpoints immediately without touching those modules. You can then migrate incrementally to the strict client as you update code.
+
+### Migration Path
+1. Introduce the loose client alongside existing v1 component clients: `const ocaLoose = c8.getOrchestrationClusterApiClientLoose()`.
+2. Replace calls to older clients (Operate / Tasklist / Optimize for read operations, Zeebe REST for workflow interactions) with equivalent Orchestration API calls using the loose client.
+3. When convenient, switch a module to the strict client: change imports to use `getOrchestrationClusterApiClient()` and address TypeScript compile errors by adopting the branded ID types (usually by propagating the type instead of `string`).
+4. Remove the loose client usage once all modules compile cleanly with the strict client.
+
+### REST Address Normalization (/v2)
+
+Set `ZEEBE_REST_ADDRESS` without the version suffix; the SDK will append `/v2` exactly once:
+
+```bash
+export ZEEBE_REST_ADDRESS='http://localhost:8888'
+```
+
+Results in effective base URL: `http://localhost:8888/v2`.
+
+If you include `/v2` already:
+
+```bash
+export ZEEBE_REST_ADDRESS='http://localhost:8888/v2'
+```
+
+It is preserved (not duplicated). Trailing slashes are stripped before normalization (`http://localhost:8888/` -> `http://localhost:8888/v2`).
+
+### Choosing Between Clients
+
+Use the strict client for new code, libraries, or examples where type safety improves clarity. Use the loose client when:
+- You need a rapid drop-in replacement without changing existing function signatures.
+- You are migrating many modules gradually.
+- You want to defer adoption of branded ID types until later.
+
+Both clients expose identical method names and behaviors; only the TypeScript surface differs. Runtime semantics and responses are otherwise equivalent.
+
+### Example (Strict vs Loose)
+
+```typescript
+import { Camunda8 } from '@camunda8/sdk'
+const c8 = new Camunda8()
+
+// Strict client (preferred once migrated)
+const oca = c8.getOrchestrationClusterApiClient()
+const proc = await oca.createProcessInstance({
+  processDefinitionId: ProcessDefinitionId.assumeExists('order-process'),
+  variables: { orderId: 'A123' },
+})
+// proc.processInstanceKey is a branded type (not a plain string)
+
+// Loose client (progressive adoption)
+const ocaLoose = c8.getOrchestrationClusterApiClientLoose()
+const procLoose = await ocaLoose.createProcessInstance({
+  processDefinitionId: 'order-process',
+  variables: { orderId: 'B456' },
+})
+// procLoose.processInstanceKey is a plain string
+```
+
+When converting code from loose to strict, remove unnecessary casts like `(key as string)` and allow the compiler to guide corrections where branded types surface.
+
+### Lifting Legacy String IDs
+
+To migrate existing code that uses plain strings for identifiers without immediately switching every module to the strict client, you can "lift" those strings into branded key types incrementally.
+
+All branded key lifter namespaces are grouped under `OrchestrationLifters` so the root SDK export surface stays tidy:
+
+```typescript
+import { OrchestrationLifters } from '@camunda8/sdk'
+
+// Suppose you previously passed raw strings:
+const rawProcessInstanceKey = '2251799813685249'
+
+// Lift it to the branded type (runtime value is still a string, but type safety now applies):
+const processInstanceKey = OrchestrationLifters.ProcessInstanceKey.assumeExists(rawProcessInstanceKey)
+
+// Use with strict client
+const c8 = new Camunda8()
+const oca = c8.getOrchestrationClusterApiClient()
+await oca.cancelProcessInstance({ processInstanceKey })
+```
+
+Common helper: `assumeExists(value: string)` turns a known-valid legacy identifier into its branded equivalent. Use this when you are certain the ID refers to an existing entity (the lifter does not perform a network validation; it is purely nominal typing).
+
+Suggested incremental approach:
+1. Start by replacing output values first (e.g. responses from `createProcessInstance`) where the strict client already returns branded types.
+2. Introduce lifters at the boundaries where you still receive legacy strings (configuration, environment, persistence layer, legacy SDK modules).
+3. Remove lifters once those boundaries natively produce branded types.
+
+All available lifters (examples): `ProcessInstanceKey`, `ProcessDefinitionId`, `JobKey`, `ElementInstanceKey`, `DecisionDefinitionKey`, `FormKey`, `UserTaskKey`, `VariableKey`, etc. See `OrchestrationLifters` export for the complete list.
+
 ## A note on how int64 is handled in the JavaScript SDK
 
-Entity keys in Camunda 8 are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda/camunda-8-js-sdk/issues/78) for more details.
+Entity keys in Camunda 8.6 and earlier are stored and represented as `int64` numbers. The range of `int64` extends to numbers that cannot be represented by the JavaScript `number` type. To deal with this, `int64` keys are serialised by the SDK to the JavaScript `string` type. See [this issue](https://github.com/camunda/camunda-8-js-sdk/issues/78) for more details.
 
-For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and to throw an exception if a number value is detected at a runtime that cannot be accurately represented as the JavaScript `number` type (that is, a value greater than 2^53-1).
+For `int64` values whose type is not known ahead of time, such as job variables, you can pass an annotated data transfer object (DTO) to decode them reliably. See the section on [Process Variable Typing](#process-variable-typing). If no DTO is specified, the default behavior of the SDK is to serialise all numbers to JavaScript `number`, and to throw an exception if a number value is detected at a runtime that cannot be accurately represented as the JavaScript `number` type (that is, a value greater than 2^53-1).
 
 ## Authorization
 
@@ -85,7 +229,8 @@ If your platform is secured with OAuth token exchange (Camunda SaaS or Self-Mana
 
 ```bash
 CAMUNDA_AUTH_STRATEGY=OAUTH
-ZEEBE_ADDRESS=...
+ZEEBE_GRPC_ADDRESS=...
+ZEEBE_REST_ADDRESS=...
 ZEEBE_CLIENT_ID=...
 ZEEBE_CLIENT_SECRET=...
 CAMUNDA_OAUTH_URL=...
@@ -113,7 +258,7 @@ Here is an example of specifying a different cache directory via the constructor
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-	CAMUNDA_TOKEN_CACHE_DIR: '/tmp/cache',
+  CAMUNDA_TOKEN_CACHE_DIR: '/tmp/cache',
 })
 ```
 
@@ -139,9 +284,9 @@ To use cookie auth, set the following value:
 CAMUNDA_AUTH_STRATEGY=COOKIE
 
 # Optional configurable values - these are the defaults
-CAMUNDA_AUTH_COOKIE_URL=http://localhost:8080/api/login
-CAMUNDA_AUTH_COOKIE_USERNAME=demo
-CAMUNDA_AUTH_COOKIE_PASSWORD=demo
+CAMUNDA_COOKIE_AUTH_URL=http://localhost:8080/api/login
+CAMUNDA_COOKIE_AUTH_USERNAME=demo
+CAMUNDA_COOKIE_AUTH_PASSWORD=demo
 ```
 
 ### Bearer Token Auth
@@ -174,21 +319,65 @@ You can add arbitrary headers to all requests by implementing `IOAuthProvider`:
 import { Camunda8, Auth } from '@camunda8/sdk'
 
 class MyCustomAuthProvider implements Auth.IOAuthProvider {
-	async getToken(audience: string) {
-		// here we give a static example, but this class may read configuration,
-		// exchange credentials with an endpoint, manage token lifecycles, and so forth...
-		// Return an object which will be merged with the headers on the request
-		return {
-			'x-custom-auth-header': 'someCustomValue',
-		}
-	}
+  async getToken(audience: string) {
+    // here we give a static example, but this class may read configuration,
+    // exchange credentials with an endpoint, manage token lifecycles, and so forth...
+    // Return an object which will be merged with the headers on the request
+  return {
+    'x-custom-auth-header': 'someCustomValue',
+    }
+  }
 }
 
 const customAuthProvider = new MyCustomAuthProvider()
 const c8 = new Camunda8({ oauthProvider: customAuthProvider })
 ```
 
-You can use this approach to wrap one of the existing strategy classes using a facade pattern to encapsulate and extend it.
+### Camunda SaaS persistent 401 tarpit
+
+Camunda SaaS continues returning `401 Unauthorized` for a misconfigured credential & audience pair, but with a 30-second delay for subsequent requests (server-side cooldown). The SDK proactively creates a persistent "tarpit" marker on the first SaaS `401` to prevent network call delays.
+
+Behavior:
+
+- First `401` for `(clientId, clientSecret, audienceType)` creates `oauth-401-tarpit-<clientId>-<audience>-<hash>.json` in the cache directory (`$HOME/.camunda` by default). `<hash>` is a truncated PBKDF2 (100K iterations) hash of the secret.
+- Subsequent `getHeaders()` calls for that tuple immediately throw a tarpit error without hitting the token endpoint.
+- The tarpit does not auto-expire.
+
+Isolation & rotation:
+
+- Keyed on clientId + secret hash + audience; different audiences are independent.
+- Rotating the secret produces a new hash (old tarpit file can be removed manually if desired).
+
+Clearing a tarpit:
+
+```typescript
+import { Auth } from '@camunda8/sdk'
+Auth.OAuthProvider.clear401Tarpit({
+  clientId: 'myClientId',
+  clientSecret: 'currentSecret',
+  audienceType: 'ZEEBE',
+})
+```
+
+After clearing, the next call attempts a real token request.
+
+Backoff interaction:
+
+- Token endpoint backoff/failure counters are suppressed for tarpit 401s to surface configuration issues quickly.
+- Other error types retain normal backoff behavior.
+
+Observability:
+
+- `DEBUG=camunda:oauth` logs creation: `Created persistent 401 tarpit file ...`
+- Inspect cache dir for `oauth-401-tarpit-*` files.
+
+Remediation steps:
+
+1. Fix credential / audience configuration.
+2. Clear the tarpit file via helper (or delete manually).
+3. Retry token acquisition.
+
+This persistent tarpit behavior is automatic for SaaS environments in this SDK version.
 
 ## TLS
 
@@ -205,13 +394,23 @@ CAMUNDA_CUSTOM_PRIVATE_KEY_PATH # path to mTLS (client-side) key
 
 ## Connection configuration examples
 
+### Camunda 8 Run 8.8
+
+This is the configuration for [Camunda 8 Run](https://developers.camunda.com/install-camunda-8/) - a local Camunda 8 instance that is the best way to get started.
+
+```bash
+export ZEEBE_REST_ADDRESS='http://localhost:8080'
+export ZEEBE_GRPC_ADDRESS='grpc://localhost:26500'
+export CAMUNDA_AUTH_STRATEGY=NONE
+```
+
 ### Self-Managed
 
 This is the complete environment configuration needed to run against the Dockerised Self-Managed stack in the `docker` subdirectory:
 
 ```bash
 # Self-Managed
-export ZEEBE_ADDRESS='localhost:26500'
+export ZEEBE_GRPC_ADDRESS='grpc://localhost:26500'
 export ZEEBE_REST_ADDRESS='http://localhost:8080'
 export ZEEBE_CLIENT_ID='zeebe'
 export ZEEBE_CLIENT_SECRET='zecret'
@@ -225,9 +424,6 @@ export CAMUNDA_MODELER_BASE_URL='http://localhost:8070/api'
 # Turn off the tenant ID, which may have been set by multi-tenant tests
 # You can set this in a constructor config, or in the environment if running multi-tenant
 export CAMUNDA_TENANT_ID=''
-
-# TLS for gRPC is on by default. If the Zeebe broker is not secured by TLS, turn it off
-export CAMUNDA_SECURE_CONNECTION=false
 ```
 
 If you are using an OIDC that requires a `scope` parameter to be passed with the token request, set the following variable:
@@ -242,19 +438,19 @@ Here is an example of doing this via the constructor, rather than via the enviro
 import { Camunda8 } from '@camunda8/sdk'
 
 const c8 = new Camunda8({
-	ZEEBE_ADDRESS: 'localhost:26500',
-	ZEEBE_REST_ADDRESS: 'http://localhost:8080',
-	ZEEBE_CLIENT_ID: 'zeebe',
-	ZEEBE_CLIENT_SECRET: 'zecret',
-	CAMUNDA_OAUTH_STRATEGY: 'OAUTH',
-	CAMUNDA_OAUTH_URL:
-		'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
-	CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
-	CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
-	CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
-	CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
-	CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
-	CAMUNDA_SECURE_CONNECTION: false,
+  ZEEBE_GRPC_ADDRESS: 'grpc://localhost:26500',
+  ZEEBE_REST_ADDRESS: 'http://localhost:8080',
+  ZEEBE_CLIENT_ID: 'zeebe',
+  ZEEBE_CLIENT_SECRET: 'zecret',
+  CAMUNDA_OAUTH_STRATEGY: 'OAUTH',
+  CAMUNDA_OAUTH_URL:
+    'http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token',
+  CAMUNDA_TASKLIST_BASE_URL: 'http://localhost:8082',
+  CAMUNDA_OPERATE_BASE_URL: 'http://localhost:8081',
+  CAMUNDA_OPTIMIZE_BASE_URL: 'http://localhost:8083',
+  CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
+  CAMUNDA_TENANT_ID: '', // We can override values in the env by passing an empty string value
+  CAMUNDA_SECURE_CONNECTION: false,
 })
 ```
 
@@ -263,19 +459,16 @@ const c8 = new Camunda8({
 Here is a complete configuration example for connection to Camunda SaaS:
 
 ```bash
-export ZEEBE_ADDRESS='5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
+export ZEEBE_GRPC_ADDRESS='grpcs://5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
 export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO9TmBnP3zx4Xd8Ho6apgeiZTjn6'
 export ZEEBE_CLIENT_SECRET='iJJu-SHgUtuJTTAMnMLdcb8WGF8s2mHfXhXutEwe8eSbLXn98vUpoxtuLk5uG0en'
-# export CAMUNDA_CREDENTIALS_SCOPES='Zeebe,Tasklist,Operate,Optimize' # What APIs these client creds are authorised for
+
 export CAMUNDA_TASKLIST_BASE_URL='https://syd-1.tasklist.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OPTIMIZE_BASE_URL='https://syd-1.optimize.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OPERATE_BASE_URL='https://syd-1.operate.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
 export CAMUNDA_OAUTH_URL='https://login.cloud.camunda.io/oauth/token'
 export CAMUNDA_AUTH_STRATEGY='OAUTH'
-
-# This is on by default, but we include it in case it got turned off for local tests
-export CAMUNDA_SECURE_CONNECTION=true
 
 # Admin Console and Modeler API Client
 export CAMUNDA_CONSOLE_CLIENT_ID='e-JdgKfJy9hHSXzi'
@@ -297,17 +490,133 @@ You can supply a custom logger via the constructor. For example, to use the [Pin
 ```typescript
 import pino from 'pino'
 
-import { Camunda8 } from '../../c8/index'
+import { Camunda8 } from '@camunda8/sdk'
 
 const level = process.env.CAMUNDA_LOG_LEVEL ?? 'trace'
 const logger = pino({ level }) // Logging level controlled via the logging library
 
 logger.info('Pino logger created')
 const c8 = new Camunda8({
-	logger,
+  logger,
 })
 c8.log.info('Using pino logger')
 ```
+
+## Awaiting Asynchronous Query Data
+
+Camunda 8 uses an eventually-consistent data architecture. When you start a process instance, data related to this process instance is not immediately available in the datastore. This leads to data synchronisation issues you need to manage in your application. To aid you with this, the SDK provides a utility: `PollingOperation`. You can pass a query API operation to this utility with a polling interval and a timeout.
+
+The `PollingOperation` will execute the query repeatedly until the expected data is available in the data store, or the timeout is reached.
+
+The following example will return the query response for a newly-created process instance as soon as the element instance data is available:
+
+```typescript
+import { Camunda8, PollingOperation } from '@camunda8/sdk'
+
+const c8 = new Camunda8()
+
+const elementInstances = await PollingOperation({
+  operation: () =>
+  c8.searchElementInstances({
+    sort: [{ field: 'processInstanceKey' }],
+    filter: {
+      processInstanceKey: processInstance.processInstanceKey,
+      type: 'SERVICE_TASK',
+    },
+  }),
+  interval: 500,
+  timeout: 10000,
+})
+```
+
+By default, the `PollingOperation` waits for a query response from the Orchestration Cluster API that has one or more results in the `items` array. If you have a more specific predicate, or are using one of the v1 component APIs, you can pass in a custom predicate function.
+
+The following example waits for a process instance to be available to a query over the Operate API:
+
+```typescript
+import { Camunda8, PollingOperation } from '@camunda8/sdk'
+
+const c8 = new Camunda8()
+const c = c8.getOperateApiClient()
+
+const process = await PollingOperation({
+  operation: () => c.getProcessInstance(p.processInstanceKey),
+  predicate: (res) => res.key === p.processInstanceKey,
+  interval: 500,
+  timeout: 15000,
+})
+```
+## Subscribing to queries
+
+You can subscribe to queries using a `QuerySubscription`. This is an event emitter that emits a `data` event when new data is available. You pass a predicate function that takes a `previous` and `current` query result set. In this predicate function you can examine the two states to see whether or not to emit a data event, and also perform data-processing — for example, removing items that were emitted in the last update.
+
+Note that this is an experimental feature and may change in future releases. We are looking for feedback on this feature, please report issues in the GitHub repo or via a JIRA ticket if you have an account with Camunda.
+
+Here is an example of using `QuerySubscription`:
+
+```typescript
+import { Camunda8, QuerySubscription } from '@camunda8/sdk'
+
+const c8 = new Camunda8()
+
+const query = () =>
+ c8.searchProcessInstances({
+  filter: {
+    processDefinitionKey: key,
+    state: 'ACTIVE',
+  },
+  sort: [{ field: 'startDate', order: 'ASC' }],
+})
+
+const subscription = QuerySubscription({
+  query,
+  predicate: (previous, current) => {
+    // This is the default predicate, provided here as an example
+	const previousItems = (previous?.items ?? []) as Array<unknown>
+	const currentItems = current.items.filter(
+		(item) =>
+			!previousItems.some((prevItem) => isDeepStrictEqual(prevItem, item))
+	)
+	if (currentItems.length > 0) {
+		return {
+			...current,
+			items: currentItems,
+			page: { ...current.page, totalItems: currentItems.length },
+		}
+	}
+	return false // No new items, do not emit
+  },
+  interval: 5000,
+  trackingWindow: 5, // Remember emitted items from last 5 poll cycles (default)
+})
+
+subscription.on('data', data => {
+    // new process instances
+})
+//...
+subscription.cancel() // close subscription and free resources
+// You can also use subscription.pause() and subscription.resume() to pause and resume the subscription
+```
+
+**Note**:
+- `QuerySubscription` uses a rolling window approach to prevent memory leaks when tracking emitted items. By default, it remembers items from the last 5 poll cycles to prevent duplicates. You can adjust this with the `trackingWindow` parameter:
+
+```typescript
+const subscription = QuerySubscription({
+  query,
+  predicate: myCustomPredicate,
+  interval: 5000,
+  trackingWindow: 10, // Remember items from the last 10 polling cycles
+})
+```
+
+If you implement a custom predicate, your predicate determines what data should be emitted, and then the rolling window mechanism prevents duplicate emissions across multiple poll cycles.
+
+**Important:** The rolling window mechanism operates by serializing each emitted item to a string and tracking it for the specified number of poll cycles. This means that if an entity changes state and then returns to a previous state within the tracking window timeframe, the second appearance in the original state might not trigger an emission. For example, if a process instance transitions from "READY" to "NOT_READY" and back to "READY" within the tracking window, the second "READY" state might not be emitted. If you need to track all state transitions regardless of previous states, consider:
+
+1. Setting a smaller `trackingWindow` value to reduce the tracking period
+2. Implementing a custom state tracking mechanism in your application
+3. Including a timestamp or version field in your item identification logic
 
 ## Debugging
 
@@ -315,18 +624,20 @@ The SDK uses the [`debug`](https://github.com/debug-js/debug) library to help yo
 
 To enable debugging output, set a value for the `DEBUG` environment variable. The value is a comma-separated list of debugging namespaces. The SDK has the following namespaces:
 
-| Value                    | Component                        |
-| ------------------------ | -------------------------------- |
-| `camunda:adminconsole`   | Administration API               |
-| `camunda:modeler`        | Modeler API                      |
-| `camunda:operate`        | Operate API                      |
-| `camunda:optimize`       | Optimize API                     |
-| `camunda:tasklist`       | Tasklist API                     |
-| `camunda:oauth`          | OAuth Token Exchange             |
-| `camunda:grpc`           | Zeebe gRPC channel               |
-| `camunda:worker`         | Zeebe Worker                     |
-| `camunda:worker:verbose` | Zeebe Worker (additional detail) |
-| `camunda:zeebeclient`    | Zeebe Client                     |
+| Value                       | Component                                 |
+| --------------------------- | ----------------------------------------- |
+| `camunda:adminconsole`      | Administration API                        |
+| `camunda:modeler`           | Modeler API                               |
+| `camunda:operate`           | Operate API                               |
+| `camunda:optimize`          | Optimize API                              |
+| `camunda:tasklist`          | Tasklist API                              |
+| `camunda:oauth`             | OAuth Token Exchange                      |
+| `camunda:querySubscription` | QuerySubscription debugging               |
+| `camunda:grpc`              | Zeebe gRPC channel                        |
+| `camunda:worker`            | Zeebe Worker                              |
+| `camunda:worker:verbose`    | Zeebe Worker (additional detail)          |
+| `camunda:zeebeclient`       | Zeebe Client                              |
+| `camunda:orchestration-rest`              | Camunda Orchestration Cluster API Client  |
 
 Here is an example of turning on debugging for the OAuth and Operate components:
 
@@ -414,13 +725,43 @@ The SDK supports the Zeebe REST API. Be sure to set the `ZEEBE_REST_ADDRESS` eit
 
 The Zeebe gRPC API supports streaming available jobs, rather than polling for them.
 
-The ZeebeGrpcClient method `StreamJobs` allows you to use this API.
+The ZeebeGrpcClient method `streamJobs` allows you to use this API.
 
-Please note that only jobs that become available _after_ the stream is opened are pushed to the client. For jobs that were already activatable _before_ the method is called, you need to use a polling worker.
+When `streamJobs` is called, it first opens a stream to receive any newly created jobs, then performs an initial poll (via `activateJobs`) to pick up any jobs that were already queued before the stream was established. This "subscribe then backfill" approach ensures no jobs are missed — the stream catches anything created after it opens, the poll catches anything that existed before, and the broker's single-activation guarantee prevents duplicates.
 
-In this release, this is not handled for you. You must both poll and stream jobs to make sure that you get jobs that were available before your application started as well as jobs that become available after your application starts.
+### Sidecar polling
 
-In a subsequent release, the ZeebeWorker will transparently handle this for you.
+After the initial backfill, a low-frequency sidecar poll runs alongside the stream as a safety net. This catches edge cases the stream alone cannot handle — for example, jobs that are re-queued after a worker fails to complete them within the timeout, or jobs that arrive during a brief stream reconnect.
+
+Each poll is a command on the broker, so the default interval is deliberately long (30 seconds) to minimise server load. The stream remains the primary delivery mechanism.
+
+Configure the sidecar poll with:
+
+- **`pollInterval`** — milliseconds between sidecar poll cycles. Defaults to `30000` (30 s). Set to `0` or `-1` to disable recurring polling entirely (the initial backfill poll still runs).
+- **`pollMaxJobsToActivate`** — maximum jobs per poll cycle (both initial and recurring). Defaults to `32`.
+
+You can optionally pass a `jitter` parameter (in milliseconds) to delay the start by a random period up to that value. This is useful when starting multiple stream workers simultaneously, to avoid saturating the gateway at application startup.
+
+Example:
+
+```typescript
+client.streamJobs({
+	type: 'payment-service',
+	worker: 'my-worker',
+	timeout: 30000,
+	tenantIds: ['<default>'],
+	taskHandler: async (job) => {
+		// business logic
+		return job.complete()
+	},
+	// Optional: stagger startup across workers
+	jitter: 2000,
+	// Optional: control poll batch size (default: 32)
+	pollMaxJobsToActivate: 64,
+	// Optional: sidecar poll every 60 s instead of the default 30 s
+	pollInterval: 60_000,
+})
+```
 
 ## Multi-tenant workers
 

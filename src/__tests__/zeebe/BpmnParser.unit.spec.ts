@@ -1,5 +1,6 @@
 import path from 'path'
 
+import { allowAny } from '../../test-support/testTags'
 import { BpmnParser } from '../../zeebe'
 
 const getPath = (filename: string) =>
@@ -11,12 +12,24 @@ const modeller7File = getPath('modeller7File.bpmn')
 const parsed = BpmnParser.parseBpmn(testBpmnFile)
 const parsedSimple = BpmnParser.parseBpmn(simpleTestBpmnFile)
 
-test('parses a bpmn file to an Object', () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('parses a bpmn file to an Object', () => {
 	expect(typeof parsed).toBe('object')
 	expect(typeof parsedSimple).toBe('object')
 })
 
-test('can parse a file with a message with no name', async () => {
+test.runIf(
+	allowAny([
+		{ deployment: 'unit-test' },
+		{ deployment: 'saas' },
+		{ deployment: 'self-managed' },
+	])
+)('can parse a file with a message with no name', async () => {
 	const parsedv7 = await BpmnParser.generateConstantsForBpmnFiles(modeller7File)
 	// console.log(parsedv7)
 	expect(typeof parsedv7).toBe('string')

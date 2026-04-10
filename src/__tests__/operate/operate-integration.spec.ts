@@ -1,13 +1,16 @@
 import { LosslessNumber } from 'lossless-json'
+import { describe, expect, test, vi } from 'vitest'
 
-import { HTTPError, RestError } from '../../lib'
+import { HTTPError } from '../../lib'
+import { PollingOperation } from '../../lib/PollingOperation'
 import { OperateApiClient } from '../../operate'
 import { ProcessDefinition, Query } from '../../operate/lib/OperateDto'
+import { matrix } from '../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../zeebe'
 
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20_000 })
 describe('Operate Integration', () => {
-	xtest('It can get the Incident', async () => {
+	test.skip('It can get the Incident', async () => {
 		const c = new OperateApiClient()
 
 		const res = await c.searchIncidents({
@@ -15,10 +18,9 @@ describe('Operate Integration', () => {
 				processInstanceKey: new LosslessNumber('2251799816400111'),
 			},
 		})
-		console.log(JSON.stringify(res, null, 2))
 		expect(res.total).toBe(1)
 	})
-	xtest('It can search process definitions', async () => {
+	test.skip('It can search process definitions', async () => {
 		const c = new OperateApiClient()
 
 		const query: Query<ProcessDefinition> = {
@@ -36,7 +38,17 @@ describe('Operate Integration', () => {
 	})
 })
 
-test('getJSONVariablesforProcess works', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+		exclude: [{ version: '8.8', deployment: 'self-managed' }],
+	})
+)('getJSONVariablesforProcess works', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({
@@ -49,31 +61,36 @@ test('getJSONVariablesforProcess works', async () => {
 		},
 	})
 
-	// Wait for Operate to catch up.
-	// Make sure that the process instance exists in Operate.
-	// Operate is eventually consistent, so we need to wait a bit.
-	const maxRetries = 15
-	const delay = 1000
-	let process
-
-	for (let i = 0; i < maxRetries; i++) {
-		process = await c.getProcessInstance(p.processInstanceKey).catch(() => null)
-		if (process) break
-		await new Promise((res) => setTimeout(res, delay))
-	}
-	if (!process) {
-		throw new Error('Process instance not found within the timeout period')
-	}
+	const process = await PollingOperation({
+		operation: () => c.getProcessInstance(p.processInstanceKey),
+		predicate: (res) => res.key === p.processInstanceKey,
+		interval: 500,
+		timeout: 15000,
+	})
 
 	expect(process.key).toBe(p.processInstanceKey)
 	// We need to wait further for the variables to be populated in Operate
-	await new Promise((res) => setTimeout(res, 5000))
-	const res = await c.getJSONVariablesforProcess(p.processInstanceKey)
+	const res = await PollingOperation({
+		operation: () => c.getJSONVariablesforProcess(p.processInstanceKey),
+		predicate: (r) => !!r.foo,
+		interval: 500,
+		timeout: 5000,
+	})
 
 	expect(res.foo).toBe('bar')
 })
 
-test('getVariablesforProcess paging works', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+		exclude: [{ version: '8.8', deployment: 'self-managed' }],
+	})
+)('getVariablesforProcess paging works', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({
@@ -99,32 +116,43 @@ test('getVariablesforProcess paging works', async () => {
 	// Wait for Operate to catch up.
 	// Make sure that the process instance exists in Operate.
 	// Operate is eventually consistent, so we need to wait a bit.
-	const maxRetries = 15
-	const delay = 1000
-	let process
-
-	for (let i = 0; i < maxRetries; i++) {
-		process = await c.getProcessInstance(p.processInstanceKey).catch(() => null)
-		if (process) break
-		await new Promise((res) => setTimeout(res, delay))
-	}
-	if (!process) {
-		throw new Error('Process instance not found within the timeout period')
-	}
+	const process = await PollingOperation({
+		operation: () => c.getProcessInstance(p.processInstanceKey),
+		predicate: (res) => res.key === p.processInstanceKey,
+		interval: 500,
+		timeout: 15000,
+	})
 
 	expect(process.key).toBe(p.processInstanceKey)
 	// We need to wait further for the variables to be populated in Operate
-	await new Promise((res) => setTimeout(res, 5000))
-	const res = await c.getVariablesforProcess(p.processInstanceKey, { size: 5 })
+	const res = await PollingOperation({
+		operation: () =>
+			c.getVariablesforProcess(p.processInstanceKey, { size: 5 }),
+		interval: 500,
+		timeout: 5000,
+	})
 	expect(res.items[0].name).toBe('foo')
-	const nextPage = await c.getVariablesforProcess(p.processInstanceKey, {
-		size: 5,
-		searchAfter: res.sortValues,
+	const nextPage = await PollingOperation({
+		operation: () =>
+			c.getVariablesforProcess(p.processInstanceKey, {
+				size: 5,
+				searchAfter: res.sortValues,
+			}),
 	})
 	expect(nextPage.items[0].name).toBe('foo4')
 })
 
-test('test error type', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['multi-tenant', 'single-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+		exclude: [{ version: '8.8', deployment: 'self-managed' }],
+	})
+)('test error type', async () => {
 	const c = new OperateApiClient()
 	const zeebe = new ZeebeGrpcClient()
 	await zeebe.deployResource({
@@ -139,28 +167,11 @@ test('test error type', async () => {
 	await new Promise((res) => setTimeout(() => res(null), 5000))
 	/**
 	 * Here we request a process instance that doesn't exist.
-	 * Understanding that this is the issue requires a bit of gymnastics by the consumer.
-	 * This call may fail due to lack of permissions, a network error (including misconfiguration), or the process instance not existing.
-	 * To rule out the other issues and focus on the process instance not existing, we need to catch the error and check the response body.
-	 * (e.response?.body as string).includes('404') will return true if the response body contains the string '404'.
-	 * This is a bit of a hack, but it's the best we can do without a more specific error type.
-	 * Do we really want to expose consumers to this?
+	 * This should throw a 404 error.
 	 */
 	const res = await c
 		.getProcessInstance(`${p.processInstanceKey}1`)
-		.catch((e: RestError) => {
-			// console.log(e.code)
-			// `ERR_NON_2XX_3XX_RESPONSE`
-
-			// console.log(e.message)
-			// `Response code 404 (Not Found) (request to http://localhost:8081/v1/process-instances/22517998149629301)`
-			// Note: The request url has been enhanced into the message by a hook.
-
-			// console.log(e.response?.body)
-			// `{"status":404,"message":"No process instances found for key 22517998149629301 ","instance":"76807bf1-d877-4f8e-bd0d-6d953b1799e5","type":"Requested resource not found"}`
-
-			// console.log(typeof e.response?.body)
-			// `string`
+		.catch((e) => {
 			expect((e.response?.body as string).includes('404')).toBe(true)
 			if (e instanceof HTTPError) {
 				expect(e.statusCode).toBe(404)
@@ -168,5 +179,6 @@ test('test error type', async () => {
 			expect(e instanceof HTTPError).toBe(true)
 			return false
 		})
+	await zeebe.cancelProcessInstance(p.processInstanceKey).catch((e) => e) // Cleanup the process instance, but it should not exist anymore.
 	expect(res).toBe(false)
 })

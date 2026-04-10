@@ -6,8 +6,9 @@
  * We expect this case to fail because the token is invalid.
  */
 import { Camunda8 } from '../../../c8/index'
+import { matrix } from '../../../test-support/testTags'
 
-jest.setTimeout(15000)
+vi.setConfig({ testTimeout: 15_000 })
 
 const token =
 	'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJWOGFfUlB2R1pWNjVQLXZ5VXhBd2tSSXlrUzNfbkZxMTRGdjJwOUdsSEtJIn0'
@@ -25,7 +26,16 @@ const zeebe = c8.getZeebeGrpcApiClient()
 afterAll(() => zeebe.close())
 
 describe('Expired token gRPC client (green tenant)', () => {
-	test('cannot activate jobs', async () => {
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8', '8.7'],
+				deployments: ['saas', 'self-managed'],
+				tenancy: ['multi-tenant'],
+				security: ['secured'],
+			},
+		})
+	)('cannot activate jobs', async () => {
 		await expect(() =>
 			zeebe.activateJobs({
 				maxJobsToActivate: 10,

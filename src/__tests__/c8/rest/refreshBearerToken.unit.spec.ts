@@ -10,8 +10,18 @@ import {
 	TopologyResponse,
 } from '../../../generated/zeebe_pb'
 import { BearerAuthProvider } from '../../../oauth'
+import { matrix } from '../../../test-support/testTags'
 
-test('it can refresh the bearer token with a custom OAuth provider', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('it can refresh the bearer token with a custom OAuth provider', async () => {
 	let currentToken = ''
 
 	function createServer(): Promise<{ server: Server; port: number }> {
@@ -38,7 +48,7 @@ test('it can refresh the bearer token with a custom OAuth provider', async () =>
 
 			// Add a service to the server
 			server.addService(zeebeProto.gateway_protocol.Gateway.service, {
-				Topology: (_, callback) => {
+				Topology: (call, callback) => {
 					const t = new TopologyResponse()
 					const b = new BrokerInfo()
 					b.setHost('localhost')
@@ -48,15 +58,16 @@ test('it can refresh the bearer token with a custom OAuth provider', async () =>
 					partition.setRole(0)
 					b.setPartitionsList([partition])
 					t.setBrokersList([b])
-					currentToken = _.metadata.get('authorization')[0]
+					const authHeader = call.metadata.get('authorization')
+					currentToken = authHeader.length > 0 ? authHeader[0] : ''
 					callback(null, t)
 				},
 				// Implement your service methods here
 			})
 
 			const credentials = ServerCredentials.createInsecure()
-			// Start the server
-			server.bindAsync('localhost:50051', credentials, (err, port) => {
+			// Start the server - use port 0 to bind to any available port
+			server.bindAsync('localhost:0', credentials, (err, port) => {
 				if (err) {
 					reject(err)
 				}
@@ -76,11 +87,9 @@ test('it can refresh the bearer token with a custom OAuth provider', async () =>
 	const { server, port } = await createServer()
 	const zbc = c8.getZeebeGrpcApiClient({
 		CAMUNDA_OAUTH_DISABLED: true,
-		ZEEBE_ADDRESS: `localhost:${port}`,
-		CAMUNDA_SECURE_CONNECTION: false,
+		ZEEBE_GRPC_ADDRESS: `grpc://localhost:${port}`,
 		zeebeGrpcSettings: {
 			ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
-			ZEEBE_INSECURE_CONNECTION: true,
 		},
 	})
 	await zbc.topology()

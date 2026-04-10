@@ -7,7 +7,7 @@
 			"name": "Debug Jest Tests",
 			"program": "${workspaceFolder}/node_modules/jest/bin/jest",
 			"args": [
-				"grpc-expired-token-green-activate-jobs.spec", // "workerBackoffRetry", // set to the name of the test file you want to run
+				"QuerySubscription.spec", // "workerBackoffRetry", // set to the name of the test file you want to run
 				"--runInBand",
 				"--watchAll=false"
 			],

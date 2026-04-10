@@ -1,3 +1,4 @@
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import {
@@ -6,7 +7,7 @@ import {
 	ProcessDeployment,
 } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30000 })
 
 const trace = async <T>(result: T) => {
 	// tslint:disable-next-line: no-console
@@ -14,7 +15,7 @@ const trace = async <T>(result: T) => {
 	return result
 }
 
-const zbc = new ZeebeGrpcClient()
+const zbc = new ZeebeGrpcClient({ config: { CAMUNDA_LOG_LEVEL: 'none' } })
 let wf: CreateProcessInstanceResponse
 let deploy: DeployResourceResponse<ProcessDeployment>
 let bpmnProcessId: string
@@ -37,54 +38,57 @@ afterAll(async () => {
 	await cancelProcesses(processDefinitionKey)
 })
 
-test('Can update process variables with setVariables', async () => {
-	jest.setTimeout(30000)
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Can update process variables with setVariables',
+	async () => {
+		vi.setConfig({ testTimeout: 30_000 })
 
-	wf = await zbc
-		.createProcessInstance({
-			bpmnProcessId,
-			variables: {
-				conditionVariable: true,
-			},
-		})
-		.then(trace)
+		wf = await zbc
+			.createProcessInstance({
+				bpmnProcessId,
+				variables: {
+					conditionVariable: true,
+				},
+			})
+			.then(trace)
 
-	const wfi = wf?.processInstanceKey
-	expect(wfi).toBeTruthy()
+		const wfi = wf?.processInstanceKey
+		expect(wfi).toBeTruthy()
 
-	await zbc
-		.setVariables({
-			elementInstanceKey: wfi,
-			local: false,
-			variables: {
-				conditionVariable: false,
-			},
-		})
-		.then(trace)
+		await zbc
+			.setVariables({
+				elementInstanceKey: wfi,
+				local: false,
+				variables: {
+					conditionVariable: false,
+				},
+			})
+			.then(trace)
 
-	zbc.createWorker({
-		taskType: 'wait',
-		taskHandler: async (job) => {
-			expect(job?.processInstanceKey).toBe(wfi)
-			trace(`Completing wait job for ${job.processInstanceKey}`)
-			return job.complete()
-		},
-	})
-
-	await new Promise((resolve, reject) => {
 		zbc.createWorker({
-			taskType: 'pathB',
+			taskType: 'wait',
 			taskHandler: async (job) => {
-				try {
-					expect(job?.processInstanceKey).toBe(wfi)
-					expect(job?.variables?.conditionVariable).toBe(false)
-					resolve(null)
-					return job.complete()
-				} catch (error) {
-					reject(error)
-					return job.complete()
-				}
+				expect(job?.processInstanceKey).toBe(wfi)
+				trace(`Completing wait job for ${job.processInstanceKey}`)
+				return job.complete()
 			},
 		})
-	})
-})
+
+		await new Promise((resolve, reject) => {
+			zbc.createWorker({
+				taskType: 'pathB',
+				taskHandler: async (job) => {
+					try {
+						expect(job?.processInstanceKey).toBe(wfi)
+						expect(job?.variables?.conditionVariable).toBe(false)
+						resolve(null)
+						return job.complete()
+					} catch (error) {
+						reject(error)
+						return job.complete()
+					}
+				},
+			})
+		})
+	}
+)

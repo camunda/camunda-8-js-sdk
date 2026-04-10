@@ -5,8 +5,9 @@
  */
 import { Camunda8 } from '../../../c8/index'
 import { NullLogger } from '../../../c8/lib/C8Logger'
+import { matrix } from '../../../test-support/testTags'
 
-jest.setTimeout(15000)
+vitest.setConfig({ testTimeout: 15_000 })
 
 const c8 = new Camunda8({
 	CAMUNDA_TENANT_ID: 'green',
@@ -19,13 +20,25 @@ const c8 = new Camunda8({
 const restClientInvalidCreds = c8.getCamundaRestClient()
 
 describe('Invalid credentials REST client (green tenant)', () => {
-	test('cannot activate jobs', async () =>
-		await expect(async () =>
-			restClientInvalidCreds.activateJobs({
-				maxJobsToActivate: 10,
-				timeout: 30000,
-				type: 'anything',
-				worker: 'test',
-			})
-		).rejects.toThrow())
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8', '8.7'],
+				deployments: ['saas', 'self-managed'],
+				tenancy: ['multi-tenant'],
+				security: ['secured'],
+			},
+		})
+	)(
+		'cannot activate jobs',
+		async () =>
+			await expect(async () =>
+				restClientInvalidCreds.activateJobs({
+					maxJobsToActivate: 10,
+					timeout: 30000,
+					type: 'anything',
+					worker: 'test',
+				})
+			).rejects.toThrow()
+	)
 })

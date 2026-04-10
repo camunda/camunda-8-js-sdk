@@ -14,7 +14,6 @@ import {
 	gotBeforeErrorHook,
 	losslessParse,
 	losslessStringify,
-	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 
@@ -69,7 +68,13 @@ export class TasklistApiClient {
 			options?.config ?? {}
 		)
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_TASKLIST_BASE_URL,
@@ -87,11 +92,6 @@ export class TasklistApiClient {
 					},
 					handlers: [beforeCallHook],
 					hooks: {
-						beforeRetry: [
-							makeBeforeRetryHandlerFor401TokenRetry(
-								this.getHeaders.bind(this)
-							),
-						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: config.middleware ?? [],
 					},

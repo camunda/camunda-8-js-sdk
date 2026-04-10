@@ -12,7 +12,6 @@ import {
 	constructOAuthProvider,
 	createUserAgentString,
 	gotBeforeErrorHook,
-	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 
@@ -42,7 +41,13 @@ export class AdminApiClient {
 		)
 
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 
 		this.userAgentString = createUserAgentString(config)
 		this.rest = GetCustomCertificateBuffer(config).then(
@@ -55,11 +60,6 @@ export class AdminApiClient {
 					},
 					handlers: [beforeCallHook],
 					hooks: {
-						beforeRetry: [
-							makeBeforeRetryHandlerFor401TokenRetry(
-								this.getHeaders.bind(this)
-							),
-						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: config.middleware ?? [],
 					},

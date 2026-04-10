@@ -9,9 +9,32 @@ import {
 	Partition,
 	TopologyResponse,
 } from '../../generated/zeebe_pb'
+import {
+	EnvironmentSetup,
+	EnvironmentStorage,
+} from '../../lib/EnvironmentSetup'
 import { ZeebeGrpcClient } from '../../zeebe'
 
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20_000 })
+
+let storage: EnvironmentStorage = {}
+/** Store all env vars, then wipe them in the environment */
+beforeAll(() => {
+	storage = EnvironmentSetup.storeEnv()
+})
+
+beforeAll(() => {
+	EnvironmentSetup.wipeEnv()
+})
+
+beforeEach(() => {
+	EnvironmentSetup.wipeEnv()
+	vi.resetModules()
+})
+
+/** Restore all env vars */
+afterAll(() => EnvironmentSetup.restoreEnv(storage))
+
 let server
 afterEach(() => {
 	;(server && server.close && server.close()) ||
@@ -77,7 +100,7 @@ function createServer(): Promise<{ server: Server; port: number }> {
 		})
 
 		// Start the server
-		server.bindAsync('localhost:50051', credentials, (err, port) => {
+		server.bindAsync('localhost:0', credentials, (err, port) => {
 			if (err) {
 				reject(err)
 			}
@@ -92,12 +115,10 @@ test('can communicate with a gRPC server with self-signed certificate', async ()
 	const zbc = new ZeebeGrpcClient({
 		config: {
 			CAMUNDA_OAUTH_DISABLED: true,
-			ZEEBE_ADDRESS: `localhost:${port}`,
+			ZEEBE_GRPC_ADDRESS: `grpcs://localhost:${port}`,
 			CAMUNDA_CUSTOM_ROOT_CERT_PATH: serverCertFile,
-			CAMUNDA_SECURE_CONNECTION: true,
 			zeebeGrpcSettings: {
 				ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
-				ZEEBE_INSECURE_CONNECTION: false,
 			},
 		},
 	})
@@ -117,12 +138,10 @@ test('can connect to a gRPC server with self-signed certificate provided via str
 	const zbc = new ZeebeGrpcClient({
 		config: {
 			CAMUNDA_OAUTH_DISABLED: true,
-			ZEEBE_ADDRESS: `localhost:${port}`,
+			ZEEBE_GRPC_ADDRESS: `grpcs://localhost:${port}`,
 			CAMUNDA_CUSTOM_ROOT_CERT_STRING: serverCertString,
-			CAMUNDA_SECURE_CONNECTION: true,
 			zeebeGrpcSettings: {
 				ZEEBE_CLIENT_LOG_LEVEL: 'NONE',
-				ZEEBE_INSECURE_CONNECTION: false,
 			},
 		},
 	})

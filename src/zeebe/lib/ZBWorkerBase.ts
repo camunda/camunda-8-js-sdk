@@ -1,13 +1,10 @@
 import { EventEmitter } from 'events'
+import { randomUUID } from 'node:crypto'
 
-import {
-	ClientReadableStream,
-	ClientReadableStreamImpl,
-} from '@grpc/grpc-js/build/src/call'
+import { ClientReadableStream } from '@grpc/grpc-js'
 import chalk, { Chalk } from 'chalk'
 import d from 'debug'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
-import * as uuid from 'uuid'
 
 import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
@@ -93,14 +90,16 @@ export class ZBWorkerBase<
 	private closePromise?: Promise<null>
 	private closing = false
 	private closed = false
-	private id = uuid.v4()
+	private id: string = randomUUID()
 	private longPoll: MaybeTimeDuration
 	private debugMode: boolean
 	private capacityEmitter: EventEmitter
 	private stalled = false
 	private connected = true
 	private readied = false
-	private jobStream?: ClientReadableStreamImpl<unknown>
+	private jobStream?: ClientReadableStream<unknown> & {
+		destroy?: () => void
+	}
 	private activeJobsThresholdForReactivation: number
 	private pollInterval: MaybeTimeDuration
 	private pollLoop: NodeJS.Timeout
@@ -166,7 +165,7 @@ export class ZBWorkerBase<
 		this.pollInterval = options.pollInterval!
 		this.longPoll = options.longPoll!
 		this.pollInterval = options.pollInterval!
-		this.id = id || uuid.v4()
+		this.id = id || randomUUID()
 		// Set options.debug to true to count the number of poll requests for testing
 		// See the Worker-LongPoll test
 		this.debugMode = options.debug === true
@@ -236,8 +235,8 @@ export class ZBWorkerBase<
 			if (this.activeJobs <= 0) {
 				await this.grpcClient.close(timeout)
 				this.grpcClient.removeAllListeners()
-				this.jobStream?.removeAllListeners()
 				this.jobStream?.cancel?.()
+				this.jobStream?.destroy?.()
 				this.jobStream = undefined
 				this.logger.logDebug('Cancelled Job Stream')
 				resolve(null)
@@ -468,11 +467,13 @@ You should call only one job action method in the worker handler. This is a bug 
 	}
 
 	private handleStreamEnd = (id) => {
-		this.jobStream?.removeAllListeners()
+		// We do not delete the stream listeners, as the error event can be emitted asynchronously by a connection error after end
+		// for example - due to broker overload
+		// If the 'error' event has no listener, an uncaught exception that crashes the application will be thrown.
+		// The job stream will be garbage collected, and the listeners will be removed. There is no need to remove them manually.
+		// See: https://github.com/camunda/camunda-8-js-sdk/issues/466
 		this.jobStream = undefined
-		this.logger.logDebug(
-			`Deleted job stream [${id}] listeners and job stream reference`
-		)
+		this.logger.logDebug(`Deleted job stream [${id}] reference`)
 	}
 
 	private async poll() {
@@ -497,7 +498,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		this.pollMutex = true
 		debug('Polling...')
 		this.logger.logDebug('Activating Jobs...')
-		const id = uuid.v4()
+		const id = randomUUID()
 		const jobStream = await this.activateJobs(id)
 		const start = Date.now()
 		this.logger.logDebug(
@@ -662,28 +663,25 @@ You should call only one job action method in the worker handler. This is a bug 
 		this.backPressureRetryCount = 0
 		this.activeJobs += res.jobs.length
 
-		Promise.all(
-			res.jobs
-				.map((job) =>
+		const jobs: ZB.Job<WorkerInputVariables, CustomHeaderShape>[] = []
+		res.jobs.forEach((job) => {
+			try {
+				jobs.push(
 					parseVariablesAndCustomHeadersToJSON<
 						WorkerInputVariables,
 						CustomHeaderShape
 					>(job, this.inputVariableDto, this.customHeadersDto)
-						.then((job) => job)
-						.catch((e) => {
-							this.zbClient.failJob({
-								jobKey: job.key,
-								errorMessage: `Error parsing variable payload: ${e}`,
-								retries: job.retries - 1,
-								retryBackOff: 0,
-							})
-							return null
-						})
 				)
-				.filter(
-					(f): f is Promise<ZB.Job<WorkerInputVariables, CustomHeaderShape>> =>
-						!!f
-				)
-		).then((jobs) => this.handleJobs(jobs))
+			} catch (e) {
+				this.zbClient.failJob({
+					jobKey: job.key,
+					errorMessage: `Error parsing variable payload: ${e}`,
+					retries: job.retries - 1,
+					retryBackOff: 0,
+				})
+			}
+		})
+
+		this.handleJobs(jobs)
 	}
 }

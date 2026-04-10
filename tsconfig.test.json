@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"],
+    "moduleResolution": "node16"
+  },
+  "include": [
+    "src/__tests__/**/*.ts",
+    "src/test-support/**/*.ts"
+  ]
+}

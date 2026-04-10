@@ -1,8 +1,9 @@
+import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { DeployResourceResponse, ProcessDeployment } from '../../../zeebe/types'
 
-jest.setTimeout(25000)
+vi.setConfig({ testTimeout: 25_000 })
 
 const zbc = new ZeebeGrpcClient()
 let test1: DeployResourceResponse<ProcessDeployment>
@@ -31,40 +32,49 @@ afterAll(async () => {
 	await cancelProcesses(test3.deployments[0].process.processDefinitionKey)
 })
 
-test('Awaits a process outcome', async () => {
-	const bpmnProcessId = test1.deployments[0].process.bpmnProcessId
-	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId,
-		variables: {
-			sourceValue: 5,
-		},
-	})
-	expect(result.variables.sourceValue).toBe(5)
-})
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'Awaits a process outcome',
+	async () => {
+		const bpmnProcessId = test1.deployments[0].process.bpmnProcessId
+		const result = await zbc.createProcessInstanceWithResult({
+			bpmnProcessId,
+			variables: {
+				sourceValue: 5,
+			},
+		})
+		expect(result.variables.sourceValue).toBe(5)
+	}
+)
 
-test('can override the gateway timeout', async () => {
-	const bpmnProcessId = test2.deployments[0].process.bpmnProcessId
-	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId,
-		requestTimeout: 25000,
-		variables: {
-			otherValue: 'rome',
-			sourceValue: 5,
-		},
-	})
-	expect(result.variables.sourceValue).toBe(5)
-})
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'can override the gateway timeout',
+	async () => {
+		const bpmnProcessId = test2.deployments[0].process.bpmnProcessId
+		const result = await zbc.createProcessInstanceWithResult({
+			bpmnProcessId,
+			requestTimeout: 25000,
+			variables: {
+				otherValue: 'rome',
+				sourceValue: 5,
+			},
+		})
+		expect(result.variables.sourceValue).toBe(5)
+	}
+)
 
-test('fetches a subset of variables', async () => {
-	const bpmnProcessId = test3.deployments[0].process.bpmnProcessId
-	const result = await zbc.createProcessInstanceWithResult({
-		bpmnProcessId,
-		fetchVariables: ['otherValue'],
-		variables: {
-			otherValue: 'rome',
-			sourceValue: 5,
-		},
-	})
-	expect(result.variables.sourceValue).toBe(undefined)
-	expect(result.variables.otherValue).toBe('rome')
-})
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'fetches a subset of variables',
+	async () => {
+		const bpmnProcessId = test3.deployments[0].process.bpmnProcessId
+		const result = await zbc.createProcessInstanceWithResult({
+			bpmnProcessId,
+			fetchVariables: ['otherValue'],
+			variables: {
+				otherValue: 'rome',
+				sourceValue: 5,
+			},
+		})
+		expect(result.variables.sourceValue).toBe(undefined)
+		expect(result.variables.otherValue).toBe('rome')
+	}
+)

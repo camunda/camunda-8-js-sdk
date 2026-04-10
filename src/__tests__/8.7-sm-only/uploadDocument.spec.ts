@@ -1,11 +1,25 @@
 import fs from 'fs'
 
+import { expect, test, vi } from 'vitest'
+
 import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
-test('It can upload a document', async () => {
+// Disabled because the test is flaky and the issue is not resolved yet.
+// See https://github.com/camunda/camunda-8-js-sdk/issues/562
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can upload a document', async () => {
 	const response = await c8.uploadDocument({
 		file: fs.createReadStream('README.md'),
 		metadata: {
@@ -16,7 +30,18 @@ test('It can upload a document', async () => {
 	expect(response.metadata.contentType).toBe('text/markdown')
 })
 
-test('It can download a document', async () => {
+// Disabled because the test is flaky and the issue is not resolved yet.
+// See https://github.com/camunda/camunda-8-js-sdk/issues/562
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can download a document', async () => {
 	const response = await c8.uploadDocument({
 		file: fs.createReadStream('README.md'),
 		metadata: {

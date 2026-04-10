@@ -1,3 +1,341 @@
+# [8.9.0-alpha.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.4...v8.9.0-alpha.5) (2026-03-18)
+
+
+### Bug Fixes
+
+* do not arm client-side timeout on long-lived gRPC streams ([a5ed433](https://github.com/camunda/camunda-8-js-sdk/commit/a5ed433a01043f1d36cca1de4afb17e993e618ea))
+* remove Promise churn from job pathway ([d763c89](https://github.com/camunda/camunda-8-js-sdk/commit/d763c896780a7aa17f9ec6d500745a806b8d3867))
+* update grpc dependencies ([ce7a450](https://github.com/camunda/camunda-8-js-sdk/commit/ce7a45008da4c505a8fa9bb2e807d864effcd267))
+
+# [8.9.0-alpha.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.3...v8.9.0-alpha.4) (2026-03-15)
+
+
+### Bug Fixes
+
+* address npm audit issues ([fea2510](https://github.com/camunda/camunda-8-js-sdk/commit/fea251013097768d0514a355ba95e768d5737de3))
+* use latest stable tag for version detection in compatibility workflow ([7591903](https://github.com/camunda/camunda-8-js-sdk/commit/75919032eee6bb794d9f5541bb97ecd3cde93229))
+
+
+### Features
+
+* add author as reviewer ([3c02ce6](https://github.com/camunda/camunda-8-js-sdk/commit/3c02ce6a46577a67c35cfdc9129dab8143f8f205))
+
+# [8.9.0-alpha.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.2...v8.9.0-alpha.3) (2026-03-10)
+
+
+### Bug Fixes
+
+* use semver comparison for gateway version check in cancelProcesses ([042e3a9](https://github.com/camunda/camunda-8-js-sdk/commit/042e3a9a9c147f4675b8af138164ee4458b9f8c5))
+
+
+### Features
+
+* add trigger for stable branches ([6344480](https://github.com/camunda/camunda-8-js-sdk/commit/6344480c373ec9beeb985242ed2ccaeefcb67705))
+
+# [8.9.0-alpha.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.1...v8.9.0-alpha.2) (2026-03-07)
+
+
+### Bug Fixes
+
+* export types. fixes Missing types in export ([bda4b97](https://github.com/camunda/camunda-8-js-sdk/commit/bda4b9705da03f63c9d9eed04a5dc99e5bda1ec1)), closes [#570](https://github.com/camunda/camunda-8-js-sdk/issues/570)
+* implement copilot suggestions ([fb25ca5](https://github.com/camunda/camunda-8-js-sdk/commit/fb25ca54025fdbdfe33fbd9b62b131ecf5714257))
+
+
+### Features
+
+* add new compatibility test workflow ([e8074c4](https://github.com/camunda/camunda-8-js-sdk/commit/e8074c42b47d05234a9cc37e7ac5d96b8b3efdd3))
+
+# [8.9.0-alpha.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.5...v8.9.0-alpha.1) (2026-03-05)
+
+
+### Features
+
+* implement sidecar polling in streamJobs ([2fff9bb](https://github.com/camunda/camunda-8-js-sdk/commit/2fff9bb377c5f7914b3930f96db1c28641239309))
+* streamWorker jitter startup and subscribe -> backfill ([408d254](https://github.com/camunda/camunda-8-js-sdk/commit/408d254a29e0fdc82d107532e4580226ad846c00))
+
+## [8.8.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.4...v8.8.5) (2026-02-11)
+
+
+### Bug Fixes
+
+* detect ultrawombat ([7cb51eb](https://github.com/camunda/camunda-8-js-sdk/commit/7cb51eb506579671dab760db00c03be513102f3d))
+* remove MessageCorrelationKey from types ([d6c4b88](https://github.com/camunda/camunda-8-js-sdk/commit/d6c4b885622aaa28ed06eeb807e6fa0f6f4153bd))
+* update JS SDK dependency ([8d62dea](https://github.com/camunda/camunda-8-js-sdk/commit/8d62deac1868497ef31b1b45f8653b261587acfe))
+* update publishing to use OIDC ([a308d6c](https://github.com/camunda/camunda-8-js-sdk/commit/a308d6c8db66525a69ffdc64879bbb686dec8f55))
+
+## [8.8.4](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.3...v8.8.4) (2025-12-01)
+
+
+### Bug Fixes
+
+* remove jobKey from failure request body ([42b2ce5](https://github.com/camunda/camunda-8-js-sdk/commit/42b2ce54726f06ce5f875c2caa21535c6e8f6c55))
+* update oca client ([9e3b4eb](https://github.com/camunda/camunda-8-js-sdk/commit/9e3b4eb76f11356a4dfe9a31cdc6b0abe714d17f))
+* update OCA client ([0515bac](https://github.com/camunda/camunda-8-js-sdk/commit/0515bac238a7a853d07a5494a1fa5ae7a89debe4))
+
+## [8.8.3](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.2...v8.8.3) (2025-11-11)
+
+
+### Bug Fixes
+
+* update deps ([bc7b731](https://github.com/camunda/camunda-8-js-sdk/commit/bc7b7315c1b5ac3941d34a53331460e30b5bbbc5))
+
+## [8.8.2](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.1...v8.8.2) (2025-11-11)
+
+
+### Bug Fixes
+
+* repair docs build ([653fa0d](https://github.com/camunda/camunda-8-js-sdk/commit/653fa0de67eb4f3a5bead14e245cffc32db256fc))
+
+## [8.8.1](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.0...v8.8.1) (2025-11-10)
+
+
+### Bug Fixes
+
+* update oca client ([0a9d716](https://github.com/camunda/camunda-8-js-sdk/commit/0a9d7162a687a8f5f1b92239153a2d495fc9748e))
+
+# [8.8.0](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.33...v8.8.0) (2025-11-10)
+
+
+### Bug Fixes
+
+* export OrchestrationLifter types as namespace ([8d86756](https://github.com/camunda/camunda-8-js-sdk/commit/8d8675613c9d668cc59b530aa2bd481ee8e60f98))
+* oca config translation precedence ([20721a9](https://github.com/camunda/camunda-8-js-sdk/commit/20721a9d4577d8805a03d04ddf2a1a57c6fba6fc))
+* update oca client ([8d5f1f4](https://github.com/camunda/camunda-8-js-sdk/commit/8d5f1f40ceba927932a9e3f16fa2ee4c0b65d26e))
+* update oca dep ([2b88f8c](https://github.com/camunda/camunda-8-js-sdk/commit/2b88f8ca9440eae5192074a582c71d6ac57c3973))
+* update oca dependency ([22d2438](https://github.com/camunda/camunda-8-js-sdk/commit/22d24381a059bf0195da3e807f7d71c739791607))
+
+
+### Features
+
+* improve async error trace ([9f00874](https://github.com/camunda/camunda-8-js-sdk/commit/9f00874a5322f6279ae44441f9c90c190018a1c5))
+* integrate new OCA client ([278731a](https://github.com/camunda/camunda-8-js-sdk/commit/278731a27238fa614ba955bdbe575c5e81519c93))
+
+## [8.7.33](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.32...v8.7.33) (2025-10-30)
+
+
+### Bug Fixes
+
+* normalise error message ([e1158d4](https://github.com/camunda/camunda-8-js-sdk/commit/e1158d455b8f72dd2a8e02ac1222678e03b528d9))
+
+## [8.7.32](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.31...v8.7.32) (2025-10-29)
+
+
+### Features
+
+* memoize 401 response on SaaS ([c65a71c](https://github.com/camunda/camunda-8-js-sdk/commit/c65a71c51a3200ba310464b1980bd6369f9d5f36))
+* persistent 401 tar pit memoization ([1446488](https://github.com/camunda/camunda-8-js-sdk/commit/144648850b7119d15356164f33399edae924bb73))
+
+
+### Reverts
+
+* fix job.fail regression ([264552a](https://github.com/camunda/camunda-8-js-sdk/commit/264552aabbdf313609d9864b56bfb827b2520228))
+
+## [8.7.31](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.30...v8.7.31) (2025-10-21)
+
+
+### Features
+
+* apply OAuth backoff adjustments ([c1d5659](https://github.com/camunda/camunda-8-js-sdk/commit/c1d5659b0761ab06e0e8d6b430a2f7b7e7fbfafb))
+* disable token backoff on SaaS by default ([5bbb85d](https://github.com/camunda/camunda-8-js-sdk/commit/5bbb85d608afb3c3726ad53993dc380f1577ec85))
+
+## [8.7.30](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.29...v8.7.30) (2025-09-30)
+
+
+### Bug Fixes
+
+* add typed-emitter to deps ([1b42edc](https://github.com/camunda/camunda-8-js-sdk/commit/1b42edc49911ec1d94bf468c67ad3b4f25523296))
+* allow explicit override of auth strategy ([67031ab](https://github.com/camunda/camunda-8-js-sdk/commit/67031ab925d5d61b519318d32729908833c40152))
+* searchUserTasks signature expansion ([7422e18](https://github.com/camunda/camunda-8-js-sdk/commit/7422e18cd0672aef2c44f7eb4da30633a267c06a))
+* set AUTH strategy to OAUTH if OAUTH url set ([53185ed](https://github.com/camunda/camunda-8-js-sdk/commit/53185edaeba80df9f7c3c0766b9e22c979e94049))
+* update DecisionEvaluation signatures ([ca9c050](https://github.com/camunda/camunda-8-js-sdk/commit/ca9c0509d118dfc683c2afbcf3c9819fa1ba5ef3))
+
+
+### Features
+
+* add default Operate and Tasklist urls ([2d4acc0](https://github.com/camunda/camunda-8-js-sdk/commit/2d4acc0230ff01b8b6e90658ba0c8f10bf9fb46b))
+
+## [8.7.29](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.28...v8.7.29) (2025-09-12)
+
+
+### Bug Fixes
+
+* update DecisionDeploymentDto ([dafa72a](https://github.com/camunda/camunda-8-js-sdk/commit/dafa72aeed86fa18979f59d996d80516216a92a7))
+
+## [8.7.28](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.27...v8.7.28) (2025-08-06)
+
+
+### Features
+
+* support new runtimeInstructions field. fixes [#472](https://github.com/camunda/camunda-8-js-sdk/issues/472) ([53bc43d](https://github.com/camunda/camunda-8-js-sdk/commit/53bc43d2cec9c3f26e4134d6dc4fb67222f1806f))
+
+## [8.7.27](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.26...v8.7.27) (2025-07-31)
+
+
+### Bug Fixes
+
+* correct updateJob method. fixes [#579](https://github.com/camunda/camunda-8-js-sdk/issues/579) ([693c676](https://github.com/camunda/camunda-8-js-sdk/commit/693c676bc84801e46e09fea33f5a4e385de5629d))
+
+## [8.7.26](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.25...v8.7.26) (2025-07-30)
+
+
+### Bug Fixes
+
+* **docs:** adjust variable names for cookie auth ([a162005](https://github.com/camunda/camunda-8-js-sdk/commit/a162005e98cd03fc02021f96788f139a332c3f67))
+
+
+### Features
+
+* add ability to override caching of clients. fixes [#575](https://github.com/camunda/camunda-8-js-sdk/issues/575) ([d9c24c5](https://github.com/camunda/camunda-8-js-sdk/commit/d9c24c5bde8d71eded2544dd7bcbc78f8d6dcf2f))
+* add close() method to Rest Job Worker. Fixes [#571](https://github.com/camunda/camunda-8-js-sdk/issues/571) ([da239fb](https://github.com/camunda/camunda-8-js-sdk/commit/da239fb1e1d313798ae74ef7794ecc72e755449d))
+* allow configuration of default Camunda8 client caching behaviour ([97d2a45](https://github.com/camunda/camunda-8-js-sdk/commit/97d2a45dfa19162cdfcda95fbe008882af00abcd))
+
+## [8.7.25](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.24...v8.7.25) (2025-07-29)
+
+
+### Bug Fixes
+
+* export SearchUsersRequest type ([5c44ffe](https://github.com/camunda/camunda-8-js-sdk/commit/5c44ffe8074e3899df847710ec95a64477d9d61b))
+
+
+### Features
+
+* export Camunda Rest Types. fixes [#564](https://github.com/camunda/camunda-8-js-sdk/issues/564) ([b4b0d53](https://github.com/camunda/camunda-8-js-sdk/commit/b4b0d53522513622f0db1f96de62906d2bbaff80))
+
+## [8.7.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.23...v8.7.24) (2025-07-25)
+
+
+### Features
+
+* support ZEEBE_GRPC_ADDRESS. fixes [#557](https://github.com/camunda/camunda-8-js-sdk/issues/557) ([2422581](https://github.com/camunda/camunda-8-js-sdk/commit/2422581c2a15f905b2ae7cac5f1dbad819b10108))
+
+## [8.7.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.22...v8.7.23) (2025-07-22)
+
+
+### Bug Fixes
+
+* add missing fields to getDecisionInstance Response Dto. fixes [#545](https://github.com/camunda/camunda-8-js-sdk/issues/545) ([2378d6b](https://github.com/camunda/camunda-8-js-sdk/commit/2378d6bbfd653bf6fe0d6d415084e998fa0b55d2))
+
+## [8.7.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.21...v8.7.22) (2025-07-22)
+
+
+### Bug Fixes
+
+* fix QuerySubscription duplicate item emission. fixes [#540](https://github.com/camunda/camunda-8-js-sdk/issues/540) ([8d61bcb](https://github.com/camunda/camunda-8-js-sdk/commit/8d61bcb7a191b7bf561c1ed65dccb53e8d0fa22e))
+
+
+### Features
+
+* correctly handle backpressure 503 response. fixes [#509](https://github.com/camunda/camunda-8-js-sdk/issues/509) ([7994b5f](https://github.com/camunda/camunda-8-js-sdk/commit/7994b5fbef0852eb49a19b37089070d3225a7f89))
+* enable debugging for Camunda Rest Client ([cba989f](https://github.com/camunda/camunda-8-js-sdk/commit/cba989f72ed446e40eb9dcd8dfd0b898bf1a90a8))
+* implement getDecisionInstance. fixes [#293](https://github.com/camunda/camunda-8-js-sdk/issues/293) ([eea159d](https://github.com/camunda/camunda-8-js-sdk/commit/eea159d11cc411144c6472f1dfe364380d856592))
+* implement searchDecisionInstances. fixes [#292](https://github.com/camunda/camunda-8-js-sdk/issues/292) ([83a7d7b](https://github.com/camunda/camunda-8-js-sdk/commit/83a7d7b0abd163abeb3311588305c7c0b9db8caa))
+
+
+### Reverts
+
+* remove logging for [#491](https://github.com/camunda/camunda-8-js-sdk/issues/491) ([ae69149](https://github.com/camunda/camunda-8-js-sdk/commit/ae69149bd2e10d143fd1186a721fa02cd8ccbabb))
+
+## [8.7.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.20...v8.7.21) (2025-07-17)
+
+
+### Features
+
+* backoff retry on 429 "Too many client requests". FIxes [#528](https://github.com/camunda/camunda-8-js-sdk/issues/528) ([63ea9ec](https://github.com/camunda/camunda-8-js-sdk/commit/63ea9ecf6b53b3327ebfb54bca41a3e13f1b01e7))
+
+## [8.7.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.19...v8.7.20) (2025-07-16)
+
+## [8.7.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.18...v8.7.19) (2025-07-15)
+
+
+### Bug Fixes
+
+* support new search pagination. fixes [#514](https://github.com/camunda/camunda-8-js-sdk/issues/514) ([84b5047](https://github.com/camunda/camunda-8-js-sdk/commit/84b5047501a3cae7039a5bce3ea977ac52d7e993))
+
+
+### Reverts
+
+* fix resetClock http method ([5c2baad](https://github.com/camunda/camunda-8-js-sdk/commit/5c2baad3c68a8ff0d9ca6b19a7c48c4567039ee4))
+
+## [8.7.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.17...v8.7.18) (2025-07-07)
+
+
+### Features
+
+* add stopWorkers and startWorkers methods. fixes [#511](https://github.com/camunda/camunda-8-js-sdk/issues/511) ([69612a3](https://github.com/camunda/camunda-8-js-sdk/commit/69612a399e3c26c90ecb3308e25c602870c061bf))
+* implement searchIncidents. fixes  [#310](https://github.com/camunda/camunda-8-js-sdk/issues/310) ([e840d79](https://github.com/camunda/camunda-8-js-sdk/commit/e840d7947ad3ab1ad6ce65b0af92b551fddb12a9))
+
+## [8.7.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.16...v8.7.17) (2025-06-18)
+
+
+### Bug Fixes
+
+* enhance async stack trace. fixes [#506](https://github.com/camunda/camunda-8-js-sdk/issues/506) ([c443ab2](https://github.com/camunda/camunda-8-js-sdk/commit/c443ab20c7aed9a2f4e0b80e0df4ec3e2be8b15c))
+
+
+### Features
+
+* implement QuerySubscription. fixes [#502](https://github.com/camunda/camunda-8-js-sdk/issues/502) ([a4bbd61](https://github.com/camunda/camunda-8-js-sdk/commit/a4bbd612e8c34112e9dfcd19e0b00a81e0c24e81))
+
+## [8.7.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.15...v8.7.16) (2025-06-11)
+
+
+### Bug Fixes
+
+* fix implementation of updateElementInstanceVariables. fixes [#495](https://github.com/camunda/camunda-8-js-sdk/issues/495) ([6d36a8a](https://github.com/camunda/camunda-8-js-sdk/commit/6d36a8a6da29e8569ba6b87e532d1375e8b9b34a))
+
+
+### Features
+
+* implement getElementInstance. fixes [#302](https://github.com/camunda/camunda-8-js-sdk/issues/302) ([abf5635](https://github.com/camunda/camunda-8-js-sdk/commit/abf5635114cb0c1b8d3bb46f317bba08db6244a2))
+* implement getProcessDefinition. Fixes [#316](https://github.com/camunda/camunda-8-js-sdk/issues/316) ([94ddb86](https://github.com/camunda/camunda-8-js-sdk/commit/94ddb86c3d0064630ec007378f01396b55b0e8a0))
+* implement getProcessDefinitionXML. fixes [#317](https://github.com/camunda/camunda-8-js-sdk/issues/317) ([4c03327](https://github.com/camunda/camunda-8-js-sdk/commit/4c0332701af3c5c4243e09dd12eafe74f18d5880))
+* implement PollingOperation. fixes [#497](https://github.com/camunda/camunda-8-js-sdk/issues/497) ([b4e118d](https://github.com/camunda/camunda-8-js-sdk/commit/b4e118d84f559796c2e538ad68132d29211a0060))
+* implement searchElementInstances. fixes [#301](https://github.com/camunda/camunda-8-js-sdk/issues/301) ([c1a1ea5](https://github.com/camunda/camunda-8-js-sdk/commit/c1a1ea5e97fe011711cb4d70c6986f4d67d077f8))
+* implement searchProcessDefinitions. fixes [#315](https://github.com/camunda/camunda-8-js-sdk/issues/315) ([7700be7](https://github.com/camunda/camunda-8-js-sdk/commit/7700be7f2bbf419395e900511af285d43bca0e21))
+
+## [8.7.15](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.14...v8.7.15) (2025-06-06)
+
+
+### Bug Fixes
+
+* destroy streams rather than removing all listeners. Fixes [#466](https://github.com/camunda/camunda-8-js-sdk/issues/466) ([2d12170](https://github.com/camunda/camunda-8-js-sdk/commit/2d12170387c3bc06f1a2ecd3c31fba20132b6ae4))
+
+## [8.7.14](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.13...v8.7.14) (2025-06-05)
+
+
+### Bug Fixes
+
+* prevent ZBLogger crash when stacktrace is undefined ([d9b757f](https://github.com/camunda/camunda-8-js-sdk/commit/d9b757f734b7daf768e75a03843b4cdb43da0870))
+
+## [8.7.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.12...v8.7.13) (2025-06-05)
+
+
+### Features
+
+* add getVariable to Rest API client. Fixes [#344](https://github.com/camunda/camunda-8-js-sdk/issues/344) ([ecacfda](https://github.com/camunda/camunda-8-js-sdk/commit/ecacfdac8d94a0cd292c7138b04e7871400bc703))
+* add static method to OAuthProvider to clear file cache ([754bc20](https://github.com/camunda/camunda-8-js-sdk/commit/754bc2000dd42a4055a00dec6cc40138db7a78f6))
+
+## [8.7.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.11...v8.7.12) (2025-06-04)
+
+
+### Bug Fixes
+
+* suppress cancelation error when worker is stopping. FIxes [#432](https://github.com/camunda/camunda-8-js-sdk/issues/432) ([d4f313c](https://github.com/camunda/camunda-8-js-sdk/commit/d4f313c10ae49b510acfa9f402b42d9278a7988d))
+
+## [8.7.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.10...v8.7.11) (2025-05-30)
+
+
+### Bug Fixes
+
+* check the existing correlationKey first instead of using uuid() every time ([1cebb44](https://github.com/camunda/camunda-8-js-sdk/commit/1cebb443784105ff73e0e156a9ffa55c7c57a834))
+
+## [8.7.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.9...v8.7.10) (2025-05-30)
+
+
+### Bug Fixes
+
+* do not remove stream listeners on stream end. fixes [#466](https://github.com/camunda/camunda-8-js-sdk/issues/466) ([c0003bf](https://github.com/camunda/camunda-8-js-sdk/commit/c0003bfb995aed8ba60c881ff4316f6694f34beb))
+
 ## [8.7.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.7.8...v8.7.9) (2025-05-27)
 
 

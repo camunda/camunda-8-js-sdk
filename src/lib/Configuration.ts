@@ -8,6 +8,12 @@ import { Logger } from '../c8/lib/C8Logger'
 // @ts-ignore - imported for TypeDoc generation, not used in code
 import type { IHeadersProvider } from '../oauth' // eslint-disable-line @typescript-eslint/no-unused-vars
 
+import {
+	emitConflictWarnings,
+	emitDeprecationWarnings,
+	parseZeebeGrpcAddress,
+} from './ZeebeGrpcAddressUtils'
+
 // This creates a type-only reference that gets erased during compilation
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 // type _UnusedTypes = IHeadersProvider
@@ -59,11 +65,16 @@ const mainEnv = createEnv({
 		],
 		default: 'info',
 	},
-	/** The address for the Zeebe gRPC Gateway. Defaults to localhost:26500. If a value is also provided for ZEEBE_ADDRESS, that value will be used preferentially. */
+	/**
+	 * The address for the Zeebe gRPC Gateway with protocol. Takes precedence over ZEEBE_ADDRESS.
+	 * Must include protocol: grpc:// for insecure connections or grpcs:// for secure connections.
+	 * Examples: 'grpc://localhost:26500', 'grpcs://zeebe.example.com:443'
+	 * When using this, ZEEBE_ADDRESS, ZEEBE_INSECURE_CONNECTION, and CAMUNDA_SECURE_CONNECTION are ignored.
+	 */
 	ZEEBE_GRPC_ADDRESS: {
 		type: 'string',
 		optional: true,
-		default: 'localhost:26500',
+		default: undefined,
 	},
 	/** The address for the Zeebe REST API. Defaults to localhost:8080 */
 	ZEEBE_REST_ADDRESS: {
@@ -111,7 +122,7 @@ const mainEnv = createEnv({
 	CAMUNDA_TENANT_ID: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: '<default>',
 	},
 	/**
 	 * The audience parameter for a Zeebe OAuth token request.
@@ -177,6 +188,7 @@ const mainEnv = createEnv({
 		default: false,
 	},
 	/**
+	 * @deprecated Use ZEEBE_GRPC_ADDRESS with grpc:// or grpcs:// protocol instead.
 	 * Control TLS for Zeebe GRPC connections. Defaults to true.
 	 *
 	 * Note: This setting interacts with the `ZEEBE_INSECURE_CONNECTION` setting in `zeebeGrpcSettings`.
@@ -240,7 +252,7 @@ const mainEnv = createEnv({
 	CAMUNDA_OPERATE_BASE_URL: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: 'http://localhost:8080/operate',
 	},
 	/** The base url for the Optimize API */
 	CAMUNDA_OPTIMIZE_BASE_URL: {
@@ -252,7 +264,7 @@ const mainEnv = createEnv({
 	CAMUNDA_TASKLIST_BASE_URL: {
 		type: 'string',
 		optional: true,
-		default: undefined,
+		default: 'http://localhost:8080/tasklist',
 	},
 	/**
 	 * The base url for the Modeler API. Defaults to Camunda Saas - https://modeler.camunda.io/api
@@ -307,7 +319,7 @@ const mainEnv = createEnv({
 	CAMUNDA_AUTH_STRATEGY: {
 		type: 'string',
 		choices: ['BASIC', 'OAUTH', 'BEARER', 'COOKIE', 'NONE'],
-		default: 'OAUTH',
+		default: 'NONE',
 	},
 	/** Set to true to enable an output log file with debugging information and diagnostic traces to assist Camunda Support in technical support. */
 	CAMUNDA_SUPPORT_LOG_ENABLED: {
@@ -321,9 +333,19 @@ const mainEnv = createEnv({
 		optional: true,
 		default: undefined,
 	},
+	/**
+	 * When set to true, a 401 response from the token endpoint will result in an immediate failure, rather than a backoff and retry. This is false by default on Self-Managed, to avoid DDOS by misconfigured workers.
+	 * It is true by default on SaaS, as the SaaS token endpoint has a 30s cooldown for subsequent requests with the same credentials.
+	 */
+	CAMUNDA_OAUTH_FAIL_ON_ERROR: {
+		type: 'boolean',
+		optional: true,
+		default: false,
+	},
 })
 const zeebeEnv = createEnv({
 	/**
+	 * @deprecated Use ZEEBE_GRPC_ADDRESS with grpc:// or grpcs:// protocol instead.
 	 * Use an insecure connection for Zeebe GRPC.
 	 *
 	 * Note: This setting interacts with the `CAMUNDA_SECURE_CONNECTION` setting.
@@ -345,7 +367,7 @@ const zeebeEnv = createEnv({
 	ZEEBE_CLIENT_LOG_LEVEL: {
 		type: 'string',
 		optional: true,
-		choices: ['DEBUG', 'INFO', 'NONE'],
+		choices: ['DEBUG', 'INFO', 'ERROR', 'NONE'],
 		default: 'INFO',
 	},
 	/** Immediately connect to the Zeebe Gateway (issues a silent topology request). Defaults to false */
@@ -514,9 +536,40 @@ type ConfigWithMiddleware = CamundaPlatform8Configuration & {
 }
 
 export class CamundaEnvironmentConfigurator {
-	public static mergeConfigWithEnvironment = (
+	public static readonly mergeConfigWithEnvironment = (
 		config: DeepPartial<ConfigWithMiddleware>
-	): ConfigWithMiddleware => mergeWith({}, CamundaSDKConfiguration, config)
+	): ConfigWithMiddleware => {
+		const mergedConfig = mergeWith({}, CamundaSDKConfiguration, config)
+
+		// Set default ZEEBE_GRPC_ADDRESS if neither it nor ZEEBE_ADDRESS are explicitly set
+		if (!mergedConfig.ZEEBE_GRPC_ADDRESS && !mergedConfig.ZEEBE_ADDRESS) {
+			mergedConfig.ZEEBE_GRPC_ADDRESS = 'grpc://localhost:26500'
+		}
+
+		// Handle ZEEBE_GRPC_ADDRESS validation and warnings
+		if (mergedConfig.ZEEBE_GRPC_ADDRESS) {
+			const address = mergedConfig.ZEEBE_GRPC_ADDRESS
+			// Only validate if the address contains protocol (://)
+			if (address.includes('://')) {
+				try {
+					parseZeebeGrpcAddress(address)
+				} catch (error) {
+					if (error instanceof Error) {
+						throw new Error(error.message)
+					}
+					throw error
+				}
+			}
+		}
+
+		// Emit warnings for deprecated settings
+		emitDeprecationWarnings(mergedConfig)
+
+		// Emit warnings for conflicting settings
+		emitConflictWarnings(mergedConfig)
+
+		return mergedConfig
+	}
 }
 
 export type DeepPartial<T> = {

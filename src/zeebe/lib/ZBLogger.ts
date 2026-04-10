@@ -118,7 +118,7 @@ export class ZBLogger {
 		const context = makeUsefulStacktrace()
 		const msg: Msg = {
 			timestamp: new Date(),
-			context, //`${frame.getFileName()}:${frame.getLineNumber()}`,
+			context,
 			level,
 			message,
 			time: dayjs().format('YYYY MMM-DD HH:mm:ssA'),
@@ -158,19 +158,23 @@ export class ZBLogger {
 
 function makeUsefulStacktrace(): string {
 	const frame = stackTrace.get()
+	/**
+	 * In here, everything uses optional chaining, because we do not want the logger to crash
+	 * if the stack trace is not available for some reason.
+	 */
 	return JSON.stringify(
 		frame
 			.filter((callsite) => {
+				const callsiteFileName = callsite?.getFileName?.() ?? ''
 				const shouldInclude = !(
-					callsite.getFileName().includes('ZBLogger') ||
-					callsite.getFileName().includes('StatefulLogInterceptor')
+					callsiteFileName.includes('ZBLogger') ||
+					callsiteFileName.includes('StatefulLogInterceptor')
 				)
-				// console.log(callsite.getFileName(), shouldInclude)
 				return shouldInclude
 			})
 			.map(
 				(callsite) =>
-					`${callsite.getFileName()}:${callsite.getLineNumber()} ${callsite.getFunctionName()}`
+					`${callsite?.getFileName?.()}:${callsite?.getLineNumber?.()} ${callsite?.getFunctionName?.()}`
 			)
 	)
 }

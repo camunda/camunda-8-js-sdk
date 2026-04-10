@@ -1,8 +1,18 @@
 import { CamundaRestClient } from '../../../c8/lib/CamundaRestClient'
+import { matrix } from '../../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
 
-test('It can delete a resource', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8', '8.7'],
+			deployments: ['saas', 'self-managed'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can delete a resource', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/Delete-Resource-Rest.bpmn',
 	])

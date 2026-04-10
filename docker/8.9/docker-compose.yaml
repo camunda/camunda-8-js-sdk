@@ -1,0 +1,62 @@
+services:
+  camunda:
+    image: camunda/camunda:${CAMUNDA_DOCKER_IMAGE_VERSION:-8.9-SNAPSHOT}
+    # If you want to override via env like the framework: set CAMUNDA_DOCKER_IMAGE_VERSION externally
+    container_name: camunda-engine
+    environment:
+      SPRING_PROFILES_ACTIVE: 'broker,consolidated-auth'
+      ZEEBE_CLOCK_CONTROLLED: 'true'
+      ZEEBE_LOG_APPENDER: 'Stackdriver'
+      CAMUNDA_SECURITY_AUTHENTICATION_UNPROTECTEDAPI: 'true'
+      CAMUNDA_SECURITY_AUTHORIZATIONS_ENABLED: 'false'
+      # H2 / in-memory config (mirrors H2Configuration)
+      CAMUNDA_DATABASE_URL: 'jdbc:h2:mem:cpt;DB_CLOSE_DELAY=-1;MODE=PostgreSQL'
+      CAMUNDA_DATABASE_TYPE: 'rdbms'
+      CAMUNDA_DATABASE_USERNAME: 'sa'
+      CAMUNDA_DATABASE_PASSWORD: ''
+      CAMUNDA_DATA_SECONDARY_STORAGE_TYPE: 'rdbms'
+      ZEEBE_BROKER_EXPORTERS_RDBMS_CLASSNAME: 'io.camunda.exporter.rdbms.RdbmsExporter'
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_FLUSH_INTERVAL: 'PT0S'
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_DEFAULT_HISTORY_TTL: 'PT2S'
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_MIN_HISTORY_CLEANUP_INTERVAL: 'PT2S'
+      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_MAX_HISTORY_CLEANUP_INTERVAL: 'PT5S'
+      LOGGING_LEVEL_IO_CAMUNDA_DB_RDBMS: 'INFO'
+      LOGGING_LEVEL_ORG_MYBATIS: 'INFO'
+    ports:
+      - '8080:8080' # REST API (ZEEBE_REST_ADDRESS -> http://localhost:8080)
+      - '26500:26500' # gRPC Gateway
+      - '9600:9600' # Monitoring / actuator / test time control
+      # Uncomment if you need direct access to internal broker ports:
+      # - "26501:26501" # Command API (internal)
+      # - "26502:26502" # Internal API (internal)
+    healthcheck:
+      # Mimic readiness checks: uses monitoring port + health endpoint
+      test: ['CMD', 'wget', '-qO', '-', 'http://localhost:9600/actuator/health/status']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      - camunda-net
+
+  # connectors:
+  #   image: camunda/connectors-bundle:SNAPSHOT
+  #   container_name: camunda-connectors
+  #   depends_on:
+  #     camunda:
+  #       condition: service_healthy
+  #   environment:
+  #     # Adapted from runtime: service name + internal port
+  #     ZEEBE_CLIENT_BROKER_GATEWAY-ADDRESS: "camunda:26500"
+  #     ZEEBE_CLIENT_SECURITY_PLAINTEXT: "true"
+  #     # Optional additional env you might pass via framework (placeholders):
+  #     # CONNECTORS_LOG_APPENDER: "Stackdriver"
+  #     # CAMUNDA_CLIENT_GRPC-ADDRESS: "camunda:26500"
+  #     # CAMUNDA_CLIENT_REST-ADDRESS: "http://camunda:8080"
+  #   ports:
+  #     - "8085:8080" # Expose connectors runtime (external 8085 -> internal 8080)
+  #   networks:
+  # - camunda-net
+
+networks:
+  camunda-net:
+    name: camunda-net

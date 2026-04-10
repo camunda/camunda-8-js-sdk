@@ -6,6 +6,7 @@
 	],
 	"compilerOptions": {
 		"baseUrl": "../",
+		"types": ["node", "vitest/globals"],
 		"paths": {
 			"lib": ["./lib"],
 			"oauth": ["./oauth"],

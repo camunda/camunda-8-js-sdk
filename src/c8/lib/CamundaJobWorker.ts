@@ -11,7 +11,8 @@ import {
 	MustReturnJobActionAcknowledgement,
 } from '../../zeebe/types'
 
-import { Ctor, JobWithMethods, RestJob } from './C8Dto'
+import { ActivatedJob, RestJob } from './C8Dto'
+import { Ctor } from './C8DtoInternal'
 import { getLogger, Logger } from './C8Logger'
 import { CamundaRestClient } from './CamundaRestClient'
 
@@ -89,7 +90,7 @@ export class CamundaJobWorker<
 	}
 	stopping: boolean = false
 	private activePoll?: PCancelable<
-		JobWithMethods<VariablesDto, CustomHeadersDto>[]
+		ActivatedJob<VariablesDto, CustomHeadersDto>[]
 	>
 
 	constructor(
@@ -172,7 +173,7 @@ export class CamundaJobWorker<
 					`Failed to drain all jobs in ${deadlineMs}ms`,
 					this.logMeta()
 				)
-				return reject(`Failed to drain all jobs in ${deadlineMs}ms`)
+				return reject(new Error(`Failed to drain all jobs in ${deadlineMs}ms`))
 			}, deadlineMs)
 			/** Check every 500ms to see if our active job count has hit zero, i.e: all active work is stopped */
 			const wait = setInterval(() => {
@@ -189,6 +190,14 @@ export class CamundaJobWorker<
 				)
 			}, 500)
 		})
+	}
+
+	/** This is an alias for stop(). Provided for compatibility with the gRPC worker implementation.
+	 * Stops the Job Worker polling for more jobs. If await this call, and it will return as soon as all currently active jobs are completed.
+	 * The deadline for all currently active jobs to complete is 30s by default. If the active jobs do not complete by the deadline, this method will throw.
+	 */
+	public close(deadlineMs = 30000) {
+		return this.stop(deadlineMs)
 	}
 
 	private poll() {
@@ -211,8 +220,18 @@ export class CamundaJobWorker<
 
 		const remainingJobCapacity =
 			this.config.maxJobsToActivate - this.currentlyActiveJobCount
+
+		const req: ActivateJobsRequest = {
+			maxJobsToActivate: this.config.maxJobsToActivate,
+			timeout: this.config.timeout,
+			type: this.config.type,
+			worker: this.config.worker,
+			fetchVariable: this.config.fetchVariable,
+			requestTimeout: this.config.requestTimeout,
+			tenantIds: this.config.tenantIds,
+		}
 		this.activePoll = this.restClient.activateJobs({
-			...this.config,
+			...req,
 			maxJobsToActivate: remainingJobCapacity,
 		})
 
@@ -223,16 +242,30 @@ export class CamundaJobWorker<
 				this.log.debug(`Activated ${count} jobs`, this.logMeta())
 				this.emit('work', jobs)
 				// The job handlers for the activated jobs will run in parallel
-				jobs.forEach((job) => this.handleJob(job))
+				jobs.forEach((job) => this.handleJob(job)) // if the handler throws, the job will be failed and the error logged
 				this.pollLock = false
 				this.backoffRetryCount = 0
 			})
 			.catch((e) => {
+				// If the poll was cancelled because the worker is stopping, we don't need to log an error — the canceled promise rejection is expected.
+				// https://github.com/camunda/camunda-8-js-sdk/issues/432
+				if (this.stopping && e.code === 'ERR_CANCELED') {
+					return
+				}
 				// This can throw a 400, 401, or 500 REST Error with the Content-Type application/problem+json
 				// The schema is:
 				// { type: string, title: string, status: number, detail: string, instance: string }
-				this.log.error('Error during job worker poll')
-				this.log.error(e)
+				if (
+					e.statusCode === 500 &&
+					e.toString().includes('RESOURCE_EXHAUSTED')
+				) {
+					this.log.warn(
+						'The server responded with a back pressure signal RESOURCE_EXHAUSTED. Check the server resource allocation and current load.'
+					)
+				} else {
+					this.log.error('Error during job worker poll')
+					this.log.error(e)
+				}
 				this.emit('pollError', e)
 				this.activePoll = undefined
 				const backoffDuration = Math.min(

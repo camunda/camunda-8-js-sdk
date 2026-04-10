@@ -5,11 +5,11 @@ import {
 	ClientReadableStream,
 	InterceptingCall,
 	Metadata,
+	VerifyOptions,
 	credentials,
 	loadPackageDefinition,
 	status,
 } from '@grpc/grpc-js'
-import { VerifyOptions } from '@grpc/grpc-js/build/src/channel-credentials'
 import { Options, PackageDefinition, loadSync } from '@grpc/proto-loader'
 import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
@@ -395,7 +395,6 @@ export class GrpcClient extends EventEmitter {
 
 					// Free the stream resources. When it emits 'end', we remove all listeners and destroy it.
 					stream.on('end', () => {
-						stream.removeAllListeners()
 						stream.destroy()
 					})
 
@@ -403,28 +402,34 @@ export class GrpcClient extends EventEmitter {
 					// but that stream is not a legit Gateway activation. In that case, the Gateway will
 					// never time out or close the stream. So we have to manage that case.
 					// Also, no end event is emitted when there are no jobs, so we have to emit it ourselves.
-					const clientsideTimeoutDuration =
-						Duration.milliseconds.from(
-							timeNormalisedRequest.requestTimeout ?? this.longPoll!
-						) + 1000
-
-					// We will not trigger a client-side timeout if the requestTimeout was set to 0 or -1, as we don't know how long to wait
-					// This could result in resource leaks when using a worker with a longPoll set to -1 or 0.
-					const clientSideTimeout =
+					//
+					// For long-lived streams (e.g. StreamActivatedJobs) the request has
+					// no requestTimeout field, so we must not arm a client-side timeout
+					// — otherwise the stream is destroyed after longPoll + 1 s and never
+					// reconnected, silently breaking streaming.
+					const hasRequestTimeout =
+						timeNormalisedRequest.requestTimeout != null &&
 						timeNormalisedRequest.requestTimeout !== 0 &&
 						timeNormalisedRequest.requestTimeout !== -1
-							? setTimeout(() => {
-									if (
-										clientsideTimeoutDuration !== 1000 &&
-										clientsideTimeoutDuration !== 999
-									) {
-										debug(
-											`Triggered client-side timeout after ${clientsideTimeoutDuration}ms`
-										)
-										stream.emit('end')
-									}
-								}, clientsideTimeoutDuration)
-							: 0
+
+					const clientsideTimeoutDuration = hasRequestTimeout
+						? Duration.milliseconds.from(timeNormalisedRequest.requestTimeout) +
+							1000
+						: 0
+
+					const clientSideTimeout = hasRequestTimeout
+						? setTimeout(() => {
+								if (
+									clientsideTimeoutDuration !== 1000 &&
+									clientsideTimeoutDuration !== 999
+								) {
+									debug(
+										`Triggered client-side timeout after ${clientsideTimeoutDuration}ms`
+									)
+									stream.emit('end')
+								}
+							}, clientsideTimeoutDuration)
+						: 0
 
 					stream.on('data', () => (this.gRPCRetryCount = 0))
 					stream.on('metadata', (md) =>

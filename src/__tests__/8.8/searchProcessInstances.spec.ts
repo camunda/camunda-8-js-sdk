@@ -1,15 +1,24 @@
 import { randomUUID } from 'crypto'
 
+import { CamundaRestClient, PollingOperation } from '../..'
 import { CreateProcessInstanceResponse } from '../../c8/lib/C8Dto'
-import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+import { matrix } from '../../test-support/testTags'
 
 const c8 = new CamundaRestClient()
-
-jest.setTimeout(30000)
+vi.setConfig({ testTimeout: 30_000 })
 
 let wfi: CreateProcessInstanceResponse<unknown>
 
-test('It can search process instances', async () => {
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
+		},
+	})
+)('It can search process instances', async () => {
 	const res = await c8.deployResourcesFromFiles([
 		'./src/__tests__/testdata/SearchProcessInstances.bpmn',
 	])
@@ -23,13 +32,20 @@ test('It can search process instances', async () => {
 		},
 	})
 	expect(wfi.processDefinitionKey).toBe(key)
-	await new Promise((r) => setTimeout(r, 7000))
-	const instances = await c8.searchProcessInstances({
-		sort: [{ field: 'state' }],
-		filter: { state: 'ACTIVE' },
+	const instances = await PollingOperation({
+		operation: () =>
+			c8.searchProcessInstances({
+				sort: [{ field: 'state' }],
+				filter: { state: 'ACTIVE', processInstanceKey: wfi.processInstanceKey },
+			}),
+		interval: 500,
+		timeout: 7000,
 	})
 	const result = instances.items.filter(
 		(i) => i.processInstanceKey === wfi.processInstanceKey
 	)
 	expect(result.length).toBeGreaterThan(0)
+	await c8.cancelProcessInstance({
+		processInstanceKey: wfi.processInstanceKey,
+	})
 })

@@ -1,0 +1,363 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - 'stable/**'
+  workflow_dispatch:
+
+concurrency:
+  group: camunda-8-js-sdk-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and Smoke Test
+        run: npm run test:smoketest
+
+      - name: Run Unit Tests
+        run: npm run test
+
+  local_integration:
+    runs-on: ubuntu-latest
+    environment:
+      name: selfhosted
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username joshua.wulf --password-stdin registry.camunda.cloud
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml up -d
+        timeout-minutes: 10
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:8.7:sm
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          ZEEBE_CLIENT_ID: zeebe
+          ZEEBE_CLIENT_SECRET: zecret
+          CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+          CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
+          CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
+          CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8083
+          CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml down
+
+  local_multitenancy_integration:
+    runs-on: ubuntu-latest
+    environment:
+      name: selfhosted
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username joshua.wulf --password-stdin registry.camunda.cloud
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml up -d
+        timeout-minutes: 10
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:8.7:mt
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          ZEEBE_CLIENT_ID: zeebe
+          ZEEBE_CLIENT_SECRET: zecret
+          CAMUNDA_OAUTH_URL: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+          CAMUNDA_TASKLIST_BASE_URL: http://localhost:8082
+          CAMUNDA_OPERATE_BASE_URL: http://localhost:8081
+          CAMUNDA_OPTIMIZE_BASE_URL: http://localhost:8083
+          CAMUNDA_MODELER_BASE_URL: http://localhost:8070/api
+          # Needed for Multi-Tenancy
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down
+
+  saas_integration:
+    runs-on: ubuntu-latest
+    environment: integration
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:8.7:saas
+        env:
+          ZEEBE_REST_ADDRESS: ${{ vars.ZEEBE_REST_ADDRESS }}
+          ZEEBE_GRPC_ADDRESS: ${{ vars.ZEEBE_GRPC_ADDRESS }}
+          ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
+          ZEEBE_AUTHORIZATION_SERVER_URL: ${{ vars.ZEEBE_AUTHORIZATION_SERVER_URL }}
+          ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
+          ZEEBE_TOKEN_AUDIENCE: ${{ vars.ZEEBE_TOKEN_AUDIENCE }}
+          CAMUNDA_OAUTH_URL: ${{ vars.CAMUNDA_OAUTH_URL }}
+          CAMUNDA_TASKLIST_BASE_URL: ${{ vars.CAMUNDA_TASKLIST_BASE_URL }}
+          CAMUNDA_OPERATE_BASE_URL: ${{ vars.CAMUNDA_OPERATE_BASE_URL }}
+          CAMUNDA_OPTIMIZE_BASE_URL: ${{ vars.CAMUNDA_OPTIMIZE_BASE_URL }}
+          CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
+          CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
+          CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
+          CAMUNDA_CONSOLE_BASE_URL: ${{ vars.CAMUNDA_CONSOLE_BASE_URL }}
+          CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ vars.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
+
+  saas_integration_8_8:
+    runs-on: ubuntu-latest
+    environment: integration-8.8
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:8.8:saas
+        env:
+          ZEEBE_REST_ADDRESS: ${{ vars.ZEEBE_REST_ADDRESS }}
+          ZEEBE_GRPC_ADDRESS: ${{ vars.ZEEBE_GRPC_ADDRESS }}
+          ZEEBE_CLIENT_ID: ${{ secrets.ZEEBE_CLIENT_ID }}
+          ZEEBE_AUTHORIZATION_SERVER_URL: ${{ vars.ZEEBE_AUTHORIZATION_SERVER_URL }}
+          ZEEBE_CLIENT_SECRET: ${{ secrets.ZEEBE_CLIENT_SECRET }}
+          ZEEBE_TOKEN_AUDIENCE: ${{ vars.ZEEBE_TOKEN_AUDIENCE }}
+          CAMUNDA_OAUTH_URL: ${{ vars.CAMUNDA_OAUTH_URL }}
+          CAMUNDA_TASKLIST_BASE_URL: ${{ vars.CAMUNDA_TASKLIST_BASE_URL }}
+          CAMUNDA_OPERATE_BASE_URL: ${{ vars.CAMUNDA_OPERATE_BASE_URL }}
+          CAMUNDA_OPTIMIZE_BASE_URL: ${{ vars.CAMUNDA_OPTIMIZE_BASE_URL }}
+          CAMUNDA_MODELER_BASE_URL: https://modeler.cloud.camunda.io/api
+          CAMUNDA_CONSOLE_CLIENT_ID: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_ID }}
+          CAMUNDA_CONSOLE_CLIENT_SECRET: ${{ secrets.CAMUNDA_CONSOLE_CLIENT_SECRET }}
+          CAMUNDA_CONSOLE_BASE_URL: ${{ vars.CAMUNDA_CONSOLE_BASE_URL }}
+          CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ vars.CAMUNDA_CONSOLE_OAUTH_AUDIENCE }}
+
+  local_integration_8_8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/docker-compose-8.8.yaml up -d
+
+      - name: Wait for Services Healthy
+        run: |
+          set -e
+          attempts=0
+          max_attempts=60
+          while [ $attempts -lt $max_attempts ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9600/actuator/health/status || true)
+            [ "$code" = "200" ] && echo "Broker healthy" && break
+            attempts=$((attempts+1))
+            sleep 5
+          done
+          [ $attempts -ge $max_attempts ] && echo "Broker not healthy" && exit 1 || true
+
+      - name: Run Integration Tests
+        run: |
+          npm run test:8.8:sm
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          CAMUNDA_AUTH_STRATEGY: NONE
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/docker-compose-8.8.yaml down
+
+  local_integration_8_8_against_8_9:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/8.9/docker-compose.yaml up -d
+
+      - name: Wait for Services Healthy
+        run: |
+          set -e
+          attempts=0
+          max_attempts=60
+          while [ $attempts -lt $max_attempts ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9600/actuator/health/status || true)
+            [ "$code" = "200" ] && echo "Broker healthy" && break
+            attempts=$((attempts+1))
+            sleep 5
+          done
+          [ $attempts -ge $max_attempts ] && echo "Broker not healthy" && exit 1 || true
+
+      - name: Run Integration Tests (8.8 tests against 8.9 server)
+        run: |
+          npm run test:8.8:sm
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          CAMUNDA_AUTH_STRATEGY: NONE
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/8.9/docker-compose.yaml down
+
+  tag-and-publish:
+    needs:
+      - unit-tests
+      - local_integration
+      - local_multitenancy_integration
+      - saas_integration
+      - saas_integration_8_8
+      - local_integration_8_8
+      - local_integration_8_8_against_8_9
+    runs-on: ubuntu-latest
+    environment:
+      name: publish
+
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fetch remote refs for semantic-release
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          git fetch origin '+refs/notes/*:refs/notes/*' || true
+
+      - name: Export stable line config
+        run: |
+          echo "CAMUNDA_SDK_CURRENT_STABLE_MINOR=${{ vars['CAMUNDA_SDK_CURRENT_STABLE_MINOR'] }}" >> $GITHUB_ENV
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Semantic Release
+        run: NODE_AUTH_TOKEN="" npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+          HUSKY: 0
+
+      - name: Build Docs
+        run: npm run docs
+
+      - name: Deploy Docs
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+          branch: gh-pages

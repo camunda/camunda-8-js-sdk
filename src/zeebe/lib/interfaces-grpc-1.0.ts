@@ -245,18 +245,18 @@ export interface CreateProcessInstanceWithResultResponseOnWire
  * Describes the Raft role of the broker for a given partition
  */
 export enum PartitionBrokerRole {
-	LEADER = 0,
-	BROKER = 1,
-	INACTIVE = 2,
+	LEADER = 'LEADER',
+	FOLLOWER = 'FOLLOWER',
+	INACTIVE = 'INACTIVE',
 }
 
 /**
  * Describes the current health of the partition
  */
 export enum PartitionBrokerHealth {
-	HEALTHY = 0,
-	UNHEALTHY = 1,
-	DEAD = 2,
+	HEALTHY = 'HEALTHY',
+	UNHEALTHY = 'UNHEALTHY',
+	DEAD = 'DEAD',
 }
 
 export interface Partition {

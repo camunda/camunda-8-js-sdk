@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs'
+import { randomUUID as uuid } from 'node:crypto'
 import * as path from 'path'
 
 import chalk from 'chalk'
@@ -6,7 +7,6 @@ import d from 'debug'
 import { LosslessNumber } from 'lossless-json'
 import promiseRetry from 'promise-retry'
 import { Duration, MaybeTimeDuration } from 'typed-duration'
-import { v4 as uuid } from 'uuid'
 
 import {
 	CamundaEnvironmentConfigurator,
@@ -18,6 +18,7 @@ import {
 	losslessStringify,
 	RequireConfiguration,
 } from '../../lib'
+import { parseZeebeGrpcAddress } from '../../lib/ZeebeGrpcAddressUtils'
 import { IHeadersProvider } from '../../oauth'
 import {
 	BpmnParser,
@@ -109,6 +110,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	typeof ConnectionStatusEvent
 > {
 	public connectionTolerance!: MaybeTimeDuration
+	/**
+	 * connected is a ternary that indicates the connection status of the client.
+	 * Undefined means "we don't know the connection status"
+	 * False means "we know we are not connected"
+	 * True means "we know we are connected"
+	 */
 	public connected?: boolean = undefined
 	public readied = false
 	public gatewayAddress: string
@@ -173,8 +180,35 @@ export class ZeebeGrpcClient extends TypedEmitter<
 
 		this.tenantId = this.options.tenantId
 
+		// Handle ZEEBE_GRPC_ADDRESS with protocol-based configuration
+		let effectiveAddress: string
+		let protocolBasedTLS: boolean | undefined
+
+		if (
+			config.ZEEBE_GRPC_ADDRESS &&
+			config.ZEEBE_GRPC_ADDRESS.includes('://')
+		) {
+			// Use ZEEBE_GRPC_ADDRESS with protocol
+			try {
+				const addressInfo = parseZeebeGrpcAddress(config.ZEEBE_GRPC_ADDRESS)
+				effectiveAddress = addressInfo.hostPort
+				protocolBasedTLS = addressInfo.isSecure
+			} catch (error) {
+				// If parsing fails, fall back to legacy behavior but log a warning
+				console.warn(
+					`Invalid ZEEBE_GRPC_ADDRESS format: ${config.ZEEBE_GRPC_ADDRESS}. Falling back to legacy address resolution.`
+				)
+				effectiveAddress =
+					config.ZEEBE_GRPC_ADDRESS || config.ZEEBE_ADDRESS || 'localhost:26500'
+			}
+		} else {
+			// Legacy behavior: prioritize ZEEBE_ADDRESS over ZEEBE_GRPC_ADDRESS
+			effectiveAddress =
+				config.ZEEBE_ADDRESS || config.ZEEBE_GRPC_ADDRESS || 'localhost:26500'
+		}
+
 		this.gatewayAddress = RequireConfiguration(
-			config.ZEEBE_ADDRESS || config.ZEEBE_GRPC_ADDRESS,
+			effectiveAddress,
 			'ZEEBE_GRPC_ADDRESS'
 		)
 
@@ -187,7 +221,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		this.onConnectionError = this.options.onConnectionError
 		this.onReady = this.options.onReady
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 
 		this.maxRetries = config.zeebeGrpcSettings.ZEEBE_GRPC_CLIENT_MAX_RETRIES
 
@@ -202,7 +242,13 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		const zeebeInsecureConnection =
 			config.zeebeGrpcSettings.ZEEBE_INSECURE_CONNECTION ?? undefined
 
-		this.useTLS = camundaSecureConnection ?? !zeebeInsecureConnection
+		// If ZEEBE_GRPC_ADDRESS with protocol is used, use protocol-based TLS
+		// Otherwise, fall back to legacy TLS configuration
+		if (protocolBasedTLS !== undefined) {
+			this.useTLS = protocolBasedTLS
+		} else {
+			this.useTLS = camundaSecureConnection ?? !zeebeInsecureConnection
+		}
 
 		const certChainPath = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 		const privateKeyPath = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
@@ -340,22 +386,24 @@ export class ZeebeGrpcClient extends TypedEmitter<
 					reject(e)
 				})
 				stream.on('data', (res: Grpc.ActivateJobsResponse) => {
-					res.jobs.forEach((job) =>
-						parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
-							job,
-							inputVariableDtoToUse,
-							customHeadersDtoToUse
-						)
-							.then((parsedJob) => jobs.push(parsedJob))
-							.catch((e) =>
-								this.failJob({
-									jobKey: job.key,
-									errorMessage: `Error parsing job variables ${e}`,
-									retries: job.retries - 1,
-									retryBackOff: 0,
-								})
+					res.jobs.forEach((job) => {
+						try {
+							jobs.push(
+								parseVariablesAndCustomHeadersToJSON<Variables, CustomHeaders>(
+									job,
+									inputVariableDtoToUse,
+									customHeadersDtoToUse
+								)
 							)
-					)
+						} catch (e) {
+							this.failJob({
+								jobKey: job.key,
+								errorMessage: `Error parsing job variables ${e}`,
+								retries: job.retries - 1,
+								retryBackOff: 0,
+							})
+						}
+					})
 				})
 
 				stream.on('end', () => {
@@ -1061,8 +1109,9 @@ export class ZeebeGrpcClient extends TypedEmitter<
 		 * See: https://github.com/zeebe-io/zeebe/issues/1012 and https://github.com/zeebe-io/zeebe/issues/1022
 		 */
 
+		const correlationKey = publishStartMessageRequest.correlationKey ?? uuid()
 		const publishMessageRequest: Grpc.PublishMessageRequest = {
-			correlationKey: uuid(),
+			correlationKey,
 			...publishStartMessageRequest,
 			tenantId: publishStartMessageRequest.tenantId ?? this.tenantId,
 		}
@@ -1179,8 +1228,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	/**
 	 *
 	 * Create a worker that uses the StreamActivatedJobs RPC to activate jobs.
-	 * **NOTE**: This will only stream jobs created *after* the worker is started.
-	 * To activate existing jobs, use `activateJobs` or `createWorker`.
+	 *
+	 * The worker opens a stream for newly created jobs, then performs an initial
+	 * backfill poll (via `activateJobs`) to pick up any jobs that were already
+	 * queued before the stream was established. A low-frequency sidecar poll
+	 * continues running alongside the stream as a safety net for re-queued jobs.
+	 *
 	 * @example
 	 * ```
 	 * const zbc = new ZB.ZeebeGrpcClient()
@@ -1246,6 +1299,27 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			customHeadersDto?: { new (...args: any[]): Readonly<CustomHeaderShape> }
 			tenantIds?: string[]
 			fetchVariables?: string[]
+			/**
+			 * Optional jitter in milliseconds. When provided, the worker will wait
+			 * a random period up to this value before polling and opening the stream.
+			 * Useful for staggering multiple stream workers.
+			 */
+			jitter?: number
+			/**
+			 * Maximum number of jobs to activate per poll cycle (both the initial
+			 * backfill and the recurring sidecar polls). Defaults to 32.
+			 */
+			pollMaxJobsToActivate?: number
+			/**
+			 * Interval in milliseconds between sidecar poll cycles. The sidecar poll
+			 * is a low-frequency safety net that picks up jobs the stream may have
+			 * missed (e.g. jobs re-queued after a timeout). Each poll is a command on
+			 * the broker, so keep this value high to minimise load.
+			 *
+			 * Defaults to 30000 (30 seconds). Set to 0 or -1 to disable recurring
+			 * polling (the initial backfill poll still runs).
+			 */
+			pollInterval?: number
 			taskHandler: ZBWorkerTaskHandler<
 				WorkerInputVariables,
 				CustomHeaderShape,
@@ -1560,8 +1634,12 @@ export class ZeebeGrpcClient extends TypedEmitter<
 							err.message.indexOf('Stream removed') !== -1) &&
 						!err.message.includes('partition') // Error 14 can be host unavailable (network) or partition unavailable (not network)
 
+					// Inability of the gateway to send a request to the broker, or the gateway is responding with backpressure.
+					// Error 4 is DEADLINE_EXCEEDED: Time out between gateway and broker
+					// Error 8 is Backpressure
+					// See: https://github.com/camunda/camunda-8-js-sdk/issues/484
 					const isBackpressure =
-						err.message.indexOf('8') === 0 || err.code === 8
+						err.message.indexOf('8') === 0 || err.code === 8 || err.code === 4 // Error 8 is Backpressure, and error code 4 is DEADLINE_EXCEEDED: Time out between gateway and broker
 
 					const isAuthError = err.message.indexOf('16') === 0
 

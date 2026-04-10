@@ -1,4 +1,4 @@
-import { ReadStream } from 'fs'
+import { ReadStream } from 'node:fs'
 
 import { LosslessNumber } from 'lossless-json'
 
@@ -10,6 +10,8 @@ import {
 	JobCompletionInterfaceRest,
 	JSONDoc,
 } from '../../zeebe/types'
+
+import { DeployResourceResponseDto, SearchSortRequest } from './C8DtoInternal'
 
 export class RestApiJob<
 	Variables = LosslessDto,
@@ -67,12 +69,11 @@ export interface NewUserInfo {
 	// enabled: boolean
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Ctor<T> = new (obj: any) => T
-
 export class ProcessDeployment extends LosslessDto {
+	/** This is the ID of the process definition. It is a human-readable string defined in the process model */
 	processDefinitionId!: string
 	processDefinitionVersion!: number
+	/** This is the key of the process definition. It is a unique identifier for the process definition, assigned by the server on deployment. */
 	@Int64String
 	processDefinitionKey!: string
 	resourceName!: string
@@ -80,24 +81,23 @@ export class ProcessDeployment extends LosslessDto {
 }
 
 export class DecisionDeployment extends LosslessDto {
-	dmnDecisionId!: string
+	decisionDefinitionId!: string
 	version!: number
-	@Int64String
-	decisionKey!: string
-	dmnDecisionName!: string
+	name!: string
 	tenantId!: string
-	dmnDecisionRequirementsId!: string
+	decisionRequirementsId!: string
 	@Int64String
-	dmnDecisionRequirementsKey!: string
+	decisionRequirementsKey!: string
+	decisionDefinitionKey!: string
 }
 
 export class DecisionRequirementsDeployment extends LosslessDto {
-	dmnDecisionRequirementsId!: string
+	decisionRequirementsId!: string
 	version!: number
-	dmnDecisionRequirementsName!: string
+	decisionRequirementsName!: string
 	tenantId!: string
 	@Int64String
-	dmnDecisionRequirementsKey!: string
+	decisionRequirementsKey!: string
 	resourceName!: string
 }
 export class FormDeployment {
@@ -106,18 +106,6 @@ export class FormDeployment {
 	@Int64String
 	formKey!: string
 	resourceName!: string
-	tenantId!: string
-}
-
-export class DeployResourceResponseDto extends LosslessDto {
-	@Int64String
-	deploymentKey!: string
-	deployments!: (
-		| { processDefinition: ProcessDeployment }
-		| { decisionDefinition: DecisionDeployment }
-		| { decisionRequirements: DecisionRequirementsDeployment }
-		| { form: FormDeployment }
-	)[]
 	tenantId!: string
 }
 
@@ -142,7 +130,7 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	/**
 	 * The version of the process; set to -1 to use the latest version
 	 */
-	readonly version!: number
+	readonly processDefinitionVersion!: number
 	@Int64String
 	readonly processInstanceKey!: string
 	/**
@@ -154,6 +142,10 @@ export class CreateProcessInstanceResponse<T = Record<string, never>> {
 	 */
 	readonly variables!: T
 }
+
+export class CreateProcessInstanceWithResultResponse<
+	T,
+> extends CreateProcessInstanceResponse<T> {}
 
 export interface MigrationMappingInstruction {
 	/** The element ID to migrate from. */
@@ -229,7 +221,7 @@ export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	/**
 	 * the version of the process; if not specified it will use the latest version
 	 */
-	version?: number
+	processDefinitionVersion?: number
 	/**
 	 * JSON document that will instantiate the variables for the root variable scope of the
 	 * process instance.
@@ -245,6 +237,11 @@ export interface CreateProcessBaseRequest<V extends JSONDoc | LosslessDto> {
 	 * instructions after it has been created
 	 */
 	startInstructions?: ProcessInstanceCreationStartInstruction[]
+	/**
+	 * Runtime instructions (alpha). List of instructions that affect the runtime behavior of the process instance. Refer to specific instruction types for more details.
+	 * This parameter is an alpha feature and may be subject to change in future releases.
+	 */
+	runtimeInstructions?: ProcessInstanceCreationRuntimeInstruction[]
 	/**
 	 * Wait for the process instance to complete. If the process instance completion does not occur within the requestTimeout, the request will be closed. Defaults to false.
 	 */
@@ -267,6 +264,15 @@ export interface ProcessInstanceCreationStartInstruction {
 	elementId: string
 }
 
+/**
+ * Runtime instructions (alpha). List of instructions that affect the runtime behavior of the process instance. Refer to specific instruction types for more details.
+ * This parameter is an alpha feature and may be subject to change in future releases.
+ */
+export interface ProcessInstanceCreationRuntimeInstruction {
+	type: 'TERMINATE_PROCESS_INSTANCE'
+	afterElementId: string
+}
+
 export interface CreateProcessInstanceFromProcessDefinitionId<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
@@ -276,7 +282,7 @@ export interface CreateProcessInstanceFromProcessDefinitionId<
 	processDefinitionId: string
 }
 
-export interface CreateProcessInstanceFromProcessDefinition<
+export interface CreateProcessInstanceFromProcessDefinitionKey<
 	V extends JSONDoc | LosslessDto,
 > extends CreateProcessBaseRequest<V> {
 	/**
@@ -285,9 +291,9 @@ export interface CreateProcessInstanceFromProcessDefinition<
 	processDefinitionKey: string
 }
 
-export type CreateProcessInstanceReq<T extends JSONDoc | LosslessDto> =
+export type CreateProcessInstanceRequest<T extends JSONDoc | LosslessDto> =
 	| CreateProcessInstanceFromProcessDefinitionId<T>
-	| CreateProcessInstanceFromProcessDefinition<T>
+	| CreateProcessInstanceFromProcessDefinitionKey<T>
 
 export interface PatchAuthorizationRequest {
 	/** The key of the owner of the authorization. */
@@ -362,29 +368,56 @@ export interface RestJob<
 	readonly tenantId: string
 }
 
-export type JobWithMethods<VariablesDto, CustomHeadersDto> = RestJob<
+export type ActivatedJob<VariablesDto, CustomHeadersDto> = RestJob<
 	VariablesDto,
 	CustomHeadersDto
 > &
 	JobCompletionInterfaceRest<IProcessVariables>
 
-interface SearchPageRequestSearchAfter {
+export interface SearchPageRequestSearchAfter {
+	/** The index of items to start searching from. */
 	from: number
+	/** The maximum number of items to return in one request. Defaults to 100. */
 	limit: number
-	// example: [{}]. Pass in the lastSortValues from the previous response.
-	searchAfter?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+	/* Use the `endCursor` value from the previous response to fetch the next page of results. */
+	after?: string
 }
 
-interface SearchPageRequestSearchBefore {
+export interface SearchPageRequestSearchBefore {
+	/** The index of items to start searching from. */
 	from: number
+	/** The maximum number of items to return in one request. Defaults to 100. */
 	limit: number
-	// example: [{}]. Pass in the lastSortValues from the previous response.
-	searchBefore?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+	/* Use the `startCursor` value from the previous response to fetch the previous page of results. */
+	before?: string
 }
 
 export type SearchPageRequest =
 	| SearchPageRequestSearchAfter
 	| SearchPageRequestSearchBefore
+
+/** Generic search request interface that can be used for most search operations */
+export interface BaseSearchRequest<TSortFields extends string, TFilter> {
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort?: SearchSortRequest<TSortFields>
+	/** Search filter criteria. */
+	filter: TFilter
+}
+
+/** Generic search request interface with optional filter */
+export interface BaseSearchRequestWithOptionalFilter<
+	TSortFields extends string,
+	TFilter,
+> {
+	/** Pagination criteria. */
+	page?: SearchPageRequest
+	/** Sort field criteria. */
+	sort?: SearchSortRequest<TSortFields>
+	/** Search filter criteria. */
+	filter?: TFilter
+}
 
 export interface AdvancedStringFilter {
 	/** Checks for equality with the provided value. */
@@ -394,23 +427,31 @@ export interface AdvancedStringFilter {
 	/** Checks if the current property exists. */
 	$exists?: boolean
 	/** Checks if the property matches any of the provided values. */
-	$in: string[]
+	$in?: string[]
 	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
-	$like: string
+	$like?: string
 }
 
 export interface AdvancedNumberFilter {
+	/** Checks for equality with the provided value. */
 	$eq?: number
+	/** Checks for inequality with the provided value. */
 	$neq?: number
-	$exists: boolean
-	$in: number[]
-	$gt: number
-	$gte: number
-	$lt: number
-	$lte: number
+	/** Checks if the current property exists. */
+	$exists?: boolean
+	/** Checks if the property matches any of the provided values. */
+	$in?: number[]
+	/** Checks if the property is greater than the provided value. */
+	$gt?: number
+	/** Checks if the property is greater than or equal to the provided value. */
+	$gte?: number
+	/** Checks if the property is less than the provided value. */
+	$lt?: number
+	/** Checks if the property is less than or equal to the provided value. */
+	$lte?: number
 }
 
-export interface SearchFilterRequest {
+export interface VariableSearchRequestFilter {
 	/** The key for this variable. */
 	variableKey?: string | AdvancedStringFilter
 	/** Name of the variable. */
@@ -427,55 +468,55 @@ export interface SearchFilterRequest {
 	isTruncated?: boolean
 }
 
-export interface SearchSortRequest {
-	field: string
-	/** The order in which to sort the related field. Default value: ASC */
-	order?: 'ASC' | 'DESC'
-}
-
-export interface SearchVariablesRequest {
-	/** Sort field criteria. */
-	sort?: SearchSortRequest
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Variable filter request. */
-	filter: SearchFilterRequest
-}
-
 export interface SearchResponsePagination {
 	/** Total items matching the criteria. */
 	totalItems: number
-	/** The sort values of the first item in the result set. Use this in the searchBefore field of an ensuing request. */
-	firstSortValues: unknown[]
-	/** The sort values of the last item in the result set. Use this in the searchAfter field of an ensuing request. */
-	lastSortValues: unknown[]
+	/** The cursor for the first item in the result set. Use this in the searchBefore field of an ensuing request. */
+	startCursor: string
+	/** The cursor for the last item in the result set. Use this in the searchAfter field of an ensuing request. */
+	endCursor: string
 }
 
-export interface SearchVariablesResponse {
+export interface PaginatedSearchResponse<T> {
 	/** Pagination information about the search results. */
 	page: SearchResponsePagination
-	/** The matching variables. */
-	items: Array<{
-		/** The key for this variable. */
-		variableKey: string
-		/** The key of the scope of this variable. */
-		scopeKey: string
-		/** The key of the process instance of this variable. */
-		processInstanceKey: string
-	}>
+	/** The matching items. */
+	items: T[]
 }
 
-export type SearchUserTasksSortRequest = Array<{
-	/** The field to sort by. */
-	field:
-		| 'creationDate'
-		| 'completionDate'
-		| 'dueDate'
-		| 'followUpDate'
-		| 'priority'
-	/** The order in which to sort the related field. Default: asc */
-	order?: 'asc' | 'desc'
-}>
+export interface VariableDetails {
+	/** The key for this variable. */
+	variableKey: string
+	/** The key of the scope of this variable. */
+	scopeKey: string
+	/** The key of the process instance of this variable. */
+	processInstanceKey: string
+	/** Name of this variable. */
+	name: string
+	/** Tenant ID of this variable. */
+	tenantId: string
+	/** Value of this variable. Can be truncated. */
+	value: string
+	/** Whether the value is truncated or not. */
+	isTruncated: boolean
+}
+
+export interface SearchVariablesRequest
+	extends BaseSearchRequest<
+		| 'value'
+		| 'name'
+		| 'tenantId'
+		| 'variableKey'
+		| 'scopeKey'
+		| 'processInstanceKey',
+		VariableSearchRequestFilter
+	> {}
+export interface SearchVariablesResponse
+	extends PaginatedSearchResponse<VariableDetails> {}
+
+export type SearchUserTasksSortRequest = SearchSortRequest<
+	'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority'
+>
 
 export interface AdvancedDateTimeFilter {
 	/** Checks for equality with the provided value. */
@@ -497,7 +538,7 @@ export interface AdvancedDateTimeFilter {
 }
 
 /** User task filter request. */
-export interface SearchUserTasksFilter {
+export interface SearchUserTasksRequestFilter {
 	/** The key for this user task. */
 	userTaskKey?: string
 	/** The state of the user task. */
@@ -546,30 +587,14 @@ export interface SearchUserTasksFilter {
 	}>
 }
 
-export interface SearchTasksRequest {
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort?: SearchUserTasksSortRequest
-	/** User task filter request. */
-	filter?: SearchUserTasksFilter
-}
+export interface SearchTasksRequest
+	extends BaseSearchRequestWithOptionalFilter<
+		'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority',
+		SearchUserTasksRequestFilter
+	> {}
 
-export interface SearchUserTasksResponse {
-	page: SearchResponsePagination
-	items: Array<{
-		/** The key of the user task. */
-		userTaskKey: string
-		/** The key of the element instance. */
-		elementInstanceKey: string
-		/** The key of the process definition. */
-		processDefinitionKey: string
-		/** The key of the process instance. */
-		processInstanceKey: string
-		/** The key of the form. */
-		formKey: string
-	}>
-}
+export interface SearchUserTasksResponse
+	extends PaginatedSearchResponse<UserTask> {}
 
 export interface UserTask {
 	/** The name for this user task. */
@@ -628,39 +653,25 @@ export interface AssignUserTaskRequest {
 	action?: string
 }
 
-/** Sort field criteria. */
-export interface UserTaskVariablesSortRequest {
-	/** The field to sort by. */
-	field:
+export interface SearchUserTaskVariablesRequest
+	extends BaseSearchRequestWithOptionalFilter<
 		| 'value'
 		| 'name'
 		| 'tenantId'
 		| 'variableKey'
 		| 'scopeKey'
-		| 'processInstanceKey'
-	/** The order in which to sort the related field. */
-	order: 'ASC' | 'DESC'
-}
-
-export interface UserTaskVariablesRequest {
+		| 'processInstanceKey',
+		{
+			/** Name of the variable. */
+			name: string
+		}
+	> {
 	userTaskKey: string
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort: UserTaskVariablesSortRequest[]
-	/** The user task variable search filters. */
-	filter?: {
-		/** Name of the variable. */
-		name: string
-	}
 }
 
-/** The user task variables search response. */
-export interface UserTaskVariablesResponse {
-	/** Pagination information about the search results. */
-	page: SearchResponsePagination
-	/** The matching variables. */
-	items: Array<{
+/** The user task variables search response for CamundaRestClient. */
+export interface SearchUserTaskVariablesResponse
+	extends PaginatedSearchResponse<{
 		/** The key for this variable. */
 		variableKey: string
 		/** The key of the scope of this variable. */
@@ -671,110 +682,105 @@ export interface UserTaskVariablesResponse {
 		value: string
 		tenantId: string
 		isTruncated: boolean
-	}>
-}
+	}> {}
+
+export type ProcessInstanceState = 'ACTIVE' | 'COMPLETED' | 'CANCELED'
 
 export interface AdvancedProcessInstanceStateFilter {
 	/** Checks for equality with the provided value. */
-	$eq?: 'ACTIVE' | 'COMPLETED' | 'CANCELED'
+	$eq?: ProcessInstanceState
 	/** Checks for inequality with the provided value. */
-	$neq?: 'ACTIVE' | 'COMPLETED' | 'CANCELED'
+	$neq?: ProcessInstanceState
 	/** Checks if the current property exists. */
 	$exists?: boolean
 	/** Checks if the property matches any of the provided values. */
-	$in: ('ACTIVE' | 'COMPLETED' | 'CANCELED')[]
+	$in: ProcessInstanceState[]
 	/** Checks if the property matches the provided like value. Supported wildcard characters depend on the configured search client. */
 	$like: string
 }
 
-/** This is the 8.8 API.  */
-export interface SearchProcessInstanceRequest {
-	/** Pagination criteria. */
-	page?: SearchPageRequest
-	/** Sort field criteria. */
-	sort: Array<{
-		field:
-			| 'processInstanceKey'
-			| 'processDefinitionId'
-			| 'processDefinitionName'
-			| 'processDefinitionVersion'
-			| 'processDefinitionVersionTag'
-			| 'processDefinitionKey'
-			| 'parentProcessInstanceKey'
-			| 'parentFlowNodeInstanceKey'
-			| 'state'
-			| 'startDate'
-			| 'endDate'
-			| 'tenantId'
-			| 'hasIncident'
-		/** The order in which to sort the related field. Default value: ASC */
-		order?: 'ASC' | 'DESC'
+export interface SearchProcessInstanceRequestFilter {
+	/** The key of this process instance. */
+	processInstanceKey?: string | AdvancedStringFilter
+	/** The process definition ID. */
+	processDefinitionId?: string | AdvancedStringFilter
+	/** The process definition name. */
+	processDefinitionName?: string | AdvancedStringFilter
+	/** The process definition version. */
+	processDefinitionVersion?: number | AdvancedStringFilter
+	/** The process definition version tag. */
+	processDefinitionVersionTag?: string | AdvancedStringFilter
+	/** The process definition key. */
+	processDefinitionKey?: string | AdvancedStringFilter
+	/** The parent process instance key. */
+	parentProcessInstanceKey?: string | AdvancedStringFilter
+	/** The parent flow node instance key. */
+	parentFlowNodeInstanceKey?: string | AdvancedStringFilter
+	/** The process instance state. */
+	state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+	/** The start date. */
+	startDate?: string | AdvancedDateTimeFilter
+	/** The end date. */
+	endDate?: string | AdvancedDateTimeFilter
+	/** The tenant ID. */
+	tenantId?: string | AdvancedStringFilter
+	/** The process instance variables. */
+	variables?: Array<{
+		/** Name of the variable. */
+		name: string
+		/** The value of the variable */
+		value: string | AdvancedStringFilter
 	}>
-	/** Process instance search filter. */
-	filter: {
-		/** The key of this process instance. */
-		processInstanceKey?: string | AdvancedStringFilter
-		/** The process definition ID. */
-		processDefinitionId?: string | AdvancedStringFilter
-		/** The process definition name. */
-		processDefinitionName?: string | AdvancedStringFilter
-		/** The process definition version. */
-		processDefinitionVersion?: string | AdvancedStringFilter
-		/** The process definition version tag. */
-		processDefinitionVersionTag?: string | AdvancedStringFilter
-		/** The process definition key. */
-		processDefinitionKey?: string | AdvancedStringFilter
-		/** The parent process instance key. */
-		parentProcessInstanceKey?: string | AdvancedStringFilter
-		/** The parent flow node instance key. */
-		parentFlowNodeInstanceKey?: string | AdvancedStringFilter
-		/** The process instance state. */
-		state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
-		/** The start date. */
-		startDate?: string | AdvancedDateTimeFilter
-		/** The end date. */
-		endDate?: string | AdvancedDateTimeFilter
-		/** The tenant ID. */
-		tenantId?: string | AdvancedStringFilter
-		/** The process instance variables. */
-		variables?: Array<{
-			/** Name of the variable. */
-			name: string
-			/** The value of the variable */
-			value: string
-		}>
-	}
 }
 
-export interface SearchProcessInstanceResponse {
-	page: SearchResponsePagination
-	items: Array<{
-		/** The key of the process instance. */
-		processInstanceKey: string
-		/** The key of the process definition. */
-		processDefinitionKey: string
-		/** The key of the parent process instance. */
-		parentProcessInstanceKey: string
-		/** The key of the parent flow node instance. */
-		parentFlowNodeInstanceKey: string
-		/** The BPMN process ID of the process definition. */
-		processDefinitionId: string
-		/** The name of the process definition. */
-		processDefinitionName: string
-		/** The version of the process definition. */
-		processDefinitionVersion: string
-		/** The state of the process instance. */
-		state: string
-		/** The start date of the process instance. */
-		startDate: string
-		/** The end date of the process instance. */
-		endDate?: string
-		/** The tenant ID. */
-		tenantId: string
-		/** Has an incident. */
-		hasIncident: boolean
-	}>
+/** This is the 8.8 API.  */
+export interface SearchProcessInstanceRequest
+	extends BaseSearchRequest<
+		| 'processInstanceKey'
+		| 'processDefinitionId'
+		| 'processDefinitionName'
+		| 'processDefinitionVersion'
+		| 'processDefinitionVersionTag'
+		| 'processDefinitionKey'
+		| 'parentProcessInstanceKey'
+		| 'parentFlowNodeInstanceKey'
+		| 'state'
+		| 'startDate'
+		| 'endDate'
+		| 'tenantId'
+		| 'hasIncident',
+		SearchProcessInstanceRequestFilter
+	> {}
+
+export interface ProcessInstanceDetails {
+	/** The key of the process instance. */
+	processInstanceKey: string
+	/** The key of the process definition. */
+	processDefinitionKey: string
+	/** The key of the parent process instance. */
+	parentProcessInstanceKey?: string
+	/** The key of the parent flow node instance. */
+	parentFlowNodeInstanceKey?: string
+	/** The BPMN process ID of the process definition. */
+	processDefinitionId: string
+	/** The name of the process definition. */
+	processDefinitionName: string
+	/** The version of the process definition. */
+	processDefinitionVersion: string
+	/** The state of the process instance. */
+	state: string
+	/** The start date of the process instance. */
+	startDate: string
+	/** The end date of the process instance. */
+	endDate?: string
+	/** The tenant ID. */
+	tenantId: string
+	/** Has an incident. */
+	hasIncident: boolean
 }
+
+export interface SearchProcessInstanceResponse
+	extends PaginatedSearchResponse<ProcessInstanceDetails> {}
 
 export interface DownloadDocumentRequest {
 	/** The ID of the document to download. */
@@ -796,10 +802,10 @@ export interface UploadDocumentRequest {
 	documentId?: string
 	/** A file ReadStream created with fs.createReadStream() */
 	file: ReadStream
-	metadata?: UploadDocumentMetadata
+	metadata?: DocumentMetadata
 }
 
-export interface UploadDocumentMetadata {
+export interface DocumentMetadata {
 	/** The content type of the document. */
 	contentType?: string
 	/** The name of the file. */
@@ -825,7 +831,7 @@ export class UploadDocumentResponse extends LosslessDto {
 	documentId!: string
 	/** The hash of the document. */
 	contentHash!: string
-	metadata!: UploadDocumentMetadata
+	metadata!: DocumentMetadata
 }
 
 export class UploadDocumentsResponse {
@@ -895,11 +901,11 @@ export type EvaluateDecisionRequest =
 			variables: JSONDoc
 			/** The tenant ID of the decision. */
 			tenantId?: string
-			/** The unique key identifying the decision to be evaluated. */
+			/** Never. The unique key identifying the decision to be evaluated. Cannot be used with decisionDefinitionId */
 			decisionDefinitionKey?: never
 	  }
 	| {
-			/** The ID of the decision to be evaluated. */
+			/** Never. The ID of the decision to be evaluated. */
 			decisionDefinitionId?: never
 			/** The message variables as JSON document. */
 			variables: JSONDoc
@@ -978,67 +984,15 @@ export class EvaluateDecisionResponse extends LosslessDto {
 	decisionDefinitionKey!: string
 	/** The unique key identifying the decision requirements graph that the decision which was evaluated is part of. */
 	decisionRequirementsKey!: string
-	/** The unique key identifying this decision evaluation. */
+	/** Deprecated, please refer to decisionEvaluationKey. */
 	decisionInstanceKey!: string
+	/* The unique key identifying this decision evaluation. */
+	decisionEvaluationKey!: string
 	@ChildDto(EvaluatedDecision)
 	evaluatedDecisions!: EvaluatedDecision[]
 }
 
-// Base interface with common properties
-export interface BaseApiEndpointRequest<T> {
-	method: 'GET' | 'POST' | 'PUT' | 'DELETE'
-	/** The URL path of the API endpoint. */
-	urlPath: string
-	/** The request body. */
-	body?: T
-	/** TODO: multi-part form support needs to be implemented */
-	formData?: FormData
-	/** The query parameters. */
-	queryParams?: { [key: string]: string | number | boolean | undefined }
-	/** The headers. */
-	headers?: { [key: string]: string | number | boolean }
-	/** A custom JSON parsing function */
-	parseJson?: typeof JSON.parse
-}
-
-// Interface for requests that return JSON (json=true or undefined)
-export interface JsonApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
-	/** JSON-parse response? Default: true */
-	json?: true | undefined
-}
-
-// Interface for requests that return raw response (json=false)
-export interface RawApiEndpointRequest<T> extends BaseApiEndpointRequest<T> {
-	/** JSON-parse response? */
-	json: false
-}
-
-// Combined type for use in function signatures
-export type ApiEndpointRequest<T> =
-	| JsonApiEndpointRequest<T>
-	| RawApiEndpointRequest<T>
-export interface SearchUsersRequest {
-	/** Pagination criteria. */
-	page: SearchPageRequest
-	/** Sort field criteria. */
-	sort: Array<{
-		/** The field to sort by. */
-		field: 'username' | 'name' | 'email'
-		/** The order in which to sort the related field. */
-		order?: 'ASC' | 'DESC'
-	}>
-	/** User search filter. */
-	filter: {
-		/** The username of the user. */
-		username?: string
-		/** The name of the user. */
-		name?: string
-		/** The email of the user. */
-		email?: string
-	}
-}
-
-class UserItem extends LosslessDto {
+export class UserItem extends LosslessDto {
 	/** The ID of the user. */
 	@Int64String
 	id!: string
@@ -1052,6 +1006,23 @@ class UserItem extends LosslessDto {
 	email!: string
 }
 
+/* The request to search for users. */
+export interface SearchUsersRequest {
+	/** Pagination criteria. */
+	page: SearchPageRequest
+	/** Sort field criteria. */
+	sort?: SearchSortRequest<'username' | 'name' | 'email'>
+	/** User search filter. */
+	filter: {
+		/** The username of the user. */
+		username?: string
+		/** The name of the user. */
+		name?: string
+		/** The email of the user. */
+		email?: string
+	}
+}
+
 /** The user search result. */
 export class SearchUsersResponse extends LosslessDto {
 	/** Pagination information about the search results. */
@@ -1059,4 +1030,305 @@ export class SearchUsersResponse extends LosslessDto {
 	/** The matching users. */
 	@ChildDto(UserItem)
 	items!: UserItem[]
+}
+
+export class GetVariableResponse {
+	variableKey!: string
+	scopeKey!: string
+	processInstanceKey!: string
+	name!: string
+	value!: string
+	tenantId!: string
+}
+
+export interface GetProcessDefinitionResponse {
+	/** Name of this process definition. */
+	name: string
+	/** Resource name for this process definition. */
+	resourceName: string
+	/** Version of this process definition. */
+	version: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId: string
+	/** Tenant ID of this process definition. */
+	tenantId: string
+	/** The key for this process definition. */
+	processDefinitionKey: string
+}
+
+export interface ProcessDefinitionSearchRequestFilter {
+	/** Name of this process definition. */
+	name?: string
+	/** Resource name of this process definition. */
+	resourceName?: string
+	/** Version of this process definition. */
+	version?: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId?: string
+	/** Tenant ID of this process definition. */
+	tenantId?: string
+	/** The key for this process definition. */
+	processDefinitionKey?: string
+}
+
+export interface SearchProcessDefinitionsRequest
+	extends BaseSearchRequest<
+		| 'processDefinitionKey'
+		| 'name'
+		| 'resourceName'
+		| 'version'
+		| 'versionTag'
+		| 'processDefinitionId'
+		| 'tenantId',
+		ProcessDefinitionSearchRequestFilter
+	> {}
+
+export interface ProcessDefinitionDetails {
+	/** Name of this process definition. */
+	name: string
+	/** Resource name for this process definition. */
+	resourceName: string
+	/** Version of this process definition. */
+	version: number
+	/** Version tag of this process definition. */
+	versionTag?: string
+	/** Process definition ID of this process definition. */
+	processDefinitionId: string
+	/** Tenant ID of this process definition. */
+	tenantId: string
+	/** The key for this process definition. */
+	processDefinitionKey: string
+}
+
+export interface SearchProcessDefinitionsResponse
+	extends PaginatedSearchResponse<ProcessDefinitionDetails> {}
+
+export interface ElementInstanceSearchRequestFilter {
+	processDefinitionId?: string
+	state?: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+	type?:
+		| 'UNSPECIFIED'
+		| 'PROCESS'
+		| 'SUB_PROCESS'
+		| 'EVENT_SUB_PROCESS'
+		| 'AD_HOC_SUB_PROCESS'
+		| 'START_EVENT'
+		| 'INTERMEDIATE_CATCH_EVENT'
+		| 'INTERMEDIATE_THROW_EVENT'
+		| 'BOUNDARY_EVENT'
+		| 'END_EVENT'
+		| 'SERVICE_TASK'
+		| 'RECEIVE_TASK'
+		| 'USER_TASK'
+		| 'MANUAL_TASK'
+		| 'TASK'
+		| 'EXCLUSIVE_GATEWAY'
+		| 'INCLUSIVE_GATEWAY'
+		| 'PARALLEL_GATEWAY'
+		| 'EVENT_BASED_GATEWAY'
+		| 'SEQUENCE_FLOW'
+		| 'MULTI_INSTANCE_BODY'
+		| 'CALL_ACTIVITY'
+		| 'BUSINESS_RULE_TASK'
+		| 'SCRIPT_TASK'
+		| 'SEND_TASK'
+		| 'UNKNOWN'
+	elementId?: string
+	elementName?: string
+	hasIncident?: boolean
+	tenantId?: string
+	elementInstanceKey?: string
+	processInstanceKey?: string
+	processDefinitionKey?: string
+	incidentKey?: string
+}
+
+export interface SearchElementInstancesRequest
+	extends BaseSearchRequest<
+		| 'elementInstanceKey'
+		| 'processInstanceKey'
+		| 'processDefinitionKey'
+		| 'processDefinitionId'
+		| 'startDate'
+		| 'endDate'
+		| 'elementId'
+		| 'type'
+		| 'state'
+		| 'incidentKey'
+		| 'tenantId',
+		ElementInstanceSearchRequestFilter
+	> {}
+
+export interface ElementInstanceDetails {
+	/** The process definition ID associated to this element instance. */
+	processDefinitionId: string
+	/** Date when element instance started. */
+	startDate: string
+	/** Date when element instance finished. */
+	endDate: string
+	/** The element ID for this element instance. */
+	elementId: string
+	/** The element name for this element instance. */
+	elementName: string
+	/** Type of element as defined set of values. */
+	type:
+		| 'UNSPECIFIED'
+		| 'PROCESS'
+		| 'SUB_PROCESS'
+		| 'EVENT_SUB_PROCESS'
+		| 'AD_HOC_SUB_PROCESS'
+		| 'START_EVENT'
+		| 'INTERMEDIATE_CATCH_EVENT'
+		| 'INTERMEDIATE_THROW_EVENT'
+		| 'BOUNDARY_EVENT'
+		| 'END_EVENT'
+		| 'SERVICE_TASK'
+		| 'RECEIVE_TASK'
+		| 'USER_TASK'
+		| 'MANUAL_TASK'
+		| 'TASK'
+		| 'EXCLUSIVE_GATEWAY'
+		| 'INCLUSIVE_GATEWAY'
+		| 'PARALLEL_GATEWAY'
+		| 'EVENT_BASED_GATEWAY'
+		| 'SEQUENCE_FLOW'
+		| 'MULTI_INSTANCE_BODY'
+		| 'CALL_ACTIVITY'
+		| 'BUSINESS_RULE_TASK'
+		| 'SCRIPT_TASK'
+		| 'SEND_TASK'
+		| 'UNKNOWN'
+	/** State of element instance as defined set of values.*/
+	state: 'ACTIVE' | 'COMPLETED' | 'TERMINATED'
+	/** Shows whether this element instance has an incident. If true also an incidentKey is provided.*/
+	hasIncident: boolean
+	/** The tenant ID of the incident. */
+	tenantId: string
+	/** The assigned key, which acts as a unique identifier for this element instance. */
+	elementInstanceKey: string
+	/** The process instance key associated to this element instance. */
+	processInstanceKey: string
+	/** The process definition key associated to this element instance. */
+	processDefinitionKey: string
+	/** Incident key associated with this element instance. */
+	incidentKey?: string
+}
+
+export interface SearchElementInstancesResponse
+	extends PaginatedSearchResponse<ElementInstanceDetails> {}
+
+export interface IncidentSearchRequestFilter {
+	/** The process definition ID associated to this incident. */
+	processDefinitionId?: string
+	/** Incident error type with a defined set of values. */
+	errorType?:
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+		| 'IO_MAPPING_ERROR'
+		| 'JOB_NO_RETRIES'
+		| 'EXECUTION_LISTENER_NO_RETRIES'
+		| 'TASK_LISTENER_NO_RETRIES'
+		| 'CONDITION_ERROR'
+		| 'EXTRACT_VALUE_ERROR'
+		| 'CALLED_ELEMENT_ERROR'
+		| 'UNHANDLED_ERROR_EVENT'
+		| 'MESSAGE_SIZE_EXCEEDED'
+		| 'CALLED_DECISION_ERROR'
+		| 'DECISION_EVALUATION_ERROR'
+		| 'FORM_NOT_FOUND'
+		| 'RESOURCE_NOT_FOUND'
+	/** Error message which describes the error in more detail. */
+	errorMessage?: string
+	/** The element ID associated to this incident. */
+	elementId?: string
+	/** Date of incident creation. */
+	creationTime?: string
+	/** State of this incident with a defined set of values. */
+	state?: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+	/** The tenant ID of the incident. */
+	tenantId?: string
+	/** The assigned key, which acts as a unique identifier for this incident. */
+	incidentKey?: string
+	/** The process definition key associated to this incident. */
+	processDefinitionKey?: string
+	/** The process instance key associated to this incident. */
+	processInstanceKey?: string
+	/** The element instance key associated to this incident. */
+	elementInstanceKey?: string
+	/** The job key, if exists, associated with this incident. */
+	jobKey?: string
+}
+
+export interface SearchIncidentsRequest
+	extends BaseSearchRequest<
+		| 'incidentKey'
+		| 'processInstanceKey'
+		| 'processDefinitionKey'
+		| 'processDefinitionId'
+		| 'errorType'
+		| 'errorMessage'
+		| 'elementId'
+		| 'elementInstanceKey'
+		| 'creationTime'
+		| 'state'
+		| 'jobKey'
+		| 'tenantId',
+		IncidentSearchRequestFilter
+	> {}
+
+export interface IncidentDetails {
+	/* The process definition ID associated to this incident. */
+	processDefinitionId: string
+	/* Incident error type with a defined set of values. */
+	errorType:
+		| 'UNSPECIFIED'
+		| 'UNKNOWN'
+		| 'IO_MAPPING_ERROR'
+		| 'JOB_NO_RETRIES'
+		| 'EXECUTION_LISTENER_NO_RETRIES'
+		| 'TASK_LISTENER_NO_RETRIES'
+		| 'CONDITION_ERROR'
+		| 'EXTRACT_VALUE_ERROR'
+		| 'CALLED_ELEMENT_ERROR'
+		| 'UNHANDLED_ERROR_EVENT'
+		| 'MESSAGE_SIZE_EXCEEDED'
+		| 'CALLED_DECISION_ERROR'
+		| 'DECISION_EVALUATION_ERROR'
+		| 'FORM_NOT_FOUND'
+		| 'RESOURCE_NOT_FOUND'
+	/* Error message which describes the error in more detail. */
+	errorMessage: string
+	/* The element ID associated to this incident. */
+	elementId: string
+	/* Date of incident creation. */
+	creationTime: string
+	/* State of this incident with a defined set of values. */
+	state: 'ACTIVE' | 'MIGRATED' | 'RESOLVED' | 'PENDING'
+	/* The tenant ID of the incident. */
+	tenantId: string
+	/* The assigned key, which acts as a unique identifier for this incident. */
+	incidentKey: string
+	/* The process definition key associated to this incident. */
+	processDefinitionKey: string
+	/* The process instance key associated to this incident. */
+	processInstanceKey: string
+	/* The element instance key associated to this incident. */
+	elementInstanceKey: string
+	/* The job key, if exists, associated with this incident. */
+	jobKey: string
+}
+
+export interface SearchIncidentsResponse
+	extends PaginatedSearchResponse<IncidentDetails> {}
+
+export interface CamundaRestError {
+	type: 'about:blank'
+	title: string
+	status: number
+	detail: string
+	instance: string
 }

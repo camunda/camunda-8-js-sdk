@@ -3,18 +3,21 @@
  *
  * We expect this case to fail, and it will fail at the point of attempting to get a token, so the actual method endpoint is never addressed.
  */
+import { randomUUID } from 'crypto'
+
 import { Camunda8 } from '../../../c8/index'
 import { NullLogger } from '../../../c8/lib/C8Logger'
+import { matrix } from '../../../test-support/testTags'
 
-jest.setTimeout(15000)
+vi.setConfig({ testTimeout: 15_000 })
 
 // Suppress logging
 process.env.ZEEBE_CLIENT_LOG_LEVEL = 'NONE'
 
 const c8 = new Camunda8({
 	CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-	ZEEBE_CLIENT_ID: 'invalid',
-	ZEEBE_CLIENT_SECRET: 'invalid',
+	ZEEBE_CLIENT_ID: randomUUID(),
+	ZEEBE_CLIENT_SECRET: randomUUID(),
 	CAMUNDA_TENANT_ID: '<default>',
 	logger: NullLogger,
 })
@@ -22,6 +25,17 @@ const zeebe = c8.getZeebeGrpcApiClient()
 afterAll(() => zeebe.close())
 
 describe('Invalid credentials gRPC client (default tenant)', () => {
-	test('cannot get topology', async () =>
-		await expect(async () => zeebe.topology()).rejects.toThrow())
+	test.runIf(
+		matrix({
+			include: {
+				versions: ['8.8', '8.7'],
+				deployments: ['saas', 'self-managed'],
+				tenancy: ['multi-tenant', 'single-tenant'],
+				security: ['secured'],
+			},
+		})
+	)(
+		'cannot get topology',
+		async () => await expect(async () => zeebe.topology()).rejects.toThrow()
+	)
 })

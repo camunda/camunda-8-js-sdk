@@ -14,7 +14,6 @@ import {
 	gotBeforeErrorHook,
 	losslessParse,
 	losslessStringify,
-	makeBeforeRetryHandlerFor401TokenRetry,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
 
@@ -89,7 +88,13 @@ export class OperateApiClient {
 		trace('options.config', options?.config)
 		trace('config', config)
 		this.oAuthProvider =
-			options?.oAuthProvider ?? constructOAuthProvider(config)
+			options?.oAuthProvider ??
+			constructOAuthProvider(config, {
+				explicitFromConstructor: Object.prototype.hasOwnProperty.call(
+					options?.config ?? {},
+					'CAMUNDA_AUTH_STRATEGY'
+				),
+			})
 		this.userAgentString = createUserAgentString(config)
 		const baseUrl = RequireConfiguration(
 			config.CAMUNDA_OPERATE_BASE_URL,
@@ -108,11 +113,6 @@ export class OperateApiClient {
 					},
 					handlers: [beforeCallHook],
 					hooks: {
-						beforeRetry: [
-							makeBeforeRetryHandlerFor401TokenRetry(
-								this.getHeaders.bind(this)
-							),
-						],
 						beforeError: [gotBeforeErrorHook(config)],
 						beforeRequest: config.middleware ?? [],
 					},
@@ -321,17 +321,13 @@ export class OperateApiClient {
 		const json = this.addTenantIdToFilter(query)
 		const rest = await this.rest
 
-		try {
-			return rest
-				.post('process-instances/search', {
-					json,
-					headers,
-					parseJson: (text) => parseSearchResults(text, ProcessInstance),
-				})
-				.json()
-		} catch (e) {
-			throw new Error((e as Error).message)
-		}
+		return rest
+			.post('process-instances/search', {
+				json,
+				headers,
+				parseJson: (text) => parseSearchResults(text, ProcessInstance),
+			})
+			.json()
 	}
 
 	/**
@@ -536,6 +532,7 @@ export class OperateApiClient {
 	public async getVariablesforProcess(
 		processInstanceKey: number | string,
 		options: {
+			/** Defaults to 1000 */
 			size?: number
 			searchAfter?: unknown[]
 			sort?: { field: string; order?: 'ASC' | 'DESC' }[]

@@ -27,5 +27,8 @@
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": "explicit",
 		"source.organizeImports": "explicit"
+	},
+	"[markdown]": {
+		"editor.formatOnSave": false
 	}
 }

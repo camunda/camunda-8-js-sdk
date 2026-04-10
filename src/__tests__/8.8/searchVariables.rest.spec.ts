@@ -1,11 +1,11 @@
 import path from 'node:path'
 
-import { CamundaJobWorker } from 'c8/lib/CamundaJobWorker'
-import { LosslessDto } from 'lib'
+import { CamundaJobWorker, CamundaRestClient, PollingOperation } from '../../'
+import { LosslessDto } from '../../lib'
+import { matrix } from '../../test-support/testTags'
 
-import { CamundaRestClient } from '../../c8/lib/CamundaRestClient'
+vi.setConfig({ testTimeout: 10_000 })
 
-jest.setTimeout(10000)
 let processDefinitionId: string
 const restClient = new CamundaRestClient()
 let w: CamundaJobWorker<LosslessDto, LosslessDto>
@@ -23,39 +23,48 @@ afterEach(async () => {
 	}
 })
 
-test('Can query variables', (done) => {
-	restClient.createProcessInstance({
-		processDefinitionId,
-		variables: {
-			someNumberField: 8,
+test.runIf(
+	matrix({
+		include: {
+			versions: ['8.8'],
+			deployments: ['self-managed', 'saas'],
+			tenancy: ['single-tenant', 'multi-tenant'],
+			security: ['secured', 'unsecured'],
 		},
 	})
-	w = restClient.createJobWorker({
-		type: 'query-variables',
-		jobHandler: async (job) => {
-			await new Promise((res) => setTimeout(() => res(null), 5000))
-			const variables = await restClient.searchVariables({
-				filter: {
-					processInstanceKey: job.processInstanceKey,
+)(
+	'Can query variables',
+	() =>
+		new Promise((done) => {
+			restClient.createProcessInstance({
+				processDefinitionId,
+				variables: {
+					someNumberField: 8,
 				},
 			})
-			expect(variables.items.length).toBe(1)
-			const res = await job.complete()
-			done()
-			return res
-		},
-		worker: 'query-variables-worker',
-		timeout: 10000,
-		maxJobsToActivate: 10,
-	})
-	// .then(() => {
-	// 	restClient
-	// 		.getVariable({
-	// 			variableKey: 'someNumberField',
-	// 		})
-	// 		.then((variable) => {
-	// 			expect(variable).toBe(8)
-	// 			done()
-	// 		})
-	// })
-})
+			w = restClient.createJobWorker({
+				type: 'query-variables',
+				jobHandler: async (job) => {
+					const variables = await PollingOperation({
+						operation: () =>
+							restClient.searchVariables({
+								filter: {
+									processInstanceKey: job.processInstanceKey,
+								},
+								sort: [{ field: 'name', order: 'ASC' }],
+								page: { from: 0, limit: 1000 },
+							}),
+						interval: 500,
+						timeout: 5000,
+					})
+					expect(variables.items.length).toBe(1)
+					const res = await job.complete()
+					done(void 0)
+					return res
+				},
+				worker: 'query-variables-worker',
+				timeout: 10000,
+				maxJobsToActivate: 10,
+			})
+		})
+)

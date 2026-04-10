@@ -32,7 +32,10 @@ const isFormFilename = (
 ): maybeFormFilename is { formFilename: string } =>
 	!!maybeFormFilename.formFilename
 
-export function getResourceContentAndName(resource: Resource) {
+export function getResourceContentAndName(resource: Resource): {
+	content: Buffer
+	name: string
+} {
 	if (isProcessFilename(resource)) {
 		const filename = resource.processFilename
 		const process = readFileSync(filename)
