@@ -50,6 +50,18 @@ function removeCacheDir(dirpath: string) {
 	}
 }
 
+async function listenOnRandomPort(server: http.Server): Promise<number> {
+	await new Promise<void>((resolve, reject) => {
+		server.once('error', reject)
+		server.listen(0, '127.0.0.1', () => resolve())
+	})
+	const address = server.address()
+	if (!address || typeof address === 'string') {
+		throw new Error('Failed to resolve test server port')
+	}
+	return address.port
+}
+
 describe('OAuthProvider', () => {
 	it('Throws in the constructor if there in no clientId credentials', () => {
 		const { OAuthProvider } = require('../../oauth')
@@ -212,22 +224,10 @@ describe('OAuthProvider', () => {
 	// "Can not renew expired token"
 	// Updated test for https://github.com/camunda/camunda-8-js-sdk/issues/3
 	// "Remove expiry timer from oAuth token implementation"
-	it('In-memory cache is populated and evicted after expiry', (done) => {
+	it('In-memory cache is populated and evicted after expiry', async () => {
 		const { OAuthProvider } = require('../../oauth')
 		const delay = (timeout: number) =>
 			new Promise((res) => setTimeout(() => res(null), timeout))
-		const serverPort3002 = 3002
-
-		const o = new OAuthProvider({
-			config: {
-				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
-				ZEEBE_CLIENT_ID: 'clientId6',
-				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3002}`,
-				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
-				CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
-			},
-		})
 
 		const secret = 'YOUR_SECRET'
 		const ttl = 2 // 2 seconds
@@ -237,195 +237,243 @@ describe('OAuthProvider', () => {
 		// On subsequent requests, we will return a different token
 		let requested = false
 
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					req.on('data', (/*chunk*/) => {
-						// body += chunk
-						trace('data')
-						// This function does nothing, but if no listener is registered then the server will hang
-						// and not call the end event
-					})
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						const expiresIn = 2 // seconds
-						const token = requested
-							? jwt.sign(payload, secret, { expiresIn: ttl })
-							: access_token
-						requested = true
-						res.end(`{"access_token": "${token}", "expires_in": ${expiresIn}}`)
-					})
-				}
-			})
-			.listen(serverPort3002)
-
-		o.getHeaders('ZEEBE').then(async (token) => {
-			const token1 = token
-			expect(token).toStrictEqual(token1)
-			await delay(500)
-			const token2 = await o.getHeaders('ZEEBE')
-			expect(token2).toStrictEqual(token1)
-			await delay(1600)
-			const token3 = await o.getHeaders('ZEEBE')
-			expect(token3).not.toStrictEqual(token1)
-			done()
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				req.on('data', (/*chunk*/) => {
+					// body += chunk
+					trace('data')
+					// This function does nothing, but if no listener is registered then the server will hang
+					// and not call the end event
+				})
+				req.on('end', () => {
+					res.writeHead(200, { 'Content-Type': 'application/json' })
+					const expiresIn = 2 // seconds
+					const token = requested
+						? jwt.sign(payload, secret, { expiresIn: ttl })
+						: access_token
+					requested = true
+					res.end(`{"access_token": "${token}", "expires_in": ${expiresIn}}`)
+				})
+			}
 		})
+		const serverPort = await listenOnRandomPort(server)
+
+		const o = new OAuthProvider({
+			config: {
+				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+				ZEEBE_CLIENT_ID: 'clientId6',
+				ZEEBE_CLIENT_SECRET: 'clientSecret',
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
+				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+				CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS: 0,
+			},
+		})
+
+		const token1 = await o.getHeaders('ZEEBE')
+		await delay(500)
+		const token2 = await o.getHeaders('ZEEBE')
+		expect(token2).toStrictEqual(token1)
+		await delay(1600)
+		const token3 = await o.getHeaders('ZEEBE')
+		expect(token3).not.toStrictEqual(token1)
 	})
 
-	it('Uses form encoding for request', (done) => {
+	it('Does not share in-flight token requests across audiences', async () => {
 		const { OAuthProvider } = require('../../oauth')
-		const serverPort3010 = 3010
+		const requestBodies: string[] = []
+		const secret = 'YOUR_SECRET'
+		const ttl = 60
+		const zeebeToken = jwt.sign({ id: 'zeebe' }, secret, { expiresIn: ttl })
+		const operateToken = jwt.sign({ id: 'operate' }, secret, { expiresIn: ttl })
+
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				let body = ''
+				req.on('data', (chunk) => {
+					body += chunk
+				})
+				req.on('end', () => {
+					requestBodies.push(body)
+					const isZeebeRequest = body.includes('audience=zeebe.audience')
+					const accessToken = isZeebeRequest ? zeebeToken : operateToken
+					// Delay one response to force overlap between two in-flight requests.
+					setTimeout(
+						() => {
+							res.writeHead(200, { 'Content-Type': 'application/json' })
+							res.end(`{"access_token": "${accessToken}", "expires_in": "60"}`)
+						},
+						isZeebeRequest ? 50 : 0
+					)
+				})
+			}
+		})
+		const serverPort = await listenOnRandomPort(server)
+
+		const o = new OAuthProvider({
+			config: {
+				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'zeebe.audience',
+				CAMUNDA_OPERATE_OAUTH_AUDIENCE: 'operate.audience',
+				ZEEBE_CLIENT_ID: 'clientId7',
+				ZEEBE_CLIENT_SECRET: 'clientSecret',
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
+				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+			},
+		})
+
+		const [zeebeHeaders, operateHeaders] = await Promise.all([
+			o.getHeaders('ZEEBE'),
+			o.getHeaders('OPERATE'),
+		])
+
+		expect(zeebeHeaders.authorization).toBe(`Bearer ${zeebeToken}`)
+		expect(operateHeaders.authorization).toBe(`Bearer ${operateToken}`)
+		expect(requestBodies.length).toBe(2)
+		expect(
+			requestBodies.some((body) => body.includes('audience=zeebe.audience'))
+		).toBe(true)
+		expect(
+			requestBodies.some((body) => body.includes('audience=operate.audience'))
+		).toBe(true)
+	})
+
+	it('Uses form encoding for request', async () => {
+		const { OAuthProvider } = require('../../oauth')
+		const secret = 'YOUR_SECRET'
+		const ttl = 2 // 2 seconds
+		const payload = { id: 1 }
+		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+		let body = ''
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				req.on('data', (chunk) => {
+					body += chunk
+				})
+
+				req.on('end', () => {
+					res.writeHead(200, { 'Content-Type': 'application/json' })
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
+				})
+			}
+		})
+		const serverPort = await listenOnRandomPort(server)
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId8',
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3010}`,
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
 			},
 		})
+		await o.getHeaders('OPERATE')
+		expect(body).toEqual(
+			'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials'
+		)
+	})
+
+	it('Uses a custom audience for an Operate token, if one is configured', async () => {
+		const { OAuthProvider } = require('../../oauth')
 		const secret = 'YOUR_SECRET'
 		const ttl = 2 // 2 seconds
 		const payload = { id: 1 }
 		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
+		let body = ''
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				req.on('data', (chunk) => {
+					body += chunk
+				})
 
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
-						server.close()
-						expect(body).toEqual(
-							'audience=operate.camunda.io&client_id=clientId8&client_secret=clientSecret&grant_type=client_credentials'
-						)
-						done()
-					})
-				}
-			})
-			.listen(serverPort3010)
-		o.getHeaders('OPERATE')
-	})
-
-	it('Uses a custom audience for an Operate token, if one is configured', (done) => {
-		const { OAuthProvider } = require('../../oauth')
-		const serverPort3003 = 3003
+				req.on('end', () => {
+					res.writeHead(200, { 'Content-Type': 'application/json' })
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
+				})
+			}
+		})
+		const serverPort = await listenOnRandomPort(server)
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId9',
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3003}`,
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
 				CAMUNDA_OPERATE_OAUTH_AUDIENCE: 'custom.operate.audience',
 			},
 		})
-		const secret = 'YOUR_SECRET'
-		const ttl = 2 // 2 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
-
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
-						server.close()
-						expect(body).toEqual(
-							'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials'
-						)
-						done()
-					})
-				}
-			})
-			.listen(serverPort3003)
-		o.getHeaders('OPERATE')
+		await o.getHeaders('OPERATE')
+		expect(body).toEqual(
+			'audience=custom.operate.audience&client_id=clientId9&client_secret=clientSecret&grant_type=client_credentials'
+		)
 	})
 
-	it('Passes scope, if provided', () => {
+	it('Passes scope, if provided', async () => {
 		const { OAuthProvider } = require('../../oauth')
-		const serverPort3004 = 3004
+		const secret = 'YOUR_SECRET'
+		const ttl = 5 // 5 seconds
+		const payload = { id: 1 }
+		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+		let body = ''
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				req.on('data', (chunk) => {
+					body += chunk
+				})
+
+				req.on('end', () => {
+					res.writeHead(200, { 'Content-Type': 'application/json' })
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
+				})
+			}
+		})
+		const serverPort = await listenOnRandomPort(server)
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				CAMUNDA_TOKEN_SCOPE: 'scope',
 				ZEEBE_CLIENT_ID: 'clientId10',
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3004}`,
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
 			},
 		})
+		await o.getHeaders('ZEEBE')
+		expect(body).toEqual(
+			'audience=token&client_id=clientId10&client_secret=clientSecret&grant_type=client_credentials&scope=scope'
+		)
+	})
+
+	it('Can get scope from environment', async () => {
+		process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
 		const secret = 'YOUR_SECRET'
 		const ttl = 5 // 5 seconds
 		const payload = { id: 1 }
 		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
+		let body = ''
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				req.on('data', (chunk) => {
+					body += chunk
+				})
 
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
-
-						expect(body).toEqual(
-							'audience=token&client_id=clientId10&client_secret=clientSecret&grant_type=client_credentials&scope=scope'
-						)
-					})
-				}
-			})
-			.listen(serverPort3004)
-
-		return o.getHeaders('ZEEBE')
-	})
-
-	it('Can get scope from environment', () => {
-		const serverPort3005 = 3005
-		process.env.CAMUNDA_TOKEN_SCOPE = 'scope2'
+				req.on('end', () => {
+					res.writeHead(200, { 'Content-Type': 'application/json' })
+					res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
+				})
+			}
+		})
+		const serverPort = await listenOnRandomPort(server)
 		const { OAuthProvider } = require('../../oauth')
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId11',
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3005}`,
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
 			},
 		})
 		process.env.CAMUNDA_TOKEN_SCOPE = ''
-		const secret = 'YOUR_SECRET'
-		const ttl = 5 // 5 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
-
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}", "expires_in": "5"}`)
-
-						expect(body).toEqual(
-							'audience=token&client_id=clientId11&client_secret=clientSecret&grant_type=client_credentials&scope=scope2'
-						)
-					})
-				}
-			})
-			.listen(serverPort3005)
-
-		return o.getHeaders('ZEEBE')
+		await o.getHeaders('ZEEBE')
+		expect(body).toEqual(
+			'audience=token&client_id=clientId11&client_secret=clientSecret&grant_type=client_credentials&scope=scope2'
+		)
 	})
 
 	it('Creates the token cache dir if it does not exist', () => {
@@ -512,6 +560,32 @@ describe('OAuthProvider', () => {
 		})
 	})
 
+	it('Flushes all files from token cache dir', () => {
+		const { OAuthProvider } = require('../../oauth')
+		const tokenCache = path.join(__dirname, '.token-cache-flush')
+		removeCacheDir(tokenCache)
+
+		const o = new OAuthProvider({
+			config: {
+				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
+				CAMUNDA_TOKEN_CACHE_DIR: tokenCache,
+				ZEEBE_CLIENT_ID: 'clientId15',
+				ZEEBE_CLIENT_SECRET: 'clientSecret',
+				CAMUNDA_OAUTH_URL: 'url',
+			},
+		})
+
+		fs.writeFileSync(path.join(tokenCache, 'oauth-token-a.json'), '{}')
+		fs.writeFileSync(path.join(tokenCache, 'oauth-token-b.json'), '{}')
+		expect(fs.readdirSync(tokenCache).length).toBe(2)
+
+		o.flushFileCache()
+		expect(fs.readdirSync(tokenCache).length).toBe(0)
+
+		removeCacheDir(tokenCache)
+		expect(fs.existsSync(tokenCache)).toBe(false)
+	})
+
 	it('Can set a custom user agent', () => {
 		const { OAuthProvider } = require('../../oauth')
 		const o = new OAuthProvider({
@@ -528,42 +602,39 @@ describe('OAuthProvider', () => {
 	})
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
-	it('Passes no audience for Modeler API when self-hosted', (done) => {
+	it('Passes no audience for Modeler API when self-hosted', async () => {
 		const { OAuthProvider } = require('../../oauth')
-		const serverPort3006 = 3006
+		const secret = 'YOUR_SECRET'
+		const ttl = 5 // 5 seconds
+		const payload = { id: 1 }
+		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
+		let body = ''
+		server = http.createServer((req, res) => {
+			if (req.method === 'POST') {
+				req.on('data', (chunk) => {
+					body += chunk
+				})
+
+				req.on('end', () => {
+					res.writeHead(200, { 'Content-Type': 'application/json' })
+					res.end(`{"access_token": "${access_token}"}`)
+				})
+			}
+		})
+		const serverPort = await listenOnRandomPort(server)
 		const o = new OAuthProvider({
 			config: {
 				CAMUNDA_ZEEBE_OAUTH_AUDIENCE: 'token',
 				ZEEBE_CLIENT_ID: 'clientId17',
 				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
 				ZEEBE_CLIENT_SECRET: 'clientSecret',
-				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort3006}`,
+				CAMUNDA_OAUTH_URL: `http://127.0.0.1:${serverPort}`,
 			},
 		})
-		const secret = 'YOUR_SECRET'
-		const ttl = 5 // 5 seconds
-		const payload = { id: 1 }
-		const access_token = jwt.sign(payload, secret, { expiresIn: ttl })
-		server = http
-			.createServer((req, res) => {
-				if (req.method === 'POST') {
-					let body = ''
-					req.on('data', (chunk) => {
-						body += chunk
-					})
-
-					req.on('end', () => {
-						res.writeHead(200, { 'Content-Type': 'application/json' })
-						res.end(`{"access_token": "${access_token}"}`)
-						expect(body).toEqual(
-							'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
-						)
-						done()
-					})
-				}
-			})
-			.listen(serverPort3006)
-		o.getHeaders('MODELER')
+		await o.getHeaders('MODELER')
+		expect(body).toEqual(
+			'client_id=clientId17&client_secret=clientSecret&grant_type=client_credentials'
+		)
 	})
 
 	// See: https://github.com/camunda/camunda-8-js-sdk/issues/60
@@ -631,7 +702,7 @@ describe('OAuthProvider', () => {
 			}
 		})
 
-		server.listen(3033)
+		const serverPort = await listenOnRandomPort(server)
 
 		const oAuthProvider = constructOAuthProvider({
 			CAMUNDA_AUTH_STRATEGY: 'BASIC',
@@ -641,7 +712,7 @@ describe('OAuthProvider', () => {
 		} as any)
 		const Authorization = await oAuthProvider.getHeaders('ZEEBE')
 		await got
-			.get('http://localhost:3033', {
+			.get(`http://127.0.0.1:${serverPort}`, {
 				headers: {
 					...Authorization,
 				},
@@ -666,7 +737,7 @@ describe('OAuthProvider', () => {
 			}
 		})
 
-		server.listen(3033)
+		const serverPort = await listenOnRandomPort(server)
 
 		const oAuthProvider = constructOAuthProvider({
 			CAMUNDA_AUTH_STRATEGY: 'BEARER',
@@ -675,7 +746,7 @@ describe('OAuthProvider', () => {
 		} as any)
 		const Authorization = await oAuthProvider.getHeaders('ZEEBE')
 		await got
-			.get('http://localhost:3033', {
+			.get(`http://127.0.0.1:${serverPort}`, {
 				headers: {
 					...Authorization,
 				},

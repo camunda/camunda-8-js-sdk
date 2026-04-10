@@ -27,6 +27,7 @@ const trace = debug('camunda:oauth')
 
 const homedir = os.homedir()
 const BACKOFF_TOKEN_ENDPOINT_FAILURE = 1000
+const TOKEN_ENDPOINT_REQUEST_TIMEOUT_MS = 30000
 
 /**
  * The `OAuthProvider` class is an implementation of the {@link IHeadersProvider}
@@ -62,7 +63,7 @@ export class OAuthProvider implements IHeadersProvider {
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
 	private failureCount = 0
-	private inflightTokenRequest?: HeadersPromise
+	private inflightTokenRequests = new Map<string, HeadersPromise>()
 	public userAgentString: string
 	private scope: string | undefined
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
@@ -80,8 +81,6 @@ export class OAuthProvider implements IHeadersProvider {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
-		this.log = getLogger(config)
-
 		this.log = getLogger(config)
 		this.authServerUrl = RequireConfiguration(
 			config.CAMUNDA_OAUTH_URL,
@@ -125,6 +124,9 @@ export class OAuthProvider implements IHeadersProvider {
 			(certificateAuthority) =>
 				got.extend({
 					retry: GotRetryConfig,
+					timeout: {
+						request: TOKEN_ENDPOINT_REQUEST_TIMEOUT_MS,
+					},
 					https: {
 						certificateAuthority,
 					},
@@ -185,7 +187,7 @@ export class OAuthProvider implements IHeadersProvider {
 	}
 
 	public async getHeaders(audienceType: TokenGrantAudienceType) {
-		debug(`Token request for ${audienceType}`)
+		trace(`Token request for ${audienceType}`)
 		// We use the Console credential set if it we are requesting from
 		// the SaaS OAuth endpoint, and it is a Modeler or Admin Console token.
 		// Otherwise we use the application credential set, unless a Console credential set exists.
@@ -205,13 +207,13 @@ export class OAuthProvider implements IHeadersProvider {
 				)
 			: RequireConfiguration(this.clientSecret, 'ZEEBE_CLIENT_SECRET')
 
-		const key = this.getCacheKey(audienceType)
+		const key = this.getCacheKey(clientIdToUse, audienceType)
 
 		if (this.tokenCache[key]) {
 			const token = this.tokenCache[key]
 			// check expiry and evict in-memory and file cache if expired
 			if (this.isExpired(token)) {
-				this.evictFromMemoryCache(audienceType)
+				this.evictFromMemoryCache(audienceType, clientIdToUse)
 				trace(`In-memory token ${token.audience} is expired`)
 			} else {
 				trace(`Using in-memory cached token ${token.audience}`)
@@ -235,42 +237,46 @@ export class OAuthProvider implements IHeadersProvider {
 			}
 		}
 
-		if (!this.inflightTokenRequest) {
-			this.inflightTokenRequest = new Promise((resolve, reject) => {
-				const failureBackoff = Math.min(
-					BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
-					15000
-				)
-				if (this.failed) {
-					this.log.warn(
-						`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
+		if (!this.inflightTokenRequests.get(key)) {
+			const inflightTokenRequest: HeadersPromise = new Promise(
+				(resolve, reject) => {
+					const failureBackoff = Math.min(
+						BACKOFF_TOKEN_ENDPOINT_FAILURE * this.failureCount,
+						15000
+					)
+					if (this.failed) {
+						this.log.warn(
+							`Backing off token endpoint due to previous failure. Requesting token in ${failureBackoff}ms...`
+						)
+					}
+					setTimeout(
+						() => {
+							this.makeDebouncedTokenRequest({
+								audienceType,
+								clientIdToUse,
+								clientSecretToUse,
+							})
+								.then((res) => {
+									this.failed = false
+									this.failureCount = 0
+									resolve(res)
+								})
+								.catch((e) => {
+									this.failureCount++
+									this.failed = true
+									reject(e)
+								})
+								.finally(() => {
+									this.inflightTokenRequests.delete(key)
+								})
+						},
+						this.failed ? failureBackoff : 0
 					)
 				}
-				setTimeout(
-					() => {
-						this.makeDebouncedTokenRequest({
-							audienceType,
-							clientIdToUse,
-							clientSecretToUse,
-						})
-							.then((res) => {
-								this.failed = false
-								this.failureCount = 0
-								this.inflightTokenRequest = undefined
-								resolve(res)
-							})
-							.catch((e) => {
-								this.failureCount++
-								this.failed = true
-								this.inflightTokenRequest = undefined
-								reject(e)
-							})
-					},
-					this.failed ? failureBackoff : 0
-				)
-			})
+			)
+			this.inflightTokenRequests.set(key, inflightTokenRequest)
 		}
-		return this.inflightTokenRequest
+		return this.inflightTokenRequests.get(key) as HeadersPromise
 	}
 
 	public flushMemoryCache() {
@@ -278,12 +284,32 @@ export class OAuthProvider implements IHeadersProvider {
 	}
 
 	public flushFileCache() {
-		if (this.useFileCache) {
-			fs.readdirSync(this.cacheDir).forEach((file) => {
-				if (fs.existsSync(file)) {
-					fs.unlinkSync(file)
-				}
-			})
+		if (!this.useFileCache) {
+			return
+		}
+		try {
+			fs.readdirSync(this.cacheDir)
+				.filter(
+					(file) => file.startsWith('oauth-token-') && file.endsWith('.json')
+				)
+				.forEach((file) => {
+					const filePath = path.join(this.cacheDir, file)
+					try {
+						fs.unlinkSync(filePath)
+					} catch (e) {
+						const err = e as NodeJS.ErrnoException
+						if (err.code !== 'ENOENT') {
+							this.log.warn(`Failed to delete token cache file ${filePath}`)
+							this.log.warn(err.message, err)
+						}
+					}
+				})
+		} catch (e) {
+			const err = e as NodeJS.ErrnoException
+			if (err.code !== 'ENOENT') {
+				this.log.warn(`Failed to list OAuth token cache dir ${this.cacheDir}`)
+				this.log.warn(err.message, err)
+			}
 		}
 	}
 
@@ -340,23 +366,39 @@ export class OAuthProvider implements IHeadersProvider {
 
 		trace(`Making token request to the token endpoint: `)
 		trace(`  ${this.authServerUrl}`)
-		trace(options)
+		trace({
+			...options,
+			body: this.redactClientSecret(bodyWithScope),
+		})
 		return this.rest.then((rest) =>
 			rest
 				.post(this.authServerUrl, options)
 				.catch((e) => {
+					const err = e as {
+						message: string
+						code?: string
+						response?: {
+							statusCode?: number
+							statusMessage?: string
+						}
+					}
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
 					this.log.error(
 						`Error requesting token for Client Id ${clientIdToUse}`
 					)
-					this.log.error(e)
+					this.log.error('OAuth token request failed', {
+						message: err.message,
+						code: err.code,
+						statusCode: err.response?.statusCode,
+						statusMessage: err.response?.statusMessage,
+					})
 					throw e
 				})
 				.then((res) => JSON.parse(res.body))
 				.then((t) => {
 					trace(
 						`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
-							t,
+							{ ...t, access_token: '[REDACTED]' },
 							null,
 							2
 						)}`
@@ -369,7 +411,10 @@ export class OAuthProvider implements IHeadersProvider {
 						)
 					}
 					if (t.access_token === undefined) {
-						console.error(audienceType, t)
+						this.log.error(
+							`Failed to get token: no access_token in response for audience ${audienceType}`
+						)
+						this.log.error(JSON.stringify(t))
 						throw new Error('Failed to get token: no access_token in response')
 					}
 					const token = { ...(t as Token), audience: audienceType }
@@ -380,7 +425,11 @@ export class OAuthProvider implements IHeadersProvider {
 							clientId: clientIdToUse,
 						})
 					}
-					this.sendToMemoryCache({ audience: audienceType, token })
+					this.sendToMemoryCache({
+						audience: audienceType,
+						token,
+						clientId: clientIdToUse,
+					})
 					return this.addBearer(token.access_token)
 				})
 		)
@@ -389,21 +438,23 @@ export class OAuthProvider implements IHeadersProvider {
 	private sendToMemoryCache({
 		audience,
 		token,
+		clientId,
 	}: {
 		audience: TokenGrantAudienceType
 		token: Token
+		clientId: string
 	}) {
-		const key = this.getCacheKey(audience)
+		const key = this.getCacheKey(clientId, audience)
 		try {
 			const decoded = jwtDecode(token.access_token)
 			// Keeping this in the code base to help with debugging
 			// trace(`Caching token in memory: ${JSON.stringify(decoded, null, 2)}`)
 			trace(`Caching token for ${audience} in memory. Expiry: ${decoded.exp}`)
-			token.expiry = decoded.exp ?? 0
-			this.tokenCache[key] = token
+			this.tokenCache[key] = { ...token, expiry: decoded.exp ?? 0 }
 		} catch (e) {
-			console.error('audience', audience)
-			console.error('token', token.access_token)
+			const err = e as Error
+			this.log.error(`Failed to cache token in memory for audience ${audience}`)
+			this.log.error(err.message, err)
 			throw e
 		}
 	}
@@ -421,17 +472,23 @@ export class OAuthProvider implements IHeadersProvider {
 		}
 		try {
 			trace(`Reading file cached token for ${audience}`)
-			token = JSON.parse(
-				fs.readFileSync(this.getCachedTokenFileName(clientId, audience), 'utf8')
-			)
+			token = JSON.parse(fs.readFileSync(tokenFileName, 'utf8'))
 			trace(`Retrieved token from file cache`)
 			if (this.isExpired(token)) {
 				trace(`File cached token is expired`)
 				return null
 			}
-			this.sendToMemoryCache({ audience, token })
+			this.sendToMemoryCache({ audience, token, clientId })
 			return token
-		} catch (_) {
+		} catch (e) {
+			const err = e as Error
+			trace(
+				`Failed to read token from file cache for audience ${audience}: ${err.message}`
+			)
+			this.log.warn(
+				`Failed to read token from file cache for audience ${audience}. Ignoring cache entry.`
+			)
+			this.log.warn(err.message, err)
 			return null
 		}
 	}
@@ -446,7 +503,17 @@ export class OAuthProvider implements IHeadersProvider {
 		clientId: string
 	}) {
 		const file = this.getCachedTokenFileName(clientId, audience)
-		const decoded = jwtDecode(token.access_token)
+		let decoded: { exp?: number }
+		try {
+			decoded = jwtDecode(token.access_token)
+		} catch (e) {
+			const err = e as Error
+			this.log.warn(
+				`Failed to decode OAuth token before writing to file cache for audience ${audience}`
+			)
+			this.log.warn(err.message, err)
+			return
+		}
 
 		fs.writeFile(
 			file,
@@ -459,17 +526,14 @@ export class OAuthProvider implements IHeadersProvider {
 					trace(`Wrote OAuth token to file ${file}`)
 					return
 				}
-				// tslint:disable-next-line
-				console.error('Error writing OAuth token to file' + file)
-				// tslint:disable-next-line
-				console.error(e)
+				this.log.error(`Error writing OAuth token to file ${file}`)
+				this.log.error(e.message, e)
 			}
 		)
 	}
 
 	private isExpired(token: Token) {
-		const d = new Date()
-		const currentTime = d.setSeconds(d.getSeconds())
+		const currentTime = Date.now()
 
 		// token.expiry is seconds since Unix Epoch
 		// The Date constructor expects milliseconds since Unix Epoch
@@ -486,8 +550,11 @@ export class OAuthProvider implements IHeadersProvider {
 		return tokenIsExpired
 	}
 
-	private evictFromMemoryCache(audience: TokenGrantAudienceType) {
-		const key = this.getCacheKey(audience)
+	private evictFromMemoryCache(
+		audience: TokenGrantAudienceType,
+		clientId: string
+	) {
+		const key = this.getCacheKey(clientId, audience)
 		delete this.tokenCache[key]
 	}
 
@@ -504,12 +571,12 @@ export class OAuthProvider implements IHeadersProvider {
 		}
 	}
 
-	private getCacheKey = (audience: TokenGrantAudienceType) =>
-		`${this.clientId}-${audience}`
+	private getCacheKey = (clientId: string, audience: TokenGrantAudienceType) =>
+		`${clientId}-${audience}`
 	private getCachedTokenFileName = (
 		clientId: string,
 		audience: TokenGrantAudienceType
-	) => `${this.cacheDir}/oauth-token-${clientId}-${audience}.json`
+	) => path.join(this.cacheDir, `oauth-token-${clientId}-${audience}.json`)
 
 	private getAudience(audience: TokenGrantAudienceType) {
 		return this.audienceMap[audience]
@@ -517,5 +584,9 @@ export class OAuthProvider implements IHeadersProvider {
 
 	private addBearer(token: string) {
 		return { authorization: `Bearer ${token}` }
+	}
+
+	private redactClientSecret(body: string) {
+		return body.replace(/(client_secret=)[^&]*/g, '$1[REDACTED]')
 	}
 }
