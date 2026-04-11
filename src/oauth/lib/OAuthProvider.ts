@@ -483,24 +483,8 @@ export class OAuthProvider implements IHeadersProvider {
 					return JSON.parse(res.body)
 				})
 				.catch((e) => {
-					const err = e as {
-						message: string
-						code?: string
-						response?: {
-							statusCode?: number
-							statusMessage?: string
-						}
-					}
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
-					this.log.error(
-						`Error requesting token for Client Id ${clientIdToUse}`
-					)
-					this.log.error('OAuth token request failed', {
-						message: err.message,
-						code: err.code,
-						statusCode: err.response?.statusCode,
-						statusMessage: err.response?.statusMessage,
-					})
+					this.log.error(e)
 					throw e
 				})
 				.then((t) => {
