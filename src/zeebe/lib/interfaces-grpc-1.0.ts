@@ -135,8 +135,7 @@ export interface CreateProcessInstanceBaseRequest {
 	tenantId?: string
 }
 
-export interface CreateProcessInstanceRequest
-	extends CreateProcessInstanceBaseRequest {
+export interface CreateProcessInstanceRequest extends CreateProcessInstanceBaseRequest {
 	/**
 	 * List of start instructions. If empty (default) the process instance
 	 * will start at the start event. If non-empty the process instance will apply start
@@ -225,16 +224,16 @@ interface CreateProcessInstanceWithResultResponseBase {
 	readonly tenantId: string
 }
 
-export interface CreateProcessInstanceWithResultResponse<Result>
-	extends CreateProcessInstanceWithResultResponseBase {
+export interface CreateProcessInstanceWithResultResponse<
+	Result,
+> extends CreateProcessInstanceWithResultResponseBase {
 	/**
 	 * consisting of all visible variables to the root scope
 	 */
 	readonly variables: Result
 }
 
-export interface CreateProcessInstanceWithResultResponseOnWire
-	extends CreateProcessInstanceWithResultResponseBase {
+export interface CreateProcessInstanceWithResultResponseOnWire extends CreateProcessInstanceWithResultResponseBase {
 	/**
 	 * consisting of all visible variables to the root scope
 	 */
@@ -526,8 +525,9 @@ interface SetVariablesRequestBase {
 	 */
 	local: boolean
 }
-export interface SetVariablesRequest<Variables = IProcessVariables>
-	extends SetVariablesRequestBase {
+export interface SetVariablesRequest<
+	Variables = IProcessVariables,
+> extends SetVariablesRequestBase {
 	variables: Partial<Variables>
 	/** a reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber

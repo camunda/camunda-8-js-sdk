@@ -114,8 +114,9 @@ interface QuerySubscriptionConstructorBase<T> {
 	trackingWindow?: number
 }
 
-interface QuerySubscriptionConstructorWithPredicate<T>
-	extends QuerySubscriptionConstructorBase<T> {
+interface QuerySubscriptionConstructorWithPredicate<
+	T,
+> extends QuerySubscriptionConstructorBase<T> {
 	predicate: QuerySubscriptionPredicate<T>
 }
 

@@ -376,7 +376,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 					await this.grpc
 				).activateJobsStream({
 					...req,
-					tenantIds: req.tenantIds ?? this.tenantId ? [this.tenantId!] : [],
+					tenantIds: (req.tenantIds ?? this.tenantId) ? [this.tenantId!] : [],
 				})
 				if (stream.error) {
 					throw stream.error

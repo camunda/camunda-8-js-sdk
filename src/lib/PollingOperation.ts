@@ -16,8 +16,9 @@ interface PollingOperationOptionsBase<T> {
 	timeout?: number
 }
 
-interface PollingOperationOptionsWithPredicate<T>
-	extends PollingOperationOptionsBase<T> {
+interface PollingOperationOptionsWithPredicate<
+	T,
+> extends PollingOperationOptionsBase<T> {
 	/** predicate to check if the result is valid */
 	predicate: (result: T) => boolean
 }

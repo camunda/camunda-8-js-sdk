@@ -501,18 +501,16 @@ export interface VariableDetails {
 	isTruncated: boolean
 }
 
-export interface SearchVariablesRequest
-	extends BaseSearchRequest<
-		| 'value'
-		| 'name'
-		| 'tenantId'
-		| 'variableKey'
-		| 'scopeKey'
-		| 'processInstanceKey',
-		VariableSearchRequestFilter
-	> {}
-export interface SearchVariablesResponse
-	extends PaginatedSearchResponse<VariableDetails> {}
+export interface SearchVariablesRequest extends BaseSearchRequest<
+	| 'value'
+	| 'name'
+	| 'tenantId'
+	| 'variableKey'
+	| 'scopeKey'
+	| 'processInstanceKey',
+	VariableSearchRequestFilter
+> {}
+export interface SearchVariablesResponse extends PaginatedSearchResponse<VariableDetails> {}
 
 export type SearchUserTasksSortRequest = SearchSortRequest<
 	'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority'
@@ -587,14 +585,12 @@ export interface SearchUserTasksRequestFilter {
 	}>
 }
 
-export interface SearchTasksRequest
-	extends BaseSearchRequestWithOptionalFilter<
-		'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority',
-		SearchUserTasksRequestFilter
-	> {}
+export interface SearchTasksRequest extends BaseSearchRequestWithOptionalFilter<
+	'creationDate' | 'completionDate' | 'dueDate' | 'followUpDate' | 'priority',
+	SearchUserTasksRequestFilter
+> {}
 
-export interface SearchUserTasksResponse
-	extends PaginatedSearchResponse<UserTask> {}
+export interface SearchUserTasksResponse extends PaginatedSearchResponse<UserTask> {}
 
 export interface UserTask {
 	/** The name for this user task. */
@@ -653,36 +649,34 @@ export interface AssignUserTaskRequest {
 	action?: string
 }
 
-export interface SearchUserTaskVariablesRequest
-	extends BaseSearchRequestWithOptionalFilter<
-		| 'value'
-		| 'name'
-		| 'tenantId'
-		| 'variableKey'
-		| 'scopeKey'
-		| 'processInstanceKey',
-		{
-			/** Name of the variable. */
-			name: string
-		}
-	> {
+export interface SearchUserTaskVariablesRequest extends BaseSearchRequestWithOptionalFilter<
+	| 'value'
+	| 'name'
+	| 'tenantId'
+	| 'variableKey'
+	| 'scopeKey'
+	| 'processInstanceKey',
+	{
+		/** Name of the variable. */
+		name: string
+	}
+> {
 	userTaskKey: string
 }
 
 /** The user task variables search response for CamundaRestClient. */
-export interface SearchUserTaskVariablesResponse
-	extends PaginatedSearchResponse<{
-		/** The key for this variable. */
-		variableKey: string
-		/** The key of the scope of this variable. */
-		scopeKey: string
-		/** The key of the process instance of this variable. */
-		processInstanceKey: string
-		name: string
-		value: string
-		tenantId: string
-		isTruncated: boolean
-	}> {}
+export interface SearchUserTaskVariablesResponse extends PaginatedSearchResponse<{
+	/** The key for this variable. */
+	variableKey: string
+	/** The key of the scope of this variable. */
+	scopeKey: string
+	/** The key of the process instance of this variable. */
+	processInstanceKey: string
+	name: string
+	value: string
+	tenantId: string
+	isTruncated: boolean
+}> {}
 
 export type ProcessInstanceState = 'ACTIVE' | 'COMPLETED' | 'CANCELED'
 
@@ -734,23 +728,22 @@ export interface SearchProcessInstanceRequestFilter {
 }
 
 /** This is the 8.8 API.  */
-export interface SearchProcessInstanceRequest
-	extends BaseSearchRequest<
-		| 'processInstanceKey'
-		| 'processDefinitionId'
-		| 'processDefinitionName'
-		| 'processDefinitionVersion'
-		| 'processDefinitionVersionTag'
-		| 'processDefinitionKey'
-		| 'parentProcessInstanceKey'
-		| 'parentFlowNodeInstanceKey'
-		| 'state'
-		| 'startDate'
-		| 'endDate'
-		| 'tenantId'
-		| 'hasIncident',
-		SearchProcessInstanceRequestFilter
-	> {}
+export interface SearchProcessInstanceRequest extends BaseSearchRequest<
+	| 'processInstanceKey'
+	| 'processDefinitionId'
+	| 'processDefinitionName'
+	| 'processDefinitionVersion'
+	| 'processDefinitionVersionTag'
+	| 'processDefinitionKey'
+	| 'parentProcessInstanceKey'
+	| 'parentFlowNodeInstanceKey'
+	| 'state'
+	| 'startDate'
+	| 'endDate'
+	| 'tenantId'
+	| 'hasIncident',
+	SearchProcessInstanceRequestFilter
+> {}
 
 export interface ProcessInstanceDetails {
 	/** The key of the process instance. */
@@ -779,8 +772,7 @@ export interface ProcessInstanceDetails {
 	hasIncident: boolean
 }
 
-export interface SearchProcessInstanceResponse
-	extends PaginatedSearchResponse<ProcessInstanceDetails> {}
+export interface SearchProcessInstanceResponse extends PaginatedSearchResponse<ProcessInstanceDetails> {}
 
 export interface DownloadDocumentRequest {
 	/** The ID of the document to download. */
@@ -1075,17 +1067,16 @@ export interface ProcessDefinitionSearchRequestFilter {
 	processDefinitionKey?: string
 }
 
-export interface SearchProcessDefinitionsRequest
-	extends BaseSearchRequest<
-		| 'processDefinitionKey'
-		| 'name'
-		| 'resourceName'
-		| 'version'
-		| 'versionTag'
-		| 'processDefinitionId'
-		| 'tenantId',
-		ProcessDefinitionSearchRequestFilter
-	> {}
+export interface SearchProcessDefinitionsRequest extends BaseSearchRequest<
+	| 'processDefinitionKey'
+	| 'name'
+	| 'resourceName'
+	| 'version'
+	| 'versionTag'
+	| 'processDefinitionId'
+	| 'tenantId',
+	ProcessDefinitionSearchRequestFilter
+> {}
 
 export interface ProcessDefinitionDetails {
 	/** Name of this process definition. */
@@ -1104,8 +1095,7 @@ export interface ProcessDefinitionDetails {
 	processDefinitionKey: string
 }
 
-export interface SearchProcessDefinitionsResponse
-	extends PaginatedSearchResponse<ProcessDefinitionDetails> {}
+export interface SearchProcessDefinitionsResponse extends PaginatedSearchResponse<ProcessDefinitionDetails> {}
 
 export interface ElementInstanceSearchRequestFilter {
 	processDefinitionId?: string
@@ -1147,21 +1137,20 @@ export interface ElementInstanceSearchRequestFilter {
 	incidentKey?: string
 }
 
-export interface SearchElementInstancesRequest
-	extends BaseSearchRequest<
-		| 'elementInstanceKey'
-		| 'processInstanceKey'
-		| 'processDefinitionKey'
-		| 'processDefinitionId'
-		| 'startDate'
-		| 'endDate'
-		| 'elementId'
-		| 'type'
-		| 'state'
-		| 'incidentKey'
-		| 'tenantId',
-		ElementInstanceSearchRequestFilter
-	> {}
+export interface SearchElementInstancesRequest extends BaseSearchRequest<
+	| 'elementInstanceKey'
+	| 'processInstanceKey'
+	| 'processDefinitionKey'
+	| 'processDefinitionId'
+	| 'startDate'
+	| 'endDate'
+	| 'elementId'
+	| 'type'
+	| 'state'
+	| 'incidentKey'
+	| 'tenantId',
+	ElementInstanceSearchRequestFilter
+> {}
 
 export interface ElementInstanceDetails {
 	/** The process definition ID associated to this element instance. */
@@ -1218,8 +1207,7 @@ export interface ElementInstanceDetails {
 	incidentKey?: string
 }
 
-export interface SearchElementInstancesResponse
-	extends PaginatedSearchResponse<ElementInstanceDetails> {}
+export interface SearchElementInstancesResponse extends PaginatedSearchResponse<ElementInstanceDetails> {}
 
 export interface IncidentSearchRequestFilter {
 	/** The process definition ID associated to this incident. */
@@ -1263,22 +1251,21 @@ export interface IncidentSearchRequestFilter {
 	jobKey?: string
 }
 
-export interface SearchIncidentsRequest
-	extends BaseSearchRequest<
-		| 'incidentKey'
-		| 'processInstanceKey'
-		| 'processDefinitionKey'
-		| 'processDefinitionId'
-		| 'errorType'
-		| 'errorMessage'
-		| 'elementId'
-		| 'elementInstanceKey'
-		| 'creationTime'
-		| 'state'
-		| 'jobKey'
-		| 'tenantId',
-		IncidentSearchRequestFilter
-	> {}
+export interface SearchIncidentsRequest extends BaseSearchRequest<
+	| 'incidentKey'
+	| 'processInstanceKey'
+	| 'processDefinitionKey'
+	| 'processDefinitionId'
+	| 'errorType'
+	| 'errorMessage'
+	| 'elementId'
+	| 'elementInstanceKey'
+	| 'creationTime'
+	| 'state'
+	| 'jobKey'
+	| 'tenantId',
+	IncidentSearchRequestFilter
+> {}
 
 export interface IncidentDetails {
 	/* The process definition ID associated to this incident. */
@@ -1322,8 +1309,7 @@ export interface IncidentDetails {
 	jobKey: string
 }
 
-export interface SearchIncidentsResponse
-	extends PaginatedSearchResponse<IncidentDetails> {}
+export interface SearchIncidentsResponse extends PaginatedSearchResponse<IncidentDetails> {}
 
 export interface CamundaRestError {
 	type: 'about:blank'
