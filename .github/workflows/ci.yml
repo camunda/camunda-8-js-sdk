@@ -1,16 +1,20 @@
 name: CI
 
 on:
-  # Only run on push for main — this triggers the SaaS jobs after merge.
-  # Feature branches are covered by the `pull_request` trigger below, which
-  # avoids duplicate (push) + (pull_request) runs on the same commit.
+  # Push triggers act as a stability gate: they run on `main` (post-merge,
+  # including SaaS jobs) and on `stable/**` branches (release stability).
+  # Feature branches are covered by the `pull_request` trigger, so listing
+  # them here would cause duplicate (push) + (pull_request) runs on the
+  # same commit.
   push:
     branches:
       - main
+      - "stable/**"
   pull_request:
 
 jobs:
-  # Runs on every push to main and every pull request, including
+  # Runs on every push to main or stable/**, and every pull request,
+  # including
   # pull requests from forks. No secrets required.
   unit-tests:
     runs-on: ubuntu-latest
