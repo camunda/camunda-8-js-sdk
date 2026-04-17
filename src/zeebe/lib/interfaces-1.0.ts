@@ -69,8 +69,9 @@ export interface CreateProcessBaseRequest<V extends JSONDoc> {
 	operationReference?: number | LosslessNumber
 }
 
-export interface CreateProcessInstanceReq<V extends JSONDoc>
-	extends CreateProcessBaseRequest<V> {
+export interface CreateProcessInstanceReq<
+	V extends JSONDoc,
+> extends CreateProcessBaseRequest<V> {
 	/**
 	 * List of start instructions. If empty (default) the process instance
 	 * will start at the start event. If non-empty the process instance will apply start
@@ -79,8 +80,9 @@ export interface CreateProcessInstanceReq<V extends JSONDoc>
 	startInstructions?: ProcessInstanceCreationStartInstruction[]
 }
 
-export interface CreateProcessInstanceWithResultReq<T extends JSONDoc>
-	extends CreateProcessBaseRequest<T> {
+export interface CreateProcessInstanceWithResultReq<
+	T extends JSONDoc,
+> extends CreateProcessBaseRequest<T> {
 	/**
 	 * Timeout in milliseconds. the request will be closed if the process is not completed before the requestTimeout.
 	 * if requestTimeout = 0, uses the generic requestTimeout configured in the gateway.
@@ -247,7 +249,9 @@ export interface ZeebeJob<
 	WorkerInputVariables = IInputVariables,
 	CustomHeaderShape = ICustomHeaders,
 	WorkerOutputVariables = IOutputVariables,
-> extends Job<WorkerInputVariables, CustomHeaderShape>,
+>
+	extends
+		Job<WorkerInputVariables, CustomHeaderShape>,
 		JobCompletionInterface<WorkerOutputVariables> {}
 
 export interface IZBJobWorker {

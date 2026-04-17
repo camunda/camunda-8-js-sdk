@@ -22,8 +22,7 @@ export interface VariableSearchResponseWithoutDraft {
 	previewValue: string
 }
 
-export interface VariableSearchResponse
-	extends VariableSearchResponseWithoutDraft {
+export interface VariableSearchResponse extends VariableSearchResponseWithoutDraft {
 	draft: DraftSearchVariableValue
 }
 
@@ -123,8 +122,7 @@ export interface TaskSearchAfterRequest extends Partial<TaskSearchRequestBase> {
 	searchAfter: string[]
 }
 
-export interface TaskSearchAfterOrEqualRequest
-	extends Partial<TaskSearchRequestBase> {
+export interface TaskSearchAfterOrEqualRequest extends Partial<TaskSearchRequestBase> {
 	/**
 	 * Used to return a paginated result. Array of values that should be copied from sortValues of one of the tasks from the current search results page.
 	 * It enables the API to return a page of tasks that directly follow or are equal to the task identified by the provided values, with respect to the sorting order.
@@ -132,8 +130,7 @@ export interface TaskSearchAfterOrEqualRequest
 	searchAfterOrEqual: string[]
 }
 
-export interface TaskSearchBeforeRequest
-	extends Partial<TaskSearchRequestBase> {
+export interface TaskSearchBeforeRequest extends Partial<TaskSearchRequestBase> {
 	/**
 	 * Used to return a paginated result. Array of values that should be copied from sortValues of one of the tasks from the current search results page.
 	 * It enables the API to return a page of tasks that directly precede the task identified by the provided values, with respect to the sorting order.
@@ -141,8 +138,7 @@ export interface TaskSearchBeforeRequest
 	searchBefore: string[]
 }
 
-export interface TaskSearchBeforeOrEqualRequest
-	extends Partial<TaskSearchRequestBase> {
+export interface TaskSearchBeforeOrEqualRequest extends Partial<TaskSearchRequestBase> {
 	/**
 	 * Used to return a paginated result. Array of values that should be copied from sortValues of one of the tasks from the current search results page.
 	 * It enables the API to return a page of tasks that directly precede or are equal to the task identified by the provided values, with respect to the sorting order.

@@ -334,8 +334,10 @@ You should call only one job action method in the worker handler. This is a bug 
 					_conf: string | ZB.JobFailureConfiguration
 				): _conf is ZB.JobFailureConfiguration => typeof _conf === 'object'
 				const errorMessage = isFailureConfig(conf) ? conf.errorMessage : conf
-				const retryBackOff = isFailureConfig(conf) ? conf.retryBackOff ?? 0 : 0
-				const _retries = isFailureConfig(conf) ? conf.retries ?? 0 : retries
+				const retryBackOff = isFailureConfig(conf)
+					? (conf.retryBackOff ?? 0)
+					: 0
+				const _retries = isFailureConfig(conf) ? (conf.retries ?? 0) : retries
 				return this.failJob({
 					job,
 					errorMessage,
@@ -357,7 +359,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				): s is ZB.ErrorJobWithVariables => typeof s === 'object'
 				const errorCode = isErrorJobWithVariables(e) ? e.errorCode : e
 				errorMessage = isErrorJobWithVariables(e)
-					? e.errorMessage ?? ''
+					? (e.errorMessage ?? '')
 					: errorMessage
 				const variables = isErrorJobWithVariables(e) ? e.variables : {}
 

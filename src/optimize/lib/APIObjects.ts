@@ -129,8 +129,9 @@ export interface CloudEventV1<T> extends CloudEventV1Attributes<T> {
 	specversion: string
 }
 
-export interface CloudEventV1Attributes<T>
-	extends CloudEventV1OptionalAttributes<T> {
+export interface CloudEventV1Attributes<
+	T,
+> extends CloudEventV1OptionalAttributes<T> {
 	/**
 	 * [REQUIRED] Identifies the context in which an event happened. Often this
 	 * will include information such as the type of the event source, the
