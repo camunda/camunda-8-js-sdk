@@ -28,7 +28,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build and Smoke Test
         run: npm run test:smoketest
@@ -51,7 +51,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       # Workaround for https://github.com/actions/runner-images/issues/2821
       - name: Remove mono blocking 8084 port
@@ -100,7 +100,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       # Workaround for https://github.com/actions/runner-images/issues/2821
       - name: Remove mono blocking 8084 port
@@ -153,7 +153,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Integration Tests
         run: |
@@ -190,7 +190,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Integration Tests
         run: |
