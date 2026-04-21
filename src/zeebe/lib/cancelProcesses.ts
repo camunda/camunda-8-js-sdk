@@ -1,12 +1,13 @@
 import { Camunda8 } from '../../c8'
-import { OperateApiClient } from '../../operate'
 
-const operate = new OperateApiClient()
-const camunda = new Camunda8().getCamundaRestClient()
-const topology = camunda.getTopology()
+const c8 = new Camunda8()
+const camunda = c8.getCamundaRestClient()
+const operate = c8.getOperateApiClient()
 
 export async function cancelProcesses(processDefinitionKey: string) {
-	const gatewayVersion = (await topology).gatewayVersion
+	const topology = await camunda.getTopology()
+
+	const gatewayVersion = topology.gatewayVersion
 	const [major, minor] = gatewayVersion.split('.').map(Number)
 	const useCamundaRestClient = major > 8 || (major === 8 && minor >= 8)
 	const { searchProcessInstances, cancelProcessInstance } = useCamundaRestClient
