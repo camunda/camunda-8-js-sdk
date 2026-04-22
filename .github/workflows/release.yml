@@ -136,6 +136,14 @@ jobs:
   saas_integration:
     runs-on: ubuntu-latest
     environment: integration
+    # The 8.7 SaaS cluster is shared across workflows and refs. Approvers were
+    # previously used to serialize access; this concurrency group encodes the
+    # same constraint in CI. cancel-in-progress: false queues runs instead of
+    # cancelling them so a stable/8.8 release does not abort an in-flight main
+    # release (or vice-versa) mid-test.
+    concurrency:
+      group: saas-integration-8.7
+      cancel-in-progress: false
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
@@ -171,6 +179,11 @@ jobs:
   saas_integration_8_8:
     runs-on: ubuntu-latest
     environment: integration-8.8
+    # See note on saas_integration above. Separate group from the 8.7 cluster
+    # so the two SaaS targets can run in parallel with each other.
+    concurrency:
+      group: saas-integration-8.8
+      cancel-in-progress: false
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
