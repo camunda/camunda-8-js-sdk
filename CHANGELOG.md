@@ -1,3 +1,16 @@
+## [8.8.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.9...v8.8.10) (2026-04-22)
+
+
+### Bug Fixes
+
+* **oauth:** improve OAuthProvider reliability ([3375188](https://github.com/camunda/camunda-8-js-sdk/commit/3375188d0a9a855969b4eccfda56a4bb4b412454)), closes [#722](https://github.com/camunda/camunda-8-js-sdk/issues/722)
+* **test:** use response.statusCode for 403 detection ([ad2bda9](https://github.com/camunda/camunda-8-js-sdk/commit/ad2bda96c29466ca209d41dbffa85d6c6d8a7544))
+
+
+### Features
+
+* **admin:** implement all missing Admin API operations ([f66eeb0](https://github.com/camunda/camunda-8-js-sdk/commit/f66eeb06cb605e5278068946ec127d209e45014c)), closes [#713](https://github.com/camunda/camunda-8-js-sdk/issues/713)
+
 ## [8.8.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.8...v8.8.9) (2026-03-19)
 
 
