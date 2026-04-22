@@ -1,14 +1,22 @@
 name: CI
 
 on:
+  # Cheap, no-secrets jobs run on every commit push to a feature branch.
+  # Expensive / secret-requiring jobs run once when the PR is opened (or
+  # reopened / marked ready-for-review). Restricting `pull_request` to those
+  # types prevents the synchronize event from re-firing on every commit and
+  # duplicating what `push` already covers.
   push:
     branches-ignore:
       - main
       - 'stable/**'
   pull_request:
+    types: [opened, reopened, ready_for_review]
 
 jobs:
+  # Push-only: fast feedback on every commit.
   unit-tests:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -28,8 +36,10 @@ jobs:
       - name: Run Unit Tests
         run: npm run test
 
+  # PR-only: gated by selfhosted environment + needs DOCKER_PASSWORD secret.
+  # Runs once when the PR is opened, not on every push.
   local_integration:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment:
       name: selfhosted
@@ -75,8 +85,9 @@ jobs:
         if: always()
         run: docker compose -f docker/docker-compose.yaml -f docker/docker-compose-modeler.yaml down
 
+  # PR-only: gated by selfhosted environment + needs DOCKER_PASSWORD secret.
   local_multitenancy_integration:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment:
       name: selfhosted
@@ -124,8 +135,9 @@ jobs:
         if: always()
         run: docker compose -f docker/docker-compose-multitenancy.yaml -f docker/docker-compose-modeler.yaml down
 
+  # PR-only: gated by `integration` environment + SaaS secrets.
   saas_integration:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: integration
     steps:
@@ -160,8 +172,9 @@ jobs:
           CAMUNDA_CONSOLE_BASE_URL: ${{ vars.CAMUNDA_CONSOLE_BASE_URL }}
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ vars.CAMUNDA_CONSOLE_OAUTH_AUDIENCE}}
 
+  # PR-only: gated by `integration-8.8` environment + SaaS secrets.
   saas_integration_8_8:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: integration-8.8
     steps:
@@ -196,7 +209,10 @@ jobs:
           CAMUNDA_CONSOLE_BASE_URL: ${{ vars.CAMUNDA_CONSOLE_BASE_URL }}
           CAMUNDA_CONSOLE_OAUTH_AUDIENCE: ${{ vars.CAMUNDA_CONSOLE_OAUTH_AUDIENCE }}
 
+  # Push-only: public docker-compose stack, no secrets. Fast feedback on
+  # every commit.
   local_integration_8_8:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
