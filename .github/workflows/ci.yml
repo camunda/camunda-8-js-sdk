@@ -1,14 +1,13 @@
 name: CI
 
 on:
-  # Push triggers act as a stability gate: they run on `main` (post-merge,
-  # including SaaS jobs) and on `stable/**` branches (release stability).
-  # Feature branches are covered by the `pull_request` trigger, so listing
-  # them here would cause duplicate (push) + (pull_request) runs on the
-  # same commit.
+  # Push trigger acts as a stability gate for `stable/**` branches only.
+  # Merges to `main` are handled by the Release workflow (which runs the
+  # full release pipeline including its own validation), so we don't
+  # double-up by also running CI here. Feature branches are covered by
+  # the `pull_request` trigger.
   push:
     branches:
-      - main
       - "stable/**"
   pull_request:
 
