@@ -1,14 +1,10 @@
 name: CI
 
 on:
-  # Push trigger acts as a stability gate for `stable/**` branches only.
-  # Merges to `main` are handled by the Release workflow (which runs the
-  # full release pipeline including its own validation), so we don't
-  # double-up by also running CI here. Feature branches are covered by
-  # the `pull_request` trigger.
-  push:
-    branches:
-      - "stable/**"
+  # Feature branches and PRs (including forks) are covered by `pull_request`.
+  # Merges to `main` and `stable/**` are handled by the Release workflow,
+  # which runs the same non-gated jobs as part of its pipeline. Listing
+  # those branches here would just duplicate runs on the same SHA.
   pull_request:
 
 jobs:
