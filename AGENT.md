@@ -2,9 +2,55 @@
 
 This file contains information for AI agents working on the Camunda 8 JavaScript SDK repository.
 
+See also:
+- [CONTRIBUTING.md](CONTRIBUTING.md) — contributor onboarding, branch model, release summary
+- [MAINTAINER.md](MAINTAINER.md) — operational guide (CI workflows, semantic-release, npm publishing)
+
 ## Project Overview
 
-The Camunda 8 JavaScript SDK is the official TypeScript/Node.js SDK for Camunda Platform 8. It provides unified access to all Camunda 8 APIs including Zeebe, Operate, Optimize, Tasklist, Modeler, and Admin.
+The Camunda 8 JavaScript SDK is the official TypeScript/Node.js SDK for Camunda Platform 8. It provides unified access to all Camunda 8 APIs including Zeebe, Operate, Optimize, Tasklist, Modeler, and Admin. It targets Node.js (not browser) and ships TypeScript typings.
+
+## Commit Conventions (read this before committing)
+
+The repo enforces [Conventional Commits](https://www.conventionalcommits.org/) via `commitlint` (see [commitlint.config.js](commitlint.config.js)). The CI job `lint-commits` will block PRs that violate these rules.
+
+### Allowed commit types
+
+Only these `type:` values are accepted (any other type — including `deps:` — will fail `lint-commits`):
+
+| Type           | When to use                                                                                              | Release impact |
+| -------------- | -------------------------------------------------------------------------------------------------------- | -------------- |
+| `feat`         | New SDK feature                                                                                          | patch          |
+| `fix`          | Bug fix                                                                                                  | patch          |
+| `perf`         | Performance improvement                                                                                  | patch          |
+| `revert`       | Revert a previous commit                                                                                 | patch          |
+| `release`      | Force a patch release with no other eligible commits                                                     | patch          |
+| `server`       | Bump to a new Camunda **minor** line (e.g. 8.8 → 8.9)                                                    | minor          |
+| `server-major` | Bump to a new Camunda **major** line (e.g. 8.x → 9.0)                                                    | major          |
+| `chore`        | Maintenance, dependency bumps (`chore(deps): ...`), tooling                                              | none           |
+| `build`        | Build system / packaging changes                                                                         | none           |
+| `ci`           | CI workflow / GitHub Actions changes                                                                     | none           |
+| `docs`         | Documentation only                                                                                       | none           |
+| `refactor`     | Code refactor with no behavior change                                                                    | none           |
+| `style`        | Whitespace / formatting only                                                                             | none           |
+| `test`         | Test-only changes                                                                                        | none           |
+
+Note the **mutated semver**: `feat`/`fix` produce **patch** bumps, not minor/major. The SDK's version tracks the Camunda 8 server line, not its own API surface. See [MAINTAINER.md](MAINTAINER.md) for the full release pipeline.
+
+### Scopes
+
+`commitlint` does not enforce a scope-enum, so any scope is accepted. Use scopes when they clarify the change (e.g. `chore(deps): ...`, `fix(zeebe): ...`, `ci(release): ...`).
+
+### Format constraints
+
+- Body lines: max **500** characters per line (`body-max-line-length`).
+- Footer lines: max **1000** characters per line (`footer-max-line-length`).
+- Header (first line): conventional-commits default — keep concise.
+
+### Common pitfalls
+
+- **`deps:` is not valid.** Use `chore(deps): ...` for dependency pinning / bumps. (Dependabot itself uses `chore(deps):`.)
+- The pre-commit Husky hook runs `npm run test`, which can fail on local-only files (e.g. nested worktrees). The release workflow bypasses this with `HUSKY=0`. For agent commits that are otherwise validated, prefix with `HUSKY=0` rather than `--no-verify`.
 
 ## Essential Commands
 
@@ -82,6 +128,16 @@ src/
 - OAuth2/OIDC support for SaaS
 - Basic auth and custom auth providers for Self-Managed
 - Token caching and automatic refresh
+
+The SDK supports five authentication strategies (set via `CAMUNDA_AUTH_STRATEGY` or programmatically):
+
+| Strategy | Use case                                                          |
+| -------- | ----------------------------------------------------------------- |
+| `OAUTH`  | Default for Camunda SaaS and Self-Managed                         |
+| `BASIC`  | Nginx reverse-proxy with basic auth                               |
+| `COOKIE` | C8Run 8.7                                                         |
+| `BEARER` | Custom token management                                           |
+| `NONE`   | Development or mTLS                                               |
 
 ### Pagination
 - **CamundaRestClient**: Uses `startCursor`/`endCursor` (string values)
@@ -161,6 +217,53 @@ src/
 - Use `LosslessDto` base class for API responses
 - Prefer composition over inheritance for client features
 - Write comprehensive JSDoc comments for public APIs
+
+### Code formatting and linting
+
+- Prettier formats code; ESLint lints it.
+- Configs: `prettier.config.js`, `.eslintrc.json`.
+- To format/lint a single file: `npx prettier --write 'src/${filename}'` and `npx eslint 'src/${filename}'`.
+- The Husky pre-commit hook runs `lint-staged` (Prettier on staged TS files) plus `npm run test`.
+
+## REST API Endpoint Pattern
+
+When implementing a new REST API endpoint:
+
+1. Create request/response DTOs in the appropriate `*Dto.ts` file.
+2. Add the method to the relevant client class.
+3. Use the `callApiEndpoint` pattern.
+4. Document parameters with JSDoc.
+5. Include proper error handling.
+
+```typescript
+/**
+ * Gets a specific decision instance by ID
+ * @param decisionInstanceId The ID of the decision instance to retrieve
+ * @returns A GetDecisionInstanceResponse object with the decision instance details
+ */
+async getDecisionInstance(
+  decisionInstanceId: string
+): Promise<GetDecisionInstanceResponse> {
+  return this.callApiEndpoint({
+    method: 'get',
+    path: `decision-instances/${decisionInstanceId}`,
+    responseType: GetDecisionInstanceResponse,
+  })
+}
+```
+
+For search endpoints:
+
+1. Define filter interface (e.g. `SomeEntitySearchFilter`).
+2. Extend `BaseSearchRequest<TSortFields, TFilter>` or `BaseSearchRequestWithOptionalFilter<TSortFields, TFilter>`.
+3. Define response interface extending `PaginatedCamundaRestSearchResponse<EntityDetails>`.
+4. Use cursor-based pagination with `startCursor`/`endCursor` for REST API endpoints.
+
+## BPMN / DMN Test Resources
+
+- Place test models in `__tests__/<version>/resources/` (e.g. `__tests__/8.8/resources/`).
+- For DMN decision tables, use the **`FIRST`** hit policy (not `UNIQUE`).
+- Validate that resources are deployed before exercising them in tests.
 
 ## Recent Additions
 
