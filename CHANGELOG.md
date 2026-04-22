@@ -1,3 +1,21 @@
+# [8.9.0-alpha.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.5...v8.9.0-alpha.6) (2026-04-22)
+
+
+### Bug Fixes
+
+* keep error.message static for error-monitoring grouping ([0c2df38](https://github.com/camunda/camunda-8-js-sdk/commit/0c2df387d7a228fa5b322179fb70991e9d69180f)), closes [#658](https://github.com/camunda/camunda-8-js-sdk/issues/658)
+* **oauth:** improve OAuthProvider reliability ([b699342](https://github.com/camunda/camunda-8-js-sdk/commit/b699342eda39551b1cadccd6065460ac669ae22a))
+* **oauth:** write disk-cached tokens with mode 0600 (current-user only) ([1444787](https://github.com/camunda/camunda-8-js-sdk/commit/1444787086f30f2eb7363220c52a440526cb29f6)), closes [#737](https://github.com/camunda/camunda-8-js-sdk/issues/737)
+* remove logs ([4ab2178](https://github.com/camunda/camunda-8-js-sdk/commit/4ab21783387b08ee27580129231bcd0de6d82408))
+* resolve conflict ([356eaf5](https://github.com/camunda/camunda-8-js-sdk/commit/356eaf58b07b3b4009763266f36caa4ecb2363a4))
+* skip unstable tests ([cf38fdf](https://github.com/camunda/camunda-8-js-sdk/commit/cf38fdf67be3e4d8b4290c20faed0c194e1fbc08))
+* **test:** use response.statusCode for 403 detection ([c976899](https://github.com/camunda/camunda-8-js-sdk/commit/c9768995b6cbdd049549d58d95e3f538b3c4ef32))
+
+
+### Features
+
+* **admin:** implement all missing Admin API operations ([e5527ba](https://github.com/camunda/camunda-8-js-sdk/commit/e5527bac2b139790638c76b26b0f737986413850)), closes [#713](https://github.com/camunda/camunda-8-js-sdk/issues/713)
+
 # [8.9.0-alpha.5](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.4...v8.9.0-alpha.5) (2026-03-18)
 
 
