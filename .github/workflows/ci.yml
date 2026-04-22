@@ -1,10 +1,18 @@
 name: CI
 
 on:
-  # Feature branches and PRs (including forks) are covered by `pull_request`.
+  # Push to a feature branch (anything except main and stable/**) runs the
+  # non-blocking CI suite for fast feedback before a PR is opened.
+  # `pull_request` then re-runs the same suite once a PR exists, so the
+  # author also sees the result against the PR's merge commit.
   # Merges to `main` and `stable/**` are handled by the Release workflow,
-  # which runs the same non-gated jobs as part of its pipeline. Listing
-  # those branches here would just duplicate runs on the same SHA.
+  # which runs the same non-gated jobs plus the gated integration / SaaS
+  # jobs as part of its pipeline. Listing those branches here would just
+  # duplicate runs on the same SHA.
+  push:
+    branches-ignore:
+      - main
+      - 'stable/**'
   pull_request:
 
 jobs:
