@@ -195,9 +195,25 @@ export class OAuthProvider implements IHeadersProvider {
 		if (this.useFileCache) {
 			try {
 				if (!fs.existsSync(this.cacheDir)) {
+					// Mode 0o700: only the current user may read, write, or list the
+					// cached token files. See #737. (POSIX-only; Node ignores mode on
+					// Windows, where per-user profile ACLs already restrict access.)
 					fs.mkdirSync(this.cacheDir, {
 						recursive: true,
+						mode: 0o700,
 					})
+				} else if (process.platform !== 'win32') {
+					// Tighten an existing cache directory that was created by an older
+					// SDK version (or by another process) with a wider mode. Only
+					// strip group/other bits — never widen the user's existing mode.
+					try {
+						const current = fs.statSync(this.cacheDir).mode
+						if (current & 0o077) {
+							fs.chmodSync(this.cacheDir, current & ~0o077)
+						}
+					} catch (_) {
+						/* best-effort */
+					}
 				}
 				// Try to write a temporary file to the directory
 				const tempfilename = path.join(this.cacheDir, `${randomUUID()}.tmp`)
@@ -564,6 +580,19 @@ export class OAuthProvider implements IHeadersProvider {
 		}
 		try {
 			trace(`Reading file cached token for ${audience}`)
+			// If the file was created by an older SDK with a wider mode (e.g.
+			// 0o644), tighten it now. Only strip group/other bits — never widen
+			// the user's existing mode. POSIX-only. See #737.
+			if (process.platform !== 'win32') {
+				try {
+					const current = fs.statSync(tokenFileName).mode
+					if (current & 0o077) {
+						fs.chmodSync(tokenFileName, current & ~0o077)
+					}
+				} catch (_) {
+					/* best-effort */
+				}
+			}
 			token = JSON.parse(fs.readFileSync(tokenFileName, 'utf8'))
 			trace(`Retrieved token from file cache`)
 			if (this.isExpired(token)) {
@@ -613,9 +642,25 @@ export class OAuthProvider implements IHeadersProvider {
 				...token,
 				expiry: decoded.exp ?? 0,
 			}),
+			// Mode 0o600: bearer tokens are confidentiality-class secrets and
+			// must not be readable by other local users. See #737.
+			{ mode: 0o600 },
 			(e) => {
 				if (!e) {
 					trace(`Wrote OAuth token to file ${file}`)
+					// If the file already existed with a wider mode (older SDK or
+					// external process), {mode} on writeFile only affects creation.
+					// Strip group/other bits without widening user bits. POSIX-only.
+					if (process.platform !== 'win32') {
+						try {
+							const current = fs.statSync(file).mode
+							if (current & 0o077) {
+								fs.chmodSync(file, current & ~0o077)
+							}
+						} catch (_) {
+							/* best-effort */
+						}
+					}
 					return
 				}
 				this.log.error(`Error writing OAuth token to file ${file}`)
