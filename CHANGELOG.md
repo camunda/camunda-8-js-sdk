@@ -1,3 +1,10 @@
+## [8.8.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.10...v8.8.11) (2026-04-22)
+
+
+### Bug Fixes
+
+* **oauth:** write disk-cached tokens with mode 0600 (current-user only) ([a298735](https://github.com/camunda/camunda-8-js-sdk/commit/a2987359b14220452e69b4a6a68082636b1dbb9f)), closes [#737](https://github.com/camunda/camunda-8-js-sdk/issues/737)
+
 ## [8.8.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.9...v8.8.10) (2026-04-22)
 
 
