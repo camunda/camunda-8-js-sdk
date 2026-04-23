@@ -428,6 +428,15 @@ See [Search endpoints](#search-endpoints) above. Summary:
 3. Add a client factory method to the `Camunda8` class.
 4. Export the client from `src/index.ts`.
 
+### Updating the Zeebe gRPC facade
+
+The `ZeebeGrpcClient` facade in `src/zeebe/` mirrors the upstream Zeebe `gateway.proto`. The local copy lives at `src/proto/zeebe.proto` and the upstream ref is pinned in `.zeebe-proto-version`.
+
+- `npm run check:grpc-coverage` — see what (if anything) has drifted between the proto and the facade.
+- `npm run emit:grpc-additions -- --apply` — auto-backfill new wire-types, ZBGrpc method signatures, and Class 1–3 facade methods. Hard-fails on Class 4 RPCs (nested `*Request`, `bytes`, real oneofs, per-element variables) — those need a hand-written facade.
+
+A weekly workflow (`.github/workflows/proto-sync.yml`) runs the same pipeline and opens a PR. See **MAINTAINER.md → "Sync the Zeebe gateway.proto"** for the full procedure, including how to bump the pinned ref.
+
 ---
 
 ## Coding Guidelines
