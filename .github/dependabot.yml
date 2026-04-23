@@ -9,6 +9,13 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    ignore:
+      # Pin @camunda8/orchestration-cluster-api to the 8.x release range.
+      # The 9.x line will target Camunda 9 and is not API-compatible with
+      # this SDK's 8.x stable lines. Major bumps must be done manually as
+      # part of a `server-major` release (see release.config.js).
+      - dependency-name: "@camunda8/orchestration-cluster-api"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -27,6 +34,10 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    ignore:
+      # See note on main: pin to 8.x on stable/8.8 as well.
+      - dependency-name: "@camunda8/orchestration-cluster-api"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
