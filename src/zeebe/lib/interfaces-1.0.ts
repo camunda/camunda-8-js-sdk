@@ -15,8 +15,11 @@ import {
 	CreateProcessInstanceWithResultRequest,
 	CreateProcessInstanceWithResultResponseOnWire,
 	DeleteResourceRequest,
+	DeleteResourceResponse,
 	DeployResourceRequest,
 	DeployResourceResponse,
+	EvaluateConditionalRequest,
+	EvaluateConditionalResponse,
 	EvaluateDecisionRequest,
 	EvaluateDecisionResponse,
 	FailJobRequest,
@@ -523,13 +526,16 @@ export interface ZBGrpc extends GrpcClient {
 	): Promise<void>
 	deleteResourceSync: (
 		deleteResourceRequest: DeleteResourceRequest
-	) => Promise<Record<string, never>>
+	) => Promise<DeleteResourceResponse>
 	deployResourceSync<T>(
 		resource: DeployResourceRequest
 	): Promise<DeployResourceResponse<T>>
 	evaluateDecisionSync(
 		evaluateDecisionRequest: EvaluateDecisionRequest
 	): Promise<EvaluateDecisionResponse>
+	evaluateConditionalSync(
+		evaluateConditionalRequest: EvaluateConditionalRequest
+	): Promise<EvaluateConditionalResponse>
 	failJobSync(failJobRequest: FailJobRequest): Promise<void>
 	createProcessInstanceSync(
 		createProcessInstanceRequest: CreateProcessInstanceRequest
