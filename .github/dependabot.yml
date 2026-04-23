@@ -5,6 +5,13 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: "alpha"
+    ignore:
+      # Pin @camunda8/orchestration-cluster-api to the 8.x release range.
+      # The 9.x line will target Camunda 9 and is not API-compatible with
+      # this SDK's 8.x stable lines. Major bumps must be done manually as
+      # part of a `server-major` release (see release.config.js).
+      - dependency-name: "@camunda8/orchestration-cluster-api"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -15,6 +22,10 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: "stable/8.8"
+    ignore:
+      # See note above: pin to 8.x on stable/8.8 as well.
+      - dependency-name: "@camunda8/orchestration-cluster-api"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
