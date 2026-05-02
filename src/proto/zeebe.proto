@@ -6,7 +6,7 @@ option java_package = "io.camunda.zeebe.gateway.protocol";
 option go_package = "./;pb";
 
 // For a more complete documentation, refer to Zeebe documentation at:
-// https://docs.camunda.io/docs/reference/grpc
+// https://docs.camunda.io/docs/apis-tools/zeebe-api/gateway-service/
 
 message StreamActivatedJobsRequest {
   // the job type, as defined in the BPMN process (e.g. <zeebe:taskDefinition
@@ -22,6 +22,8 @@ message StreamActivatedJobsRequest {
   repeated string fetchVariable = 5;
   // a list of identifiers of tenants for which to stream jobs
   repeated string tenantIds = 6;
+  // the tenant filtering strategy - determines whether to use provided tenant IDs or assigned tenant IDs
+  TenantFilter tenantFilter = 7;
 }
 
 message ActivateJobsRequest {
@@ -44,6 +46,8 @@ message ActivateJobsRequest {
   int64 requestTimeout = 6;
   // a list of IDs of tenants for which to activate jobs
   repeated string tenantIds = 7;
+  // the tenant filtering strategy - determines whether to use provided tenant IDs or assigned tenant IDs
+  TenantFilter tenantFilter = 8;
 }
 
 message ActivateJobsResponse {
@@ -51,7 +55,35 @@ message ActivateJobsResponse {
   repeated ActivatedJob jobs = 1;
 }
 
+// Describes the tenant filtering strategy for job activation
+enum TenantFilter {
+  // Use the tenant IDs provided in the request
+  PROVIDED = 0;
+  // Use the tenant IDs assigned to the authenticated user/identity
+  ASSIGNED = 1;
+}
+
 message ActivatedJob {
+  // Describes the kind of job.
+  enum JobKind {
+    BPMN_ELEMENT = 0;
+    EXECUTION_LISTENER = 1;
+    TASK_LISTENER = 2;
+    AD_HOC_SUB_PROCESS = 3;
+  }
+
+  // Describes the listener event type of the job.
+  enum ListenerEventType {
+    ASSIGNING = 0;
+    CANCELING = 1;
+    COMPLETING = 2;
+    CREATING = 3;
+    END = 4;
+    START = 5;
+    UNSPECIFIED = 6;
+    UPDATING = 7;
+  }
+
   // the key, a unique identifier for the job
   int64 key = 1;
   // the type of the job (should match what was requested)
@@ -83,6 +115,46 @@ message ActivatedJob {
   string variables = 13;
   // the id of the tenant that owns the job
   string tenantId = 14;
+  // Contains user task properties if the job is of kind TASK_LISTENER
+  optional UserTaskProperties userTask = 15;
+  // the kind of the job.
+  JobKind kind = 16;
+  // the listener event type of the job.
+  ListenerEventType listenerEventType = 17;
+  // the list of tags
+  repeated string tags = 18;
+}
+
+message UserTaskProperties {
+  // The action performed on the user task (e.g., "claim", "update", "complete").
+  optional string action = 1;
+
+  // The user assigned to the task.
+  optional string assignee = 2;
+
+  // The list of candidate groups for the user task.
+  repeated string candidateGroups = 3;
+
+  // The list of candidate users for the user task.
+  repeated string candidateUsers = 4;
+
+  // The list of attributes that were changed in the user task.
+  repeated string changedAttributes = 5;
+
+  // The due date of the user task in ISO 8601 format.
+  optional string dueDate = 6;
+
+  // The follow-up date of the user task in ISO 8601 format.
+  optional string followUpDate = 7;
+
+  // The key of the form associated with the user task.
+  optional int64 formKey = 8;
+
+  // The priority of the user task (0-100).
+  optional int32 priority = 9;
+
+  // The unique key identifying the user task.
+  optional int64 userTaskKey = 10;
 }
 
 message CancelProcessInstanceRequest {
@@ -101,6 +173,68 @@ message CompleteJobRequest {
   int64 jobKey = 1;
   // a JSON document representing the variables in the current task scope
   string variables = 2;
+  // The result of the completed job as determined by the worker.
+  // This functionality is currently supported only by user task listeners.
+  optional JobResult result = 3;
+}
+
+message JobResult{
+  // Indicates whether the worker denies the work, i.e. explicitly doesn't approve it.
+  // For example, a user task listener can deny the completion of a user task by setting this flag to true.
+  // In this example, the completion of a task is represented by a job that the worker can complete as denied.
+  // As a result, the completion request is rejected and the task remains active.
+  // Defaults to false.
+  optional bool denied = 1;
+  // Attributes that were corrected by the worker.
+  // The following attributes can be corrected, additional attributes will be ignored:
+  //   * `assignee` - clear by providing an empty string
+  //   * `dueDate` - clear by providing an empty string
+  //   * `followUpDate` - clear by providing an empty string
+  //   * `candidateGroups` - clear by providing an empty list
+  //   * `candidateUsers` - clear by providing an empty list
+  //   * `priority` - minimum 0, maximum 100, default 50
+  //  Omitting any of the attributes will preserve the persisted attribute's value.
+  optional JobResultCorrections corrections = 2;
+  // The reason provided by the user task listener for denying the work.
+  optional string deniedReason = 3;
+  // Used to distinguish between different types of job results. Must be one of ["userTask", "adHocSubProcess"]. If not set, defaults to "userTask".
+  optional string type = 4;
+  // The list of elements that should be activated after the job is completed. Only relevant for ad-hoc subprocesses.
+  repeated JobResultActivateElement activateElements = 5;
+  // Indicates whether the completion condition of the job is fulfilled. Only relevant for ad-hoc subprocesses.
+  optional bool isCompletionConditionFulfilled = 6;
+  // Indicates whether active instances of the ad-hoc subprocess should be cancelled. Only relevant for ad-hoc subprocesses.
+  optional bool isCancelRemainingInstances = 7;
+}
+
+message JobResultCorrections {
+  // The assignee of the task.
+  optional string assignee = 1;
+  // The due date of the task.
+  optional string dueDate = 2;
+  // The follow-up date of the task.
+  optional string followUpDate = 3;
+  // The list of candidate users of the task.
+  optional StringList candidateUsers = 4;
+  // The list of candidate groups of the task.
+  optional StringList candidateGroups = 5;
+  // The priority of the task.
+  optional int32 priority = 6;
+}
+
+message JobResultActivateElement {
+  // The id of the element to activate
+  string elementId = 1;
+  // JSON document of variables that will be created on the scope of the activated element.
+  // It must be a JSON object, as variables will be mapped in a key-value fashion.
+  // e.g. { "a": 1, "b": 2 } will create two variables, named "a" and
+  // "b" respectively, with their associated values. [{ "a": 1, "b": 2 }] would not be a
+  // valid argument, as the root of the JSON document is an array and not an object.
+  string variables = 2;
+}
+
+message StringList {
+  repeated string values = 1;
 }
 
 message CompleteJobResponse {
@@ -124,11 +258,27 @@ message CreateProcessInstanceRequest {
   // will start at the start event. If non-empty the process instance will apply start
   // instructions after it has been created
   repeated ProcessInstanceCreationStartInstruction startInstructions = 5;
+
   // the tenant id of the process definition
   string tenantId = 6;
 
   // a reference key chosen by the user and will be part of all records resulted from this operation
   optional uint64 operationReference = 7;
+
+  // a list of runtime instruction that can modify the behavior of the process
+  // instance during its execution
+  // if empty (default), the process instance will be executed normally
+  repeated ProcessInstanceCreationRuntimeInstruction runtimeInstructions = 8;
+
+  // a list of tags that can be attached as meta-data to process instances
+  repeated string tags = 9;
+
+  // an optional, user-defined string identifier that identifies the process instance
+  // within the scope of the process definition (scoped by tenant). If provided and uniqueness
+  // enforcement is enabled, the engine will reject creation if another root process instance
+  // with the same business id is already active for the same process definition.
+  // Note that any active child process instances with the same business id are not taken into account.
+  optional string businessId = 10;
 }
 
 message ProcessInstanceCreationStartInstruction {
@@ -144,6 +294,18 @@ message ProcessInstanceCreationStartInstruction {
   string elementId = 1;
 }
 
+message ProcessInstanceCreationRuntimeInstruction {
+  oneof instruction {
+    TerminateProcessInstanceInstruction terminate = 1;
+  }
+}
+
+message TerminateProcessInstanceInstruction {
+  // the ID of the process element after which the process instance should be
+  // terminated
+  string afterElementId = 1;
+}
+
 message CreateProcessInstanceResponse {
   // the key of the process definition which was used to create the process instance
   int64 processDefinitionKey = 1;
@@ -157,6 +319,10 @@ message CreateProcessInstanceResponse {
   int64 processInstanceKey = 4;
   // the tenant identifier of the created process instance
   string tenantId = 5;
+  // tags attached to a process instance
+  repeated string tags = 6;
+  // the business id of the created process instance
+  optional string businessId = 7;
 }
 
 message CreateProcessInstanceWithResultRequest {
@@ -186,6 +352,10 @@ message CreateProcessInstanceWithResultResponse {
   string variables = 5;
   // the tenant identifier of the process definition
   string tenantId = 6;
+  // tags attached to a process instance
+  repeated string tags = 7;
+  // the business id of the created process instance
+  optional string businessId = 8;
 }
 
 message EvaluateDecisionRequest {
@@ -234,8 +404,10 @@ message EvaluateDecisionResponse {
   string failureMessage = 10;
   // the tenant identifier of the evaluated decision
   string tenantId = 11;
-  // the unique key identifying this decision evaluation
+  // deprecated, please refer to decisionEvaluationKey
   int64 decisionInstanceKey = 12;
+  // the unique key identifying this decision evaluation
+  int64 decisionEvaluationKey = 13;
 }
 
 message EvaluatedDecision {
@@ -260,6 +432,8 @@ message EvaluatedDecision {
   repeated EvaluatedDecisionInput evaluatedInputs = 8;
   // the tenant identifier of the evaluated decision
   string tenantId = 9;
+  // the key of the decision evaluation instance
+  string decisionEvaluationInstanceKey = 10;
 }
 
 message EvaluatedDecisionInput {
@@ -507,6 +681,8 @@ message TopologyResponse {
   int32 replicationFactor = 4;
   // gateway version
   string gatewayVersion = 5;
+  // the cluster's unique ID
+  string clusterId = 6;
 }
 
 message BrokerInfo {
@@ -604,6 +780,8 @@ message ModifyProcessInstanceRequest {
   repeated TerminateInstruction terminateInstructions = 3;
   // a reference key chosen by the user and will be part of all records resulted from this operation
   optional uint64 operationReference = 4;
+  // instructions describing which elements should be moved from one scope to another.
+  repeated MoveInstruction moveInstructions = 5;
 
   message ActivateInstruction {
     // the id of the element that should be activated
@@ -629,8 +807,32 @@ message ModifyProcessInstanceRequest {
   }
 
   message TerminateInstruction {
-    // the id of the element that should be terminated
+    // the key of the element instance that should be terminated
     int64 elementInstanceKey = 1;
+    // the id of the elements that should be terminated
+    string elementId = 2;
+  }
+
+  message MoveInstruction {
+    // the key of the element instance that should be moved
+    int64 sourceElementInstanceKey = 1;
+    // the id of the elements that should be moved
+    string sourceElementId = 2;
+    // the id of the element scope that the elements should be moved to
+    string targetElementId = 3;
+    // instructions describing which variables should be created
+    repeated VariableInstruction variableInstructions = 4;
+    // the key of the ancestor scope the element instance should be created in;
+    // set to -1 to create the new element instance within an existing element
+    // instance of the flow scope
+    int64 ancestorElementInstanceKey = 5;
+    // whether to use the source element hierarchy to infer the ancestor element
+    // instance key
+    bool inferAncestorScopeFromSourceHierarchy = 6;
+    // whether to use the source's direct parent key as the ancestor scope key;
+    // this is a simpler alternative to inferAncestorScopeFromSourceHierarchy
+    // that skips hierarchy traversal and directly uses the source's parent key
+    bool useSourceParentKeyAsAncestorScopeKey = 7;
   }
 }
 
@@ -671,10 +873,48 @@ message DeleteResourceRequest {
   int64 resourceKey = 1;
   // a reference key chosen by the user and will be part of all records resulted from this operation
   optional uint64 operationReference = 2;
+  // Indicates if the historic data of a process resource should be deleted via a
+  // batch operation asynchronously.
+  //
+  // This flag is only effective for process resources. For other resource types
+  // (decisions, forms, generic resources), this flag is ignored and no history
+  // will be deleted. In those cases, the `batchOperation` field in the response
+  // will not be populated.
+  optional bool deleteHistory = 3;
 }
 
 message DeleteResourceResponse {
+  // The system-assigned key for this resource, requested to be deleted.
+  string resourceKey = 1;
 
+  // The batch operation created for asynchronously deleting the historic data.
+  //
+  // This field is only populated when the request `deleteHistory` is set to `true` and the resource
+  // is a process definition. For other resource types (decisions, forms, generic resources),
+  // this field will not be present in the response.
+  BatchOperationCreatedResult batchOperation = 2;
+}
+
+message BatchOperationCreatedResult {
+
+  // The batch operation type
+  enum BatchOperationTypeEnum {
+    ADD_VARIABLE = 0;
+    CANCEL_PROCESS_INSTANCE = 1;
+    DELETE_DECISION_DEFINITION = 2;
+    DELETE_PROCESS_DEFINITION = 3;
+    DELETE_PROCESS_INSTANCE = 4;
+    MIGRATE_PROCESS_INSTANCE = 5;
+    MODIFY_PROCESS_INSTANCE = 6;
+    RESOLVE_INCIDENT = 7;
+    UPDATE_VARIABLE = 8;
+    DELETE_DECISION_INSTANCE = 9;
+  }
+
+  // The batch operation key created to delete the resource.
+  string batchOperationKey = 1;
+
+  BatchOperationTypeEnum batchOperationType = 2;
 }
 
 message BroadcastSignalRequest {
@@ -692,6 +932,32 @@ message BroadcastSignalResponse {
   int64 key = 1;
   // the tenant id of the signal that was broadcasted.
   string tenantId = 2;
+}
+
+message EvaluateConditionalRequest {
+  // Used to evaluate root-level conditional start events for a tenant with the given ID.
+  // This will only evaluate root-level conditional start events of process definitions which belong to the tenant.
+  string tenantId = 1;
+  // Used to evaluate root-level conditional start events of the process definition with the given key.
+  optional int64 processDefinitionKey = 2;
+  // Serialised JSON object representing the variables to use for evaluation of the conditions and to pass to the process instances that have been triggered.
+  string variables = 3;
+}
+
+message ProcessInstanceReference {
+  // The key of the process definition.
+  int64 processDefinitionKey = 1;
+  // The key of the created process instance.
+  int64 processInstanceKey = 2;
+}
+
+message EvaluateConditionalResponse {
+  // List of process instances created. If no root-level conditional start events evaluated to true, the list will be empty.
+  repeated ProcessInstanceReference processInstances = 1;
+  // The unique key of the conditional evaluation operation.
+  int64 conditionalEvaluationKey = 2;
+  // The tenant ID of the conditional evaluation operation.
+  string tenantId = 3;
 }
 
 service Gateway {
@@ -717,7 +983,7 @@ service Gateway {
      INVALID_ARGUMENT:
       - type is blank (empty string, null)
       - timeout less than 1
-      - If multi-tenancy is enabled, and tenantIds is empty (empty list)
+      - If multi-tenancy is enabled, tenantFilter is PROVIDED (default value) and tenantIds is empty (empty list)
       - If multi-tenancy is enabled, and an invalid tenant ID is provided. A tenant ID is considered invalid if:
         - The tenant ID is blank (empty string, null)
         - The tenant ID is longer than 31 characters
@@ -772,12 +1038,23 @@ service Gateway {
       INVALID_ARGUMENT:
         - the given variables argument is not a valid JSON document; it is expected to be a valid
           JSON document where the root node is an object.
+
+      ALREADY_EXISTS:
+        - Business ID Uniqueness Control is enabled, and an active root process instance
+          with the provided businessId already exists
+          for the same process definition and tenant.
    */
   rpc CreateProcessInstance (CreateProcessInstanceRequest) returns (CreateProcessInstanceResponse) {
   }
 
   /*
     Behaves similarly to `rpc CreateProcessInstance`, except that a successful response is received when the process completes successfully.
+
+    Errors:
+      ALREADY_EXISTS:
+        - Business ID Uniqueness Control is enabled, and an active root process instance
+          with the provided businessId already exists
+          for the same process definition and tenant.
   */
   rpc CreateProcessInstanceWithResult (CreateProcessInstanceWithResultRequest) returns (CreateProcessInstanceWithResultResponse) {
   }
@@ -897,6 +1174,14 @@ service Gateway {
       INVALID_ARGUMENT:
         - the given variables document is not a valid JSON document; valid documents are expected to
           be JSON documents where the root node is an object.
+      DEADLINE_EXCEEDED:
+        - the request timed out between the gateway and the broker. This can happen for general
+          timeout reasons (for example transient communication delays). On user-task-listener-
+          related operations, this can additionally happen when the corresponding listener job is
+          not completed within the request timeout.
+
+    If this happens repeatedly, retry with backoff and check listener worker availability and
+    health.
    */
   rpc SetVariables (SetVariablesRequest) returns (SetVariablesResponse) {
   }
@@ -1013,6 +1298,25 @@ service Gateway {
     Broadcasts a signal.
    */
   rpc BroadcastSignal (BroadcastSignalRequest) returns (BroadcastSignalResponse) {
+
+  }
+
+  /*
+    Evaluates root-level conditional start events for process definitions.
+    If the evaluation is successful, it will return the keys of all created process instances, along with their associated process definition key.
+    Multiple root-level conditional start events of the same process definition can trigger if their conditions evaluate to true.
+
+    Errors:
+     INVALID_ARGUMENT:
+      - The provided data is not valid
+     NOT_FOUND:
+      - The process definition was not found for the given processDefinitionKey
+     PERMISSION_DENIED:
+      - The client is not authorized to start process instances for the specified process definition
+      - If a processDefinitionKey is not provided, this indicates that the client is not authorized
+        to start process instances for at least one of the matched process definitions
+   */
+  rpc EvaluateConditional (EvaluateConditionalRequest) returns (EvaluateConditionalResponse) {
 
   }
 }
