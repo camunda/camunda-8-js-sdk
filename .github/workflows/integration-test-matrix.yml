@@ -345,7 +345,7 @@ jobs:
             --exclude '**/8.8/getProcessDefinition.spec.ts' \
             --exclude '**/8.8/getUserTask.spec.ts' \
             --exclude '**/8.8/searchUserTasks.spec.ts' \
-            --exclude '**/c8/rest/activateJobs.spec.ts'
+            --exclude '**/c8/rest/activateJobs.rest.spec.ts'
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
