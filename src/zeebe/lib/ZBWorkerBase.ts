@@ -579,6 +579,8 @@ You should call only one job action method in the worker handler. This is a bug 
 					this.handleStreamEnd(id)
 					this.pollMutex = false
 				}, backoffDuration)
+			} else {
+				this.pollMutex = false
 			}
 		} else {
 			this.pollMutex = false
