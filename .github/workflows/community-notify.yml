@@ -1,0 +1,18 @@
+name: Community & Dependabot Notifications
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  notify:
+    uses: camunda/sdk-infra/.github/workflows/sdk-slack-community-notify.yml@v1
+    with:
+      repo-name: camunda-8-js-sdk
+      mention-group: ${{ vars.SLACK_MENTION_GROUP }}
+    secrets:
+      slack-webhook-url: ${{ secrets.SLACK_SDK_ALERTS }}

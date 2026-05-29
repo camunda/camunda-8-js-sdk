@@ -374,3 +374,23 @@ jobs:
         with:
           folder: docs
           branch: gh-pages
+
+  notify-release-failure:
+    needs:
+      - unit-tests
+      - local_integration
+      - local_multitenancy_integration
+      - saas_integration
+      - saas_integration_8_8
+      - local_integration_8_8
+      - local_integration_8_8_against_8_9
+      - tag-and-publish
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    permissions: {}
+    uses: camunda/sdk-infra/.github/workflows/sdk-slack-notify.yml@v1
+    with:
+      repo-name: camunda-8-js-sdk
+      workflow-name: Release
+      mention-group: ${{ vars.SLACK_MENTION_GROUP }}
+    secrets:
+      slack-webhook-url: ${{ secrets.SLACK_SDK_ALERTS }}
