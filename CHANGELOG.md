@@ -1,3 +1,10 @@
+# [8.9.0-alpha.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.6...v8.9.0-alpha.7) (2026-05-31)
+
+
+### Bug Fixes
+
+* issue 784 ([4caab63](https://github.com/camunda/camunda-8-js-sdk/commit/4caab63c5964093e0d4987cf1789d1faa3522e4c))
+
 # [8.9.0-alpha.6](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.5...v8.9.0-alpha.6) (2026-04-22)
 
 
