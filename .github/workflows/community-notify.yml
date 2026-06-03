@@ -14,5 +14,6 @@ jobs:
     with:
       repo-name: camunda-8-js-sdk
       mention-group: ${{ vars.SLACK_MENTION_GROUP }}
+      author-association: ${{ github.event.pull_request.author_association || github.event.issue.author_association }}
     secrets:
       slack-webhook-url: ${{ secrets.SLACK_SDK_ALERTS }}
