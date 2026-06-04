@@ -52,6 +52,7 @@ All workflows live under [.github/workflows/](.github/workflows/).
 | `backport.yml`                            | PR closed, `/backport` comment                           | Creates backport PRs (e.g. `main` → `stable/8.8`) via `korthout/backport-action`.                                    |
 | `integration-test-matrix.yml`             | scheduled (02:00 UTC), manual dispatch                   | Cross-version client × server compatibility matrix. Runs **on a stable branch** and tests every released SDK version against every server version ≥ current minor. |
 | `integration-test-matrix-trigger.yaml`    | scheduled (02:00 UTC)                                    | Fans out the matrix run to each active stable branch (uses `gh workflow run --ref stable/<x.y>`).                    |
+| `proto-sync.yml`                          | scheduled (Mon 04:00 UTC), manual dispatch              | Pulls latest Zeebe `gateway.proto` from the pinned upstream ref, runs the auto-emitter, and opens a PR if anything changed. See [§7 — Sync the Zeebe gateway.proto](#sync-the-zeebe-gatewayproto). |
 
 ### CI vs. Release: why feature branches and `main`/`stable/**` are separated
 
@@ -193,6 +194,54 @@ Re-run the `tag-and-publish` job from the Actions UI. semantic-release is idempo
 
 Do **not** add an `NPM_TOKEN` secret. Verify on npmjs.com that `@camunda8/sdk` lists this repo + `release.yml` as a Trusted Publisher.
 
+### Sync the Zeebe gateway.proto
+
+The hand-written gRPC facade in `src/zeebe/` mirrors the upstream Zeebe `gateway.proto`. The local copy lives at `src/proto/zeebe.proto` and the upstream ref is pinned in `.zeebe-proto-version` (currently `stable/8.9`).
+
+#### Pipeline at a glance
+
+| Script                                 | Purpose                                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `scripts/fetch-zeebe-proto.mjs`        | Resolve pinned ref → SHA, fetch `gateway.proto` from `camunda/camunda`, write metadata.                  |
+| `scripts/check-grpc-coverage.mjs`      | Diff the proto against the facade. Reports missing RPCs, messages, and fields. Classifies each RPC 1–4. |
+| `scripts/emit-grpc-additions.mjs`      | Auto-emit Class 1–3 additive surfaces. **Hard-fails on Class 4** (bespoke shaping required).             |
+
+npm script aliases:
+
+```bash
+npm run fetch:zeebe-proto       # refresh src/proto/zeebe.proto
+npm run check:zeebe-proto       # CI: fail if local copy drifts from pinned upstream
+npm run check:grpc-coverage     # human-readable gap report
+npm run check:grpc-drift        # CI: exit non-zero on any gap
+npm run emit:grpc-additions     # print proposed additive code
+npm run emit:grpc-additions -- --apply   # write additive code into source files
+```
+
+#### Bumping the pinned proto ref
+
+1. Edit `.zeebe-proto-version` (e.g. `stable/8.9` → `stable/9.0`).
+2. `npm run fetch:zeebe-proto` — refreshes `src/proto/zeebe.proto`.
+3. `npm run check:grpc-coverage` — see what changed.
+4. `npm run emit:grpc-additions -- --apply` — auto-backfill Class 1–3 surfaces. If this exits with code 3, a new RPC needs a Class 4 (bespoke) facade designed by hand; do that on a separate commit before re-running.
+5. Splice in any newly-reported optional fields on existing wire-types (the emitter prints these in `--print` mode but does not auto-apply — placement inside an existing interface body is not safe to automate).
+6. `npx tsc --noEmit -p tsconfig.json` and `npm run check:grpc-drift` — both must be clean.
+7. Commit with a `feat(zeebe):` message; flag any breaking changes.
+
+#### Weekly automation
+
+`.github/workflows/proto-sync.yml` runs the above pipeline every Monday at 04:00 UTC (and on manual dispatch) and opens a PR titled `chore(zeebe): sync gateway.proto from camunda/camunda@<ref>`. The PR body includes a maintainer checklist for the manual splice step. The workflow fails (and does not open a PR) if the emitter detects a Class 4 RPC.
+
+#### Shape classes (request-shape classifier)
+
+| Class | Trigger                                                              | Facade template                                    |
+| ----- | -------------------------------------------------------------------- | -------------------------------------------------- |
+| 1     | Pure pass-through (no `string variables`, no `operationReference`)   | Direct forward to `*Sync()`.                        |
+| 2     | Has optional `operationReference`                                    | Spread + `operationReference?.toString()`.          |
+| 3     | Has `string variables` field                                         | Spread + `losslessStringify(variables)` + `tenantId ?? this.tenantId`. |
+| 4     | Nested `*Request` field, `bytes`, real oneofs, or per-element variables | Hand-written by a maintainer.                       |
+
+Synthetic oneofs from proto3 `optional` fields (named `_fieldname`) are filtered out and do not trigger Class 4.
+
 ---
 
 ## 8. Cross-references
@@ -203,3 +252,6 @@ Do **not** add an `NPM_TOKEN` secret. Verify on npmjs.com that `@camunda8/sdk` l
 - [.github/workflows/ci.yml](.github/workflows/ci.yml) — PR / feature-branch CI
 - [.github/workflows/integration-test-matrix.yml](.github/workflows/integration-test-matrix.yml) — nightly compatibility matrix
 - [.github/workflows/backport.yml](.github/workflows/backport.yml) — automated backports
+- [.github/workflows/proto-sync.yml](.github/workflows/proto-sync.yml) — weekly Zeebe `gateway.proto` sync
+- [.zeebe-proto-version](.zeebe-proto-version) — pinned upstream ref for the Zeebe gateway proto
+- [scripts/fetch-zeebe-proto.mjs](scripts/fetch-zeebe-proto.mjs), [scripts/check-grpc-coverage.mjs](scripts/check-grpc-coverage.mjs), [scripts/emit-grpc-additions.mjs](scripts/emit-grpc-additions.mjs) — proto-sync pipeline

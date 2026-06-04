@@ -781,7 +781,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	}: {
 		resourceKey: string
 		operationReference?: number | LosslessNumber
-	}): Promise<Record<string, never>> {
+	}): Promise<Grpc.DeleteResourceResponse> {
 		return this.executeOperation('deleteResourceSync', async () =>
 			(await this.grpc).deleteResourceSync({ resourceKey, operationReference })
 		)
@@ -923,6 +923,33 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				...evaluateDecisionRequest,
 				variables,
 				tenantId: evaluateDecisionRequest.tenantId ?? this.tenantId,
+			})
+		)
+	}
+
+	/**
+	 * Evaluate root-level conditional start events for a tenant. For every
+	 * conditional start event whose condition evaluates to true given the
+	 * supplied variables, a new process instance is created. The list of
+	 * created instances is returned in the response.
+	 *
+	 * Optionally restrict the evaluation to a single process definition by
+	 * supplying `processDefinitionKey`.
+	 *
+	 * Available since Camunda 8.9.
+	 */
+	public evaluateConditional(
+		evaluateConditionalRequest: Grpc.EvaluateConditionalRequest
+	): Promise<Grpc.EvaluateConditionalResponse> {
+		const variables = losslessStringify(
+			evaluateConditionalRequest.variables
+		) as unknown as ZB.JSONDoc
+		return this.executeOperation('evaluateConditional', async () =>
+			(await this.grpc).evaluateConditionalSync({
+				...evaluateConditionalRequest,
+				variables: variables as unknown as string,
+				tenantId:
+					evaluateConditionalRequest.tenantId ?? (this.tenantId as string),
 			})
 		)
 	}

@@ -39,6 +39,33 @@ jobs:
       - name: Run Unit Tests
         run: npm run test
 
+  # Verify the hand-written Zeebe gRPC facade in src/zeebe/ matches the
+  # upstream gateway.proto pinned in .zeebe-proto-version. Fails the build
+  # if any RPC, top-level message, or field defined in the proto is missing
+  # from the SDK. See MAINTAINER.md for how to refresh the proto and
+  # backfill new surfaces with `npm run emit:grpc-additions -- --apply`.
+  grpc-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify zeebe.proto matches pinned upstream ref
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run check:zeebe-proto
+
+      - name: Verify SDK facade covers all proto surfaces
+        run: npm run check:grpc-drift
+
   # 8.8 self-managed integration tests. Uses only the public docker-compose
   # stack — no secrets required. Runs on every push and every pull request
   # (including fork PRs) so external contributors get PR feedback.
