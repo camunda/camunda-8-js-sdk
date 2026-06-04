@@ -1,3 +1,10 @@
+# [8.9.0-alpha.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.7...v8.9.0-alpha.8) (2026-06-04)
+
+
+### Bug Fixes
+
+* pass author-association to community notification workflow ([09fb9b8](https://github.com/camunda/camunda-8-js-sdk/commit/09fb9b8849b3d9c7f5ab3d19457c9bb1e7b492a6))
+
 # [8.9.0-alpha.7](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.6...v8.9.0-alpha.7) (2026-05-31)
 
 
