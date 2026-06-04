@@ -17,3 +17,6 @@ jobs:
       author-association: ${{ github.event.pull_request.author_association || github.event.issue.author_association }}
     secrets:
       slack-webhook-url: ${{ secrets.SLACK_SDK_ALERTS }}
+      vault-addr: ${{ secrets.VAULT_ADDR }}
+      vault-role-id: ${{ secrets.VAULT_ROLE_ID }}
+      vault-secret-id: ${{ secrets.VAULT_SECRET_ID }}
