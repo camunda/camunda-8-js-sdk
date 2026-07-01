@@ -33,7 +33,7 @@ When a new Camunda minor (e.g. `8.9`) is ready to be promoted to `latest`:
 2. Update the GitHub **repository variable** (Settings → Secrets and variables → Actions → Variables) `CAMUNDA_SDK_CURRENT_STABLE_MINOR` from `8.8` to `8.9`.
 3. The next merge to `stable/8.9` will publish to npm dist-tag `latest`. The previous current line (`stable/8.8`) automatically falls back to maintenance dist-tag `8.8-stable` on its next release.
 4. Update [.github/workflows/integration-test-matrix-trigger.yaml](.github/workflows/integration-test-matrix-trigger.yaml) to add a daily compatibility-test trigger for the new branch (uncomment / duplicate the `trigger-stable-8-9` block).
-5. Update [.github/dependabot.yml](.github/dependabot.yml) `target-branch` entries if the previous stable line should be replaced as a dependabot target.
+5. Update [.github/renovate.json](.github/renovate.json) `baseBranchPatterns` if the previous stable line should be replaced as a Renovate target.
 
 No git tag manipulation is required — semantic-release reads existing tags and computes the next version per branch independently.
 

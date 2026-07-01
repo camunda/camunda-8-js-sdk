@@ -61,7 +61,7 @@ Note the **mutated semver**: `feat`/`fix` produce **patch** bumps, not minor/maj
 
 ### Common pitfalls
 
-- **`deps:` is not valid.** Use `chore(deps): ...` for dependency pinning / bumps. (Dependabot itself uses `chore(deps):`.)
+- **`deps:` is not valid.** Use `chore(deps): ...` for dependency pinning / bumps. (Renovate is configured to use `chore(deps):` as well.)
 - The pre-commit Husky hook runs `npm run test`, which can fail on local-only files (e.g. nested worktrees). The release workflow bypasses this with `HUSKY=0`. For agent commits that are otherwise validated, prefix with `HUSKY=0` rather than `--no-verify`.
 
 ---

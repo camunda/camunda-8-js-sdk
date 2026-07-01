@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "semanticCommits": "enabled",
+  "baseBranchPatterns": ["main", "stable/8.8"],
+  "rebaseWhen": "behind-base-branch",
+  "packageRules": [
+    {
+      "description": "Group all npm updates into a single PR (mirrors Dependabot's npm-dependencies group).",
+      "matchManagers": ["npm"],
+      "groupName": "npm dependencies"
+    },
+    {
+      "description": "Group GitHub Actions updates into a single PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Never auto-bump the orchestration API client across majors.",
+      "matchPackageNames": ["@camunda8/orchestration-cluster-api"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Auto-merge minor updates once CI is green.",
+      "matchUpdateTypes": ["minor"],
+      "automerge": true
+    }
+  ],
+  "vulnerabilityAlerts": { "enabled": false }
+}
