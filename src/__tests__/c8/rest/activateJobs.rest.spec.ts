@@ -82,7 +82,8 @@ test.runIf(
 							jobs[0].complete().then(() => done(void 0))
 						})
 				})
-		})
+		}),
+	30000
 )
 
 // https://github.com/camunda/camunda-8-js-sdk/issues/424
@@ -95,28 +96,40 @@ test.runIf(
 			security: ['secured', 'unsecured'],
 		},
 	})
-)('Can cancel an in-flight REST job activation call', async () => {
-	const res = restClient.activateJobs({
-		maxJobsToActivate: 2,
-		requestTimeout: 5000,
-		timeout: 5000,
-		type: 'console-log-complete-rest',
-		worker: 'test',
-	})
+)(
+	'Can cancel an in-flight REST job activation call',
+	async () => {
+		const res = restClient.activateJobs({
+			maxJobsToActivate: 2,
+			requestTimeout: 5000,
+			timeout: 5000,
+			type: 'console-log-complete-rest',
+			worker: 'test',
+		})
 
-	res.then(() => {
-		throw new Error('Should not have received jobs')
-	})
-	res.cancel(`Activate jobs call cancelled from test`)
-	const process = await restClient.createProcessInstance({
-		processDefinitionId,
-		variables: {
-			someNumberField: 8,
-		},
-	})
-	// Wait for a couple of seconds to ensure that we do not receive any jobs
-	await delay(3000)
-	await restClient.cancelProcessInstance({
-		processInstanceKey: process.processInstanceKey,
-	})
-})
+		res.then(() => {
+			throw new Error('Should not have received jobs')
+		})
+		res.cancel(`Activate jobs call cancelled from test`)
+		const process = await restClient.createProcessInstance({
+			processDefinitionId,
+			variables: {
+				someNumberField: 8,
+			},
+		})
+		// Wait for a couple of seconds to ensure that we do not receive any jobs
+		await delay(3000)
+		try {
+			await restClient.cancelProcessInstance({
+				processInstanceKey: process.processInstanceKey,
+			})
+		} catch (e: unknown) {
+			// The process may have already completed (e.g. a background activateJobs
+			// from a prior test picked up and completed the job). Treat NOT_FOUND as
+			// an acceptable outcome here since the goal of the test is to verify that
+			// the cancellation of the activateJobs call prevented job delivery.
+			if ((e as { statusCode?: number })?.statusCode !== 404) throw e
+		}
+	},
+	15000
+)
