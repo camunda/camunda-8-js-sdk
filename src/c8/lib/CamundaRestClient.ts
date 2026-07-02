@@ -2,7 +2,7 @@ import fs, { ReadStream } from 'node:fs'
 
 import { debug } from 'debug'
 import FormData from 'form-data'
-import got, { CancelableRequest, Response } from 'got'
+import got, { CancelableRequest, RequiredRetryOptions, Response } from 'got'
 import { parse, stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
@@ -140,6 +140,11 @@ export class CamundaRestClient {
 	constructor(options?: {
 		config?: Camunda8ClientConfiguration
 		oAuthProvider?: IHeadersProvider
+		/**
+		 * Custom retry configuration for the underlying HTTP client. Overrides the default retry config.
+		 * See {@link https://github.com/sindresorhus/got/blob/main/documentation/7-retry.md | got retry documentation} for details.
+		 */
+		retry?: Partial<RequiredRetryOptions>
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
@@ -172,7 +177,7 @@ export class CamundaRestClient {
 				createTrackedGot(
 					got.extend({
 						prefixUrl: this.prefixUrl,
-						retry: GotRetryConfig,
+						retry: options?.retry ?? GotRetryConfig,
 						https: {
 							certificateAuthority,
 						},
