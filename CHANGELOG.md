@@ -1,3 +1,10 @@
+# [8.9.0-alpha.9](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.8...v8.9.0-alpha.9) (2026-07-02)
+
+
+### Features
+
+* **rest-client:** allow customizing retry config via constructor option ([cea5ab8](https://github.com/camunda/camunda-8-js-sdk/commit/cea5ab87bc370413fecf202c397bd003d78f8c19)), closes [#808](https://github.com/camunda/camunda-8-js-sdk/issues/808)
+
 # [8.9.0-alpha.8](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.7...v8.9.0-alpha.8) (2026-06-04)
 
 
