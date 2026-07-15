@@ -511,7 +511,10 @@ export class ModelerApiClient {
 	}
 
 	/**
-	 * Creates a version (a named snapshot of a file).
+	 * Creates a version (a snapshot of a file).
+	 *
+	 * `name` is optional: if omitted, Web Modeler assigns a name automatically. Provide `name` to
+	 * create a named version.
 	 *
 	 * Versions are the successor to milestones (renamed in Web Modeler 8.9). Use this method for
 	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link createMilestone}.
