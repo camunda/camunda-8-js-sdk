@@ -205,7 +205,10 @@ export interface PubSearchResultDtoMilestoneMetadataDto {
  * Use the `versions` endpoints in Web Modeler 8.9 and later.
  */
 export interface CreateVersionDto {
-	/** maxLength: 255 minLength: 1 */
+	/**
+	 * Optional. If omitted, Web Modeler assigns a name automatically.
+	 * maxLength: 255 minLength: 1
+	 */
 	name?: string
 	description?: string
 	/** maxLength: 255 minLength: 1 */
