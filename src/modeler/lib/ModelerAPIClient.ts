@@ -99,7 +99,8 @@ export class ModelerApiClient {
 	 */
 	async addCollaborator(req: Dto.CreateCollaboratorDto): Promise<null> {
 		const headers = await this.getHeaders()
-		return got
+		const rest = await this.rest
+		return rest
 			.put(`collaborators`, {
 				headers,
 				body: JSON.stringify(req),
@@ -119,7 +120,8 @@ export class ModelerApiClient {
 		req: Dto.PubSearchDtoProjectCollaboratorDto
 	): Promise<Dto.PubSearchResultDtoProjectCollaboratorDto> {
 		const headers = await this.getHeaders()
-		return got
+		const rest = await this.rest
+		return rest
 			.post(`collaborators/search`, {
 				headers,
 				body: JSON.stringify(req),
@@ -144,7 +146,7 @@ export class ModelerApiClient {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
-			.delete(`project/${projectId}collaborators/${email}`, {
+			.delete(`projects/${projectId}/collaborators/${email}`, {
 				headers,
 			})
 			.then(this.decodeResponseOrThrow) as Promise<null>
@@ -395,7 +397,10 @@ export class ModelerApiClient {
 	}
 
 	/**
+	 * Creates a milestone (a named snapshot of a file).
 	 *
+	 * @deprecated Milestones were renamed to versions in Web Modeler 8.9. The `milestones` endpoints are
+	 * only available in Web Modeler 8.8 and earlier. For Web Modeler 8.9 and later, use {@link createVersion}.
 	 * @throws {RESTError}
 	 */
 	async createMilestone(
@@ -414,7 +419,8 @@ export class ModelerApiClient {
 	}
 
 	/**
-	 *
+	 * @deprecated Milestones were renamed to versions in Web Modeler 8.9. The `milestones` endpoints are
+	 * only available in Web Modeler 8.8 and earlier. For Web Modeler 8.9 and later, use {@link getVersion}.
 	 * @throws {RESTError}
 	 */
 	async getMilestone(milestoneId: string): Promise<Dto.MilestoneDto> {
@@ -429,18 +435,26 @@ export class ModelerApiClient {
 
 	/**
 	 * Deletion of resources is recursive and cannot be undone.
+	 *
+	 * @deprecated Milestones were renamed to versions in Web Modeler 8.9. The `milestones` endpoints are
+	 * only available in Web Modeler 8.8 and earlier. For Web Modeler 8.9 and later, use {@link deleteVersion}.
 	 * @throws {RESTError}
 	 */
 	async deleteMilestone(milestoneId: string) {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
-		return rest(`milestones/${milestoneId}`, {
-			headers,
-		}).then(this.decodeResponseOrThrow)
+		return rest
+			.delete(`milestones/${milestoneId}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow)
 	}
 
 	/**
 	 * Returns a link to a visual comparison between two milestones where the milestone referenced by milestone1Id acts as a baseline to compare the milestone referenced by milestone2Id against.
+	 *
+	 * @deprecated Milestones were renamed to versions in Web Modeler 8.9. The `milestones` endpoints are
+	 * only available in Web Modeler 8.8 and earlier. For Web Modeler 8.9 and later, use {@link compareVersions}.
 	 * @throws {RESTError}
 	 */
 	async getMilestoneComparison(
@@ -476,6 +490,9 @@ export class ModelerApiClient {
 	 * page specifies the page number to return.
 	 *
 	 * size specifies the number of items per page. The default value is 10.
+	 *
+	 * @deprecated Milestones were renamed to versions in Web Modeler 8.9. The `milestones` endpoints are
+	 * only available in Web Modeler 8.8 and earlier. For Web Modeler 8.9 and later, use {@link searchVersions}.
 	 * @throws {RESTError}
 	 */
 	async searchMilestones(
@@ -491,6 +508,171 @@ export class ModelerApiClient {
 			.then((res) =>
 				JSON.parse(this.decodeResponseOrThrow(res))
 			) as Promise<Dto.PubSearchResultDtoMilestoneMetadataDto>
+	}
+
+	/**
+	 * Creates a version (a named snapshot of a file).
+	 *
+	 * Versions are the successor to milestones (renamed in Web Modeler 8.9). Use this method for
+	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link createMilestone}.
+	 * @throws {RESTError}
+	 */
+	async createVersion(
+		req: Dto.CreateVersionDto
+	): Promise<Dto.VersionMetadataDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.post(`versions`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.VersionMetadataDto>
+	}
+
+	/**
+	 * Retrieves a version.
+	 *
+	 * Versions are the successor to milestones (renamed in Web Modeler 8.9). Use this method for
+	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link getMilestone}.
+	 * @throws {RESTError}
+	 */
+	async getVersion(versionId: string): Promise<Dto.VersionDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`versions/${versionId}`, {
+			headers,
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.VersionDto>
+	}
+
+	/**
+	 * Updates the name, description, or organization visibility of a version.
+	 *
+	 * This capability has no milestone equivalent; it was added alongside versions in Web Modeler 8.9.
+	 * @throws {RESTError}
+	 */
+	async updateVersion(
+		versionId: string,
+		update: Dto.UpdateVersionDto
+	): Promise<Dto.VersionMetadataDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.patch(`versions/${versionId}`, {
+				headers,
+				body: JSON.stringify(update),
+			})
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.VersionMetadataDto>
+	}
+
+	/**
+	 * Deletion of resources is recursive and cannot be undone.
+	 *
+	 * Versions are the successor to milestones (renamed in Web Modeler 8.9). Use this method for
+	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link deleteMilestone}.
+	 * @throws {RESTError}
+	 */
+	async deleteVersion(versionId: string) {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.delete(`versions/${versionId}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow)
+	}
+
+	/**
+	 * Restores a file to the state captured by the given version.
+	 *
+	 * This capability has no milestone equivalent; it was added alongside versions in Web Modeler 8.9.
+	 * @throws {RESTError}
+	 */
+	async restoreVersion(
+		versionId: string,
+		req: Dto.RestoreVersionDto
+	): Promise<Dto.VersionMetadataDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.post(`versions/${versionId}/restore`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.VersionMetadataDto>
+	}
+
+	/**
+	 * Returns a link to a visual comparison between two versions where the version referenced by version1Id acts as a baseline to compare the version referenced by version2Id against.
+	 *
+	 * Versions are the successor to milestones (renamed in Web Modeler 8.9). Use this method for
+	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link getMilestoneComparison}.
+	 *
+	 * Note: unlike the milestone comparison (which returned the link as a plain string), this returns a
+	 * {@link Dto.VersionComparisonDto} object with a `url` property.
+	 * @throws {RESTError}
+	 */
+	async compareVersions(
+		version1Id: string,
+		version2Id: string
+	): Promise<Dto.VersionComparisonDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`versions/compare/${version1Id}...${version2Id}`, {
+			headers,
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.VersionComparisonDto>
+	}
+
+	/**
+	 * Searches for versions.
+	 *
+	 * filter specifies which fields should match. Only items that match the given fields will be returned.
+	 *
+	 * Note: Date fields need to be specified in a format compatible with java.time.ZonedDateTime; for example 2023-09-20T11:31:20.206801604Z.
+	 *
+	 * You can use suffixes to match date ranges:
+	 *
+	 * Modifier	Description
+	 * ||/y	Within a year
+	 * ||/M	Within a month
+	 * ||/w	Within a week
+	 * ||/d	Within a day
+	 * ||/h	Within an hour
+	 * ||/m	Within a minute
+	 * ||/s	Within a second
+	 * sort specifies by which fields and direction (ASC/DESC) the result should be sorted.
+	 *
+	 * page specifies the page number to return.
+	 *
+	 * size specifies the number of items per page. The default value is 10.
+	 *
+	 * Versions are the successor to milestones (renamed in Web Modeler 8.9). Use this method for
+	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link searchMilestones}.
+	 * @throws {RESTError}
+	 */
+	async searchVersions(
+		req: Dto.PubSearchDtoVersionMetadataDto
+	): Promise<Dto.PubSearchResultDtoVersionMetadataDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.post(`versions/search`, {
+				headers,
+				body: JSON.stringify(req),
+			})
+			.then((res) =>
+				JSON.parse(this.decodeResponseOrThrow(res))
+			) as Promise<Dto.PubSearchResultDtoVersionMetadataDto>
 	}
 
 	/**
