@@ -440,14 +440,14 @@ export class ModelerApiClient {
 	 * only available in Web Modeler 8.8 and earlier. For Web Modeler 8.9 and later, use {@link deleteVersion}.
 	 * @throws {RESTError}
 	 */
-	async deleteMilestone(milestoneId: string) {
+	async deleteMilestone(milestoneId: string): Promise<null> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
 			.delete(`milestones/${milestoneId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow)
+			.then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**
@@ -581,14 +581,14 @@ export class ModelerApiClient {
 	 * Web Modeler 8.9 and later; for Web Modeler 8.8 and earlier, use {@link deleteMilestone}.
 	 * @throws {RESTError}
 	 */
-	async deleteVersion(versionId: string) {
+	async deleteVersion(versionId: string): Promise<null> {
 		const headers = await this.getHeaders()
 		const rest = await this.rest
 		return rest
 			.delete(`versions/${versionId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow)
+			.then(this.decodeResponseOrThrow) as Promise<null>
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import { BeforeRequestHook } from 'got'
+import type { BeforeRequestHook } from 'got'
 
 import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { ModelerApiClient } from '../../modeler/index'
