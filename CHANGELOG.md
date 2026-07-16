@@ -1,3 +1,15 @@
+## [8.8.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.12...v8.8.13) (2026-07-16)
+
+
+### Bug Fixes
+
+* **modeler:** resolve delete methods with real null instead of casting ([9641877](https://github.com/camunda/camunda-8-js-sdk/commit/96418776103efa31cab4d0ab15d0c330f4de6870))
+
+
+### Features
+
+* **modeler:** add versions endpoints and deprecate milestones ([86ec8f7](https://github.com/camunda/camunda-8-js-sdk/commit/86ec8f79e17587340fde7eebb87faa2938ccc014)), closes [#812](https://github.com/camunda/camunda-8-js-sdk/issues/812)
+
 ## [8.8.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.11...v8.8.12) (2026-07-02)
 
 
