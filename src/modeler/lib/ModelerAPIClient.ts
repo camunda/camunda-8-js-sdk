@@ -149,7 +149,8 @@ export class ModelerApiClient {
 			.delete(`projects/${projectId}/collaborators/${email}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow) as Promise<null>
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
 	}
 
 	/**
@@ -447,7 +448,8 @@ export class ModelerApiClient {
 			.delete(`milestones/${milestoneId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow) as Promise<null>
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
 	}
 
 	/**
@@ -588,7 +590,8 @@ export class ModelerApiClient {
 			.delete(`versions/${versionId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow) as Promise<null>
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
 	}
 
 	/**
