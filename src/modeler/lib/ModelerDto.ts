@@ -144,6 +144,10 @@ export interface UpdateFolderDto {
 	parentId: string
 }
 
+/**
+ * @deprecated Milestones were renamed to versions in Web Modeler 8.9. Use {@link CreateVersionDto} instead.
+ * This type targets the `milestones` endpoints, which are only available in Web Modeler 8.8 and earlier.
+ */
 export interface CreateMilestoneDto {
 	/** maxLength: 255 minLength: 1 */
 	name: string
@@ -151,6 +155,10 @@ export interface CreateMilestoneDto {
 	fileId: string
 }
 
+/**
+ * @deprecated Milestones were renamed to versions in Web Modeler 8.9. Use {@link VersionMetadataDto} instead.
+ * This type targets the `milestones` endpoints, which are only available in Web Modeler 8.8 and earlier.
+ */
 export interface MilestoneMetadataDto {
 	id: string
 	name: string
@@ -161,11 +169,19 @@ export interface MilestoneMetadataDto {
 	updatedBy: UserDto
 }
 
+/**
+ * @deprecated Milestones were renamed to versions in Web Modeler 8.9. Use {@link VersionDto} instead.
+ * This type targets the `milestones` endpoints, which are only available in Web Modeler 8.8 and earlier.
+ */
 export interface MilestoneDto {
 	metadata: MilestoneMetadataDto
 	content: string
 }
 
+/**
+ * @deprecated Milestones were renamed to versions in Web Modeler 8.9. Use {@link PubSearchDtoVersionMetadataDto} instead.
+ * This type targets the `milestones` endpoints, which are only available in Web Modeler 8.8 and earlier.
+ */
 export interface PubSearchDtoMilestoneMetadataDto {
 	filter: Partial<MilestoneMetadataDto>
 	sort?: SortDto[]
@@ -175,8 +191,78 @@ export interface PubSearchDtoMilestoneMetadataDto {
 	size?: number
 }
 
+/**
+ * @deprecated Milestones were renamed to versions in Web Modeler 8.9. Use {@link PubSearchResultDtoVersionMetadataDto} instead.
+ * This type targets the `milestones` endpoints, which are only available in Web Modeler 8.8 and earlier.
+ */
 export interface PubSearchResultDtoMilestoneMetadataDto {
 	items: MilestoneMetadataDto[]
+	total: number
+}
+
+/**
+ * Versions are the successor to milestones (renamed in Web Modeler 8.9).
+ * Use the `versions` endpoints in Web Modeler 8.9 and later.
+ */
+export interface CreateVersionDto {
+	/**
+	 * Optional. If omitted, Web Modeler assigns a name automatically.
+	 * maxLength: 255 minLength: 1
+	 */
+	name?: string
+	description?: string
+	/** maxLength: 255 minLength: 1 */
+	fileId: string
+	organizationPublic?: boolean
+}
+
+export interface VersionMetadataDto {
+	id: string
+	name: string
+	description?: string
+	fileId: string
+	created: string
+	createdBy: UserDto
+	updated: string
+	updatedBy: UserDto
+	organizationPublic?: boolean
+}
+
+export interface VersionDto {
+	metadata: VersionMetadataDto
+	content: string
+}
+
+export interface UpdateVersionDto {
+	/** maxLength: 255 minLength: 1 */
+	name?: string
+	description?: string
+	organizationPublic?: boolean
+}
+
+export interface RestoreVersionDto {
+	/** The version number to restore. */
+	version: number
+}
+
+/**
+ * The result of comparing two versions. `url` is a link to a visual comparison in Web Modeler.
+ */
+export interface VersionComparisonDto {
+	url: string
+}
+
+export interface PubSearchDtoVersionMetadataDto {
+	filter: Partial<VersionMetadataDto>
+	sort?: SortDto[]
+	/** minimum: 0 */
+	page?: number
+	/** maximum: 50 minimum: 0 */
+	size?: number
+}
+
+export interface PubSearchResultDtoVersionMetadataDto {
+	items: VersionMetadataDto[]
 	total: number
 }
 
