@@ -105,7 +105,8 @@ export class ModelerApiClient {
 				headers,
 				body: JSON.stringify(req),
 			})
-			.then(this.decodeResponseOrThrow) as Promise<null>
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
 	}
 
 	/**
@@ -224,7 +225,8 @@ export class ModelerApiClient {
 			.delete(`files/${fileId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow) as Promise<null>
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
 	}
 
 	/**
@@ -352,7 +354,8 @@ export class ModelerApiClient {
 			.delete(`folders/${folderId}`, {
 				headers,
 			})
-			.then(this.decodeResponseOrThrow) as Promise<null>
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
 	}
 
 	/**
