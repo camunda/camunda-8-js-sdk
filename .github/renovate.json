@@ -25,10 +25,19 @@
       "enabled": false
     },
     {
+      "description": "Do not raise routine major-update PRs. Renovate's vulnerability remediation bypasses packageRules by design, so a major is still raised when it is the lowest version that fixes a known vulnerability.",
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "Auto-merge minor and patch updates once CI is green.",
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     }
   ],
-  "vulnerabilityAlerts": { "enabled": false }
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "vulnerabilityFixStrategy": "lowest"
+  },
+  "osvVulnerabilityAlerts": true
 }
