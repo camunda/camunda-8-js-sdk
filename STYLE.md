@@ -32,7 +32,7 @@ often annotated with a comment explaining why.
 
 1. **Definite-assignment across branches** — when the initializing logic is
    _multi-statement_ (a `try/catch`, a multi-arm `if`) and cannot be a single
-   `const = expr`, declare a typed `let` and assign it **exactly once per branch**.
+   `const x = expr`, declare a typed `let` and assign it **exactly once per branch**.
    These are morally `const`; TypeScript's definite-assignment analysis guarantees
    they are set before use.
 
