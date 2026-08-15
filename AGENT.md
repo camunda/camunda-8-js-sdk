@@ -3,6 +3,7 @@
 This file is the **canonical** instruction document for AI agents (Copilot, Claude, etc.) working on the Camunda 8 JavaScript SDK repository. It supersedes the previous `.github/copilot-instructions.md`.
 
 See also:
+
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contributor onboarding, branch model, release summary
 - [MAINTAINER.md](MAINTAINER.md) — operational guide (CI workflows, semantic-release, npm publishing)
 
@@ -30,22 +31,22 @@ The repo enforces [Conventional Commits](https://www.conventionalcommits.org/) v
 
 Only these `type:` values are accepted (any other type — including `deps:` — will fail `lint-commits`):
 
-| Type           | When to use                                                      | Release impact |
-| -------------- | ---------------------------------------------------------------- | -------------- |
-| `feat`         | New SDK feature                                                  | patch          |
-| `fix`          | Bug fix                                                          | patch          |
-| `perf`         | Performance improvement                                          | patch          |
-| `revert`       | Revert a previous commit                                         | patch          |
-| `release`      | Force a patch release with no other eligible commits             | patch          |
-| `server`       | Bump to a new Camunda **minor** line (e.g. 8.8 → 8.9)            | minor          |
-| `server-major` | Bump to a new Camunda **major** line (e.g. 8.x → 9.0)            | major          |
-| `chore`        | Maintenance, dependency bumps (`chore(deps): ...`), tooling      | none           |
-| `build`        | Build system / packaging changes                                 | none           |
-| `ci`           | CI workflow / GitHub Actions changes                             | none           |
-| `docs`         | Documentation only                                               | none           |
-| `refactor`     | Code refactor with no behavior change                            | none           |
-| `style`        | Whitespace / formatting only                                     | none           |
-| `test`         | Test-only changes                                                | none           |
+| Type           | When to use                                                 | Release impact |
+| -------------- | ----------------------------------------------------------- | -------------- |
+| `feat`         | New SDK feature                                             | patch          |
+| `fix`          | Bug fix                                                     | patch          |
+| `perf`         | Performance improvement                                     | patch          |
+| `revert`       | Revert a previous commit                                    | patch          |
+| `release`      | Force a patch release with no other eligible commits        | patch          |
+| `server`       | Bump to a new Camunda **minor** line (e.g. 8.8 → 8.9)       | minor          |
+| `server-major` | Bump to a new Camunda **major** line (e.g. 8.x → 9.0)       | major          |
+| `chore`        | Maintenance, dependency bumps (`chore(deps): ...`), tooling | none           |
+| `build`        | Build system / packaging changes                            | none           |
+| `ci`           | CI workflow / GitHub Actions changes                        | none           |
+| `docs`         | Documentation only                                          | none           |
+| `refactor`     | Code refactor with no behavior change                       | none           |
+| `style`        | Whitespace / formatting only                                | none           |
+| `test`         | Test-only changes                                           | none           |
 
 Note the **mutated semver**: `feat`/`fix` produce **patch** bumps, not minor/major. The SDK's version tracks the Camunda 8 server line, not its own API surface. See [MAINTAINER.md](MAINTAINER.md) for the full release pipeline.
 
@@ -200,13 +201,13 @@ export class SomeEntityDto extends LosslessDto {
 
 The SDK supports five authentication strategies (set via `CAMUNDA_AUTH_STRATEGY` or programmatically):
 
-| Strategy | Use case                                          |
-| -------- | ------------------------------------------------- |
-| `OAUTH`  | Default for Camunda SaaS and Self-Managed         |
-| `BASIC`  | Nginx reverse-proxy with basic auth               |
-| `COOKIE` | C8Run 8.7                                         |
-| `BEARER` | Custom token management                           |
-| `NONE`   | Development or mTLS                               |
+| Strategy | Use case                                  |
+| -------- | ----------------------------------------- |
+| `OAUTH`  | Default for Camunda SaaS and Self-Managed |
+| `BASIC`  | Nginx reverse-proxy with basic auth       |
+| `COOKIE` | C8Run 8.7                                 |
+| `BEARER` | Custom token management                   |
+| `NONE`   | Development or mTLS                       |
 
 - Clients accept `IHeadersProvider` for custom auth.
 - Use `constructOAuthProvider()` for standard OAuth flows.
@@ -350,6 +351,7 @@ async searchEntities(
 ### Test Implementation Guidelines
 
 **Unit tests:**
+
 - Mock external dependencies and API calls.
 - Test error handling paths.
 - Validate proper parameter passing.
@@ -359,6 +361,7 @@ async searchEntities(
   ```
 
 **Integration tests:**
+
 - Deploy required resources (BPMN, DMN) before testing.
 - Clean up resources after tests.
 - Source environment variables from `env/`.
@@ -370,6 +373,7 @@ async searchEntities(
   ```
 
 **BPMN / DMN test resources:**
+
 - Place test models in `src/__tests__/<version>/resources/` (e.g. `src/__tests__/8.8/resources/`).
 - For DMN decision tables, use the **`FIRST`** hit policy (not `UNIQUE`).
 - Validate that resources are deployed before exercising them.
@@ -432,6 +436,10 @@ See [Search endpoints](#search-endpoints) above. Summary:
 
 ## Coding Guidelines
 
+See [STYLE.md](STYLE.md) for the codebase's control-flow, iteration, and state
+philosophy (immutable by default, guard-clause conditionals, declarative
+iteration). New code should match it.
+
 1. Use TypeScript strict mode.
 2. Add detailed JSDoc comments to public methods.
 3. Follow existing naming conventions.
@@ -455,21 +463,25 @@ See [Search endpoints](#search-endpoints) above. Summary:
 ## Common Issues & Solutions
 
 ### Build Issues
+
 - Run `npm run clean` before building if encountering cache issues.
 - Ensure all imports use correct relative paths.
 - Check for TypeScript errors with `npm run compile`.
 
 ### Test Issues
+
 - Integration tests require Docker services: `npm run sm:start` (or one of the version-specific variants).
 - Use `npm run test` for unit tests only.
 - Verify test environment variables are set (source the right file from `env/`).
 
 ### Authentication Issues
+
 - Verify OAuth configuration for SaaS.
 - Check basic-auth credentials for Self-Managed.
 - Ensure certificates are properly configured for custom CA.
 
 ### Commit Rejected by `lint-commits`
+
 - Confirm the type is in the [allowed commit types](#allowed-commit-types) table. `deps:` is the most common mistake — use `chore(deps):` instead.
 
 ---
@@ -490,6 +502,7 @@ Key dependencies to be aware of:
 ## Recent Additions
 
 ### Search Decision Instances API
+
 - `searchDecisionInstances()` method on `CamundaRestClient`
 - `DecisionInstanceSearchFilter` and `SearchDecisionInstancesRequest` DTOs
 - `CamundaRestSearchDecisionInstancesResponse` with cursor-based pagination
