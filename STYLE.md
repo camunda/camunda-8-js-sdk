@@ -99,10 +99,11 @@ often annotated with a comment explaining why.
 
 - **Reach for an imperative `for` only where array methods genuinely cannot**:
 
-  - **Unknown-shape object-graph traversal**, usually recursive — `for (const k in
-obj)` walking an arbitrary tree (`BpmnParser.ts`, `LosslessJsonParser.ts`),
+  - **Unknown-shape object-graph traversal**, usually recursive —
+    `for (const k in obj)` walking an arbitrary tree (`BpmnParser.ts`,
+    `LosslessJsonParser.ts`),
     switching _back_ to `.forEach` for the known-array parts.
-  - **Index-sensitive scanning** of strings/buffers — `for (let i = 0; …)` where
+  - **Index-sensitive scanning** of strings/buffers — `for (let i = 0; ...)` where
     the index itself matters (`OriginTracing.ts`, `QuerySubscription.ts`).
   - **Async-sequential or side-effecting** iteration — awaiting per item, or
     dispatching jobs; use `Promise.all` where the work is safely parallel.
@@ -112,13 +113,13 @@ obj)` walking an arbitrary tree (`BpmnParser.ts`, `LosslessJsonParser.ts`),
   `break`s, consumed declaratively via `for await (const data of generator)`
   (`Subscription.ts`).
 
-- **No `do…while`.** Same "no exotic constructs" discipline as no `switch`.
+- **No `do...while`.** Same "no exotic constructs" discipline as no `switch`.
 
 ---
 
 ## 4. The unifying tell
 
-The same instinct yields **zero `switch`, zero `do…while`, zero `var`, and zero
+The same instinct yields **zero `switch`, zero `do...while`, zero `var`, and zero
 `Object.freeze`**. When the imperative escape hatch _is_ used — a mutable `let`, a
 raw `for`, a `while (true)` — it is narrow, localized, and frequently annotated
 with a comment explaining why. The result is a **straight, un-nested happy path
