@@ -38,11 +38,11 @@ Releases are performed by GitHub Actions using semantic-release:
 
 ### Branch model
 
-| Branch | Type | npm dist-tag |
-|--------|------|--------------|
-| `main` | prerelease | `alpha` |
-| `stable/<major>.<minor>` (current) | stable | `latest` |
-| `stable/<major>.<minor>` (older) | maintenance | `<major>.<minor>-stable` |
+| Branch                             | Type        | npm dist-tag             |
+| ---------------------------------- | ----------- | ------------------------ |
+| `main`                             | prerelease  | `alpha`                  |
+| `stable/<major>.<minor>` (current) | stable      | `latest`                 |
+| `stable/<major>.<minor>` (older)   | maintenance | `<major>.<minor>-stable` |
 
 ### Promotion procedure (switch current stable line)
 
@@ -136,6 +136,7 @@ We follow a specific code style in our project to maintain consistency. Please m
 
 - Run `npm run lint` to lint your code with ESLint.
 - Run `npm run format` to format your code to the project standard.
+- Read [STYLE.md](STYLE.md) for the codebase's control-flow, iteration, and state philosophy — much of it is authorial discipline that the linter does not enforce.
 
 ## Issue Reporting
 
