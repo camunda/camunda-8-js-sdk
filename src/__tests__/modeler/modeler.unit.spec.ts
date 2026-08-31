@@ -45,6 +45,7 @@ interface CapturedRequest {
 	method?: string
 	path?: string
 	search?: string
+	hash?: string
 	body?: unknown
 }
 
@@ -56,6 +57,7 @@ function makeCapturingClient(
 		captured.method = options.method
 		captured.path = options.url.pathname
 		captured.search = options.url.search
+		captured.hash = options.url.hash
 		captured.body = options.body
 		throw new Error('__captured__')
 	}
@@ -190,5 +192,18 @@ describe('ModelerApiClient prefixUrl construction', () => {
 		expect(captured.method).toBe('GET')
 		expect(captured.path).toBe('/api/v1/versions/version-1')
 		expect(captured.search).toBe('')
+	})
+
+	test('base url with a fragment drops the fragment and still extends the path', async () => {
+		const captured: CapturedRequest = {}
+		const client = makeCapturingClient(
+			captured,
+			'https://host.example/api#frag'
+		)
+		await expect(client.getVersion('version-1')).rejects.toThrow()
+		expect(captured.method).toBe('GET')
+		expect(captured.path).toBe('/api/v1/versions/version-1')
+		expect(captured.search).toBe('')
+		expect(captured.hash).toBe('')
 	})
 })

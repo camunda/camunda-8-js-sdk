@@ -22,14 +22,15 @@ const API_VERSION = 'v1'
 
 /**
  * Builds the `got` `prefixUrl` and `searchParams` for the Modeler API client from a configured base
- * URL that may itself carry a query string.
+ * URL that may itself carry a query string or fragment.
  *
  * `got` builds each request's URL by concatenating `prefixUrl + path` as a plain string and only then
- * re-parsing it as a `URL` (see `got`'s `dist/source/core/index.js`). A query string baked into
- * `prefixUrl` therefore captures every character appended after it, including the path segments of
- * subsequent requests, instead of staying a query. Keeping `prefixUrl` query-free and passing the
- * original query through `got`'s own `searchParams` option (which `got` applies to `options.url.search`
- * after the path concatenation) preserves both the appended path and the original query.
+ * re-parsing it as a `URL` (see `got`'s `dist/source/core/index.js`). A query string or fragment baked
+ * into `prefixUrl` therefore captures every character appended after it, including the path segments of
+ * subsequent requests, instead of staying a query or fragment. Keeping `prefixUrl` free of both and
+ * passing the original query through `got`'s own `searchParams` option (which `got` applies to
+ * `options.url.search` after the path concatenation) preserves the appended path and the original
+ * query. A fragment is never sent to the server, so it is dropped rather than forwarded.
  */
 function buildModelerPrefixUrl(baseUrl: string): {
 	prefixUrl: string
@@ -40,6 +41,7 @@ function buildModelerPrefixUrl(baseUrl: string): {
 	url.pathname = `${trimmedPathname}/${API_VERSION}/`
 	const searchParams = url.search ? url.search : undefined
 	url.search = ''
+	url.hash = ''
 	return { prefixUrl: url.toString(), searchParams }
 }
 
