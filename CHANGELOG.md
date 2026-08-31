@@ -1,3 +1,10 @@
+# [8.9.0-alpha.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.10...v8.9.0-alpha.11) (2026-08-31)
+
+
+### Bug Fixes
+
+* **modeler:** preserve query string on CAMUNDA_MODELER_BASE_URL ([#825](https://github.com/camunda/camunda-8-js-sdk/issues/825)) ([b6ecd45](https://github.com/camunda/camunda-8-js-sdk/commit/b6ecd451c79ca0cdadc826dd28d94184c60fbb24)), closes [#824](https://github.com/camunda/camunda-8-js-sdk/issues/824)
+
 # [8.9.0-alpha.10](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.9...v8.9.0-alpha.10) (2026-07-16)
 
 
