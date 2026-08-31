@@ -21,6 +21,29 @@ const debug = d('camunda:modeler')
 const API_VERSION = 'v1'
 
 /**
+ * Builds the `got` `prefixUrl` and `searchParams` for the Modeler API client from a configured base
+ * URL that may itself carry a query string.
+ *
+ * `got` builds each request's URL by concatenating `prefixUrl + path` as a plain string and only then
+ * re-parsing it as a `URL` (see `got`'s `dist/source/core/index.js`). A query string baked into
+ * `prefixUrl` therefore captures every character appended after it, including the path segments of
+ * subsequent requests, instead of staying a query. Keeping `prefixUrl` query-free and passing the
+ * original query through `got`'s own `searchParams` option (which `got` applies to `options.url.search`
+ * after the path concatenation) preserves both the appended path and the original query.
+ */
+function buildModelerPrefixUrl(baseUrl: string): {
+	prefixUrl: string
+	searchParams?: string
+} {
+	const url = new URL(baseUrl)
+	const trimmedPathname = url.pathname.replace(/\/+$/, '')
+	url.pathname = `${trimmedPathname}/${API_VERSION}/`
+	const searchParams = url.search ? url.search : undefined
+	url.search = ''
+	return { prefixUrl: url.toString(), searchParams }
+}
+
+/**
  * Modeler REST API Client.
  * All constructor parameters for configuration are optional. If no configuration is provided, the SDK will use environment variables to configure itself.
  * See {@link CamundaSDKConfiguration} for the complete list of configuration parameters. Values can be passed in explicitly in code, or set via environment variables (recommended: separate configuration and application logic).
@@ -48,12 +71,13 @@ export class ModelerApiClient {
 				),
 			})
 		this.userAgentString = createUserAgentString(config)
-		const prefixUrl = `${modelerApiUrl}/${API_VERSION}`
+		const { prefixUrl, searchParams } = buildModelerPrefixUrl(modelerApiUrl)
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
 				got.extend({
 					prefixUrl,
+					searchParams,
 					retry: GotRetryConfig,
 					https: {
 						certificateAuthority,
