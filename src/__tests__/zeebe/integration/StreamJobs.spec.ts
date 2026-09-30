@@ -1,7 +1,6 @@
 import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
-import { JOB_ACTION_ACKNOWLEDGEMENT } from '../../../zeebe/lib/interfaces-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 vi.setConfig({ testTimeout: 25_000 })
@@ -35,6 +34,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		await new Promise((resolve) => {
 			let counter = 0
+			const completions: Promise<unknown>[] = []
 			zbc.streamJobs({
 				type: 'stream-job',
 				worker: 'test-worker',
@@ -43,9 +43,14 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 					counter++
 					expect(job.variables.foo).toBe('bar')
 					const res = job.complete({})
+					completions.push(res)
 					if (counter === 3) {
-						zbc.close()
-						resolve(null)
+						// Wait for every completion to reach the broker before closing,
+						// otherwise the client shuts down with jobs still active and
+						// they leak into later tests.
+						Promise.all(completions)
+							.then(() => zbc.close())
+							.then(() => resolve(null))
 					}
 					return res
 				},
@@ -92,6 +97,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		await new Promise((resolve) => {
 			let counter = 0
+			const completions: Promise<unknown>[] = []
 			const expectedTotal = 3 // 2 pre-existing + 1 created after stream opens
 
 			zbc.streamJobs({
@@ -102,9 +108,14 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 					counter++
 					expect(job.variables.foo).toBe('bar')
 					const res = job.complete({})
+					completions.push(res)
 					if (counter === expectedTotal) {
-						zbc.close()
-						resolve(null)
+						// Wait for every completion to reach the broker before closing,
+						// otherwise the client shuts down with jobs still active and
+						// they leak into later tests.
+						Promise.all(completions)
+							.then(() => zbc.close())
+							.then(() => resolve(null))
 					}
 					return res
 				},
@@ -140,6 +151,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		await new Promise((resolve) => {
 			let counter = 0
+			const completions: Promise<unknown>[] = []
 			const expectedTotal = 2 // 1 pre-existing + 1 created after stream opens
 
 			zbc.streamJobs({
@@ -150,9 +162,14 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 					counter++
 					expect(job.variables.foo).toBe('bar')
 					const res = job.complete({})
+					completions.push(res)
 					if (counter === expectedTotal) {
-						zbc.close()
-						resolve(null)
+						// Wait for every completion to reach the broker before closing,
+						// otherwise the client shuts down with jobs still active and
+						// they leak into later tests.
+						Promise.all(completions)
+							.then(() => zbc.close())
+							.then(() => resolve(null))
 					}
 					return res
 				},
@@ -182,57 +199,37 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 	async () => {
 		const zbc = new ZeebeGrpcClient({ config: { CAMUNDA_LOG_LEVEL: 'none' } })
 
-		let alreadyActivated = false
-		let threw = false
-		const jobTimeout = 10000 // The job is made available for reactivation after this time
-		const jobDuration = 15000 // The first invocation takes this long before completing
-		// The second invocation completes shortly after the job has been redelivered,
-		// by which time the first invocation has already completed it -> NOT_FOUND.
-		const secondWorkerDuration = jobDuration - jobTimeout + 5000
-
 		await zbc.createProcessInstance({
 			bpmnProcessId,
 			variables: { foo: 'bar' },
 		})
 
-		await new Promise<void>((resolve, reject) => {
+		const secondComplete = await new Promise<unknown>((resolve, reject) => {
 			zbc.streamJobs({
 				type: 'stream-job',
 				worker: 'test-worker',
 				tenantIds: ['<default>'],
 				taskHandler: async (job) => {
-					const delay = alreadyActivated ? secondWorkerDuration : jobDuration
-					const shouldThrow = alreadyActivated
-					alreadyActivated = true
+					const res = await job.complete({})
+					// The job no longer exists on the broker, so completing it again
+					// must reject with NOT_FOUND. Under streaming this used to resolve
+					// as an acknowledgement, swallowing the failed complete command.
 					try {
-						await new Promise((r) => setTimeout(r, delay))
-						const res = await job.complete({})
-						if (shouldThrow) {
-							// Under streaming this used to resolve instead of reject,
-							// swallowing the failed complete command.
-							reject(new Error('Second complete should have thrown NOT_FOUND'))
-						}
-						return res
+						await job.complete({})
+						reject(new Error('Second complete should have thrown NOT_FOUND'))
 					} catch (e: unknown) {
-						expect((e as Error).message.includes('NOT_FOUND')).toBe(true)
-						threw = true
-						resolve()
-						// The job has already been completed by the first
-						// invocation, so it no longer exists on the broker.
-						// Acknowledge the handler without issuing another job
-						// action, which would also reject with NOT_FOUND.
-						return JOB_ACTION_ACKNOWLEDGEMENT
+						resolve(e)
 					}
+					return res
 				},
 				inputVariableDto: class {
 					foo!: string
 				},
 				fetchVariables: [],
-				timeout: jobTimeout,
+				timeout: 30000,
 			})
 		}).finally(() => zbc.close())
 
-		expect(threw).toBe(true)
-	},
-	40_000
+		expect((secondComplete as Error).message).toContain('NOT_FOUND')
+	}
 )
