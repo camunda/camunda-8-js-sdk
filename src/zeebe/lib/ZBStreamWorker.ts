@@ -162,10 +162,22 @@ export class ZBStreamWorker implements IZBJobWorker {
 			// timeout or during a brief stream reconnect). Uses a setTimeout
 			// chain so each cycle waits for the previous poll to finish before
 			// scheduling the next, preventing overlapping polls.
+			//
+			// The live timer is tracked in `this.pollTimers` so that `close()`
+			// can cancel it. Each cycle removes the timer that just fired
+			// before scheduling the next one, so the array holds at most one
+			// live timer per stream rather than growing by one per poll cycle.
 			let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 			if (pollInterval > 0) {
 				const schedulePoll = () => {
 					sidecarTimer = setTimeout(() => {
+						// This timer has fired and is dead — drop it before the
+						// next cycle pushes its replacement, so `pollTimers` only
+						// ever retains live timers.
+						const index = this.pollTimers.indexOf(sidecarTimer!)
+						if (index !== -1) {
+							this.pollTimers.splice(index, 1)
+						}
 						runPoll()
 							.catch(() => {
 								// Swallow errors — the stream is the primary channel.
