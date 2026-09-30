@@ -1,6 +1,7 @@
 import { allowAny } from '../../../test-support/testTags'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
+import { JOB_ACTION_ACKNOWLEDGEMENT } from '../../../zeebe/lib/interfaces-1.0'
 
 process.env.ZEEBE_NODE_LOG_LEVEL = process.env.ZEEBE_NODE_LOG_LEVEL || 'NONE'
 vi.setConfig({ testTimeout: 25_000 })
@@ -216,7 +217,11 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 						expect((e as Error).message.includes('NOT_FOUND')).toBe(true)
 						threw = true
 						resolve()
-						return job.fail({ retries: 0, errorMessage: (e as Error).message })
+						// The job has already been completed by the first
+						// invocation, so it no longer exists on the broker.
+						// Acknowledge the handler without issuing another job
+						// action, which would also reject with NOT_FOUND.
+						return JOB_ACTION_ACKNOWLEDGEMENT
 					}
 				},
 				inputVariableDto: class {

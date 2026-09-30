@@ -90,14 +90,26 @@ export class ZBStreamWorker implements IZBJobWorker {
 		} = req
 
 		const handleJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
-			taskHandler(
-				{
-					...job,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					...this.makeCompleteHandlers(job as any, req.type),
-				},
-				this
-			)
+			// Observe the handler's returned promise so that a rejected job
+			// action (for example, a completion command that fails because the
+			// job was already completed, failed, or the process instance was
+			// cancelled) is handled here rather than surfacing as an unhandled
+			// promise rejection that could terminate the process.
+			Promise.resolve(
+				taskHandler(
+					{
+						...job,
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						...this.makeCompleteHandlers(job as any, req.type),
+					},
+					this
+				)
+			).catch((e: unknown) => {
+				const message = e instanceof Error ? e.message : String(e)
+				this.logger.logError(
+					`Unhandled exception in stream worker task handler for job ${job.key}: ${message}`
+				)
+			})
 		}
 
 		const pollAndStream = async () => {
