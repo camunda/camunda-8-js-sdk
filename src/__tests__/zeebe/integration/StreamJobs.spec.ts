@@ -34,6 +34,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		await new Promise((resolve) => {
 			let counter = 0
+			const completions: Promise<unknown>[] = []
 			zbc.streamJobs({
 				type: 'stream-job',
 				worker: 'test-worker',
@@ -42,9 +43,14 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 					counter++
 					expect(job.variables.foo).toBe('bar')
 					const res = job.complete({})
+					completions.push(res)
 					if (counter === 3) {
-						zbc.close()
-						resolve(null)
+						// Wait for every completion to reach the broker before closing,
+						// otherwise the client shuts down with jobs still active and
+						// they leak into later tests.
+						Promise.all(completions)
+							.then(() => zbc.close())
+							.then(() => resolve(null))
 					}
 					return res
 				},
@@ -91,6 +97,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		await new Promise((resolve) => {
 			let counter = 0
+			const completions: Promise<unknown>[] = []
 			const expectedTotal = 3 // 2 pre-existing + 1 created after stream opens
 
 			zbc.streamJobs({
@@ -101,9 +108,14 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 					counter++
 					expect(job.variables.foo).toBe('bar')
 					const res = job.complete({})
+					completions.push(res)
 					if (counter === expectedTotal) {
-						zbc.close()
-						resolve(null)
+						// Wait for every completion to reach the broker before closing,
+						// otherwise the client shuts down with jobs still active and
+						// they leak into later tests.
+						Promise.all(completions)
+							.then(() => zbc.close())
+							.then(() => resolve(null))
 					}
 					return res
 				},
@@ -139,6 +151,7 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 
 		await new Promise((resolve) => {
 			let counter = 0
+			const completions: Promise<unknown>[] = []
 			const expectedTotal = 2 // 1 pre-existing + 1 created after stream opens
 
 			zbc.streamJobs({
@@ -149,9 +162,14 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 					counter++
 					expect(job.variables.foo).toBe('bar')
 					const res = job.complete({})
+					completions.push(res)
 					if (counter === expectedTotal) {
-						zbc.close()
-						resolve(null)
+						// Wait for every completion to reach the broker before closing,
+						// otherwise the client shuts down with jobs still active and
+						// they leak into later tests.
+						Promise.all(completions)
+							.then(() => zbc.close())
+							.then(() => resolve(null))
 					}
 					return res
 				},
@@ -173,5 +191,45 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 				})
 			})
 		})
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'A failed complete command rejects instead of resolving as an acknowledgement',
+	async () => {
+		const zbc = new ZeebeGrpcClient({ config: { CAMUNDA_LOG_LEVEL: 'none' } })
+
+		await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: { foo: 'bar' },
+		})
+
+		const secondComplete = await new Promise<unknown>((resolve, reject) => {
+			zbc.streamJobs({
+				type: 'stream-job',
+				worker: 'test-worker',
+				tenantIds: ['<default>'],
+				taskHandler: async (job) => {
+					const res = await job.complete({})
+					// The job no longer exists on the broker, so completing it again
+					// must reject with NOT_FOUND. Under streaming this used to resolve
+					// as an acknowledgement, swallowing the failed complete command.
+					try {
+						await job.complete({})
+						reject(new Error('Second complete should have thrown NOT_FOUND'))
+					} catch (e: unknown) {
+						resolve(e)
+					}
+					return res
+				},
+				inputVariableDto: class {
+					foo!: string
+				},
+				fetchVariables: [],
+				timeout: 30000,
+			})
+		}).finally(() => zbc.close())
+
+		expect((secondComplete as Error).message).toContain('NOT_FOUND')
 	}
 )

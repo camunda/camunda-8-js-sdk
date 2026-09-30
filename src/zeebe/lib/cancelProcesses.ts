@@ -5,6 +5,9 @@ const camunda = c8.getCamundaRestClient()
 const operate = c8.getOperateApiClient()
 
 export async function cancelProcesses(processDefinitionKey: string) {
+	// The search API is eventually consistent. Wait so that recently created
+	// process instances are visible before we search for them to cancel.
+	await new Promise((resolve) => setTimeout(resolve, 1000))
 	const topology = await camunda.getTopology()
 
 	const gatewayVersion = topology.gatewayVersion
