@@ -24,6 +24,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private logger: StatefulLogInterceptor
 	private zbClient: ZeebeGrpcClient
 	private streams: ClientReadableStream<unknown>[] = []
+	private closed = false
 	private pollTimers: ReturnType<typeof setTimeout>[] = []
 	constructor({
 		grpcClient,
@@ -177,6 +178,10 @@ export class ZBStreamWorker implements IZBJobWorker {
 			let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 			if (pollInterval > 0) {
 				const schedulePoll = () => {
+					// A poll in flight when close() is called must not schedule another.
+					if (this.closed) {
+						return
+					}
 					sidecarTimer = setTimeout(() => {
 						runPoll()
 							.catch(() => {
@@ -205,6 +210,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	}
 
 	close() {
+		this.closed = true
 		this.pollTimers.forEach((t) => clearTimeout(t))
 		this.pollTimers = []
 		this.streams.forEach((s) => {
