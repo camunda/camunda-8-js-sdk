@@ -175,3 +175,59 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 		})
 	}
 )
+
+test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
+	'A failed complete command rejects instead of resolving as an acknowledgement',
+	async () => {
+		const zbc = new ZeebeGrpcClient({ config: { CAMUNDA_LOG_LEVEL: 'none' } })
+
+		let alreadyActivated = false
+		let threw = false
+		const jobTimeout = 10000 // The job is made available for reactivation after this time
+		const jobDuration = 15000 // The first invocation takes this long before completing
+		// The second invocation completes shortly after the job has been redelivered,
+		// by which time the first invocation has already completed it -> NOT_FOUND.
+		const secondWorkerDuration = jobDuration - jobTimeout + 5000
+
+		await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: { foo: 'bar' },
+		})
+
+		await new Promise<void>((resolve, reject) => {
+			zbc.streamJobs({
+				type: 'stream-job',
+				worker: 'test-worker',
+				tenantIds: ['<default>'],
+				taskHandler: async (job) => {
+					const delay = alreadyActivated ? secondWorkerDuration : jobDuration
+					const shouldThrow = alreadyActivated
+					alreadyActivated = true
+					try {
+						await new Promise((r) => setTimeout(r, delay))
+						const res = await job.complete({})
+						if (shouldThrow) {
+							// Under streaming this used to resolve instead of reject,
+							// swallowing the failed complete command.
+							reject(new Error('Second complete should have thrown NOT_FOUND'))
+						}
+						return res
+					} catch (e: unknown) {
+						expect((e as Error).message.includes('NOT_FOUND')).toBe(true)
+						threw = true
+						resolve()
+						return job.fail({ retries: 0, errorMessage: (e as Error).message })
+					}
+				},
+				inputVariableDto: class {
+					foo!: string
+				},
+				fetchVariables: [],
+				timeout: jobTimeout,
+			})
+		}).finally(() => zbc.close())
+
+		expect(threw).toBe(true)
+	},
+	40_000
+)

@@ -339,7 +339,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.logger.logDebug(
 					`Completing job ${jobKey} for ${taskType} threw ${e.message}`
 				)
-				return e
+				throw e
 			})
 			.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 	}
