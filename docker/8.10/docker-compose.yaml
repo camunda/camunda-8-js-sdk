@@ -1,6 +1,6 @@
 services:
   camunda:
-    image: camunda/camunda:${CAMUNDA_DOCKER_IMAGE_VERSION:-8.9.22}
+    image: camunda/camunda:${CAMUNDA_DOCKER_IMAGE_VERSION:-8.10-SNAPSHOT}
     # If you want to override via env like the framework: set CAMUNDA_DOCKER_IMAGE_VERSION externally
     container_name: camunda-engine
     environment:
@@ -9,17 +9,18 @@ services:
       ZEEBE_LOG_APPENDER: 'Stackdriver'
       CAMUNDA_SECURITY_AUTHENTICATION_UNPROTECTEDAPI: 'true'
       CAMUNDA_SECURITY_AUTHORIZATIONS_ENABLED: 'false'
-      # H2 / in-memory config (mirrors H2Configuration)
-      CAMUNDA_DATABASE_URL: 'jdbc:h2:mem:cpt;DB_CLOSE_DELAY=-1;MODE=PostgreSQL'
-      CAMUNDA_DATABASE_TYPE: 'rdbms'
-      CAMUNDA_DATABASE_USERNAME: 'sa'
-      CAMUNDA_DATABASE_PASSWORD: ''
-      CAMUNDA_DATA_SECONDARY_STORAGE_TYPE: 'rdbms'
-      ZEEBE_BROKER_EXPORTERS_RDBMS_CLASSNAME: 'io.camunda.exporter.rdbms.RdbmsExporter'
-      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_FLUSH_INTERVAL: 'PT0S'
-      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_DEFAULT_HISTORY_TTL: 'PT2S'
-      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_MIN_HISTORY_CLEANUP_INTERVAL: 'PT2S'
-      ZEEBE_BROKER_EXPORTERS_RDBMS_ARGS_MAX_HISTORY_CLEANUP_INTERVAL: 'PT5S'
+      # H2 / in-memory config (mirrors H2Configuration).
+      # 8.10 removed the legacy camunda.database.* and zeebe.broker.exporters.rdbms.*
+      # properties; RDBMS secondary storage is configured under
+      # camunda.data.secondary-storage.* instead.
+      CAMUNDA_DATA_SECONDARYSTORAGE_TYPE: 'rdbms'
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_URL: 'jdbc:h2:mem:cpt;DB_CLOSE_DELAY=-1;MODE=PostgreSQL'
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_USERNAME: 'sa'
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_PASSWORD: ''
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_FLUSHINTERVAL: 'PT0S'
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_HISTORY_DEFAULTHISTORYTTL: 'PT2S'
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_HISTORY_MINHISTORYCLEANUPINTERVAL: 'PT2S'
+      CAMUNDA_DATA_SECONDARYSTORAGE_RDBMS_HISTORY_MAXHISTORYCLEANUPINTERVAL: 'PT5S'
       LOGGING_LEVEL_IO_CAMUNDA_DB_RDBMS: 'INFO'
       LOGGING_LEVEL_ORG_MYBATIS: 'INFO'
     ports:
