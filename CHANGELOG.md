@@ -7,6 +7,15 @@
 * **zeebe:** rethrow failed complete command in ZBStreamWorker ([#831](https://github.com/camunda/camunda-8-js-sdk/issues/831)) ([1124f8e](https://github.com/camunda/camunda-8-js-sdk/commit/1124f8ea2a26e5f74f0f5630c2e66c807ab22b2b)), closes [#829](https://github.com/camunda/camunda-8-js-sdk/issues/829)
 * **zeebe:** stop ZBStreamWorker leaking one timer per sidecar poll cycle ([#830](https://github.com/camunda/camunda-8-js-sdk/issues/830)) ([7ac4b1d](https://github.com/camunda/camunda-8-js-sdk/commit/7ac4b1d1f4290cc5748fc32d3604226485274c90)), closes [#828](https://github.com/camunda/camunda-8-js-sdk/issues/828)
 
+# [8.9.0-alpha.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.11...v8.9.0-alpha.12) (2026-10-01)
+
+
+### Bug Fixes
+
+* **zeebe:** forward caller-supplied tenantIds in activateJobs ([#832](https://github.com/camunda/camunda-8-js-sdk/issues/832)) ([661e4cc](https://github.com/camunda/camunda-8-js-sdk/commit/661e4cc29babd6bc29367ec41384a6253b55d6e7)), closes [#827](https://github.com/camunda/camunda-8-js-sdk/issues/827) [#827](https://github.com/camunda/camunda-8-js-sdk/issues/827)
+* **zeebe:** rethrow failed complete command in ZBStreamWorker ([#831](https://github.com/camunda/camunda-8-js-sdk/issues/831)) ([1124f8e](https://github.com/camunda/camunda-8-js-sdk/commit/1124f8ea2a26e5f74f0f5630c2e66c807ab22b2b)), closes [#829](https://github.com/camunda/camunda-8-js-sdk/issues/829)
+* **zeebe:** stop ZBStreamWorker leaking one timer per sidecar poll cycle ([#830](https://github.com/camunda/camunda-8-js-sdk/issues/830)) ([7ac4b1d](https://github.com/camunda/camunda-8-js-sdk/commit/7ac4b1d1f4290cc5748fc32d3604226485274c90)), closes [#828](https://github.com/camunda/camunda-8-js-sdk/issues/828)
+
 # [8.9.0-alpha.11](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.10...v8.9.0-alpha.11) (2026-08-31)
 
 
