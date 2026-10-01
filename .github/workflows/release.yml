@@ -348,7 +348,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "24.x"
+          # Pinned: Node 24.21.0 breaks got 11's retry path (raw
+          # ERR_SOCKET_CLOSED_BEFORE_CONNECTION escapes got).
+          # Unpin after migrating off got 11 - see #837.
+          node-version: "24.19.0"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
