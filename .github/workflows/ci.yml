@@ -139,7 +139,7 @@ jobs:
         run: docker compose -f docker/8.9/docker-compose.yaml down
 
   # 8.8 test suite run against an 8.10 self-managed broker (8.10-SNAPSHOT). Public stack — no
-  # secrets required. Runs on every push and every pull request.
+  # secrets required. Runs on feature-branch pushes and every pull request; it is intentionally omitted from release.yml.
   local_integration_8_8_against_8_10:
     runs-on: ubuntu-latest
     steps:
