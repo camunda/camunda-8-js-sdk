@@ -1,6 +1,6 @@
 services:
   camunda:
-    image: camunda/camunda:${CAMUNDA_DOCKER_IMAGE_VERSION:-8.9.22}
+    image: camunda/camunda:${CAMUNDA_DOCKER_IMAGE_VERSION:-8.10-SNAPSHOT}
     # If you want to override via env like the framework: set CAMUNDA_DOCKER_IMAGE_VERSION externally
     container_name: camunda-engine
     environment:

@@ -138,6 +138,55 @@ jobs:
         if: always()
         run: docker compose -f docker/8.9/docker-compose.yaml down
 
+  # 8.8 test suite run against an 8.10 self-managed broker (8.10-SNAPSHOT). Public stack — no
+  # secrets required. Runs on every push and every pull request.
+  local_integration_8_8_against_8_10:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Workaround for https://github.com/actions/runner-images/issues/2821
+      - name: Remove mono blocking 8084 port
+        run: sudo lsof -t -i:8084 | xargs -r sudo kill -9
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f docker/8.10/docker-compose.yaml up -d
+
+      - name: Wait for Services Healthy
+        run: |
+          set -e
+          attempts=0
+          max_attempts=60
+          while [ $attempts -lt $max_attempts ]; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9600/actuator/health/status || true)
+            [ "$code" = "200" ] && echo "Broker healthy" && break
+            attempts=$((attempts+1))
+            sleep 5
+          done
+          [ $attempts -ge $max_attempts ] && echo "Broker not healthy" && exit 1 || true
+
+      - name: Run Integration Tests (8.8 tests against 8.10 server)
+        run: |
+          npm run test:8.8:sm
+        env:
+          ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
+          CAMUNDA_AUTH_STRATEGY: NONE
+          CAMUNDA_TENANT_ID: <default>
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker/8.10/docker-compose.yaml down
+
 
   # 8.7 self-managed integration tests. Uses DOCKER_PASSWORD from the
   # `selfhosted` GitHub environment to pull images from registry.camunda.cloud.
