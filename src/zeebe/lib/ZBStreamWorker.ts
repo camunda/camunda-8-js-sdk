@@ -24,6 +24,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private logger: StatefulLogInterceptor
 	private zbClient: ZeebeGrpcClient
 	private streams: ClientReadableStream<unknown>[] = []
+	private closed = false
 	private pollTimers: ReturnType<typeof setTimeout>[] = []
 	constructor({
 		grpcClient,
@@ -90,14 +91,26 @@ export class ZBStreamWorker implements IZBJobWorker {
 		} = req
 
 		const handleJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
-			taskHandler(
-				{
-					...job,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					...this.makeCompleteHandlers(job as any, req.type),
-				},
-				this
-			)
+			// Observe the handler's returned promise so that a rejected job
+			// action (for example, a completion command that fails because the
+			// job was already completed, failed, or the process instance was
+			// cancelled) is handled here rather than surfacing as an unhandled
+			// promise rejection that could terminate the process.
+			Promise.resolve(
+				taskHandler(
+					{
+						...job,
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						...this.makeCompleteHandlers(job as any, req.type),
+					},
+					this
+				)
+			).catch((e: unknown) => {
+				const message = e instanceof Error ? e.message : String(e)
+				this.logger.logError(
+					`Unhandled exception in stream worker task handler for job ${job.key}: ${message}`
+				)
+			})
 		}
 
 		const pollAndStream = async () => {
@@ -165,6 +178,10 @@ export class ZBStreamWorker implements IZBJobWorker {
 			let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 			if (pollInterval > 0) {
 				const schedulePoll = () => {
+					// A poll in flight when close() is called must not schedule another.
+					if (this.closed) {
+						return
+					}
 					sidecarTimer = setTimeout(() => {
 						runPoll()
 							.catch(() => {
@@ -193,6 +210,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	}
 
 	close() {
+		this.closed = true
 		this.pollTimers.forEach((t) => clearTimeout(t))
 		this.pollTimers = []
 		this.streams.forEach((s) => {
@@ -341,7 +359,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.logger.logDebug(
 					`Completing job ${jobKey} for ${taskType} threw ${e.message}`
 				)
-				return e
+				throw e
 			})
 			.then(() => JOB_ACTION_ACKNOWLEDGEMENT)
 	}
