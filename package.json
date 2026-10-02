@@ -123,9 +123,6 @@
 		"vitest": "^4.1.1",
 		"wtfnode": "^0.10.0"
 	},
-	"optionalDependencies": {
-		"win-ca": "3.5.1"
-	},
 	"dependencies": {
 		"@camunda8/orchestration-cluster-api": ">=8.8.4 <9.0.0",
 		"@grpc/grpc-js": "^1.14.3",

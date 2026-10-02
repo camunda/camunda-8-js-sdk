@@ -39,6 +39,7 @@
 
 import cp from 'child_process'
 import fs from 'fs/promises'
+import tls from 'tls'
 
 let _cachedCertificates
 
@@ -70,17 +71,14 @@ async function readCaCertificates() {
 }
 
 async function readWindowsCaCertificates() {
-	const pems = await new Promise<string[]>((resolve) => {
-		const list: string[] = []
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		require('win-ca/api')({
-			format: 1 /* PEM-format (text, Base64-encoded) */,
-			store: ['root', 'ca'],
-			ondata: list,
-			onend: () => resolve(list),
-		})
-	})
-	return pems
+	// tls.getCACertificates() was added in Node.js 22.15.0 / 23.5.0
+	if (typeof tls.getCACertificates !== 'function') {
+		console.warn(
+			`Reading the Windows certificate store requires Node.js >= 22.15.0 (running ${process.version}). System certificates will not be loaded.`
+		)
+		return []
+	}
+	return tls.getCACertificates('system')
 }
 
 async function readMacCaCertificates() {
