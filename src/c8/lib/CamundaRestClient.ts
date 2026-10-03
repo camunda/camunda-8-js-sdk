@@ -1,8 +1,7 @@
 import fs, { ReadStream } from 'node:fs'
+import path from 'node:path'
 
 import { debug } from 'debug'
-import FormData from 'form-data'
-import got, { CancelableRequest, RequiredRetryOptions, Response } from 'got'
 import { parse, stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
@@ -16,6 +15,12 @@ import {
 	gotBeforeErrorHook,
 	GotRetryConfig,
 	HTTPError,
+	http,
+	HttpClient,
+	FormData,
+	RequiredRetryOptions,
+	Response,
+	ResponsePromise,
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
@@ -101,6 +106,27 @@ import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 import { createTrackedGot } from './TrackedGot'
 
+/** Buffer a readable stream into a Blob for multipart upload (fetch FormData needs Blob parts). */
+async function readStreamToBlob(
+	stream: NodeJS.ReadableStream,
+	type?: string
+): Promise<Blob> {
+	const chunks: Buffer[] = []
+	for await (const chunk of stream) {
+		chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+	}
+	return new Blob(
+		[new Uint8Array(Buffer.concat(chunks))],
+		type ? { type } : undefined
+	)
+}
+
+/** Infer a file name from an fs.ReadStream-like `path`, as form-data used to. */
+function fileNameFromStream(stream: unknown): string | undefined {
+	const p = (stream as { path?: string | Buffer }).path
+	return p ? path.basename(p.toString()) : undefined
+}
+
 const trace = debug('camunda:orchestration-rest')
 
 // Storage moved to TrackedGot.ts and imported above
@@ -126,7 +152,7 @@ class DefaultLosslessDto extends LosslessDto {}
 export class CamundaRestClient {
 	private readonly userAgentString: string
 	protected oAuthProvider: IHeadersProvider
-	private readonly rest: Promise<typeof got>
+	private readonly rest: Promise<HttpClient>
 	private readonly tenantId?: string
 	public log: Logger
 	private readonly config: CamundaPlatform8Configuration
@@ -175,7 +201,7 @@ export class CamundaRestClient {
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
 				createTrackedGot(
-					got.extend({
+					http.extend({
 						prefixUrl: this.prefixUrl,
 						retry: options?.retry ?? GotRetryConfig,
 						https: {
@@ -1041,9 +1067,7 @@ export class CamundaRestClient {
 		const formData = new FormData()
 
 		resources.forEach((resource) => {
-			formData.append(`resources`, resource.content, {
-				filename: resource.name,
-			})
+			formData.append(`resources`, new Blob([resource.content]), resource.name)
 		})
 
 		if (tenantId || this.tenantId) {
@@ -1057,7 +1081,6 @@ export class CamundaRestClient {
 					body: formData,
 					headers: {
 						...headers,
-						...formData.getHeaders(),
 						Accept: 'application/json',
 					},
 					parseJson: (text) => parse(text), // we parse the response with LosslessNumbers, with no Dto
@@ -1306,20 +1329,24 @@ export class CamundaRestClient {
 		const headers = await this.getHeaders()
 		const formData = new FormData()
 
-		const options =
-			request.metadata?.contentType || request.metadata?.fileName
-				? {
-						contentType: request.metadata?.contentType,
-						filename: request.metadata?.fileName,
-					}
-				: {}
-		formData.append('file', request.file, options)
+		const file = await readStreamToBlob(
+			request.file,
+			request.metadata?.contentType
+		)
+		formData.append(
+			'file',
+			file,
+			request.metadata?.fileName ?? fileNameFromStream(request.file)
+		)
 
 		// Add other form fields
 		if (request.metadata) {
-			formData.append('metadata', JSON.stringify(request.metadata), {
-				contentType: 'application/json',
-			})
+			formData.append(
+				'metadata',
+				new Blob([JSON.stringify(request.metadata)], {
+					type: 'application/json',
+				})
+			)
 		}
 
 		return this.rest.then((rest) =>
@@ -1331,7 +1358,6 @@ export class CamundaRestClient {
 					},
 					headers: {
 						...headers,
-						...formData.getHeaders(),
 						accept: 'application/json',
 					},
 					body: formData,
@@ -1380,7 +1406,7 @@ export class CamundaRestClient {
 	 * The filename is inferred from the filepath. If you are not reading the files from disk, you need to set the path, like this:
 	 *
 	 * ```typescript
-	 * // In-memory conversion: create Readable streams exposing a path so form-data infers filename
+	 * // In-memory conversion: create Readable streams exposing a path so the SDK can infer the filename
 const streams: ReadStream[] = uploadedFiles.map((file) => {
     const stream = new Readable({
     read() {
@@ -1388,7 +1414,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
         this.push(null);
     }
     });
-    // Provide minimal fs.ReadStream-like fields used by form-data for filename inference.
+    // Provide minimal fs.ReadStream-like fields used by the SDK for filename inference.
     (stream as any).path = file.originalname;
     (stream as any).close = () => stream.destroy();
     return stream as unknown as ReadStream;
@@ -1409,7 +1435,11 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		const formData = new FormData()
 
 		for (const file of request.files) {
-			formData.append('files', file)
+			formData.append(
+				'files',
+				await readStreamToBlob(file),
+				fileNameFromStream(file)
+			)
 		}
 
 		return this.rest.then((rest) =>
@@ -1420,7 +1450,6 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 					},
 					headers: {
 						...headers,
-						...formData.getHeaders(),
 						accept: 'application/json',
 					},
 					body: formData,
@@ -1667,7 +1696,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		// https://github.com/camunda/camunda-8-js-sdk/issues/424
 		return new PCancelable(async (resolve, reject, onCancel) => {
 			// eslint-disable-next-line prefer-const
-			let gotRequest: CancelableRequest<Response<string>>
+			let gotRequest: ResponsePromise
 			let cancelled = false
 			// Register the cancel handler, we will cancel the request if the promise is cancelled
 			onCancel.shouldReject = false
@@ -1697,22 +1726,14 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 				}
 				gotRequest = rest(urlPath, req)
 				gotRequest.catch(reject)
-				/**
-				 * Without a listener for the error event, we get an unhandled promise rejection
-				 * when the request fails. This is because the underlying stream emits an error and with no listener
-				 * on that event, it is an unhandled exception at the process level
-				 *
-				 * Implemented as part of https://github.com/camunda/camunda-8-js-sdk/issues/424.
-				 */
-				;(await gotRequest).once('error', (err) => {
-					// Swallow the error, we don't want to crash the process
-					return err
-				})
 
 				if (request.json ?? true) {
-					return gotRequest.json<V>().then(resolve)
+					return gotRequest.json<V>().then(resolve, reject)
 				}
-				return gotRequest.then((response) => resolve(response.body as V))
+				return gotRequest.then(
+					(response) => resolve(response.body as V),
+					reject
+				)
 			} catch (e) {
 				reject(e)
 			}

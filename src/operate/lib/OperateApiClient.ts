@@ -1,6 +1,6 @@
 import { debug } from 'debug'
-import got from 'got'
 
+import { HttpClient, http } from '../../lib/HttpClient'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -68,7 +68,7 @@ type EnhanceWithTenantIdIfMissing<T> = T extends {
 export class OperateApiClient {
 	private userAgentString: string
 	private oAuthProvider: IHeadersProvider
-	private rest: Promise<typeof got>
+	private rest: Promise<HttpClient>
 	private tenantId: string | undefined
 
 	/**
@@ -105,7 +105,7 @@ export class OperateApiClient {
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
+				http.extend({
 					prefixUrl,
 					retry: GotRetryConfig,
 					https: {

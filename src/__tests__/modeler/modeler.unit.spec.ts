@@ -1,5 +1,4 @@
-import type { BeforeRequestHook } from 'got'
-
+import type { BeforeRequestHook } from '../../lib/HttpClient'
 import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { ModelerApiClient } from '../../modeler/index'
 
@@ -37,7 +36,7 @@ test('Can get construct a client', () => {
 
 /**
  * The methods below assert the HTTP method, path, and (where applicable) request body that the
- * client sends, without contacting a live server. We inject a `middleware` (got beforeRequest) hook
+ * client sends, without contacting a live server. We inject a `middleware` (beforeRequest) hook
  * that captures the outgoing request and then throws to short-circuit the network call. This guards
  * against wrong-verb / wrong-path regressions like the milestone and collaborator bugs.
  */

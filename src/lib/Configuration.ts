@@ -1,5 +1,4 @@
 import debug from 'debug'
-import { BeforeRequestHook } from 'got'
 import mergeWith from 'lodash.mergewith'
 import { createEnv } from 'typed-env'
 
@@ -8,6 +7,7 @@ import { Logger } from '../c8/lib/C8Logger'
 // @ts-ignore - imported for TypeDoc generation, not used in code
 import type { IHeadersProvider } from '../oauth' // eslint-disable-line @typescript-eslint/no-unused-vars
 
+import type { BeforeRequestHook } from './HttpClient'
 import {
 	emitConflictWarnings,
 	emitDeprecationWarnings,

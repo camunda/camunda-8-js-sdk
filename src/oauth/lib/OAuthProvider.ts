@@ -4,9 +4,9 @@ import * as os from 'os'
 import path from 'path'
 
 import { debug } from 'debug'
-import got from 'got'
 import { jwtDecode } from 'jwt-decode'
 
+import { HttpClient, http } from '../../lib/HttpClient'
 import { getLogger, Logger } from '../../c8/lib/C8Logger'
 import {
 	beforeCallHook,
@@ -81,7 +81,7 @@ export class OAuthProvider implements IHeadersProvider {
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
-	private rest: Promise<typeof got>
+	private rest: Promise<HttpClient>
 	private log: Logger
 	private failOnError: boolean
 
@@ -154,7 +154,7 @@ export class OAuthProvider implements IHeadersProvider {
 		}
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
+				http.extend({
 					retry: GotRetryConfig,
 					timeout: {
 						request: TOKEN_ENDPOINT_REQUEST_TIMEOUT_MS,

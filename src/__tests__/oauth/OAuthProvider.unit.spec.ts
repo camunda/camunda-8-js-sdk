@@ -7,15 +7,15 @@ import path from 'path'
 
 import auth from 'basic-auth'
 import debug from 'debug'
-import got, { HTTPError } from 'got'
 import jwt from 'jsonwebtoken'
-
-const trace = debug('test:oauth')
 
 import {
 	EnvironmentSetup,
 	EnvironmentStorage,
 } from '../../lib/EnvironmentSetup'
+import { HTTPError, http as got } from '../../lib/HttpClient'
+
+const trace = debug('test:oauth')
 
 vi.setConfig({ testTimeout: 10_000 })
 let storedEnvironment: EnvironmentStorage
