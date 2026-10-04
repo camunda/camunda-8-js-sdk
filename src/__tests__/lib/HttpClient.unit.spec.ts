@@ -133,9 +133,35 @@ describe('HttpClient', () => {
 			res.end('boom')
 		})
 		const client = createHttpClient({ prefixUrl: base })
-		const res = await client.get('x', { throwHttpErrors: false })
+		const res = await client.get('x', {
+			throwHttpErrors: false,
+			retry: { limit: 0 },
+		})
 		expect(res.statusCode).toBe(500)
 		expect(res.body).toBe('boom')
+	})
+
+	test('throwHttpErrors: false still retries retriable statuses, then resolves with the final response', async () => {
+		let calls = 0
+		const base = await startServer((_, res) => {
+			calls++
+			res.statusCode = 503
+			res.setHeader('retry-after', '0')
+			res.end(`attempt ${calls}`)
+		})
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: {
+				limit: 2,
+				methods: ['GET'],
+				statusCodes: [503],
+				calculateDelay: ({ computedValue }) => (computedValue ? 1 : 0),
+			},
+		})
+		const res = await client.get('x', { throwHttpErrors: false })
+		expect(calls).toBe(3) // initial + 2 retries
+		expect(res.statusCode).toBe(503)
+		expect(res.body).toBe('attempt 3')
 	})
 
 	test('retries configured status codes, honouring Retry-After, and calls beforeRetry', async () => {
@@ -245,6 +271,70 @@ describe('HttpClient', () => {
 		await client.put('a/b', { json: { y: 2 } }).text()
 		expect(seen).toEqual({ method: 'PUT', path: '/a/b', body: '{"y":2}' })
 		expect(auth).toBe('yes')
+	})
+
+	test('beforeRequest middleware runs on every retry attempt (not just the first)', async () => {
+		let calls = 0
+		const seenNonces: string[] = []
+		const base = await startServer((req, res) => {
+			calls++
+			seenNonces.push(req.headers['x-nonce'] as string)
+			if (calls < 3) {
+				res.statusCode = 503
+				res.setHeader('retry-after', '0')
+				return res.end()
+			}
+			res.end('ok')
+		})
+		let nonce = 0
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: {
+				limit: 3,
+				methods: ['GET'],
+				statusCodes: [503],
+				calculateDelay: ({ computedValue }) => (computedValue ? 1 : 0),
+			},
+			hooks: {
+				beforeRequest: [
+					(options) => {
+						options.headers['x-nonce'] = String(++nonce)
+					},
+				],
+			},
+		})
+		expect(await client.get('x').text()).toBe('ok')
+		// A fresh nonce per attempt proves the hook ran on each retry.
+		expect(seenNonces).toEqual(['1', '2', '3'])
+	})
+
+	test('ordinary errors thrown by hooks are surfaced through beforeError without masking', async () => {
+		const base = await startServer((_, res) => res.end('ok'))
+		const seen: unknown[] = []
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: { limit: 0 },
+			hooks: {
+				beforeRequest: [
+					() => {
+						throw new Error('hook boom')
+					},
+				],
+				beforeError: [
+					(e) => {
+						// This would throw a TypeError if `e` were a plain Error
+						// without `.options` (the regressed behaviour).
+						seen.push(e.options.method)
+						e.message = `wrapped: ${e.message}`
+						return e
+					},
+				],
+			},
+		})
+		const err = await client.get('x').catch((e) => e)
+		expect(err).toBeInstanceOf(RequestError)
+		expect(err.message).toBe('wrapped: hook boom')
+		expect(seen).toEqual(['GET'])
 	})
 
 	test('cancel() aborts an in-flight request with CancelError', async () => {

@@ -667,7 +667,7 @@ async function executeOnce(
 		for (const hook of options.hooks.afterResponse) {
 			response = await hook(response)
 		}
-		if (options.throwHttpErrors && !(res.status >= 200 && res.status < 400)) {
+		if (!(res.status >= 200 && res.status < 400)) {
 			throw new HTTPError(response, options)
 		}
 		return response
@@ -680,12 +680,15 @@ async function executeWithRetry(
 	options: NormalizedOptions,
 	cancelSignal: AbortSignal
 ): Promise<Response<string>> {
-	for (const hook of options.hooks.beforeRequest) {
-		await hook(options)
-	}
 	let attempt = 0
 	for (;;) {
 		try {
+			// Run beforeRequest middleware before every attempt (including retries)
+			// so hooks that refresh signatures, timestamps or attempt-specific
+			// headers see fresh state on each try, as got does.
+			for (const hook of options.hooks.beforeRequest) {
+				await hook(options)
+			}
 			return await executeOnce(options, cancelSignal, attempt)
 		} catch (err) {
 			if (err instanceof CancelError || cancelSignal.aborted) {
@@ -722,6 +725,18 @@ async function executeWithRetry(
 				delay = 0
 			}
 			if (!delay || delay <= 0) {
+				// Retries are exhausted (or this status/error is not retriable).
+				// When the caller opted out of throwing on HTTP errors, hand back
+				// the final response instead of throwing — but only for HTTP status
+				// errors, which carry a response. Network/parse/cancel errors still
+				// throw.
+				if (
+					!options.throwHttpErrors &&
+					error instanceof HTTPError &&
+					error.response
+				) {
+					return error.response
+				}
 				throw error
 			}
 			// beforeRetry hooks may throw to abort retrying
@@ -750,7 +765,17 @@ function createResponsePromise(
 			return await executeWithRetry(options, controller.signal)
 		} catch (err) {
 			if (err instanceof CancelError) throw err
-			throw await applyBeforeError(err as RequestError, options)
+			// Hook errors (beforeRequest/beforeRetry/afterResponse) may be ordinary
+			// Error objects with no `.options`; wrap them so beforeError hooks that
+			// read `error.options` don't mask the original error with a TypeError.
+			const requestError =
+				err instanceof RequestError
+					? err
+					: new RequestError((err as Error)?.message ?? String(err), {
+							options,
+							cause: err,
+						})
+			throw await applyBeforeError(requestError, options)
 		}
 	})()
 

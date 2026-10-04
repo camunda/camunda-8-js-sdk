@@ -1,7 +1,8 @@
-import fs, { ReadStream } from 'node:fs'
+import fs, { openAsBlob, ReadStream } from 'node:fs'
 import path from 'node:path'
 
 import { debug } from 'debug'
+import { lookup as lookupMimeType } from 'mime-types'
 import { parse, stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
@@ -106,11 +107,66 @@ import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 import { createTrackedGot } from './TrackedGot'
 
-/** Buffer a readable stream into a Blob for multipart upload (fetch FormData needs Blob parts). */
-async function readStreamToBlob(
+/** Infer a file name from an fs.ReadStream-like `path`, as form-data used to. */
+export function fileNameFromStream(stream: unknown): string | undefined {
+	const p = (stream as { path?: string | Buffer }).path
+	return p ? path.basename(p.toString()) : undefined
+}
+
+/**
+ * Resolve the MIME type for a multipart part. Uses the caller-supplied
+ * `contentType` when present, otherwise infers it from the file name (as the
+ * previous `form-data` implementation did, e.g. `README.md` -> `text/markdown`).
+ */
+export function resolveContentType(
+	explicitType: string | undefined,
+	fileName: string | undefined
+): string | undefined {
+	if (explicitType) return explicitType
+	if (!fileName) return undefined
+	const inferred = lookupMimeType(fileName)
+	return inferred === false ? undefined : inferred
+}
+
+/**
+ * Produce a Blob for a multipart upload part.
+ *
+ * For real `fs.ReadStream`s backed by a file on disk we return a file-backed
+ * Blob via `fs.openAsBlob`, which lets undici stream the file lazily from disk
+ * rather than buffering the entire payload (and every concurrent part) into
+ * memory. Only non-file streams (e.g. in-memory `Readable`s that merely expose
+ * a `path` for filename inference) are buffered — their contents are already
+ * resident in memory, so no additional unbounded growth is introduced.
+ */
+export async function readStreamToBlob(
 	stream: NodeJS.ReadableStream,
 	type?: string
 ): Promise<Blob> {
+	const filePath = (stream as { path?: string | Buffer }).path
+	// Only stream straight from disk for a pristine, whole-file fs.ReadStream.
+	// A partially consumed stream (bytesRead > 0) or one created with a byte
+	// range (start/end) must be buffered so we honour exactly the bytes the
+	// caller intended, rather than re-reading the entire file via openAsBlob.
+	const s = stream as ReadStream & {
+		bytesRead?: number
+		start?: number
+		end?: number
+	}
+	const isWholeFile =
+		(s.start === undefined || s.start === 0) &&
+		(s.end === undefined || s.end === Infinity)
+	if (
+		stream instanceof ReadStream &&
+		filePath !== undefined &&
+		!s.bytesRead &&
+		isWholeFile
+	) {
+		try {
+			return await openAsBlob(filePath, type ? { type } : undefined)
+		} catch {
+			// Fall through to buffering if the file can't be opened as a Blob.
+		}
+	}
 	const chunks: Buffer[] = []
 	for await (const chunk of stream) {
 		chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
@@ -119,12 +175,6 @@ async function readStreamToBlob(
 		[new Uint8Array(Buffer.concat(chunks))],
 		type ? { type } : undefined
 	)
-}
-
-/** Infer a file name from an fs.ReadStream-like `path`, as form-data used to. */
-function fileNameFromStream(stream: unknown): string | undefined {
-	const p = (stream as { path?: string | Buffer }).path
-	return p ? path.basename(p.toString()) : undefined
 }
 
 const trace = debug('camunda:orchestration-rest')
@@ -1067,7 +1117,12 @@ export class CamundaRestClient {
 		const formData = new FormData()
 
 		resources.forEach((resource) => {
-			formData.append(`resources`, new Blob([resource.content]), resource.name)
+			const type = resolveContentType(undefined, resource.name)
+			formData.append(
+				`resources`,
+				new Blob([resource.content], type ? { type } : undefined),
+				resource.name
+			)
 		})
 
 		if (tenantId || this.tenantId) {
@@ -1329,15 +1384,13 @@ export class CamundaRestClient {
 		const headers = await this.getHeaders()
 		const formData = new FormData()
 
+		const fileName =
+			request.metadata?.fileName ?? fileNameFromStream(request.file)
 		const file = await readStreamToBlob(
 			request.file,
-			request.metadata?.contentType
+			resolveContentType(request.metadata?.contentType, fileName)
 		)
-		formData.append(
-			'file',
-			file,
-			request.metadata?.fileName ?? fileNameFromStream(request.file)
-		)
+		formData.append('file', file, fileName)
 
 		// Add other form fields
 		if (request.metadata) {
@@ -1435,10 +1488,11 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		const formData = new FormData()
 
 		for (const file of request.files) {
+			const fileName = fileNameFromStream(file)
 			formData.append(
 				'files',
-				await readStreamToBlob(file),
-				fileNameFromStream(file)
+				await readStreamToBlob(file, resolveContentType(undefined, fileName)),
+				fileName
 			)
 		}
 
