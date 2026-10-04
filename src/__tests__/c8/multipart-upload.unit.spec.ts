@@ -71,7 +71,9 @@ describe('readStreamToBlob', () => {
 		expect(await blob.text()).toBe('hello streaming world')
 		// The passed stream is not consumed because we read from disk directly.
 		expect(stream.bytesRead).toBe(0)
-		stream.destroy()
+		// The file-backed fast-path must not leak the caller's stream: its fd
+		// would otherwise stay open (the old buffering path auto-closed it).
+		expect(stream.destroyed).toBe(true)
 	})
 
 	test('buffers a non-file in-memory stream that only exposes a path for filename inference', async () => {

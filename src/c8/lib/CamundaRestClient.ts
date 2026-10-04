@@ -162,7 +162,14 @@ export async function readStreamToBlob(
 		isWholeFile
 	) {
 		try {
-			return await openAsBlob(filePath, type ? { type } : undefined)
+			const blob = await openAsBlob(filePath, type ? { type } : undefined)
+			// openAsBlob re-reads the file from disk and never touches the
+			// caller's stream, so the stream's fd would stay open (the old
+			// buffering path consumed it, which auto-closed it). Destroy it
+			// here to release the fd — destroying a pending or open
+			// fs.ReadStream is safe.
+			stream.destroy()
+			return blob
 		} catch {
 			// Fall through to buffering if the file can't be opened as a Blob.
 		}
