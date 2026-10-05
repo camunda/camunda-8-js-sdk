@@ -305,7 +305,12 @@ export const parseRetryAfter = (error: RequestError): number | undefined => {
 	const value = Array.isArray(header) ? header[0] : header
 	if (!value) return undefined
 	const seconds = Number(value)
-	return Number.isNaN(seconds) ? Date.parse(value) - Date.now() : seconds * 1000
+	if (!Number.isNaN(seconds)) return seconds * 1000
+	// An HTTP-date Retry-After; a malformed date must be treated as absent
+	// (returning NaN here would later collapse to a NaN delay that silently
+	// stops retrying instead of falling back to exponential backoff).
+	const date = Date.parse(value)
+	return Number.isNaN(date) ? undefined : date - Date.now()
 }
 
 /** got 11-compatible default backoff: 2^(n-1) * 1000ms + up to 100ms jitter, honouring Retry-After. */
@@ -699,7 +704,12 @@ async function executeOnce(
 		for (const hook of options.hooks.afterResponse) {
 			response = await hook(response)
 		}
-		if (!(res.status >= 200 && res.status < 400)) {
+		// Evaluate the final response returned by the hooks (a hook may recover a
+		// 5xx into a success), not the original fetch status. With redirects
+		// followed (undici's default), got treats only 2xx and 304 as successful.
+		const status = response.statusCode
+		const isOk = (status >= 200 && status < 300) || status === 304
+		if (!isOk) {
 			throw new HTTPError(response, options)
 		}
 		return response
@@ -736,29 +746,28 @@ async function executeWithRetry(
 							cause: err,
 						})
 			attempt++
-			let delay = 0
-			try {
-				const retryAfter = parseRetryAfter(error)
-				const computedValue = defaultCalculateDelay({
-					attemptCount: attempt,
-					retryOptions: options.retry,
-					error,
-					computedValue: 0,
-					retryAfter,
-				})
-				delay =
-					options.retry.calculateDelay === defaultCalculateDelay
-						? computedValue
-						: await options.retry.calculateDelay({
-								attemptCount: attempt,
-								retryOptions: options.retry,
-								error,
-								computedValue,
-								retryAfter,
-							})
-			} catch {
-				delay = 0
-			}
+			// Do not swallow exceptions from a user-supplied calculateDelay:
+			// let them propagate so the outer error path wraps them with request
+			// context and runs beforeError, instead of masking a configuration or
+			// programming failure behind the unrelated request error.
+			const retryAfter = parseRetryAfter(error)
+			const computedValue = defaultCalculateDelay({
+				attemptCount: attempt,
+				retryOptions: options.retry,
+				error,
+				computedValue: 0,
+				retryAfter,
+			})
+			const delay =
+				options.retry.calculateDelay === defaultCalculateDelay
+					? computedValue
+					: await options.retry.calculateDelay({
+							attemptCount: attempt,
+							retryOptions: options.retry,
+							error,
+							computedValue,
+							retryAfter,
+						})
 			if (!delay || delay <= 0) {
 				// Retries are exhausted (or this status/error is not retriable).
 				// When the caller opted out of throwing on HTTP errors, hand back

@@ -524,6 +524,155 @@ describe('HttpClient', () => {
 			.text()
 		expect(seen).toBe('/x?keep=1&tag=a&tag=b')
 	})
+
+	test('afterResponse hook that recovers a 500 into a 2xx suppresses the HTTPError', async () => {
+		const base = await startServer((_, res) => {
+			res.statusCode = 500
+			res.end('boom')
+		})
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: { limit: 0 },
+			hooks: {
+				afterResponse: [
+					(response) => ({
+						...response,
+						statusCode: 200,
+						statusMessage: 'OK',
+						ok: true,
+						body: 'recovered',
+					}),
+				],
+			},
+		})
+		// The final status is evaluated from the hook's response, not the
+		// original fetch status, so no HTTPError is thrown.
+		expect(await client.get('x').text()).toBe('recovered')
+	})
+
+	test('afterResponse hook that downgrades a 200 into a 500 raises an HTTPError', async () => {
+		const base = await startServer((_, res) => res.end('ok'))
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: { limit: 0 },
+			hooks: {
+				afterResponse: [
+					(response) => ({
+						...response,
+						statusCode: 500,
+						statusMessage: 'Internal Server Error',
+						ok: false,
+					}),
+				],
+			},
+		})
+		const err = await client
+			.get('x')
+			.text()
+			.catch((e) => e)
+		expect(err).toBeInstanceOf(HTTPError)
+		expect(err.response.statusCode).toBe(500)
+	})
+
+	test('a final 3xx response is not treated as success', async () => {
+		const base = await startServer((_, res) => res.end('ok'))
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: { limit: 0 },
+			hooks: {
+				// Rewrite the final response to a 3xx status, mirroring got's
+				// semantics where only 2xx and 304 are successful.
+				afterResponse: [
+					(response) => ({
+						...response,
+						statusCode: 305,
+						statusMessage: 'Use Proxy',
+						ok: false,
+					}),
+				],
+			},
+		})
+		const err = await client
+			.get('x', { throwHttpErrors: true })
+			.text()
+			.catch((e) => e)
+		expect(err).toBeInstanceOf(HTTPError)
+		expect(err.response.statusCode).toBe(305)
+	})
+
+	test('a 304 response is treated as successful', async () => {
+		const base = await startServer((_, res) => {
+			res.statusCode = 304
+			res.end()
+		})
+		const client = createHttpClient({ prefixUrl: base, retry: { limit: 0 } })
+		const res = await client.get('x')
+		expect(res.statusCode).toBe(304)
+	})
+
+	test('a malformed Retry-After date falls back to exponential backoff instead of stopping', async () => {
+		let calls = 0
+		const base = await startServer((_, res) => {
+			calls++
+			if (calls < 2) {
+				res.statusCode = 503
+				// An unparseable HTTP-date: Date.parse -> NaN. A NaN delay would
+				// silently stop retrying; it must fall back to backoff instead.
+				res.setHeader('retry-after', 'not-a-date')
+				return res.end()
+			}
+			res.end('ok')
+		})
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: {
+				limit: 3,
+				methods: ['GET'],
+				statusCodes: [503],
+				// Collapse the backoff to 1ms so the test stays fast while still
+				// proving a positive (non-NaN) delay was computed.
+				calculateDelay: ({ computedValue }) =>
+					computedValue && !Number.isNaN(computedValue) ? 1 : 0,
+			},
+		})
+		expect(await client.get('x').text()).toBe('ok')
+		expect(calls).toBe(2)
+	})
+
+	test('an exception thrown by a user calculateDelay propagates through beforeError', async () => {
+		const base = await startServer((_, res) => {
+			res.statusCode = 500
+			res.end('boom')
+		})
+		const seen: unknown[] = []
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: {
+				limit: 3,
+				methods: ['GET'],
+				statusCodes: [500],
+				calculateDelay: () => {
+					throw new Error('calculateDelay boom')
+				},
+			},
+			hooks: {
+				beforeError: [
+					(e) => {
+						// Would throw a TypeError if the calculateDelay error bypassed
+						// wrapping and arrived without `.options`.
+						seen.push(e.options.method)
+						return e
+					},
+				],
+			},
+		})
+		const err = await client
+			.get('x', { throwHttpErrors: false })
+			.catch((e) => e)
+		expect(err).toBeInstanceOf(RequestError)
+		expect(err.message).toContain('calculateDelay boom')
+		expect(seen).toEqual(['GET'])
+	})
 })
 
 describe('HttpClient TLS', () => {
