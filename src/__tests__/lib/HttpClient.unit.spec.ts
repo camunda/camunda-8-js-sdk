@@ -50,6 +50,16 @@ function readBody(req: http.IncomingMessage): Promise<string> {
 	})
 }
 
+/** Await a promise that must reject, and return the rejection reason typed as E. */
+async function rejectionOf<E = RequestError>(p: Promise<unknown>): Promise<E> {
+	try {
+		await p
+	} catch (e) {
+		return e as E
+	}
+	throw new Error('expected the promise to reject, but it resolved')
+}
+
 /** A port with nothing listening on it */
 async function closedPort() {
 	const s = http.createServer()
@@ -112,10 +122,7 @@ describe('HttpClient', () => {
 			res.end('{"title":"NOT_FOUND"}')
 		})
 		const client = createHttpClient({ prefixUrl: base })
-		const err = await client
-			.get('missing')
-			.json()
-			.catch((e) => e)
+		const err = await rejectionOf<HTTPError>(client.get('missing').json())
 		expect(err).toBeInstanceOf(HTTPError)
 		expect(err.code).toBe('ERR_NON_2XX_3XX_RESPONSE')
 		expect(err.message).toBe('Response code 404 (Not Found)')
@@ -125,7 +132,7 @@ describe('HttpClient', () => {
 			'application/problem+json'
 		)
 		expect(err.options.method).toBe('GET')
-		expect(err.request.options.url.href).toBe(`${base}/missing`)
+		expect(err.request?.options.url.href).toBe(`${base}/missing`)
 	})
 
 	test('throwHttpErrors: false resolves with the response', async () => {
@@ -172,7 +179,8 @@ describe('HttpClient', () => {
 			if (calls < 3) {
 				res.statusCode = 503
 				res.setHeader('retry-after', '0')
-				return res.end()
+				res.end()
+				return
 			}
 			res.end('{"done":true}')
 		})
@@ -238,10 +246,7 @@ describe('HttpClient', () => {
 				],
 			},
 		})
-		const err = await client
-			.post('x', { json: {} })
-			.json()
-			.catch((e) => e)
+		const err = await rejectionOf(client.post('x', { json: {} }).json())
 		expect(err).toBeInstanceOf(RequestError)
 		expect(err.code).toBe('ECONNREFUSED')
 		expect(err.message).toMatch(/^wrapped: /)
@@ -252,7 +257,7 @@ describe('HttpClient', () => {
 	test('beforeRequest hooks (middleware) see method, URL and serialised body and can mutate headers', async () => {
 		let auth: string | undefined
 		const base = await startServer((req, res) => {
-			auth = req.headers['x-mw']
+			auth = req.headers['x-mw'] as string | undefined
 			res.end('ok')
 		})
 		const seen: { method?: string; path?: string; body?: unknown } = {}
@@ -283,7 +288,8 @@ describe('HttpClient', () => {
 			if (calls < 3) {
 				res.statusCode = 503
 				res.setHeader('retry-after', '0')
-				return res.end()
+				res.end()
+				return
 			}
 			res.end('ok')
 		})
@@ -431,7 +437,8 @@ describe('HttpClient', () => {
 			if (calls < 3) {
 				res.statusCode = 503
 				res.setHeader('retry-after', '0')
-				return res.end()
+				res.end()
+				return
 			}
 			res.end('ok')
 		})
@@ -619,7 +626,8 @@ describe('HttpClient', () => {
 				// An unparseable HTTP-date: Date.parse -> NaN. A NaN delay would
 				// silently stop retrying; it must fall back to backoff instead.
 				res.setHeader('retry-after', 'not-a-date')
-				return res.end()
+				res.end()
+				return
 			}
 			res.end('ok')
 		})

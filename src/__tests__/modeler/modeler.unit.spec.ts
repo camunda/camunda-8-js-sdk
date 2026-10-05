@@ -60,13 +60,15 @@ function makeCapturingClient(
 		captured.body = options.body
 		throw new Error('__captured__')
 	}
-	return new ModelerApiClient({
-		config: {
-			CAMUNDA_OAUTH_DISABLED: true,
-			CAMUNDA_MODELER_BASE_URL: baseUrl,
-			middleware: [middleware],
-		},
-	})
+	// `middleware` is honoured at runtime but is not declared on the client
+	// config types, so (as for SDK users) it is passed via a variable, which
+	// is not subject to excess-property checks.
+	const config = {
+		CAMUNDA_OAUTH_DISABLED: true,
+		CAMUNDA_MODELER_BASE_URL: baseUrl,
+		middleware: [middleware],
+	}
+	return new ModelerApiClient({ config })
 }
 
 describe('ModelerApiClient request shape', () => {
