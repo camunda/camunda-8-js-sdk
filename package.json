@@ -105,6 +105,7 @@
 		"eslint-plugin-prettier": "^5.0.1",
 		"express": "^4.19.2",
 		"get-port-please": "^3.1.2",
+		"got11": "npm:got@^11.8.6",
 		"grpc-tools": "^1.13.1",
 		"husky": "^8.0.3",
 		"jsonwebtoken": "^9.0.2",

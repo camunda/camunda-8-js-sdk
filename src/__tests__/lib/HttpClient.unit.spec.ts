@@ -738,3 +738,91 @@ describe('HttpClient TLS', () => {
 		)
 	})
 })
+
+/**
+ * Behaviour that got 11 had and the SDK's public contract relies on. These
+ * guard the class of "the transport silently differs from got" regressions,
+ * not just one call site.
+ */
+describe('HttpClient got 11 behavioural parity', () => {
+	/** Bind a server on the first free port from the fetch-spec "bad ports" list. */
+	async function listenOnFetchBadPort(handler: Handler) {
+		// https://fetch.spec.whatwg.org/#port-blocking (unprivileged entries)
+		const candidates = [6000, 6566, 6665, 6666, 6667, 6668, 6669, 6697, 10080]
+		for (const port of candidates) {
+			const server = http.createServer(handler)
+			const ok = await new Promise<boolean>((resolve) => {
+				server.once('error', () => resolve(false))
+				server.listen(port, '127.0.0.1', () => resolve(true))
+			})
+			if (ok) {
+				servers.push(server)
+				return port
+			}
+		}
+		throw new Error('no fetch bad port available to bind')
+	}
+
+	test('requests to fetch-spec "bad ports" are not refused', async () => {
+		const port = await listenOnFetchBadPort((_, res) => res.end('reached'))
+		const client = createHttpClient({
+			prefixUrl: `http://127.0.0.1:${port}`,
+			retry: { limit: 0 },
+		})
+		expect(await client.get('x').text()).toBe('reached')
+	})
+
+	test('redirects are followed, and 303 turns a POST into a GET', async () => {
+		const seen: string[] = []
+		const base = await startServer((req, res) => {
+			seen.push(`${req.method} ${req.url}`)
+			if (req.url === '/a') {
+				res.writeHead(302, { location: '/b' }).end()
+			} else if (req.url === '/post') {
+				res.writeHead(303, { location: '/b' }).end()
+			} else {
+				res.end(`at ${req.url}`)
+			}
+		})
+		const client = createHttpClient({ prefixUrl: base, retry: { limit: 0 } })
+		expect(await client.get('a').text()).toBe('at /b')
+		expect(await client.post('post', { json: { x: 1 } }).text()).toBe('at /b')
+		expect(seen).toEqual(['GET /a', 'GET /b', 'POST /post', 'GET /b'])
+	})
+
+	test('a beforeRequest hook can short-circuit by returning a response (got 11 contract)', async () => {
+		const port = await closedPort()
+		const client = createHttpClient({
+			prefixUrl: `http://127.0.0.1:${port}`,
+			retry: { limit: 0 },
+			hooks: {
+				beforeRequest: [
+					() =>
+						({
+							statusCode: 200,
+							headers: { 'content-type': 'application/json' },
+							body: '{"cached":true}',
+						}) as never,
+				],
+			},
+		})
+		expect(await client.get('x').json()).toEqual({ cached: true })
+	})
+
+	test('a short-circuit response with an error status still raises HTTPError', async () => {
+		const port = await closedPort()
+		const client = createHttpClient({
+			prefixUrl: `http://127.0.0.1:${port}`,
+			retry: { limit: 0 },
+			hooks: {
+				beforeRequest: [() => ({ statusCode: 418, body: 'teapot' }) as never],
+			},
+		})
+		const err = await client
+			.get('x')
+			.text()
+			.catch((e) => e)
+		expect(err).toBeInstanceOf(HTTPError)
+		expect(err.response.statusCode).toBe(418)
+	})
+})
