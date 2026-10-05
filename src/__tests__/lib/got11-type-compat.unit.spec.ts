@@ -28,7 +28,10 @@ describe('got 11 type compatibility', () => {
 			.filter((d) => d.file?.fileName === fixture)
 			.map((d) => {
 				const { line } = d.file!.getLineAndCharacterOfPosition(d.start ?? 0)
-				return `L${line + 1}: ${ts.flattenDiagnosticMessageText(d.messageText, '\n')}`
+				return `L${line + 1}: ${ts.flattenDiagnosticMessageText(
+					d.messageText,
+					'\n'
+				)}`
 			})
 		expect(diagnostics).toEqual([])
 	}, 120_000)

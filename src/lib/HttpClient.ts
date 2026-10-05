@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Minimal got-compatible HTTP client built on undici's fetch.
+ * Minimal got-compatible HTTP client built on undici's `request` API.
  *
  * This replaces got 11 (see https://github.com/camunda/camunda-8-js-sdk/issues/837).
  * It deliberately mirrors the subset of the got API used by this SDK
@@ -8,13 +8,28 @@
  * `.cancel()`, hooks, retry, timeouts, TLS options) so that call sites and the
  * public `middleware` / `HTTPError` shapes stay compatible.
  *
- * We use the `undici` package's own `fetch`, `Agent` and `FormData` (rather than the
- * Node.js globals) so that the TLS dispatcher and fetch implementation always match,
+ * We use the `undici` package's own `request`, `Agent` and `FormData` (rather than the
+ * Node.js globals) so that the TLS dispatcher and request implementation always match,
  * independent of the Node.js-bundled undici version.
+ *
+ * `request` rather than `fetch`: fetch applies browser-only rules that got 11 did
+ * not (e.g. refusing fetch-spec "bad ports" such as 6000 or 6666), which would be
+ * a behavioural break for SDK users. Redirects are followed by the redirect
+ * interceptor, matching got 11's default.
  */
 import { createHash } from 'node:crypto'
+import { STATUS_CODES } from 'node:http'
+import { Readable } from 'node:stream'
 
-import { Agent, Dispatcher, FormData, fetch } from 'undici'
+import {
+	Agent,
+	Dispatcher,
+	FormData,
+	getGlobalDispatcher,
+	interceptors,
+	request as undiciRequest,
+	Response as UndiciResponse,
+} from 'undici'
 
 export type Method =
 	| 'GET'
@@ -59,10 +74,25 @@ export interface HttpsOptions {
 	rejectUnauthorized?: boolean
 }
 
+/**
+ * The error shape a retry decision is based on. Deliberately structural (not
+ * the {@link RequestError} class) so that `calculateDelay` functions written
+ * against got 11's `RetryObject` type keep type-checking.
+ */
+export interface RetryError extends Error {
+	code: string
+	options: { method: string }
+	response?: {
+		statusCode: number
+		headers: Record<string, string | string[] | undefined>
+		body?: unknown
+	}
+}
+
 export interface RetryObject {
 	attemptCount: number
 	retryOptions: RequiredRetryOptions
-	error: RequestError
+	error: RetryError
 	computedValue: number
 	/** Parsed `Retry-After` delay in milliseconds, when the response supplied one. */
 	retryAfter?: number
@@ -74,14 +104,28 @@ export interface RequiredRetryOptions {
 	statusCodes: number[]
 	errorCodes: string[]
 	maxRetryAfter?: number
-	calculateDelay: (retryObject: RetryObject) => number | Promise<number>
+	// Method syntax (bivariant parameter) so got 11-typed `calculateDelay`
+	// functions remain assignable. See got11-type-compat.unit.spec.ts.
+	calculateDelay(retryObject: RetryObject): number | Promise<number>
 }
 
 export type RetryOptions = Partial<RequiredRetryOptions> | number
 
+/**
+ * A response a `beforeRequest` hook may return to short-circuit the network
+ * call (got 11 contract), e.g. to serve a cached or stubbed response.
+ */
+export interface ResponseLike {
+	statusCode: number
+	statusMessage?: string
+	headers?: Record<string, string | string[] | undefined>
+	body?: string | Buffer
+}
+
 export type BeforeRequestHook = (
 	options: NormalizedOptions
-) => void | Promise<void>
+	// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+) => void | ResponseLike | Promise<void | ResponseLike>
 export type BeforeRetryHook = (
 	options: NormalizedOptions,
 	error?: RequestError,
@@ -184,7 +228,8 @@ export class RequestError extends Error {
 	options: NormalizedOptions
 	request?: { options: NormalizedOptions }
 	response?: Response<string>
-	timings: undefined
+	/** Always undefined; kept for got 11 shape compatibility. */
+	timings?: object
 	declare cause?: unknown
 	constructor(
 		message: string,
@@ -207,7 +252,6 @@ export class RequestError extends Error {
 		this.options = options
 		this.request = { options }
 		this.response = response
-		this.timings = undefined
 		if (cause !== undefined) {
 			Object.defineProperty(this, 'cause', {
 				value: cause,
@@ -294,7 +338,7 @@ const RETRY_AFTER_STATUS_CODES = [413, 429, 503]
  * Returns `undefined` when the error carries no response, the status is not one
  * that uses `Retry-After`, or the header is absent.
  */
-export const parseRetryAfter = (error: RequestError): number | undefined => {
+export const parseRetryAfter = (error: RetryError): number | undefined => {
 	if (
 		!error.response ||
 		!RETRY_AFTER_STATUS_CODES.includes(error.response.statusCode)
@@ -535,7 +579,7 @@ function pemKey(value: unknown): string {
 }
 
 /** Returns an undici Agent configured for custom CA / mTLS, or undefined for the default dispatcher. */
-export function getDispatcher(https: HttpsOptions): Dispatcher | undefined {
+function getTlsDispatcher(https: HttpsOptions): Dispatcher | undefined {
 	const cert = https.certificate ?? https.cert
 	const {
 		certificateAuthority: ca,
@@ -574,11 +618,30 @@ export function getDispatcher(https: HttpsOptions): Dispatcher | undefined {
 	return dispatcher
 }
 
+const MAX_REDIRECTS = 10 // got 11 default
+const redirectingDispatchers = new WeakMap<Dispatcher, Dispatcher>()
+
+/**
+ * Returns the dispatcher for a request: the TLS-configured Agent (or the global
+ * dispatcher) composed with redirect following, as got 11 followed redirects.
+ */
+export function getDispatcher(https: HttpsOptions): Dispatcher {
+	const base = getTlsDispatcher(https) ?? getGlobalDispatcher()
+	let composed = redirectingDispatchers.get(base)
+	if (!composed) {
+		composed = base.compose(
+			interceptors.redirect({ maxRedirections: MAX_REDIRECTS })
+		)
+		redirectingDispatchers.set(base, composed)
+	}
+	return composed
+}
+
 /* ------------------------------------------------------------------ */
 /* Request execution                                                  */
 /* ------------------------------------------------------------------ */
 
-/** Extract a Node/undici error code from a fetch failure (`TypeError: fetch failed` with a cause chain). */
+/** Extract a Node/undici error code from a transport failure (walking any cause chain). */
 function networkErrorCode(err: any): string | undefined {
 	let e = err
 	for (let i = 0; i < 5 && e; i++) {
@@ -613,15 +676,50 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 	})
 }
 
-function responseHeaders(h: globalThis.Headers | any) {
+function responseHeaders(
+	h: Record<string, string | string[] | undefined> | undefined
+) {
 	const out: Record<string, string | string[]> = {}
-	h.forEach((value: string, key: string) => {
-		if (key !== 'set-cookie') out[key] = value
-	})
-	const cookies: string[] =
-		typeof h.getSetCookie === 'function' ? h.getSetCookie() : []
-	if (cookies.length) out['set-cookie'] = cookies
+	for (const [key, value] of Object.entries(h ?? {})) {
+		if (value === undefined) continue
+		const k = key.toLowerCase()
+		if (k === 'set-cookie') {
+			out[k] = Array.isArray(value) ? value : [value]
+		} else {
+			out[k] = Array.isArray(value) ? value.join(', ') : value
+		}
+	}
 	return out
+}
+
+/** Turn a beforeRequest short-circuit return value into a Response. */
+function fromResponseLike(
+	like: ResponseLike,
+	options: NormalizedOptions,
+	retryCount: number
+): Response<string> {
+	const rawBody = Buffer.isBuffer(like.body)
+		? like.body
+		: Buffer.from(like.body ?? '', 'utf8')
+	return {
+		statusCode: like.statusCode,
+		statusMessage: like.statusMessage ?? STATUS_CODES[like.statusCode] ?? '',
+		headers: responseHeaders(like.headers),
+		body: rawBody.toString('utf8'),
+		rawBody,
+		url: options.url.toString(),
+		ok: like.statusCode >= 200 && like.statusCode < 300,
+		retryCount,
+		request: { options },
+	}
+}
+
+function isResponseLike(value: unknown): value is ResponseLike {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as ResponseLike).statusCode === 'number'
+	)
 }
 
 async function applyBeforeError(
@@ -635,78 +733,107 @@ async function applyBeforeError(
 	return e
 }
 
+/**
+ * Encode the request body for undici's `request`. FormData is serialised
+ * per attempt (so retries resend it) via the WHATWG Response body extractor,
+ * which streams Blob parts lazily and supplies the multipart boundary.
+ */
+function encodeBody(options: NormalizedOptions): {
+	body: string | Buffer | Uint8Array | Readable | undefined
+	headers: Record<string, string>
+} {
+	if (options.method === 'GET' || options.method === 'HEAD') {
+		return { body: undefined, headers: options.headers }
+	}
+	const body = options.body
+	if (body instanceof FormData) {
+		const encoded = new UndiciResponse(body)
+		return {
+			body: encoded.body ? Readable.fromWeb(encoded.body as any) : undefined,
+			headers: {
+				...options.headers,
+				'content-type': encoded.headers.get('content-type') as string,
+			},
+		}
+	}
+	if (body instanceof URLSearchParams) {
+		return { body: body.toString(), headers: options.headers }
+	}
+	return { body, headers: options.headers }
+}
+
 async function executeOnce(
 	options: NormalizedOptions,
 	cancelSignal: AbortSignal,
-	retryCount: number
+	retryCount: number,
+	shortCircuit?: ResponseLike
 ): Promise<Response<string>> {
 	const timeoutMs = options.timeout.request
 	const timeoutController = new AbortController()
 	const timer =
-		timeoutMs !== undefined
+		timeoutMs !== undefined && !shortCircuit
 			? setTimeout(
 					() => timeoutController.abort(new TimeoutError(timeoutMs, options)),
 					timeoutMs
 				)
 			: undefined
 	const signal = AbortSignal.any([cancelSignal, timeoutController.signal])
+	const rethrowAbort = () => {
+		if (timeoutController.signal.aborted) throw timeoutController.signal.reason
+		if (cancelSignal.aborted) throw cancelSignal.reason
+	}
 	try {
-		let res
-		try {
-			res = await fetch(options.url, {
-				method: options.method,
-				headers: options.headers,
-				body:
-					options.method === 'GET' || options.method === 'HEAD'
-						? undefined
-						: (options.body as any),
-				signal,
-				dispatcher: getDispatcher(options.https),
-			})
-		} catch (err: any) {
-			if (timeoutController.signal.aborted) {
-				throw timeoutController.signal.reason
+		let response: Response<string>
+		if (shortCircuit) {
+			response = fromResponseLike(shortCircuit, options, retryCount)
+		} else {
+			let res: Dispatcher.ResponseData
+			try {
+				const { body, headers } = encodeBody(options)
+				res = await undiciRequest(options.url, {
+					method: options.method as Dispatcher.HttpMethod,
+					headers,
+					body,
+					signal,
+					dispatcher: getDispatcher(options.https),
+				})
+			} catch (err: any) {
+				rethrowAbort()
+				throw new RequestError(networkErrorMessage(err), {
+					code: networkErrorCode(err),
+					options,
+					cause: err,
+				})
 			}
-			if (cancelSignal.aborted) {
-				throw cancelSignal.reason
+			let rawBody: Buffer
+			try {
+				rawBody = Buffer.from(await res.body.arrayBuffer())
+			} catch (err: any) {
+				rethrowAbort()
+				throw new RequestError(networkErrorMessage(err), {
+					code: networkErrorCode(err) ?? 'ERR_READING_RESPONSE_STREAM',
+					options,
+					cause: err,
+				})
 			}
-			throw new RequestError(networkErrorMessage(err), {
-				code: networkErrorCode(err),
-				options,
-				cause: err,
-			})
-		}
-		let rawBody: Buffer
-		try {
-			rawBody = Buffer.from(await res.arrayBuffer())
-		} catch (err: any) {
-			if (timeoutController.signal.aborted) {
-				throw timeoutController.signal.reason
+			response = {
+				statusCode: res.statusCode,
+				statusMessage: STATUS_CODES[res.statusCode] ?? '',
+				headers: responseHeaders(res.headers),
+				body: rawBody.toString('utf8'),
+				rawBody,
+				url: options.url.toString(),
+				ok: res.statusCode >= 200 && res.statusCode < 300,
+				retryCount,
+				request: { options },
 			}
-			if (cancelSignal.aborted) throw cancelSignal.reason
-			throw new RequestError(networkErrorMessage(err), {
-				code: networkErrorCode(err) ?? 'ERR_READING_RESPONSE_STREAM',
-				options,
-				cause: err,
-			})
-		}
-		let response: Response<string> = {
-			statusCode: res.status,
-			statusMessage: res.statusText,
-			headers: responseHeaders(res.headers),
-			body: rawBody.toString('utf8'),
-			rawBody,
-			url: res.url || options.url.toString(),
-			ok: res.ok,
-			retryCount,
-			request: { options },
 		}
 		for (const hook of options.hooks.afterResponse) {
 			response = await hook(response)
 		}
 		// Evaluate the final response returned by the hooks (a hook may recover a
-		// 5xx into a success), not the original fetch status. With redirects
-		// followed (undici's default), got treats only 2xx and 304 as successful.
+		// 5xx into a success), not the original status. With redirects followed,
+		// got treats only 2xx and 304 as successful.
 		const status = response.statusCode
 		const isOk = (status >= 200 && status < 300) || status === 304
 		if (!isOk) {
@@ -728,10 +855,17 @@ async function executeWithRetry(
 			// Run beforeRequest middleware before every attempt (including retries)
 			// so hooks that refresh signatures, timestamps or attempt-specific
 			// headers see fresh state on each try, as got does.
+			// As in got 11, a hook that returns a response short-circuits the
+			// network call; later hooks are skipped.
+			let shortCircuit: ResponseLike | undefined
 			for (const hook of options.hooks.beforeRequest) {
-				await hook(options)
+				const result = await hook(options)
+				if (isResponseLike(result)) {
+					shortCircuit = result
+					break
+				}
 			}
-			return await executeOnce(options, cancelSignal, attempt)
+			return await executeOnce(options, cancelSignal, attempt, shortCircuit)
 		} catch (err) {
 			if (err instanceof CancelError || cancelSignal.aborted) {
 				throw err instanceof CancelError
