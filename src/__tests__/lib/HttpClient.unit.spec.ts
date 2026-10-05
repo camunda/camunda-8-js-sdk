@@ -11,6 +11,7 @@ import {
 	createHttpClient,
 	FormData,
 	HTTPError,
+	mergeOptions,
 	RequestError,
 	TimeoutError,
 } from '../../lib/HttpClient'
@@ -396,6 +397,115 @@ describe('HttpClient', () => {
 		expect(body).toContain('filename="test.bpmn"')
 		expect(body).toContain('<xml/>')
 		expect(body).toContain('<default>')
+	})
+
+	test('async calculateDelay is awaited: a Promise<0> stops retrying (not treated as truthy)', async () => {
+		let calls = 0
+		const base = await startServer((_, res) => {
+			calls++
+			res.statusCode = 500
+			res.end('boom')
+		})
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: {
+				limit: 5,
+				methods: ['GET'],
+				statusCodes: [500],
+				// Returns a resolved Promise<0>. If the result is not awaited, the
+				// Promise is truthy and retries proceed; awaited, 0 stops them.
+				calculateDelay: async () => 0,
+			},
+		})
+		const err = await client
+			.get('x', { throwHttpErrors: false })
+			.catch((e) => e)
+		expect(calls).toBe(1)
+		expect(err.statusCode ?? err.response?.statusCode).toBe(500)
+	})
+
+	test('async calculateDelay returning a positive delay is honoured and retries proceed', async () => {
+		let calls = 0
+		const base = await startServer((_, res) => {
+			calls++
+			if (calls < 3) {
+				res.statusCode = 503
+				res.setHeader('retry-after', '0')
+				return res.end()
+			}
+			res.end('ok')
+		})
+		const client = createHttpClient({
+			prefixUrl: base,
+			retry: {
+				limit: 3,
+				methods: ['GET'],
+				statusCodes: [503],
+				calculateDelay: async ({ computedValue }) => (computedValue ? 1 : 0),
+			},
+		})
+		expect(await client.get('x').text()).toBe('ok')
+		expect(calls).toBe(3)
+	})
+
+	test('maxRetryAfter defaults to the request timeout: a huge Retry-After stops retrying', async () => {
+		let calls = 0
+		const base = await startServer((_, res) => {
+			calls++
+			res.statusCode = 503
+			// One hour: far beyond the request timeout. With no maxRetryAfter cap
+			// this would sleep for an hour; capped at the timeout it stops instead.
+			res.setHeader('retry-after', '3600')
+			res.end()
+		})
+		const client = createHttpClient({
+			prefixUrl: base,
+			timeout: { request: 500 },
+			retry: { limit: 5, methods: ['GET'], statusCodes: [503] },
+		})
+		const err = await client
+			.get('x', { throwHttpErrors: false })
+			.catch((e) => e)
+		expect(calls).toBe(1)
+		expect(err.statusCode ?? err.response?.statusCode).toBe(503)
+	})
+
+	test('a throwing handler is enriched through beforeError like hook failures', async () => {
+		const base = await startServer((_, res) => res.end('ok'))
+		const seen: unknown[] = []
+		const client = createHttpClient({
+			prefixUrl: base,
+			handlers: [
+				() => {
+					throw new Error('handler boom')
+				},
+			],
+			hooks: {
+				beforeError: [
+					(e) => {
+						// Would throw a TypeError if the handler error bypassed
+						// wrapping and arrived as a plain Error without `.options`.
+						seen.push(e.options.method)
+						e.message = `wrapped: ${e.message}`
+						return e
+					},
+				],
+			},
+		})
+		const err = await client.get('x').catch((e) => e)
+		expect(err).toBeInstanceOf(RequestError)
+		expect(err.message).toBe('wrapped: handler boom')
+		expect(seen).toEqual(['GET'])
+	})
+
+	test('mergeOptions preserves repeated override query params and replaces matching base keys', () => {
+		const merged = mergeOptions(
+			{ searchParams: new URLSearchParams('tag=base&keep=1') },
+			{ searchParams: new URLSearchParams('tag=a&tag=b') }
+		)
+		const sp = merged.searchParams as URLSearchParams
+		expect(sp.getAll('tag')).toEqual(['a', 'b'])
+		expect(sp.get('keep')).toBe('1')
 	})
 })
 

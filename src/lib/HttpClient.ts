@@ -64,6 +64,8 @@ export interface RetryObject {
 	retryOptions: RequiredRetryOptions
 	error: RequestError
 	computedValue: number
+	/** Parsed `Retry-After` delay in milliseconds, when the response supplied one. */
+	retryAfter?: number
 }
 
 export interface RequiredRetryOptions {
@@ -72,7 +74,7 @@ export interface RequiredRetryOptions {
 	statusCodes: number[]
 	errorCodes: string[]
 	maxRetryAfter?: number
-	calculateDelay: (retryObject: RetryObject) => number
+	calculateDelay: (retryObject: RetryObject) => number | Promise<number>
 }
 
 export type RetryOptions = Partial<RequiredRetryOptions> | number
@@ -287,11 +289,31 @@ export const DEFAULT_RETRY_ERROR_CODES = [
 
 const RETRY_AFTER_STATUS_CODES = [413, 429, 503]
 
+/**
+ * Parse a `Retry-After` header (delta-seconds or an HTTP-date) into milliseconds.
+ * Returns `undefined` when the error carries no response, the status is not one
+ * that uses `Retry-After`, or the header is absent.
+ */
+export const parseRetryAfter = (error: RequestError): number | undefined => {
+	if (
+		!error.response ||
+		!RETRY_AFTER_STATUS_CODES.includes(error.response.statusCode)
+	) {
+		return undefined
+	}
+	const header = error.response.headers['retry-after']
+	const value = Array.isArray(header) ? header[0] : header
+	if (!value) return undefined
+	const seconds = Number(value)
+	return Number.isNaN(seconds) ? Date.parse(value) - Date.now() : seconds * 1000
+}
+
 /** got 11-compatible default backoff: 2^(n-1) * 1000ms + up to 100ms jitter, honouring Retry-After. */
 export const defaultCalculateDelay = ({
 	attemptCount,
 	retryOptions,
 	error,
+	retryAfter,
 }: RetryObject): number => {
 	if (attemptCount > retryOptions.limit) return 0
 	const hasMethod = retryOptions.methods
@@ -307,15 +329,8 @@ export const defaultCalculateDelay = ({
 		error.response &&
 		RETRY_AFTER_STATUS_CODES.includes(error.response.statusCode)
 	) {
-		const header = error.response.headers['retry-after']
-		const value = Array.isArray(header) ? header[0] : header
-		if (value) {
-			let after = Number(value)
-			if (Number.isNaN(after)) {
-				after = Date.parse(value) - Date.now()
-			} else {
-				after *= 1000
-			}
+		const after = retryAfter ?? parseRetryAfter(error)
+		if (after !== undefined) {
 			if (
 				retryOptions.maxRetryAfter !== undefined &&
 				after > retryOptions.maxRetryAfter
@@ -386,7 +401,13 @@ export function mergeOptions(base: Options, override: Options = {}): Options {
 	merged.retry = normalizeRetry(base.retry, override.retry)
 	if (base.searchParams !== undefined || override.searchParams !== undefined) {
 		const sp = toSearchParams(base.searchParams)
-		toSearchParams(override.searchParams).forEach((v, k) => sp.set(k, v))
+		const overrideSp = toSearchParams(override.searchParams)
+		// Drop each overridden base key once, then append all override entries so
+		// repeated params (e.g. tag=a&tag=b) survive instead of collapsing to one.
+		for (const key of new Set(overrideSp.keys())) {
+			sp.delete(key)
+		}
+		overrideSp.forEach((v, k) => sp.append(k, v))
 		merged.searchParams = sp
 	}
 	merged.hooks = {
@@ -460,6 +481,12 @@ function normalize(url: string | URL, options: Options): NormalizedOptions {
 		typeof options.timeout === 'number'
 			? { request: options.timeout }
 			: { ...(options.timeout ?? {}) }
+
+	// got 11 caps Retry-After at the request timeout when maxRetryAfter is unset;
+	// otherwise a huge `Retry-After` (e.g. 3600s) would sleep far past the timeout.
+	if (retry.maxRetryAfter === undefined && timeout.request !== undefined) {
+		retry.maxRetryAfter = timeout.request
+	}
 
 	return {
 		method: (options.method ?? 'GET').toUpperCase(),
@@ -706,20 +733,23 @@ async function executeWithRetry(
 			attempt++
 			let delay = 0
 			try {
+				const retryAfter = parseRetryAfter(error)
 				const computedValue = defaultCalculateDelay({
 					attemptCount: attempt,
 					retryOptions: options.retry,
 					error,
 					computedValue: 0,
+					retryAfter,
 				})
 				delay =
 					options.retry.calculateDelay === defaultCalculateDelay
 						? computedValue
-						: options.retry.calculateDelay({
+						: await options.retry.calculateDelay({
 								attemptCount: attempt,
 								retryOptions: options.retry,
 								error,
 								computedValue,
+								retryAfter,
 							})
 			} catch {
 				delay = 0
@@ -758,10 +788,12 @@ function createResponsePromise(
 	let canceled = false
 
 	const core: Promise<Response<string>> = (async () => {
-		for (const handler of handlers) {
-			handler(options)
-		}
 		try {
+			// Run handlers inside the try so a throwing handler (e.g. beforeCallHook)
+			// is enriched by beforeError like hook/transport failures, not returned raw.
+			for (const handler of handlers) {
+				handler(options)
+			}
 			return await executeWithRetry(options, controller.signal)
 		} catch (err) {
 			if (err instanceof CancelError) throw err
