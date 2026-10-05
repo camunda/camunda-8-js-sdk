@@ -166,8 +166,15 @@ export async function readStreamToBlob(
 			// openAsBlob re-reads the file from disk and never touches the
 			// caller's stream, so the stream's fd would stay open (the old
 			// buffering path consumed it, which auto-closed it). Destroy it
-			// here to release the fd — destroying a pending or open
-			// fs.ReadStream is safe.
+			// here to release the fd. A pending fs.ReadStream still runs its
+			// open(2) after destroy(), and if the file has already been
+			// removed (e.g. a caller that deletes the temp file once the
+			// upload returns) the late open failure is emitted as an 'error'
+			// event on the destroyed stream — with no listener that is an
+			// uncaughtException that crashes the process. Attach a no-op
+			// listener so the intentionally destroyed stream can never take
+			// the process down.
+			stream.on('error', () => {})
 			stream.destroy()
 			return blob
 		} catch {

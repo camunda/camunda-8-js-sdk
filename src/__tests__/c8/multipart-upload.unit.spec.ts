@@ -76,6 +76,25 @@ describe('readStreamToBlob', () => {
 		expect(stream.destroyed).toBe(true)
 	})
 
+	test('a deleted backing file cannot crash the process after the fast-path destroys the stream', async () => {
+		// Regression test: a pending fs.ReadStream still runs its open(2) after
+		// destroy(); if the file is gone by then, the late open failure is
+		// emitted as an 'error' event on the destroyed stream, which is an
+		// uncaughtException when nothing is listening. This crashed the CI
+		// unit-test run (ENOENT on the temp file removed by afterEach).
+		const filePath = writeTempFile('gone.txt', 'ephemeral')
+		const stream = fs.createReadStream(filePath)
+		const blob = await readStreamToBlob(stream, 'text/plain')
+		expect(await blob.text()).toBe('ephemeral')
+		fs.rmSync(filePath)
+		// Wait for the destroyed stream's deferred open(2) to fail. Without the
+		// no-op 'error' listener in readStreamToBlob this surfaces as an
+		// unhandled error and fails the whole test run.
+		await new Promise((resolve) => setImmediate(resolve))
+		await new Promise((resolve) => setImmediate(resolve))
+		expect(stream.destroyed).toBe(true)
+	})
+
 	test('buffers a non-file in-memory stream that only exposes a path for filename inference', async () => {
 		const stream = Readable.from([Buffer.from('in-'), Buffer.from('memory')])
 		// A fake path (as documented for in-memory uploads) is NOT a real file.
