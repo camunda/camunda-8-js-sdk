@@ -447,7 +447,12 @@ function resolveUrl(input: string | URL, prefixUrl?: string): URL {
 function normalize(url: string | URL, options: Options): NormalizedOptions {
 	const resolved = resolveUrl(url, options.prefixUrl)
 	const extra = toSearchParams(options.searchParams)
-	extra.forEach((v, k) => resolved.searchParams.set(k, v))
+	// Drop each overridden URL key once, then append all option entries so
+	// repeated params (e.g. tag=a&tag=b) survive instead of collapsing to one.
+	for (const key of new Set(extra.keys())) {
+		resolved.searchParams.delete(key)
+	}
+	extra.forEach((v, k) => resolved.searchParams.append(k, v))
 
 	const headers = lowerCaseHeaders(options.headers)
 	let body = options.body

@@ -507,6 +507,23 @@ describe('HttpClient', () => {
 		expect(sp.getAll('tag')).toEqual(['a', 'b'])
 		expect(sp.get('keep')).toBe('1')
 	})
+
+	test('repeated query params survive URL normalization onto the wire', async () => {
+		let seen: string | undefined
+		const base = await startServer((req, res) => {
+			seen = req.url
+			res.end('ok')
+		})
+		// Repeated option params keep every value, and option keys replace
+		// same-named keys already present in the request URL.
+		const client = createHttpClient({ prefixUrl: base })
+		await client
+			.get('x?tag=url&keep=1', {
+				searchParams: new URLSearchParams('tag=a&tag=b'),
+			})
+			.text()
+		expect(seen).toBe('/x?keep=1&tag=a&tag=b')
+	})
 })
 
 describe('HttpClient TLS', () => {
