@@ -44,20 +44,27 @@ test('Can get construct a client', () => {
 interface CapturedRequest {
 	method?: string
 	path?: string
+	search?: string
+	hash?: string
 	body?: unknown
 }
 
-function makeCapturingClient(captured: CapturedRequest) {
+function makeCapturingClient(
+	captured: CapturedRequest,
+	baseUrl = 'http://localhost:8070/api'
+) {
 	const middleware: BeforeRequestHook = (options) => {
 		captured.method = options.method
 		captured.path = options.url.pathname
+		captured.search = options.url.search
+		captured.hash = options.url.hash
 		captured.body = options.body
 		throw new Error('__captured__')
 	}
 	return new ModelerApiClient({
 		config: {
 			CAMUNDA_OAUTH_DISABLED: true,
-			CAMUNDA_MODELER_BASE_URL: 'http://localhost:8070/api',
+			CAMUNDA_MODELER_BASE_URL: baseUrl,
 			middleware: [middleware],
 		},
 	})
@@ -160,5 +167,43 @@ describe('ModelerApiClient request shape', () => {
 		expect(captured.path).toBe(
 			'/api/v1/projects/project-1/collaborators/user@example.com'
 		)
+	})
+})
+
+// A query string on CAMUNDA_MODELER_BASE_URL must stay a query, and must not absorb the path
+// segments of subsequent requests.
+describe('ModelerApiClient prefixUrl construction', () => {
+	test('base url with a query string keeps the query and extends the path', async () => {
+		const captured: CapturedRequest = {}
+		const client = makeCapturingClient(
+			captured,
+			'https://host.example/api?token=x'
+		)
+		await expect(client.getVersion('version-1')).rejects.toThrow()
+		expect(captured.method).toBe('GET')
+		expect(captured.path).toBe('/api/v1/versions/version-1')
+		expect(captured.search).toBe('?token=x')
+	})
+
+	test('base url with no query string resolves the same request url as before', async () => {
+		const captured: CapturedRequest = {}
+		const client = makeCapturingClient(captured, 'http://localhost:8070/api')
+		await expect(client.getVersion('version-1')).rejects.toThrow()
+		expect(captured.method).toBe('GET')
+		expect(captured.path).toBe('/api/v1/versions/version-1')
+		expect(captured.search).toBe('')
+	})
+
+	test('base url with a fragment drops the fragment and still extends the path', async () => {
+		const captured: CapturedRequest = {}
+		const client = makeCapturingClient(
+			captured,
+			'https://host.example/api#frag'
+		)
+		await expect(client.getVersion('version-1')).rejects.toThrow()
+		expect(captured.method).toBe('GET')
+		expect(captured.path).toBe('/api/v1/versions/version-1')
+		expect(captured.search).toBe('')
+		expect(captured.hash).toBe('')
 	})
 })
