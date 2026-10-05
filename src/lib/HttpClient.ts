@@ -567,7 +567,12 @@ function normalize(url: string | URL, options: Options): NormalizedOptions {
 /* TLS dispatcher                                                     */
 /* ------------------------------------------------------------------ */
 
-const dispatcherCache = new Map<string, Dispatcher>()
+/**
+ * Dispatcher cache: outer key fingerprints the PEM material, inner key is the
+ * raw passphrase. The passphrase is a secret, so it is used as an in-memory
+ * map key only and never hashed or serialised into a string key.
+ */
+const dispatcherCache = new Map<string, Map<string | undefined, Dispatcher>>()
 
 function pemKey(value: unknown): string {
 	if (value === undefined || value === null) return ''
@@ -598,10 +603,14 @@ function getTlsDispatcher(https: HttpsOptions): Dispatcher | undefined {
 		pemKey(ca),
 		pemKey(cert),
 		pemKey(key),
-		pemKey(passphrase),
 		String(rejectUnauthorized),
 	].join(':')
-	let dispatcher = dispatcherCache.get(cacheKey)
+	let byPassphrase = dispatcherCache.get(cacheKey)
+	if (!byPassphrase) {
+		byPassphrase = new Map()
+		dispatcherCache.set(cacheKey, byPassphrase)
+	}
+	let dispatcher = byPassphrase.get(passphrase)
 	if (!dispatcher) {
 		dispatcher = new Agent({
 			connect: {
@@ -612,7 +621,7 @@ function getTlsDispatcher(https: HttpsOptions): Dispatcher | undefined {
 				...(rejectUnauthorized === undefined ? {} : { rejectUnauthorized }),
 			},
 		})
-		dispatcherCache.set(cacheKey, dispatcher)
+		byPassphrase.set(passphrase, dispatcher)
 	}
 	return dispatcher
 }
