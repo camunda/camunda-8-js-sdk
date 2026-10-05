@@ -826,3 +826,33 @@ describe('HttpClient got 11 behavioural parity', () => {
 		expect(err.response.statusCode).toBe(418)
 	})
 })
+
+describe('HttpClient dispatcher isolation', () => {
+	// Node's bundled undici owns the process-global dispatcher, and its
+	// version differs per Node release (6.x on Node 22, 7.x on Node 24).
+	// Composing this package's interceptors onto it fails with
+	// UND_ERR_INVALID_ARG ("invalid onError method") on mismatched versions,
+	// so the client must never route through the global dispatcher.
+	const GLOBAL_DISPATCHER = Symbol.for('undici.globalDispatcher.1')
+	const globals = globalThis as unknown as Record<symbol, unknown>
+	let saved: unknown
+	afterEach(() => {
+		globals[GLOBAL_DISPATCHER] = saved
+	})
+
+	test('requests do not depend on the process-global undici dispatcher', async () => {
+		const base = await startServer((_, res) => res.end('ok'))
+		saved = globals[GLOBAL_DISPATCHER]
+		const foreign = {
+			dispatch() {
+				throw new Error('global dispatcher must not be used')
+			},
+			compose() {
+				throw new Error('global dispatcher must not be used')
+			},
+		}
+		globals[GLOBAL_DISPATCHER] = foreign
+		const client = createHttpClient({ prefixUrl: base, retry: { limit: 0 } })
+		expect(await client.get('x').text()).toBe('ok')
+	})
+})

@@ -25,7 +25,6 @@ import {
 	Agent,
 	Dispatcher,
 	FormData,
-	getGlobalDispatcher,
 	interceptors,
 	request as undiciRequest,
 	Response as UndiciResponse,
@@ -619,14 +618,23 @@ function getTlsDispatcher(https: HttpsOptions): Dispatcher | undefined {
 }
 
 const MAX_REDIRECTS = 10 // got 11 default
+
+/**
+ * Default (non-TLS-customised) dispatcher, owned by this package's undici.
+ * We deliberately do not use getGlobalDispatcher(): the process-global
+ * dispatcher belongs to Node's bundled undici, whose version varies by Node
+ * release (6.x on Node 22), and composing this package's interceptors onto
+ * it fails with UND_ERR_INVALID_ARG ("invalid onError method").
+ */
+let defaultAgent: Dispatcher | undefined
 const redirectingDispatchers = new WeakMap<Dispatcher, Dispatcher>()
 
 /**
  * Returns the dispatcher for a request: the TLS-configured Agent (or the global
- * dispatcher) composed with redirect following, as got 11 followed redirects.
+ * package-owned default Agent) composed with redirect following, as got 11 followed redirects.
  */
 export function getDispatcher(https: HttpsOptions): Dispatcher {
-	const base = getTlsDispatcher(https) ?? getGlobalDispatcher()
+	const base = getTlsDispatcher(https) ?? (defaultAgent ??= new Agent())
 	let composed = redirectingDispatchers.get(base)
 	if (!composed) {
 		composed = base.compose(
