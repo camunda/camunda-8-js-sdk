@@ -71,12 +71,14 @@ async function readCaCertificates() {
 }
 
 async function readWindowsCaCertificates() {
-	// tls.getCACertificates() was added in Node.js 22.15.0 / 23.5.0
+	// tls.getCACertificates() was added in Node.js 22.15.0 / 23.10.0
 	if (typeof tls.getCACertificates !== 'function') {
+		// The result replaces Node's default CA list, so fall back to the bundled
+		// root certificates to keep public TLS endpoints working.
 		console.warn(
-			`Reading the Windows certificate store requires Node.js >= 22.15.0 (running ${process.version}). System certificates will not be loaded.`
+			`Reading the Windows certificate store requires Node.js >= 22.15.0 (running ${process.version}). Falling back to Node's bundled root certificates; CAs installed only in the Windows store will not be trusted.`
 		)
-		return []
+		return [...tls.rootCertificates]
 	}
 	return tls.getCACertificates('system')
 }
