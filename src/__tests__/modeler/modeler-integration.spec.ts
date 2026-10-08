@@ -15,11 +15,19 @@ describe('ModelerApiClient', () => {
 	afterAll(async () => {
 		// Cleanup any remaining test data. Every assertion has already run by now,
 		// so a cleanup problem is logged rather than failing the suite.
-		const existingProjects = await modeler.searchProjects({
-			filter: { name: '__test__' },
-			// Also sweeps up projects leaked by earlier runs whose cleanup failed.
-			size: 50,
-		})
+		let existingProjects: Awaited<ReturnType<typeof modeler.searchProjects>>
+		try {
+			existingProjects = await modeler.searchProjects({
+				filter: { name: '__test__' },
+				// Also sweeps up projects leaked by earlier runs whose cleanup failed.
+				size: 50,
+			})
+		} catch (e) {
+			console.warn(
+				`Could not look up test projects for cleanup: ${(e as Error).message}`
+			)
+			return
+		}
 		for (const project of existingProjects.items) {
 			try {
 				await deleteProjectAndContents(modeler, project.id)
