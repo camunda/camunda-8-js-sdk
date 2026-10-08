@@ -21,6 +21,13 @@ permissions:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 24 tracks the latest Node 24 - the same line the publish job uses -
+        # so a Node release that breaks us fails here, before anything is tagged.
+        node-version: ["22", "24"]
+    name: unit-tests (Node ${{ matrix.node-version }})
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
@@ -28,7 +35,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm install
@@ -348,10 +355,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          # Pinned: Node 24.21.0 breaks got 11's retry path (raw
-          # ERR_SOCKET_CLOSED_BEFORE_CONNECTION escapes got).
-          # Unpin after migrating off got 11 - see #837.
-          node-version: "24.19.0"
+          # Node 24 for npm >= 11.5 (OIDC trusted publishing). Same line as the
+          # unit-tests Node 24 leg, which gates this job.
+          node-version: "24"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
