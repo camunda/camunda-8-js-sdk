@@ -1,3 +1,11 @@
+# [8.9.0-alpha.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.12...v8.9.0-alpha.13) (2026-10-08)
+
+
+### Bug Fixes
+
+* **modeler:** delete projects containing process applications; fix test cleanup ([#845](https://github.com/camunda/camunda-8-js-sdk/issues/845)) ([1b96169](https://github.com/camunda/camunda-8-js-sdk/commit/1b96169b78b609c66eb5e9adea706fc28f221865))
+* replace win-ca with tls.getCACertificates to drop node-forge ([#842](https://github.com/camunda/camunda-8-js-sdk/issues/842)) ([9b40d23](https://github.com/camunda/camunda-8-js-sdk/commit/9b40d23241caeb0f0d54531e1e9e0a45b461f2d9)), closes [hi#severity](https://github.com/hi/issues/severity)
+
 # [8.9.0-alpha.12](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.11...v8.9.0-alpha.12) (2026-10-01)
 
 
