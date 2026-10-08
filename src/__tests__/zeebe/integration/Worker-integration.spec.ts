@@ -10,7 +10,9 @@ import { ZBWorker, ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 import { CreateProcessInstanceResponse } from '../../../zeebe/lib/interfaces-grpc-1.0'
 
-vi.setConfig({ testTimeout: 120_000 })
+// beforeAll deploys four processes and cleans up three of them; against
+// SaaS that can exceed the default 10s hook timeout.
+vi.setConfig({ testTimeout: 120_000, hookTimeout: 60_000 })
 
 let zbc: ZeebeGrpcClient
 let wf: CreateProcessInstanceResponse | undefined
