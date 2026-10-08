@@ -1,8 +1,11 @@
-import * as Got from 'got'
-import { BeforeErrorHook, HTTPError as GotHTTPError, RequestError } from 'got'
-
 import { CamundaRestError } from '../c8/lib/C8Dto'
 
+import * as Http from './HttpClient'
+import {
+	BeforeErrorHook,
+	HTTPError as BaseHTTPError,
+	RequestError,
+} from './HttpClient'
 import { CamundaPlatform8Configuration } from './Configuration'
 import { supportLogger } from './GotHooks'
 
@@ -13,7 +16,7 @@ const Defaults: CamundaRestError = {
 	instance: '',
 	type: 'about:blank' as const,
 }
-export class HTTPError extends Got.HTTPError implements CamundaRestError {
+export class HTTPError extends BaseHTTPError implements CamundaRestError {
 	statusCode: number
 	title: string
 	detail: string
@@ -29,7 +32,7 @@ export class HTTPError extends Got.HTTPError implements CamundaRestError {
 		url,
 		message,
 	}: {
-		response: Got.Response<unknown>
+		response: Http.Response<string>
 		method?: string
 		url?: string
 		message: string
@@ -78,14 +81,10 @@ export class HTTPError extends Got.HTTPError implements CamundaRestError {
 
 export type RestError =
 	| HTTPError
-	| Got.RequestError
-	| Got.ReadError
-	| Got.ParseError
-	| Got.TimeoutError
-	| Got.CancelError
-	| Got.CacheError
-	| Got.MaxRedirectsError
-	| Got.UnsupportedProtocolError /**
+	| Http.RequestError
+	| Http.ParseError
+	| Http.TimeoutError
+	| Http.CancelError /**
  * This function adds the call point to the error stack trace of got errors.
  * This enables users to see where the error originated from.
  *
@@ -104,7 +103,7 @@ export const gotBeforeErrorHook =
 		const method = request?.options.method
 		const url = request?.options.url.href
 		let detail = ''
-		if (error instanceof GotHTTPError) {
+		if (error instanceof BaseHTTPError && !(error instanceof HTTPError)) {
 			error = new HTTPError({
 				response: error.response,
 				method,

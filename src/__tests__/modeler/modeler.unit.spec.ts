@@ -1,5 +1,4 @@
-import type { BeforeRequestHook } from 'got'
-
+import type { BeforeRequestHook } from '../../lib/HttpClient'
 import { EnvironmentSetup, EnvironmentStorage } from '../../lib'
 import { ModelerApiClient } from '../../modeler/index'
 
@@ -37,7 +36,7 @@ test('Can get construct a client', () => {
 
 /**
  * The methods below assert the HTTP method, path, and (where applicable) request body that the
- * client sends, without contacting a live server. We inject a `middleware` (got beforeRequest) hook
+ * client sends, without contacting a live server. We inject a `middleware` (beforeRequest) hook
  * that captures the outgoing request and then throws to short-circuit the network call. This guards
  * against wrong-verb / wrong-path regressions like the milestone and collaborator bugs.
  */
@@ -61,13 +60,15 @@ function makeCapturingClient(
 		captured.body = options.body
 		throw new Error('__captured__')
 	}
-	return new ModelerApiClient({
-		config: {
-			CAMUNDA_OAUTH_DISABLED: true,
-			CAMUNDA_MODELER_BASE_URL: baseUrl,
-			middleware: [middleware],
-		},
-	})
+	// `middleware` is honoured at runtime but is not declared on the client
+	// config types, so (as for SDK users) it is passed via a variable, which
+	// is not subject to excess-property checks.
+	const config = {
+		CAMUNDA_OAUTH_DISABLED: true,
+		CAMUNDA_MODELER_BASE_URL: baseUrl,
+		middleware: [middleware],
+	}
+	return new ModelerApiClient({ config })
 }
 
 describe('ModelerApiClient request shape', () => {

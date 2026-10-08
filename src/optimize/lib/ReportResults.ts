@@ -1,4 +1,4 @@
-import got from 'got'
+import type { HttpClient } from '../../lib/HttpClient'
 
 import { ReportDataExporter, ReportDataPage } from './APIObjects'
 
@@ -10,7 +10,7 @@ export class ReportResults implements ReportDataExporter {
 	private reportId: string
 	private limit: number
 	private paginationTimeout: number
-	private rest: Promise<typeof got>
+	private rest: Promise<HttpClient>
 	constructor({
 		getHeaders,
 		rest,
@@ -19,7 +19,7 @@ export class ReportResults implements ReportDataExporter {
 		paginationTimeout,
 	}: {
 		getHeaders: () => Promise<Headers>
-		rest: Promise<typeof got>
+		rest: Promise<HttpClient>
 		reportId: string
 		limit: number
 		paginationTimeout: number

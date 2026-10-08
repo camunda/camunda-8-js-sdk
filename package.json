@@ -18,7 +18,8 @@
 		"sm:start:8.8": "docker compose -f docker/docker-compose-8.8.yaml up -d",
 		"sm:start:8.9": "docker compose -f docker/8.9/docker-compose.yaml up -d",
 		"sm:stop:8.9": "docker compose -f docker/8.9/docker-compose.yaml down",
-		"test": "TEST_DEPLOYMENT=unit-test CAMUNDA_UNIT_TEST=true vitest run --sequence.concurrent=false",
+		"test": "npm run typecheck:tests && TEST_DEPLOYMENT=unit-test CAMUNDA_UNIT_TEST=true vitest run --sequence.concurrent=false",
+		"typecheck:tests": "tsc --noEmit -p src/__tests__/tsconfig.json",
 		"test:8.8:sm": "TEST_VERSION=8.8 TEST_DEPLOYMENT=self-managed TEST_TENANCY=single-tenant TEST_SECURITY=unsecured vitest run --sequence.concurrent=false",
 		"test:8.8:saas": "TEST_VERSION=8.8 TEST_DEPLOYMENT=saas TEST_TENANCY=single-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false --sequence.setupFiles=list",
 		"test:8.7:mt": "TEST_VERSION=8.7 TEST_DEPLOYMENT=self-managed TEST_TENANCY=multi-tenant TEST_SECURITY=secured vitest run --sequence.concurrent=false",
@@ -88,6 +89,7 @@
 		"@types/express": "^4.17.21",
 		"@types/jsonwebtoken": "^9.0.6",
 		"@types/lodash.mergewith": "^4.6.9",
+		"@types/mime-types": "^2.1.4",
 		"@types/promise-retry": "^1.1.6",
 		"@types/single-line-log": "^1.1.2",
 		"@types/stack-trace": "^0.0.33",
@@ -104,6 +106,7 @@
 		"eslint-plugin-prettier": "^5.0.1",
 		"express": "^4.19.2",
 		"get-port-please": "^3.1.2",
+		"got11": "npm:got@^11.8.6",
 		"grpc-tools": "^1.13.1",
 		"husky": "^8.0.3",
 		"jsonwebtoken": "^9.0.2",
@@ -127,19 +130,17 @@
 		"@camunda8/orchestration-cluster-api": ">=8.8.4 <9.0.0",
 		"@grpc/grpc-js": "^1.14.3",
 		"@grpc/proto-loader": "^0.8.0",
-		"@types/form-data": "^2.2.1",
 		"@types/node": "^22.18.6",
 		"chalk": "^2.4.2",
 		"console-stamp": "^3.0.2",
 		"dayjs": "^1.8.15",
 		"debug": "^4.3.4",
-		"fast-xml-parser": "^5.5.5",
-		"form-data": "^4.0.2",
-		"got": "^11.8.6",
+		"fast-xml-parser": "^5.7.1",
 		"jwt-decode": "^4.0.0",
 		"lodash.mergewith": "^4.6.2",
 		"long": "^4.0.0",
 		"lossless-json": "^4.0.1",
+		"mime-types": "^2.1.35",
 		"p-cancelable": "^2.1.1",
 		"promise-retry": "^1.1.1",
 		"reflect-metadata": "^0.2.1",
@@ -147,11 +148,15 @@
 		"typed-duration": "^1.0.12",
 		"typed-emitter": "^2.1.0",
 		"typed-env": "^2.0.0",
+		"undici": "^7.30.0",
 		"winston": "^3.14.2"
 	},
 	"overrides": {
 		"lodash": "4.17.23",
 		"inquirer": "8.2.7",
 		"tmp": "0.2.5"
+	},
+	"engines": {
+		"node": ">=20.18.1"
 	}
 }
