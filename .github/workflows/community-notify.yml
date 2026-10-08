@@ -10,6 +10,13 @@ permissions: {}
 
 jobs:
   notify:
+    # The reusable workflow's jobs request these (to record a marker comment
+    # for the Slack reaction-on-merge feature). A called workflow cannot exceed
+    # the caller's grant, and the top-level `permissions: {}` grants nothing,
+    # so without this every run fails at startup.
+    permissions:
+      issues: write
+      pull-requests: write
     uses: camunda/sdk-infra/.github/workflows/sdk-slack-community-notify.yml@v1
     with:
       repo-name: camunda-8-js-sdk
