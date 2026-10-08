@@ -1,12 +1,11 @@
 import d from 'debug'
-import got from 'got'
 
+import { HttpClient, http } from '../../lib/HttpClient'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCustomCertificateBuffer,
-	GotRequestFunction,
 	GotRetryConfig,
 	RequireConfiguration,
 	beforeCallHook,
@@ -27,7 +26,7 @@ const debug = d('camunda:adminconsole')
 export class AdminApiClient {
 	private userAgentString: string
 	private oAuthProvider: IHeadersProvider
-	private rest: Promise<typeof got>
+	private rest: Promise<HttpClient>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -53,10 +52,9 @@ export class AdminApiClient {
 		this.userAgentString = createUserAgentString(config)
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
+				http.extend({
 					prefixUrl,
 					retry: GotRetryConfig,
-					request: GotRequestFunction,
 					https: {
 						certificateAuthority,
 					},

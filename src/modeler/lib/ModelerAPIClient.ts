@@ -1,12 +1,11 @@
 import d from 'debug'
-import got, { Response } from 'got'
 
+import { HttpClient, Response, http } from '../../lib/HttpClient'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCustomCertificateBuffer,
-	GotRequestFunction,
 	GotRetryConfig,
 	beforeCallHook,
 	constructOAuthProvider,
@@ -55,7 +54,7 @@ function buildModelerPrefixUrl(baseUrl: string): {
 export class ModelerApiClient {
 	private userAgentString: string
 	private oAuthProvider: IHeadersProvider
-	private rest: Promise<typeof got>
+	private rest: Promise<HttpClient>
 
 	constructor(options?: {
 		config?: DeepPartial<CamundaPlatform8Configuration>
@@ -78,11 +77,10 @@ export class ModelerApiClient {
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
+				http.extend({
 					prefixUrl,
 					searchParams,
 					retry: GotRetryConfig,
-					request: GotRequestFunction,
 					https: {
 						certificateAuthority,
 					},
