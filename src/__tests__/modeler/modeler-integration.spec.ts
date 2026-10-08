@@ -322,7 +322,9 @@ describe('ModelerApiClient', () => {
 /**
  * Empties and deletes a project. Order matters: files first (a folder or
  * process application can only be deleted once no files remain in its
- * subtree), then process applications, then folders, then the project.
+ * subtree), then folders (a root folder may live inside a process
+ * application, which takes it along when deleted), then process
+ * applications, then the project.
  *
  * Since Web Modeler started storing v1 root-level files and folders in an
  * automatically created "<project> - General" process application, a project
