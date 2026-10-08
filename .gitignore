@@ -155,3 +155,5 @@ docs
 .nx/cache
 
 camunda-support.log*
+# local git worktrees (e.g. backport checkouts)
+.worktree/
