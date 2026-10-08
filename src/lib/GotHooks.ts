@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import http from 'node:http'
+import https from 'node:https'
+
 import { debug } from 'debug'
 import { BeforeRetryHook, HandlerFunction, Method, RequestError } from 'got'
 
@@ -80,4 +83,43 @@ export const GotRetryConfig = {
 	// - we handle Job activation backpressure in the worker directly
 	// See: https://github.com/camunda/camunda/issues/25806#issuecomment-3459961630
 	statusCodes: [429, 503],
+}
+
+/**
+ * Request function for got that works around a crash on Node.js >= 24.20.
+ *
+ * Since 24.20, when the socket closes before the connection is established
+ * (e.g. ECONNREFUSED), Node also calls the `ClientRequest.end()` callback with
+ * an `ERR_SOCKET_CLOSED_BEFORE_CONNECTION` error. got 11 hands that error to its
+ * stream's `_final` callback, so it surfaces as a raw, context-free `'error'`
+ * on got's request - after got has already scheduled a retry for the real
+ * error. The promise rejects with the raw error, and when the retry timer
+ * fires, p-cancelable throws "The `onCancel` handler was attached after the
+ * promise settled" as an uncaught exception, crashing the process.
+ *
+ * The real error still arrives through the request's `'error'` event, which got
+ * handles (and retries) properly, so we drop the error from the `end()`
+ * callback. got 11 is no longer maintained; this goes away with the move off got.
+ * See: https://github.com/camunda/camunda-8-js-sdk/pull/840
+ */
+export const GotRequestFunction = (
+	url: URL,
+	options: https.RequestOptions,
+	callback?: (res: http.IncomingMessage) => void
+): http.ClientRequest => {
+	const req = (url.protocol === 'https:' ? https : http).request(
+		url,
+		options,
+		callback
+	)
+	const end = req.end as (...a: any[]) => http.ClientRequest
+	req.end = function (this: http.ClientRequest, ...args: any[]) {
+		const i = args.findIndex((a) => typeof a === 'function')
+		if (i !== -1) {
+			const cb = args[i]
+			args[i] = () => cb()
+		}
+		return end.apply(this, args)
+	} as typeof req.end
+	return req
 }
