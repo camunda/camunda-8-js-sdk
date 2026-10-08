@@ -1,8 +1,8 @@
-import fs, { ReadStream } from 'node:fs'
+import fs, { openAsBlob, ReadStream } from 'node:fs'
+import path from 'node:path'
 
 import { debug } from 'debug'
-import FormData from 'form-data'
-import got, { CancelableRequest, RequiredRetryOptions, Response } from 'got'
+import { lookup as lookupMimeType } from 'mime-types'
 import { parse, stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
@@ -14,9 +14,14 @@ import {
 	createUserAgentString,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
-	GotRequestFunction,
 	GotRetryConfig,
 	HTTPError,
+	http,
+	HttpClient,
+	FormData,
+	RequiredRetryOptions,
+	Response,
+	ResponsePromise,
 	LosslessDto,
 	losslessParse,
 	losslessStringify,
@@ -102,6 +107,90 @@ import { createSpecializedRestApiJobClass } from './RestApiJobClassFactory'
 import { createSpecializedCreateProcessInstanceResponseClass } from './RestApiProcessInstanceClassFactory'
 import { createTrackedGot } from './TrackedGot'
 
+/** Infer a file name from an fs.ReadStream-like `path`, as form-data used to. */
+export function fileNameFromStream(stream: unknown): string | undefined {
+	const p = (stream as { path?: string | Buffer }).path
+	return p ? path.basename(p.toString()) : undefined
+}
+
+/**
+ * Resolve the MIME type for a multipart part. Uses the caller-supplied
+ * `contentType` when present, otherwise infers it from the file name (as the
+ * previous `form-data` implementation did, e.g. `README.md` -> `text/markdown`).
+ */
+export function resolveContentType(
+	explicitType: string | undefined,
+	fileName: string | undefined
+): string | undefined {
+	if (explicitType) return explicitType
+	if (!fileName) return undefined
+	const inferred = lookupMimeType(fileName)
+	return inferred === false ? undefined : inferred
+}
+
+/**
+ * Produce a Blob for a multipart upload part.
+ *
+ * For real `fs.ReadStream`s backed by a file on disk we return a file-backed
+ * Blob via `fs.openAsBlob`, which lets undici stream the file lazily from disk
+ * rather than buffering the entire payload (and every concurrent part) into
+ * memory. Only non-file streams (e.g. in-memory `Readable`s that merely expose
+ * a `path` for filename inference) are buffered — their contents are already
+ * resident in memory, so no additional unbounded growth is introduced.
+ */
+export async function readStreamToBlob(
+	stream: NodeJS.ReadableStream,
+	type?: string
+): Promise<Blob> {
+	const filePath = (stream as { path?: string | Buffer }).path
+	// Only stream straight from disk for a pristine, whole-file fs.ReadStream.
+	// A partially consumed stream (bytesRead > 0) or one created with a byte
+	// range (start/end) must be buffered so we honour exactly the bytes the
+	// caller intended, rather than re-reading the entire file via openAsBlob.
+	const s = stream as ReadStream & {
+		bytesRead?: number
+		start?: number
+		end?: number
+	}
+	const isWholeFile =
+		(s.start === undefined || s.start === 0) &&
+		(s.end === undefined || s.end === Infinity)
+	if (
+		stream instanceof ReadStream &&
+		filePath !== undefined &&
+		!s.bytesRead &&
+		isWholeFile
+	) {
+		try {
+			const blob = await openAsBlob(filePath, type ? { type } : undefined)
+			// openAsBlob re-reads the file from disk and never touches the
+			// caller's stream, so the stream's fd would stay open (the old
+			// buffering path consumed it, which auto-closed it). Destroy it
+			// here to release the fd. A pending fs.ReadStream still runs its
+			// open(2) after destroy(), and if the file has already been
+			// removed (e.g. a caller that deletes the temp file once the
+			// upload returns) the late open failure is emitted as an 'error'
+			// event on the destroyed stream — with no listener that is an
+			// uncaughtException that crashes the process. Attach a no-op
+			// listener so the intentionally destroyed stream can never take
+			// the process down.
+			stream.on('error', () => {})
+			stream.destroy()
+			return blob
+		} catch {
+			// Fall through to buffering if the file can't be opened as a Blob.
+		}
+	}
+	const chunks: Buffer[] = []
+	for await (const chunk of stream) {
+		chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+	}
+	return new Blob(
+		[new Uint8Array(Buffer.concat(chunks))],
+		type ? { type } : undefined
+	)
+}
+
 const trace = debug('camunda:orchestration-rest')
 
 // Storage moved to TrackedGot.ts and imported above
@@ -127,7 +216,7 @@ class DefaultLosslessDto extends LosslessDto {}
 export class CamundaRestClient {
 	private readonly userAgentString: string
 	protected oAuthProvider: IHeadersProvider
-	private readonly rest: Promise<typeof got>
+	private readonly rest: Promise<HttpClient>
 	private readonly tenantId?: string
 	public log: Logger
 	private readonly config: CamundaPlatform8Configuration
@@ -176,10 +265,9 @@ export class CamundaRestClient {
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
 				createTrackedGot(
-					got.extend({
+					http.extend({
 						prefixUrl: this.prefixUrl,
 						retry: options?.retry ?? GotRetryConfig,
-						request: GotRequestFunction,
 						https: {
 							certificateAuthority,
 						},
@@ -1043,9 +1131,12 @@ export class CamundaRestClient {
 		const formData = new FormData()
 
 		resources.forEach((resource) => {
-			formData.append(`resources`, resource.content, {
-				filename: resource.name,
-			})
+			const type = resolveContentType(undefined, resource.name)
+			formData.append(
+				`resources`,
+				new Blob([resource.content], type ? { type } : undefined),
+				resource.name
+			)
 		})
 
 		if (tenantId || this.tenantId) {
@@ -1059,7 +1150,6 @@ export class CamundaRestClient {
 					body: formData,
 					headers: {
 						...headers,
-						...formData.getHeaders(),
 						Accept: 'application/json',
 					},
 					parseJson: (text) => parse(text), // we parse the response with LosslessNumbers, with no Dto
@@ -1308,20 +1398,22 @@ export class CamundaRestClient {
 		const headers = await this.getHeaders()
 		const formData = new FormData()
 
-		const options =
-			request.metadata?.contentType || request.metadata?.fileName
-				? {
-						contentType: request.metadata?.contentType,
-						filename: request.metadata?.fileName,
-					}
-				: {}
-		formData.append('file', request.file, options)
+		const fileName =
+			request.metadata?.fileName ?? fileNameFromStream(request.file)
+		const file = await readStreamToBlob(
+			request.file,
+			resolveContentType(request.metadata?.contentType, fileName)
+		)
+		formData.append('file', file, fileName)
 
 		// Add other form fields
 		if (request.metadata) {
-			formData.append('metadata', JSON.stringify(request.metadata), {
-				contentType: 'application/json',
-			})
+			formData.append(
+				'metadata',
+				new Blob([JSON.stringify(request.metadata)], {
+					type: 'application/json',
+				})
+			)
 		}
 
 		return this.rest.then((rest) =>
@@ -1333,7 +1425,6 @@ export class CamundaRestClient {
 					},
 					headers: {
 						...headers,
-						...formData.getHeaders(),
 						accept: 'application/json',
 					},
 					body: formData,
@@ -1382,7 +1473,7 @@ export class CamundaRestClient {
 	 * The filename is inferred from the filepath. If you are not reading the files from disk, you need to set the path, like this:
 	 *
 	 * ```typescript
-	 * // In-memory conversion: create Readable streams exposing a path so form-data infers filename
+	 * // In-memory conversion: create Readable streams exposing a path so the SDK can infer the filename
 const streams: ReadStream[] = uploadedFiles.map((file) => {
     const stream = new Readable({
     read() {
@@ -1390,7 +1481,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
         this.push(null);
     }
     });
-    // Provide minimal fs.ReadStream-like fields used by form-data for filename inference.
+    // Provide minimal fs.ReadStream-like fields used by the SDK for filename inference.
     (stream as any).path = file.originalname;
     (stream as any).close = () => stream.destroy();
     return stream as unknown as ReadStream;
@@ -1411,7 +1502,12 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		const formData = new FormData()
 
 		for (const file of request.files) {
-			formData.append('files', file)
+			const fileName = fileNameFromStream(file)
+			formData.append(
+				'files',
+				await readStreamToBlob(file, resolveContentType(undefined, fileName)),
+				fileName
+			)
 		}
 
 		return this.rest.then((rest) =>
@@ -1422,7 +1518,6 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 					},
 					headers: {
 						...headers,
-						...formData.getHeaders(),
 						accept: 'application/json',
 					},
 					body: formData,
@@ -1669,7 +1764,7 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 		// https://github.com/camunda/camunda-8-js-sdk/issues/424
 		return new PCancelable(async (resolve, reject, onCancel) => {
 			// eslint-disable-next-line prefer-const
-			let gotRequest: CancelableRequest<Response<string>>
+			let gotRequest: ResponsePromise
 			let cancelled = false
 			// Register the cancel handler, we will cancel the request if the promise is cancelled
 			onCancel.shouldReject = false
@@ -1699,22 +1794,14 @@ const streams: ReadStream[] = uploadedFiles.map((file) => {
 				}
 				gotRequest = rest(urlPath, req)
 				gotRequest.catch(reject)
-				/**
-				 * Without a listener for the error event, we get an unhandled promise rejection
-				 * when the request fails. This is because the underlying stream emits an error and with no listener
-				 * on that event, it is an unhandled exception at the process level
-				 *
-				 * Implemented as part of https://github.com/camunda/camunda-8-js-sdk/issues/424.
-				 */
-				;(await gotRequest).once('error', (err) => {
-					// Swallow the error, we don't want to crash the process
-					return err
-				})
 
 				if (request.json ?? true) {
-					return gotRequest.json<V>().then(resolve)
+					return gotRequest.json<V>().then(resolve, reject)
 				}
-				return gotRequest.then((response) => resolve(response.body as V))
+				return gotRequest.then(
+					(response) => resolve(response.body as V),
+					reject
+				)
 			} catch (e) {
 				reject(e)
 			}

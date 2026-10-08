@@ -6,8 +6,16 @@
 	],
 	"compilerOptions": {
 		"baseUrl": "../",
+		// Tests are bundled by vitest, so resolve like a bundler. Classic "node"
+		// resolution ignores package.json "exports" and cannot see vitest 4's
+		// types (e.g. 'vite/module-runner').
+		"module": "preserve",
+		"moduleResolution": "bundler",
 		"types": ["node", "vitest/globals"],
 		"paths": {
+			// @types/send (via express) expects mime@1 types; without this TS
+			// picks the hoisted ESM mime@4 (a semantic-release dependency).
+			"mime": ["../node_modules/@types/mime"],
 			"lib": ["./lib"],
 			"oauth": ["./oauth"],
 			"operate": ["./operate"],

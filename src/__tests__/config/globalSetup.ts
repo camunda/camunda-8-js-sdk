@@ -3,8 +3,7 @@ import path from 'node:path'
 
 // eslint-disable-next-line import/order
 
-import { HTTPError } from 'got'
-
+import type { HTTPError } from '../../lib/HttpClient'
 import { Camunda8 } from '../../index'
 import { OAuthProvider } from '../../oauth'
 import { OperateApiClient } from '../../operate'
