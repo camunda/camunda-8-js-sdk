@@ -178,6 +178,9 @@ jobs:
 
       - name: Create version matrix
         id: create-matrix
+        env:
+          # GitHub's hard limit is 256 jobs per matrix; leave some headroom
+          MAX_MATRIX_JOBS: 250
         run: |
           CLIENT_VERSION="${{ inputs.client_version }}"
           SERVER_VERSION="${{ inputs.server_version }}"
@@ -206,15 +209,18 @@ jobs:
             MATRIX_JSON=$(jq -nc --argjson items "$MATRIX_ITEMS" '{"include": $items}')
             echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
           else
-            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt || true)
-            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt || true)
+            # Newest first (sort -V puts SNAPSHOT after numeric tags, so -rV puts it
+            # first). Combined with the cap below, this means the most relevant
+            # combinations run first when there is a backlog.
+            CLIENT_LIST=$(grep -v '^$' /tmp/client_list.txt | sort -rV || true)
+            SERVER_LIST=$(grep -v '^$' /tmp/server_list.txt | sort -rV || true)
 
             MATRIX_ITEMS="[]"
             ADDED_COUNT=0
             SKIPPED_COUNT=0
 
-            for client in $CLIENT_LIST; do
-              for server in $SERVER_LIST; do
+            for server in $SERVER_LIST; do
+              for client in $CLIENT_LIST; do
                 COMBO="$client-$server"
 
                 # Skip if combination already tested (unless skip_cache is true or server is SNAPSHOT)
@@ -233,6 +239,15 @@ jobs:
             done
 
             echo "Matrix contains $ADDED_COUNT combinations (skipped $SKIPPED_COUNT already tested)"
+
+            # GitHub Actions rejects a matrix with more than 256 entries: the job
+            # is never created and the run fails. Cap it; the remaining
+            # combinations are picked up on later runs, because passing
+            # combinations are cached as tested.
+            if (( ADDED_COUNT > MAX_MATRIX_JOBS )); then
+              echo "::warning::Matrix capped at $MAX_MATRIX_JOBS of $ADDED_COUNT combinations; $((ADDED_COUNT - MAX_MATRIX_JOBS)) deferred to later runs"
+              MATRIX_ITEMS=$(echo "$MATRIX_ITEMS" | jq -c --argjson max "$MAX_MATRIX_JOBS" '.[:$max]')
+            fi
             MATRIX_JSON=$(jq -nc --argjson items "$MATRIX_ITEMS" '{"include": $items}')
             echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
             echo "Generated matrix:"
@@ -419,8 +434,12 @@ jobs:
 
   update-tested-combinations:
     name: Update Tested Combinations
-    needs: integration-tests
-    if: always() && needs.integration-tests.result == 'success'
+    needs: [prepare-versions, integration-tests]
+    # Record passing combinations even if other combinations failed. Each matrix
+    # job only uploads its marker on success, so failures are never cached.
+    # Requiring the whole matrix to pass meant one failure blocked recording
+    # everything, so the matrix never shrank.
+    if: always() && needs.prepare-versions.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
