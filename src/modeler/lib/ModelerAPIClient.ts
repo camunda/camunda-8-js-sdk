@@ -743,7 +743,54 @@ export class ModelerApiClient {
 	}
 
 	/**
-	 * This endpoint deletes an empty project. A project is considered empty if there are no files in it. Deletion of resources is recursive and cannot be undone.
+	 * Retrieves a process application's metadata and its root-level content (the folders and files
+	 * directly inside it).
+	 *
+	 * Requires a Web Modeler version that supports process applications in the v1 API (SaaS, Self-Managed 8.10+).
+	 * @throws {RESTError}
+	 */
+	async getProcessApplication(
+		processApplicationId: string
+	): Promise<Dto.ProcessApplicationDto> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest(`process-applications/${processApplicationId}`, {
+			headers,
+		}).then((res) =>
+			JSON.parse(this.decodeResponseOrThrow(res))
+		) as Promise<Dto.ProcessApplicationDto>
+	}
+
+	/**
+	 * Permanently deletes a process application, including its folders. It must not contain any
+	 * files anywhere in its subtree. Deletion cannot be undone.
+	 *
+	 * Use this to empty a project before calling {@link deleteProject}: on SaaS and Self-Managed 8.10+, a
+	 * project that contains any process application (including the automatically created
+	 * `<project name> - General` catch-all) cannot be deleted.
+	 *
+	 * Requires a Web Modeler version that supports process applications in the v1 API (SaaS, Self-Managed 8.10+).
+	 * @throws {RESTError}
+	 */
+	async deleteProcessApplication(processApplicationId: string): Promise<null> {
+		const headers = await this.getHeaders()
+		const rest = await this.rest
+		return rest
+			.delete(`process-applications/${processApplicationId}`, {
+				headers,
+			})
+			.then(this.decodeResponseOrThrow)
+			.then(() => null)
+	}
+
+	/**
+	 * This endpoint deletes an empty project. Deletion of resources is recursive and cannot be undone.
+	 *
+	 * A project is considered empty if it contains no files and, on SaaS and Self-Managed 8.10+, no process
+	 * applications. Creating a file or folder at the root of a project through this API there
+	 * creates a `<project name> - General` process application to hold it, so delete the project's
+	 * files, then its process applications (see {@link deleteProcessApplication} and
+	 * `getProject(projectId).content.processApplications`), before deleting the project.
 	 * @throws {RESTError}
 	 */
 	async deleteProject(projectId: string) {
