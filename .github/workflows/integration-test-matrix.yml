@@ -385,7 +385,10 @@ jobs:
         if: success() && steps.check-image.outputs.exists == 'true'
         run: |
           mkdir -p /tmp/compatibility-state
-          echo "${{ matrix.client }}-${{ matrix.server }}" > /tmp/compatibility-state/combo.txt
+          # Unique name per pair: the merge job downloads every marker into one
+          # directory (merge-multiple), so a shared name would overwrite them all
+          # but one.
+          echo "${{ matrix.client }}-${{ matrix.server }}" > "/tmp/compatibility-state/combo-${{ matrix.client }}-${{ matrix.server }}.txt"
           echo "Recorded tested combination: ${{ matrix.client }}-${{ matrix.server }}"
 
       - name: Upload tested combination marker
@@ -393,7 +396,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: tested-combo-${{ matrix.client }}-${{ matrix.server }}
-          path: /tmp/compatibility-state/combo.txt
+          path: /tmp/compatibility-state/combo-${{ matrix.client }}-${{ matrix.server }}.txt
 
   notify-failure:
     name: Notify on failure
