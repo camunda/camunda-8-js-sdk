@@ -13,19 +13,23 @@ describe('ModelerApiClient', () => {
 	})
 
 	afterAll(async () => {
-		// Cleanup any remaining test data
+		// Cleanup any remaining test data. Every assertion has already run by now,
+		// so a cleanup problem is logged rather than failing the suite.
 		const existingProjects = await modeler.searchProjects({
 			filter: { name: '__test__' },
+			// Also sweeps up projects leaked by earlier runs whose cleanup failed.
+			size: 50,
 		})
 		for (const project of existingProjects.items) {
-			const projectData = await modeler.getProject(project.id)
-			for (const file of projectData.content.files) {
-				await modeler.deleteFile(file.id)
+			try {
+				await deleteProjectAndContents(modeler, project.id)
+			} catch (e) {
+				console.warn(
+					`Could not clean up test project ${project.id}: ${
+						(e as Error).message
+					}`
+				)
 			}
-			for (const folder of projectData.content.folders) {
-				await modeler.deleteFolder(folder.id)
-			}
-			await modeler.deleteProject(project.id)
 		}
 	})
 
@@ -138,6 +142,42 @@ describe('ModelerApiClient', () => {
 		)('should throw an error if the project does not exist', async () => {
 			await expect(modeler.deleteProject('non-existent-id')).rejects.toThrow()
 		})
+
+		test.runIf(
+			matrix({
+				include: {
+					versions: ['8.8', '8.7'],
+					deployments: ['saas'],
+					tenancy: ['single-tenant', 'multi-tenant'],
+					security: ['secured'],
+				},
+			})
+		)(
+			'should delete a project that had root-level content, once emptied',
+			async () => {
+				// Root-level content may be stored in an automatically created
+				// process application, which blocks deleteProject until removed.
+				const projectResponse = await modeler.createProject('__test__')
+				const folder = await modeler.createFolder({
+					projectId: projectResponse.id,
+					name: 'Test Folder',
+				})
+				await modeler.createFile({
+					folderId: folder.id,
+					projectId: projectResponse.id,
+					name: 'Test File',
+					content: fs.readFileSync(
+						'./src/__tests__/testdata/generic-test.bpmn',
+						'utf-8'
+					),
+					fileType: 'bpmn',
+				})
+
+				await deleteProjectAndContents(modeler, projectResponse.id)
+
+				await expect(modeler.getProject(projectResponse.id)).rejects.toThrow()
+			}
+		)
 	})
 
 	describe('searchProjects', () => {
@@ -270,3 +310,40 @@ describe('ModelerApiClient', () => {
 		})
 	})
 })
+
+/**
+ * Empties and deletes a project. Order matters: files first (a folder or
+ * process application can only be deleted once no files remain in its
+ * subtree), then process applications, then folders, then the project.
+ *
+ * Since Web Modeler started storing v1 root-level files and folders in an
+ * automatically created "<project> - General" process application, a project
+ * cannot be deleted while it contains any process application, so deleting
+ * only files and folders is no longer enough.
+ */
+async function deleteProjectAndContents(
+	modeler: ModelerApiClient,
+	projectId: string
+) {
+	// files/search covers the whole project, including files nested in folders
+	// and process applications, which getProject only lists at the root.
+	// Bounded so a search index that lags behind deletes cannot loop forever.
+	for (let page = 0; page < 20; page++) {
+		const files = await modeler.searchFiles({
+			filter: { projectId },
+			size: 50,
+		})
+		if (files.items.length === 0) break
+		for (const file of files.items) {
+			await modeler.deleteFile(file.id)
+		}
+	}
+	const { content } = await modeler.getProject(projectId)
+	for (const processApplication of content.processApplications ?? []) {
+		await modeler.deleteProcessApplication(processApplication.id)
+	}
+	for (const folder of content.folders) {
+		await modeler.deleteFolder(folder.id)
+	}
+	await modeler.deleteProject(projectId)
+}
