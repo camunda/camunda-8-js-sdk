@@ -5,6 +5,7 @@ import {
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCustomCertificateBuffer,
+	GotRequestFunction,
 	GotRetryConfig,
 	RequireConfiguration,
 	beforeCallHook,
@@ -86,6 +87,7 @@ export class OptimizeApiClient {
 				got.extend({
 					prefixUrl,
 					retry: GotRetryConfig,
+					request: GotRequestFunction,
 					https: {
 						certificateAuthority,
 					},

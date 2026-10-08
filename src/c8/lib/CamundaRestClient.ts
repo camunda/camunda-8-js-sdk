@@ -14,6 +14,7 @@ import {
 	createUserAgentString,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
+	GotRequestFunction,
 	GotRetryConfig,
 	HTTPError,
 	LosslessDto,
@@ -178,6 +179,7 @@ export class CamundaRestClient {
 					got.extend({
 						prefixUrl: this.prefixUrl,
 						retry: options?.retry ?? GotRetryConfig,
+						request: GotRequestFunction,
 						https: {
 							certificateAuthority,
 						},
