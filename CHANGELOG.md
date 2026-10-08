@@ -1,3 +1,10 @@
+# [8.9.0-alpha.14](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.13...v8.9.0-alpha.14) (2026-10-08)
+
+
+### Bug Fixes
+
+* stop REST retries crashing the process on Node.js >= 24.20 ([#850](https://github.com/camunda/camunda-8-js-sdk/issues/850)) ([7fd0046](https://github.com/camunda/camunda-8-js-sdk/commit/7fd0046a4f5234f56359c808aac1f875a33b1d9d)), closes [#838](https://github.com/camunda/camunda-8-js-sdk/issues/838)
+
 # [8.9.0-alpha.13](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.12...v8.9.0-alpha.13) (2026-10-08)
 
 
