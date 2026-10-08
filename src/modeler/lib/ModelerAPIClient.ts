@@ -6,6 +6,7 @@ import {
 	CamundaPlatform8Configuration,
 	DeepPartial,
 	GetCustomCertificateBuffer,
+	GotRequestFunction,
 	GotRetryConfig,
 	beforeCallHook,
 	constructOAuthProvider,
@@ -81,6 +82,7 @@ export class ModelerApiClient {
 					prefixUrl,
 					searchParams,
 					retry: GotRetryConfig,
+					request: GotRequestFunction,
 					https: {
 						certificateAuthority,
 					},

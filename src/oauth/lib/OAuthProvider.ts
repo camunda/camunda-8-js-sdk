@@ -17,6 +17,7 @@ import {
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
 	gotBeforeRetryHook,
+	GotRequestFunction,
 	GotRetryConfig,
 	RequireConfiguration,
 } from '../../lib'
@@ -156,6 +157,7 @@ export class OAuthProvider implements IHeadersProvider {
 			(certificateAuthority) =>
 				got.extend({
 					retry: GotRetryConfig,
+					request: GotRequestFunction,
 					timeout: {
 						request: TOKEN_ENDPOINT_REQUEST_TIMEOUT_MS,
 					},
