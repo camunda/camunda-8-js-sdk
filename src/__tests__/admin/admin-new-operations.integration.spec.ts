@@ -74,7 +74,17 @@ describe('AdminApiClient - new operations', () => {
 	})
 
 	describe('IP Allowlist', () => {
-		test.runIf(saasMatrix)(
+		/**
+		 * Opt-in only. Setting an allowlist locks every other client out of the
+		 * cluster until the clear propagates to the ingress - including this test
+		 * run, whose concurrent tests then fail with "403 RBAC: access denied" /
+		 * gRPC PERMISSION_DENIED (seen on the shared 8.8 SaaS test cluster from
+		 * 2026-10-08). If the clear ever fails, the cluster stays locked.
+		 * Only enable this against a dedicated, throwaway cluster.
+		 */
+		const mutateAllowlist =
+			process.env.CAMUNDA_TEST_MUTATE_IP_ALLOWLIST === 'true'
+		test.runIf(saasMatrix && mutateAllowlist)(
 			'updateIpAllowlist can set and clear an allowlist',
 			async () => {
 				// Set a test allowlist entry
