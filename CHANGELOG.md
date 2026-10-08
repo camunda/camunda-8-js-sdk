@@ -1,3 +1,10 @@
+## [8.8.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.15...v8.8.16) (2026-10-08)
+
+
+### Bug Fixes
+
+* **modeler:** delete projects containing process applications; fix test cleanup ([#845](https://github.com/camunda/camunda-8-js-sdk/issues/845)) ([#847](https://github.com/camunda/camunda-8-js-sdk/issues/847)) ([268a3ab](https://github.com/camunda/camunda-8-js-sdk/commit/268a3ab3d851505785e013add7db07ea013ff91f))
+
 ## [8.8.15](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.14...v8.8.15) (2026-10-05)
 
 
