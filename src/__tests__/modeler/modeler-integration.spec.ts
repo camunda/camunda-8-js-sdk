@@ -343,15 +343,29 @@ async function deleteProjectAndContents(
 		})
 		if (files.items.length === 0) break
 		for (const file of files.items) {
-			await modeler.deleteFile(file.id)
+			await ignoreNotFound(modeler.deleteFile(file.id))
 		}
 	}
+	// Folders before process applications: v1 lists a folder created at the
+	// root as a root folder, but it actually lives inside the catch-all process
+	// application, and deleting that application deletes the folder with it.
 	const { content } = await modeler.getProject(projectId)
-	for (const processApplication of content.processApplications ?? []) {
-		await modeler.deleteProcessApplication(processApplication.id)
-	}
 	for (const folder of content.folders) {
-		await modeler.deleteFolder(folder.id)
+		await ignoreNotFound(modeler.deleteFolder(folder.id))
+	}
+	for (const processApplication of content.processApplications ?? []) {
+		await ignoreNotFound(
+			modeler.deleteProcessApplication(processApplication.id)
+		)
 	}
 	await modeler.deleteProject(projectId)
+}
+
+/** Treat 404 as success: the resource is already gone, which is the goal. */
+async function ignoreNotFound(deletion: Promise<unknown>) {
+	try {
+		await deletion
+	} catch (e) {
+		if ((e as { statusCode?: number }).statusCode !== 404) throw e
+	}
 }
