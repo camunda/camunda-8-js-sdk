@@ -8,6 +8,7 @@ import {
 	DeepPartial,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
+	GotRequestFunction,
 	GotRetryConfig,
 } from '../../lib'
 import { IHeadersProvider } from '../index'
@@ -46,6 +47,7 @@ export class CookieAuthProvider implements IHeadersProvider {
 			(certificateAuthority) =>
 				got.extend({
 					retry: GotRetryConfig,
+					request: GotRequestFunction,
 					https: {
 						certificateAuthority,
 					},
