@@ -21,9 +21,8 @@ test('reads the Windows certificate store via tls.getCACertificates', async () =
 		.spyOn(tls, 'getCACertificates')
 		.mockReturnValue(pems)
 
-	const { getSystemCertificates } = await import(
-		'../../lib/GetSystemCertificates'
-	)
+	const { getSystemCertificates } =
+		await import('../../lib/GetSystemCertificates')
 
 	expect(await getSystemCertificates()).toEqual(pems)
 	expect(getCACertificates).toHaveBeenCalledWith('system')
@@ -40,9 +39,8 @@ test('falls back to bundled root certificates when tls.getCACertificates is unav
 	const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
 	try {
-		const { getSystemCertificates } = await import(
-			'../../lib/GetSystemCertificates'
-		)
+		const { getSystemCertificates } =
+			await import('../../lib/GetSystemCertificates')
 
 		expect(await getSystemCertificates()).toEqual([...tls.rootCertificates])
 		expect(warn).toHaveBeenCalledOnce()
