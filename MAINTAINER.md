@@ -32,8 +32,7 @@ When a new Camunda minor (e.g. `8.9`) is ready to be promoted to `latest`:
    ```
 2. Update the GitHub **repository variable** (Settings → Secrets and variables → Actions → Variables) `CAMUNDA_SDK_CURRENT_STABLE_MINOR` from `8.8` to `8.9`.
 3. The next merge to `stable/8.9` will publish to npm dist-tag `latest`. The previous current line (`stable/8.8`) automatically falls back to maintenance dist-tag `8.8-stable` on its next release.
-4. Update [.github/workflows/integration-test-matrix-trigger.yaml](.github/workflows/integration-test-matrix-trigger.yaml) to add a daily compatibility-test trigger for the new branch (uncomment / duplicate the `trigger-stable-8-9` block).
-5. Update [.github/renovate.json](.github/renovate.json) `baseBranchPatterns` if the previous stable line should be replaced as a Renovate target.
+4. Update [.github/renovate.json](.github/renovate.json) `baseBranchPatterns` if the previous stable line should be replaced as a Renovate target.
 
 No git tag manipulation is required — semantic-release reads existing tags and computes the next version per branch independently.
 
@@ -50,8 +49,7 @@ All workflows live under [.github/workflows/](.github/workflows/).
 | `commitlint.yml`                          | PR                                                       | Enforces conventional commits.                                                                                       |
 | `code-scanning.yml`                       | scheduled / push                                         | CodeQL.                                                                                                              |
 | `backport.yml`                            | PR closed, `/backport` comment                           | Creates backport PRs (e.g. `main` → `stable/8.8`) via `korthout/backport-action`.                                    |
-| `integration-test-matrix.yml`             | scheduled (02:00 UTC), manual dispatch                   | Cross-version client × server compatibility matrix. Runs **on a stable branch** and tests every released SDK version against every server version ≥ current minor. |
-| `integration-test-matrix-trigger.yaml`    | scheduled (02:00 UTC)                                    | Fans out the matrix run to each active stable branch (uses `gh workflow run --ref stable/<x.y>`).                    |
+| `integration-test-matrix.yml`             | scheduled (02:00 UTC), manual dispatch                   | Cross-version client × server compatibility matrix. Runs from `main` and tests released SDK versions (from git tags) ≥ the current minor against released server versions from the **next** minor onwards, plus `SNAPSHOT`. |
 
 ### CI vs. Release: why feature branches and `main`/`stable/**` are separated
 
@@ -128,16 +126,16 @@ After a successful release on `main`, the same job builds TypeDoc output (`npm r
 
 ## 4. Compatibility Matrix
 
-[integration-test-matrix.yml](.github/workflows/integration-test-matrix.yml) runs nightly on each active stable branch (driven by `integration-test-matrix-trigger.yaml`). It:
+[integration-test-matrix.yml](.github/workflows/integration-test-matrix.yml) runs nightly from `main` (scheduled workflows only run from the default branch). Each job checks out the SDK **source from a release tag**, then overwrites `docker/docker-compose-matrix.yaml` with the copy from the branch the workflow runs on (`main` for scheduled runs). So the SDK under test comes from tags, while the test infrastructure comes from `main`. It:
 
-1. Derives the current minor from the **latest stable git tag** on the branch (intentionally not from `package.json`, which may already be at a pre-release version).
+1. Derives the current minor from the **latest stable git tag in the repository** (intentionally not from `package.json`, which may already be at a pre-release version).
 2. Enumerates SDK client versions ≥ that minor from local git tags.
-3. Enumerates Camunda server versions ≥ that minor from `camunda/camunda` git tags via `git ls-remote` (no clone).
+3. Enumerates released Camunda server versions from the **next** minor onwards (e.g. 8.9.x and later when the current minor is 8.8) from `camunda/camunda` git tags via `git ls-remote` (no clone), and adds `SNAPSHOT`. The matrix does not test same-minor pairs (e.g. an SDK 8.8 release against server 8.8). The current code is tested against its own minor by the regular CI and Release jobs (e.g. `local_integration_8_8`).
 4. Runs the full client × server matrix, with caching to avoid retesting known-good combinations.
 
 Manual dispatch supports pinning a `client_version`, a `server_version`, and `skip_cache` to force a full re-run.
 
-When promoting a new stable line, **add a trigger entry** in `integration-test-matrix-trigger.yaml` so the new branch is exercised nightly. Failure to do so means the new line silently loses compatibility coverage.
+Because the minimum minor comes from the latest stable tag, promoting a new stable line (e.g. the first `v8.9.x` tag) drops the previous line's clients (`8.8.x`) from the matrix. If the previous line still needs nightly compatibility coverage, extend the client filter in `integration-test-matrix.yml` to include it. Running the workflow from the stable branch would not help: the tag list is the same on every branch.
 
 ---
 
