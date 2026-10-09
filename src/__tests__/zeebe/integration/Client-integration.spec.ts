@@ -77,12 +77,19 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 	"does not retry to cancel a process instance that doesn't exist",
 	async () => {
 		// See: https://github.com/zeebe-io/zeebe/issues/2680
-		// await zbc.cancelProcessInstance('123LoL')
-		try {
-			await zbc.cancelProcessInstance('2251799813686202')
-		} catch (e: unknown) {
-			expect((e as Error).message.indexOf('5 NOT_FOUND:')).toBe(0)
-		}
-		expect.assertions(1)
+		// This used a hard-coded key (2251799813686202), which is just the 954th
+		// key on partition 1. On a fresh CI broker, with test files running in
+		// parallel, that key could belong to another test's live instance: the
+		// cancel then succeeded (no assertion ran) and the other test hung.
+		// Instead, cancel an instance of our own, so the second cancel is
+		// guaranteed to target a key that no longer exists.
+		const { processInstanceKey } = await zbc.createProcessInstance({
+			bpmnProcessId,
+			variables: {},
+		})
+		await zbc.cancelProcessInstance(processInstanceKey)
+		await expect(zbc.cancelProcessInstance(processInstanceKey)).rejects.toThrow(
+			/^5 NOT_FOUND:/
+		)
 	}
 )
