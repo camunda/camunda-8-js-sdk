@@ -49,7 +49,7 @@ All workflows live under [.github/workflows/](.github/workflows/).
 | `commitlint.yml`                          | PR                                                       | Enforces conventional commits.                                                                                       |
 | `code-scanning.yml`                       | scheduled / push                                         | CodeQL.                                                                                                              |
 | `backport.yml`                            | PR closed, `/backport` comment                           | Creates backport PRs (e.g. `main` → `stable/8.8`) via `korthout/backport-action`.                                    |
-| `integration-test-matrix.yml`             | scheduled (02:00 UTC), manual dispatch                   | Cross-version client × server compatibility matrix. Runs from `main` and tests released SDK versions (from git tags) ≥ the current minor against every server version ≥ that minor. |
+| `integration-test-matrix.yml`             | scheduled (02:00 UTC), manual dispatch                   | Cross-version client × server compatibility matrix. Runs from `main` and tests released SDK versions (from git tags) ≥ the current minor against released server versions from the **next** minor onwards, plus `SNAPSHOT`. |
 
 ### CI vs. Release: why feature branches and `main`/`stable/**` are separated
 
@@ -126,11 +126,11 @@ After a successful release on `main`, the same job builds TypeDoc output (`npm r
 
 ## 4. Compatibility Matrix
 
-[integration-test-matrix.yml](.github/workflows/integration-test-matrix.yml) runs nightly from `main` (scheduled workflows only run from the default branch). It tests released SDK versions checked out from their git tags, not the code of the branch it runs from, so one run covers every release line. It:
+[integration-test-matrix.yml](.github/workflows/integration-test-matrix.yml) runs nightly from `main` (scheduled workflows only run from the default branch). Each job checks out the SDK **source from a release tag**, then overwrites `docker/docker-compose-matrix.yaml` with the copy from the branch the workflow runs on (`main` for scheduled runs). So the SDK under test comes from tags, while the test infrastructure comes from `main`. It:
 
 1. Derives the current minor from the **latest stable git tag in the repository** (intentionally not from `package.json`, which may already be at a pre-release version).
 2. Enumerates SDK client versions ≥ that minor from local git tags.
-3. Enumerates Camunda server versions ≥ that minor from `camunda/camunda` git tags via `git ls-remote` (no clone).
+3. Enumerates released Camunda server versions from the **next** minor onwards (e.g. 8.9.x and later when the current minor is 8.8) from `camunda/camunda` git tags via `git ls-remote` (no clone), and adds `SNAPSHOT`. The matrix does not test same-minor pairs (e.g. an SDK 8.8 release against server 8.8). The current code is tested against its own minor by the regular CI and Release jobs (e.g. `local_integration_8_8`).
 4. Runs the full client × server matrix, with caching to avoid retesting known-good combinations.
 
 Manual dispatch supports pinning a `client_version`, a `server_version`, and `skip_cache` to force a full re-run.
