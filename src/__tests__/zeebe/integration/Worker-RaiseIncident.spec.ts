@@ -23,7 +23,10 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-	zbc.cancelProcessInstance(processInstanceKey)
+	if (processInstanceKey) {
+		// Normally already cancelled by the test; NOT_FOUND is expected then.
+		await zbc.cancelProcessInstance(processInstanceKey).catch(() => {})
+	}
 	await zbc.close()
 	await cancelProcesses(processDefinitionKey)
 })
@@ -48,31 +51,49 @@ test.runIf(allowAny([{ deployment: 'saas' }, { deployment: 'self-managed' }]))(
 			},
 		})
 
-		zbc.createWorker({
-			taskType: 'wait-raise-incident',
-			taskHandler: async (job) => {
-				expect(job.processInstanceKey).toBe(processInstanceKey)
-				return job.complete(job.variables)
-			},
-			loglevel: 'NONE',
-		})
-
-		await new Promise((resolve) =>
+		// Assertions and errors inside a task handler are thrown on the worker,
+		// not in this test, so on their own they only show up as an anonymous
+		// timeout. Route every failure into `outcome` so the test fails at once
+		// with the real reason.
+		let fail: (reason: unknown) => void = () => {}
+		const outcome = new Promise<void>((resolve, reject) => {
+			fail = reject
 			zbc.createWorker({
 				taskType: 'pathB-raise-incident',
 				taskHandler: async (job) => {
-					expect(job.processInstanceKey).toBe(processInstanceKey)
-					expect(job.variables.conditionVariable).toBe(false)
-					const res1 = await job.fail('Raise an incident in Operate', 0)
-					/* @TODO: delay, then check for incident in Operate via the API */
-					await job.cancelWorkflow()
-					// comment out the preceding line for the verification test
-					resolve(null)
-					return res1
+					try {
+						expect(job.processInstanceKey).toBe(processInstanceKey)
+						expect(job.variables.conditionVariable).toBe(false)
+						const res1 = await job.fail('Raise an incident in Operate', 0)
+						/* @TODO: delay, then check for incident in Operate via the API */
+						await job.cancelWorkflow()
+						// comment out the preceding line for the verification test
+						resolve()
+						return res1
+					} catch (e) {
+						reject(e)
+						throw e
+					}
 				},
 				maxJobsToActivate: 1,
 				loglevel: 'NONE',
 			})
-		)
+		})
+
+		zbc.createWorker({
+			taskType: 'wait-raise-incident',
+			taskHandler: async (job) => {
+				try {
+					expect(job.processInstanceKey).toBe(processInstanceKey)
+					return await job.complete(job.variables)
+				} catch (e) {
+					fail(e)
+					throw e
+				}
+			},
+			loglevel: 'NONE',
+		})
+
+		await outcome
 	}
 )
