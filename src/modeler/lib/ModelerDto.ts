@@ -278,6 +278,32 @@ export interface ProjectMetadataDto {
 export interface ProjectContent {
 	folders: FolderMetadataDto[]
 	files: FileMetadataDto[]
+	/**
+	 * Process applications in the project. Only returned by Web Modeler versions that support
+	 * process applications in the v1 API (SaaS, Self-Managed 8.10+); absent on older versions.
+	 *
+	 * Note: on those versions, creating a file or folder at the root of a project through the v1 API
+	 * stores it in an automatically created "catch-all" process application named
+	 * `<project name> - General`. It appears in this list, and a project cannot be deleted while
+	 * it contains any process application.
+	 */
+	processApplications?: ProcessApplicationMetadataDto[]
+}
+
+export interface ProcessApplicationMetadataDto {
+	id: string
+	name: string
+	projectId: string
+	created: string
+	updated: string
+	createdBy: UserDto
+	updatedBy: UserDto
+}
+
+export interface ProcessApplicationDto {
+	metadata: ProcessApplicationMetadataDto
+	/** The folders and files directly inside the process application (not recursive). */
+	content: FolderContentDto
 }
 
 export interface ProjectDto {

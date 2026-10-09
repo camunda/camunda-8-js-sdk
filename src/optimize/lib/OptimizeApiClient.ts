@@ -1,5 +1,4 @@
-import got from 'got'
-
+import { HttpClient, http } from '../../lib/HttpClient'
 import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
@@ -48,7 +47,7 @@ import { ReportResults } from './ReportResults'
  */
 export class OptimizeApiClient {
 	private userAgentString: string
-	private rest: Promise<typeof got>
+	private rest: Promise<HttpClient>
 	private oAuthProvider: IHeadersProvider
 
 	/**
@@ -83,7 +82,7 @@ export class OptimizeApiClient {
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
+				http.extend({
 					prefixUrl,
 					retry: GotRetryConfig,
 					https: {

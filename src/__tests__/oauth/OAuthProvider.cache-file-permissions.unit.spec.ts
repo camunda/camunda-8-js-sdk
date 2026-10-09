@@ -65,7 +65,8 @@ function startTokenServer(): {
 	const server = http.createServer((req, res) => {
 		if (req.method !== 'POST') {
 			res.statusCode = 405
-			return res.end()
+			res.end()
+			return
 		}
 		let body = ''
 		req.on('data', (chunk) => {

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-import { Got, Options } from 'got'
+import { HttpClient as Got, Options } from '../../lib/HttpClient'
 
 import { OriginContext, originContextStorage } from './OriginTracing'
 
@@ -18,12 +18,12 @@ export interface CapturedStackTrace {
 }
 
 /**
- * Wrap a got instance with a Proxy that injects AsyncLocalStorage-derived stack context
+ * Wrap an HttpClient instance with a Proxy that injects AsyncLocalStorage-derived stack context
  * into each request's options.context.__stackTrace.
- * It preserves the full surface of the original got instance (HTTP verb helpers, extend, etc.).
+ * It preserves the full surface of the original client instance (HTTP verb helpers, extend, etc.).
  */
 export function createTrackedGot(gotInstance: Got): Got {
-	// Capture stack synchronously before got does internal async work
+	// Capture stack synchronously before the client does internal async work
 	const capture = () => {
 		const raw =
 			new Error('tracked-got-capture').stack?.split('\n').slice(1) ?? []

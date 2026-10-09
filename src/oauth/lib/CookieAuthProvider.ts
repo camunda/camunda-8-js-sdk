@@ -1,6 +1,6 @@
 import { debug } from 'debug'
-import got from 'got'
 
+import { HttpClient, http } from '../../lib/HttpClient'
 import {
 	beforeCallHook,
 	CamundaEnvironmentConfigurator,
@@ -25,7 +25,7 @@ const trace = debug('camunda:cookie-auth')
  * manually by calling the `setToken` method.
  */
 export class CookieAuthProvider implements IHeadersProvider {
-	rest: Promise<typeof got>
+	rest: Promise<HttpClient>
 	cookie?: string
 	username: string
 	password: string
@@ -44,7 +44,7 @@ export class CookieAuthProvider implements IHeadersProvider {
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
-				got.extend({
+				http.extend({
 					retry: GotRetryConfig,
 					https: {
 						certificateAuthority,
