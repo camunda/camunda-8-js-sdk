@@ -5,6 +5,16 @@ const camunda = c8.getCamundaRestClient()
 const operate = c8.getOperateApiClient()
 
 export async function cancelProcesses(processDefinitionKey: string) {
+	// Without a key the filter below serialises to just { state: 'ACTIVE' }
+	// (JSON drops undefined), which would cancel every running instance on the
+	// cluster - other tests' and other users' included. This happens when a
+	// beforeAll times out before assigning the key and afterAll still runs.
+	if (!processDefinitionKey) {
+		console.warn(
+			'cancelProcesses called without a processDefinitionKey; skipping so it cannot cancel every active instance'
+		)
+		return
+	}
 	// The search API is eventually consistent. Wait so that recently created
 	// process instances are visible before we search for them to cancel.
 	await new Promise((resolve) => setTimeout(resolve, 1000))
