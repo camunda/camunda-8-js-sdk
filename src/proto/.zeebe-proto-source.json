@@ -1,0 +1,8 @@
+{
+	"source": "https://github.com/camunda/camunda/blob/cbaa1d7f3d7b1c19e31a418c0744b0360e3e1cbe/zeebe/gateway-protocol/src/main/proto/gateway.proto",
+	"repo": "camunda/camunda",
+	"path": "zeebe/gateway-protocol/src/main/proto/gateway.proto",
+	"ref": "stable/8.9",
+	"sha": "cbaa1d7f3d7b1c19e31a418c0744b0360e3e1cbe",
+	"fetchedAt": "2026-04-23T00:16:18.473Z"
+}

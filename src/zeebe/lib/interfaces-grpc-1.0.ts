@@ -26,6 +26,11 @@ export interface StreamActivatedJobsRequest {
 	 * a list of identifiers of tenants for which to stream jobs
 	 */
 	tenantIds: string[]
+	/**
+	 * the tenant filtering strategy — determines whether to use provided tenant IDs
+	 * or assigned tenant IDs. Defaults to PROVIDED.
+	 */
+	tenantFilter?: TenantFilter
 }
 
 /**
@@ -66,6 +71,11 @@ export interface ActivateJobsRequest {
 	 * a list of IDs of tenants for which to activate jobs
 	 */
 	tenantIds?: string[]
+	/**
+	 * the tenant filtering strategy — determines whether to use provided tenant IDs
+	 * or assigned tenant IDs. Defaults to PROVIDED.
+	 */
+	tenantFilter?: TenantFilter
 }
 
 export interface ActivatedJob {
@@ -113,6 +123,14 @@ export interface ActivatedJob {
 	 * the id of the tenant that owns the job
 	 */
 	readonly tenantId: string
+	/** Contains user task properties if the job is of kind TASK_LISTENER */
+	readonly userTask?: UserTaskProperties
+	/** the kind of the job */
+	readonly kind?: JobKind
+	/** the listener event type of the job */
+	readonly listenerEventType?: ListenerEventType
+	/** the list of tags */
+	readonly tags?: string[]
 }
 
 export interface ActivateJobsResponse {
@@ -120,6 +138,8 @@ export interface ActivateJobsResponse {
 }
 
 export interface CreateProcessInstanceBaseRequest {
+	/** the unique key identifying the process definition (alternative to bpmnProcessId+version) */
+	processDefinitionKey?: string
 	/** the BPMN process ID of the process definition */
 	bpmnProcessId: string
 	/** the version of the process; if not specified it will use the latest version */
@@ -145,6 +165,22 @@ export interface CreateProcessInstanceRequest
 	startInstructions: ProcessInstanceCreationStartInstruction[]
 	/** a reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: string
+	/**
+	 * a list of runtime instructions that can modify the behavior of the process
+	 * instance during its execution. If empty (default), the process instance will
+	 * be executed normally.
+	 */
+	runtimeInstructions?: ProcessInstanceCreationRuntimeInstruction[]
+	/** a list of tags that can be attached as meta-data to process instances */
+	tags?: string[]
+	/**
+	 * an optional, user-defined string identifier that identifies the process
+	 * instance within the scope of the process definition (scoped by tenant). If
+	 * provided and uniqueness enforcement is enabled, the engine will reject
+	 * creation if another root process instance with the same business id is
+	 * already active for the same process definition.
+	 */
+	businessId?: string
 }
 
 export interface ProcessInstanceCreationStartInstruction {
@@ -184,6 +220,10 @@ export interface CreateProcessInstanceResponse {
 	 * the tenant identifier of the created process instance
 	 */
 	readonly tenantId: string
+	/** tags attached to the process instance */
+	readonly tags?: string[]
+	/** the business id of the created process instance */
+	readonly businessId?: string
 }
 
 export interface CreateProcessInstanceWithResultRequest {
@@ -223,6 +263,10 @@ interface CreateProcessInstanceWithResultResponseBase {
 	 * the tenant identifier of the process definition
 	 */
 	readonly tenantId: string
+	/** tags attached to the process instance */
+	readonly tags?: string[]
+	/** the business id of the created process instance */
+	readonly businessId?: string
 }
 
 export interface CreateProcessInstanceWithResultResponse<Result>
@@ -272,6 +316,8 @@ export interface BrokerInfo {
 	host: string
 	port: number
 	partitions: Partition[]
+	/** broker version */
+	version?: string
 }
 
 export interface TopologyResponse {
@@ -280,6 +326,8 @@ export interface TopologyResponse {
 	readonly partitionsCount: number
 	readonly replicationFactor: number
 	readonly gatewayVersion: string
+	/** the cluster's unique ID */
+	readonly clusterId?: string
 }
 
 export interface ProcessRequestObject {
@@ -506,6 +554,12 @@ export interface ThrowErrorRequest {
 export interface CompleteJobRequest<Variables = IProcessVariables> {
 	readonly jobKey: string
 	variables: Variables
+	/**
+	 * The result of the completed job as determined by the worker.
+	 * This functionality is currently supported only by user task listeners
+	 * and ad-hoc subprocess workers.
+	 */
+	result?: JobResult
 }
 
 interface SetVariablesRequestBase {
@@ -590,6 +644,8 @@ export interface ModifyProcessInstanceRequest {
 	terminateInstructions?: TerminateInstruction[]
 	/** a reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: string
+	/** instructions describing which elements should be moved from one scope to another */
+	moveInstructions?: MoveInstruction[]
 }
 
 export type ModifyProcessInstanceResponse = Record<string, never>
@@ -697,6 +753,13 @@ export interface EvaluateDecisionResponse {
 	failureMessage: string
 	/** the tenant identifier of the decision */
 	tenantId?: string
+	/**
+	 * the unique key identifying this decision evaluation.
+	 * @deprecated please refer to decisionEvaluationKey
+	 */
+	decisionInstanceKey?: string
+	/** the unique key identifying this decision evaluation */
+	decisionEvaluationKey?: string
 }
 
 export interface EvaluatedDecision {
@@ -725,6 +788,8 @@ export interface EvaluatedDecision {
 	evaluatedInputs: EvaluatedDecisionInput[]
 	/** the tenant identifier of the evaluated decision */
 	tenantId: string
+	/** the key of the decision evaluation instance */
+	decisionEvaluationInstanceKey?: string
 }
 
 export interface EvaluatedDecisionInput {
@@ -762,6 +827,11 @@ export interface DeleteResourceRequest {
 	resourceKey: string
 	/** a reference key chosen by the user and will be part of all records resulted from this operation */
 	operationReference?: number | LosslessNumber
+	/**
+	 * Indicates if the historic data of a process resource should be deleted via
+	 * a batch operation asynchronously. Only effective for process resources.
+	 */
+	deleteHistory?: boolean
 }
 
 export interface BroadcastSignalRequest {
@@ -780,4 +850,286 @@ export interface BroadcastSignalRequest {
 export interface BroadcastSignalResponse {
 	/** the unique ID of the signal that was broadcasted. */
 	key: string
+	/** the tenant id of the signal that was broadcasted. */
+	tenantId?: string
+}
+
+// -- Added in 8.9 ------------------------------------------------------------
+// The following types mirror additive surfaces from gateway.proto. New fields
+// on existing types are spliced into their existing interfaces above; new
+// top-level types are appended here.
+
+/**
+ * Describes the tenant filtering strategy for job activation.
+ * - `PROVIDED` (default): use the tenant IDs in `tenantIds`
+ * - `ASSIGNED`: use the tenant IDs assigned to the authenticated identity
+ */
+export enum TenantFilter {
+	PROVIDED = 'PROVIDED',
+	ASSIGNED = 'ASSIGNED',
+}
+
+/** Describes the kind of job. */
+export enum JobKind {
+	BPMN_ELEMENT = 'BPMN_ELEMENT',
+	EXECUTION_LISTENER = 'EXECUTION_LISTENER',
+	TASK_LISTENER = 'TASK_LISTENER',
+	AD_HOC_SUB_PROCESS = 'AD_HOC_SUB_PROCESS',
+}
+
+/** Describes the listener event type of the job. */
+export enum ListenerEventType {
+	ASSIGNING = 'ASSIGNING',
+	CANCELING = 'CANCELING',
+	COMPLETING = 'COMPLETING',
+	CREATING = 'CREATING',
+	END = 'END',
+	START = 'START',
+	UNSPECIFIED = 'UNSPECIFIED',
+	UPDATING = 'UPDATING',
+}
+
+/**
+ * User task properties attached to an ActivatedJob when the job is of kind
+ * TASK_LISTENER.
+ */
+export interface UserTaskProperties {
+	/** The action performed on the user task (e.g., "claim", "update", "complete"). */
+	readonly action?: string
+	/** The user assigned to the task. */
+	readonly assignee?: string
+	/** The list of candidate groups for the user task. */
+	readonly candidateGroups?: string[]
+	/** The list of candidate users for the user task. */
+	readonly candidateUsers?: string[]
+	/** The list of attributes that were changed in the user task. */
+	readonly changedAttributes?: string[]
+	/** The due date of the user task in ISO 8601 format. */
+	readonly dueDate?: string
+	/** The follow-up date of the user task in ISO 8601 format. */
+	readonly followUpDate?: string
+	/** The key of the form associated with the user task. */
+	readonly formKey?: string
+	/** The priority of the user task (0-100). */
+	readonly priority?: number
+	/** The unique key identifying the user task. */
+	readonly userTaskKey?: string
+}
+
+/**
+ * The result of a completed job as determined by the worker. Currently
+ * supported only by user task listeners (set `type: 'userTask'`) and ad-hoc
+ * subprocess workers (set `type: 'adHocSubProcess'`).
+ */
+export interface JobResult {
+	/**
+	 * Indicates whether the worker denies the work, i.e. explicitly does not
+	 * approve it. For example, a user task listener can deny the completion of a
+	 * user task by setting this flag to true. As a result, the completion
+	 * request is rejected and the task remains active. Defaults to false.
+	 */
+	denied?: boolean
+	/** Attributes that were corrected by the worker. */
+	corrections?: JobResultCorrections
+	/** The reason provided by the user task listener for denying the work. */
+	deniedReason?: string
+	/**
+	 * Used to distinguish between different types of job results.
+	 * Must be one of `"userTask"` | `"adHocSubProcess"`. Defaults to `"userTask"`.
+	 */
+	type?: 'userTask' | 'adHocSubProcess'
+	/**
+	 * The list of elements that should be activated after the job is completed.
+	 * Only relevant for ad-hoc subprocesses.
+	 */
+	activateElements?: JobResultActivateElement[]
+	/**
+	 * Indicates whether the completion condition of the job is fulfilled.
+	 * Only relevant for ad-hoc subprocesses.
+	 */
+	isCompletionConditionFulfilled?: boolean
+	/**
+	 * Indicates whether active instances of the ad-hoc subprocess should be
+	 * cancelled. Only relevant for ad-hoc subprocesses.
+	 */
+	isCancelRemainingInstances?: boolean
+}
+
+/**
+ * Attributes that can be corrected by a user task listener worker. Omitting
+ * any attribute preserves the persisted value.
+ */
+export interface JobResultCorrections {
+	/** The assignee of the task. Provide an empty string to clear. */
+	assignee?: string
+	/** The due date of the task. Provide an empty string to clear. */
+	dueDate?: string
+	/** The follow-up date of the task. Provide an empty string to clear. */
+	followUpDate?: string
+	/** The list of candidate users of the task. Provide an empty list to clear. */
+	candidateUsers?: StringList
+	/** The list of candidate groups of the task. Provide an empty list to clear. */
+	candidateGroups?: StringList
+	/** The priority of the task. 0-100, default 50. */
+	priority?: number
+}
+
+/** A wrapper for a list of strings (mirrors the proto `StringList` message). */
+export interface StringList {
+	values: string[]
+}
+
+/**
+ * An element to activate after a job is completed. Only relevant for ad-hoc
+ * subprocess workers.
+ */
+export interface JobResultActivateElement {
+	/** The id of the element to activate. */
+	elementId: string
+	/**
+	 * JSON document of variables that will be created on the scope of the
+	 * activated element. The root must be a JSON object.
+	 */
+	variables: string
+}
+
+/**
+ * Runtime instructions that can modify process-instance behaviour during
+ * execution.
+ */
+export interface ProcessInstanceCreationRuntimeInstruction {
+	/** Terminate-after-element instruction. */
+	terminate?: TerminateProcessInstanceInstruction
+}
+
+export interface TerminateProcessInstanceInstruction {
+	/**
+	 * The ID of the process element after which the process instance should be
+	 * terminated.
+	 */
+	afterElementId: string
+}
+
+/**
+ * Move-instruction for ModifyProcessInstance. Allows moving an active element
+ * instance from one scope to another.
+ */
+export interface MoveInstruction {
+	/** the key of the element instance that should be moved */
+	sourceElementInstanceKey: string
+	/** the id of the elements that should be moved */
+	sourceElementId: string
+	/** the id of the element scope that the elements should be moved to */
+	targetElementId: string
+	/** instructions describing which variables should be created */
+	variableInstructions?: VariableInstruction[]
+	/**
+	 * the key of the ancestor scope the element instance should be created in;
+	 * set to `-1` to create the new element instance within an existing element
+	 * instance of the flow scope
+	 */
+	ancestorElementInstanceKey?: string
+	/**
+	 * whether to use the source element hierarchy to infer the ancestor element
+	 * instance key
+	 */
+	inferAncestorScopeFromSourceHierarchy?: boolean
+	/**
+	 * whether to use the source's direct parent key as the ancestor scope key;
+	 * a simpler alternative to `inferAncestorScopeFromSourceHierarchy` that
+	 * skips hierarchy traversal.
+	 */
+	useSourceParentKeyAsAncestorScopeKey?: boolean
+}
+
+export interface SetVariablesResponse {
+	/** the unique key of the set variables command */
+	readonly key: string
+}
+
+/** Batch-operation types created by the engine for asynchronous operations. */
+export enum BatchOperationTypeEnum {
+	ADD_VARIABLE = 'ADD_VARIABLE',
+	CANCEL_PROCESS_INSTANCE = 'CANCEL_PROCESS_INSTANCE',
+	DELETE_DECISION_DEFINITION = 'DELETE_DECISION_DEFINITION',
+	DELETE_PROCESS_DEFINITION = 'DELETE_PROCESS_DEFINITION',
+	DELETE_PROCESS_INSTANCE = 'DELETE_PROCESS_INSTANCE',
+	MIGRATE_PROCESS_INSTANCE = 'MIGRATE_PROCESS_INSTANCE',
+	MODIFY_PROCESS_INSTANCE = 'MODIFY_PROCESS_INSTANCE',
+	RESOLVE_INCIDENT = 'RESOLVE_INCIDENT',
+	UPDATE_VARIABLE = 'UPDATE_VARIABLE',
+	DELETE_DECISION_INSTANCE = 'DELETE_DECISION_INSTANCE',
+}
+
+/** Result handle for an asynchronous batch operation created by the engine. */
+export interface BatchOperationCreatedResult {
+	/** The batch operation key created by the engine. */
+	readonly batchOperationKey: string
+	/** The kind of batch operation that was created. */
+	readonly batchOperationType: BatchOperationTypeEnum
+}
+
+/**
+ * Response shape for `DeleteResource`. Prior to 8.9 this RPC returned an empty
+ * message; from 8.9 it includes the resource key and, when `deleteHistory` was
+ * requested for a process resource, a `BatchOperationCreatedResult` handle.
+ */
+export interface DeleteResourceResponse {
+	/** The system-assigned key for this resource, requested to be deleted. */
+	readonly resourceKey: string
+	/**
+	 * The batch operation created for asynchronously deleting the historic
+	 * data. Only populated when the request set `deleteHistory: true` and the
+	 * resource is a process definition. Absent for other resource types
+	 * (decisions, forms, generic resources).
+	 */
+	readonly batchOperation?: BatchOperationCreatedResult
+}
+
+/**
+ * Request to evaluate root-level conditional start events for a tenant.
+ *
+ * Only root-level conditional start events of process definitions belonging
+ * to the given tenant are considered. Optionally restrict to a single process
+ * definition by `processDefinitionKey`.
+ */
+export interface EvaluateConditionalRequest {
+	/**
+	 * Tenant whose process definitions are considered for evaluation. Only
+	 * root-level conditional start events of process definitions belonging to
+	 * this tenant are evaluated.
+	 */
+	tenantId: string
+	/**
+	 * Restrict evaluation to root-level conditional start events of the
+	 * process definition with the given key.
+	 */
+	processDefinitionKey?: string
+	/**
+	 * Serialised JSON object representing the variables to use for evaluation
+	 * of the conditions and to pass to the process instances that are
+	 * triggered.
+	 */
+	variables: string
+}
+
+/** A handle to a process instance created by an EvaluateConditional call. */
+export interface ProcessInstanceReference {
+	/** The key of the process definition. */
+	readonly processDefinitionKey: string
+	/** The key of the created process instance. */
+	readonly processInstanceKey: string
+}
+
+/**
+ * Response from `EvaluateConditional`. If no root-level conditional start
+ * event evaluates to true, `processInstances` is empty.
+ */
+export interface EvaluateConditionalResponse {
+	/** Process instances created by the evaluation. */
+	readonly processInstances: ProcessInstanceReference[]
+	/** The unique key of the conditional evaluation operation. */
+	readonly conditionalEvaluationKey: string
+	/** The tenant ID of the conditional evaluation operation. */
+	readonly tenantId: string
 }
