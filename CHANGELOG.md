@@ -1,3 +1,10 @@
+## [8.8.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.17...v8.8.18) (2026-10-09)
+
+
+### Features
+
+* replace got 11 with undici fetch for all REST calls ([#840](https://github.com/camunda/camunda-8-js-sdk/issues/840)) ([#854](https://github.com/camunda/camunda-8-js-sdk/issues/854)) ([fd5e1b0](https://github.com/camunda/camunda-8-js-sdk/commit/fd5e1b0e281e2ac4d75fb21c9cde8bc243bce004)), closes [#837](https://github.com/camunda/camunda-8-js-sdk/issues/837)
+
 ## [8.8.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.16...v8.8.17) (2026-10-08)
 
 
