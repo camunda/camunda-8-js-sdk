@@ -144,7 +144,8 @@ Because the minimum minor comes from the latest stable tag, promoting a new stab
 To ship a fix to a stable line:
 
 1. Land the fix on `main` via a normal PR (so `alpha` users get it immediately).
-2. Add the appropriate `backport-stable/<x.y>` label on the merged PR (or comment `/backport stable/<x.y>`). [backport.yml](.github/workflows/backport.yml) creates the backport PR automatically; conflicts are committed as draft commits per the `experimental.conflict_resolution` setting.
+2. Add the appropriate `backport stable/<x.y>` label (with a space) on the PR, before or after merging (or comment `/backport stable/<x.y>`). [backport.yml](.github/workflows/backport.yml) creates the backport PR automatically. On a conflict it commits the conflict markers, opens the PR as a **draft**, and comments with the commands to resolve it locally (the `experimental.conflict_resolution: draft_commit_conflicts` setting). Resolve the conflict on that branch before marking it ready. CI's `conflict-markers` job fails while any `<<<<<<<`/`>>>>>>>` lines remain.
+   - **If only `package-lock.json` conflicts** (typical for dependency updates), don't resolve it by hand. Reset the branch to `stable/<x.y>`, then regenerate the lockfile there with the same `npm update <packages> --package-lock-only` and **npm 10** (the npm that ships with Node 22, which CI uses, so the lockfile format matches). Force-push a single `chore(deps): …` commit. #865 is an example.
 3. Merge the backport PR to `stable/<x.y>`. The Release workflow then runs the full integration suite and publishes to npm.
 
 Always land on `main` first unless the fix is genuinely stable-only (e.g. it touches code that no longer exists on `main`). Stable-only fixes should be opened directly against the `stable/<x.y>` branch.
