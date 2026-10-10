@@ -16,6 +16,27 @@ on:
   pull_request:
 
 jobs:
+  # Fails if any tracked file still contains merge-conflict markers. The
+  # backport action is configured with `draft_commit_conflicts`: on a conflict
+  # it commits the markers and opens a draft PR for someone to resolve. If that
+  # draft is marked ready without resolving them, nothing else reliably notices
+  # (npm install tolerated a conflicted package-lock.json on #865). Only the
+  # <<<<<<< and >>>>>>> lines are matched: a bare ======= line is a valid
+  # Markdown heading underline.
+  conflict-markers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Fail on unresolved conflict markers
+        run: |
+          if git grep -nE '^(<<<<<<<|>>>>>>>)( |$)' -- .; then
+            echo "::error::Unresolved merge-conflict markers found (listed above). Resolve them before merging."
+            exit 1
+          fi
+          echo "No conflict markers."
+
   # Runs on every push to main or stable/**, and every pull request,
   # including
   # pull requests from forks. No secrets required.
