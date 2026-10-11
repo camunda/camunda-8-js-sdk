@@ -32,7 +32,13 @@ test.runIf(
 		operation: () =>
 			c8.searchElementInstances({
 				sort: [{ field: 'processDefinitionKey' }],
-				filter: { processInstanceKey: processInstance.processInstanceKey },
+				// Only the start event, once it has completed: the start event is
+				// exported while ACTIVE first and gets its endDate in a later update.
+				filter: {
+					processInstanceKey: processInstance.processInstanceKey,
+					type: 'START_EVENT',
+					state: 'COMPLETED',
+				},
 			}),
 		interval: 500,
 		timeout: 7000,
@@ -42,7 +48,7 @@ test.runIf(
 	const elementInstance = await PollingOperation({
 		operation: () =>
 			c8.getElementInstance(elementInstances.items[0].elementInstanceKey),
-		predicate: (ei) => ei !== undefined,
+		predicate: (ei) => ei !== undefined && ei.endDate !== undefined,
 		timeout: 5000,
 		interval: 500,
 	})
