@@ -30,7 +30,8 @@
 		"commit": "cz",
 		"prepare": "husky install",
 		"lint": "eslint 'src/**/*.{ts,tsx}'",
-		"format": "prettier --write 'src/**/*.ts'"
+		"format": "prettier --write 'src/**/*.ts'",
+		"format:check": "prettier --check 'src/**/*.ts'"
 	},
 	"keywords": [
 		"zeebe",

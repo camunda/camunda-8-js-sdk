@@ -1,6 +1,18 @@
 name: Commitlint
 on: [pull_request]
 
+# Checks only: this workflow never pushes. It used to run `prettier --write`
+# and push a "style: apply Prettier formatting" commit, which caused problems:
+# - `npm install` could rewrite package-lock.json (npm 10 vs the author's npm),
+#   and the commit step staged every changed file, lockfile included.
+# - The push used GITHUB_TOKEN, so the runs on the new head commit waited for
+#   manual approval ("action_required"), stalling the PR.
+# - On fork PRs the push cannot work at all.
+# Formatting is applied locally by the husky pre-commit hook (lint-staged runs
+# prettier on staged src/**/*.ts), so this check normally passes untouched.
+permissions:
+  contents: read
+
 jobs:
   lint-commits:
     runs-on: ubuntu-latest
@@ -15,31 +27,20 @@ jobs:
         with:
           node-version: "22" # Specify a Node.js version
 
+      # npm ci installs exactly what the lockfile says and never rewrites it.
+      # It also fails if package.json and package-lock.json are out of sync.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Lint last commit message
+      - name: Lint commit messages
         run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.event.pull_request.head.sha }} --verbose
 
-      - name: Run Prettier
-        run: npm run format
+      - name: Check Prettier formatting
+        run: |
+          if ! npm run format:check; then
+            echo "::error::Some files are not Prettier-formatted (listed above). Run 'npm run format' and commit the result."
+            exit 1
+          fi
 
       - name: Run ESLint
         run: npm run lint
-
-      - name: Commit and push if changes
-        if: github.actor != 'dependabot[bot]'
-        run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'josh.wulf@camunda.com'
-
-          # Check out the branch
-          git fetch
-          git checkout ${{ github.head_ref }}
-
-          # Add, commit, and push changes, ignoring package-lock.json
-          git diff --name-only | xargs git add
-          git diff --staged --quiet || git commit -m "style: apply Prettier formatting"
-          git push origin ${{ github.head_ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
