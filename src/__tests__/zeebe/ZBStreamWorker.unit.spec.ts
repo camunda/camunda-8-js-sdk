@@ -31,6 +31,7 @@ const createWorker = () => {
 	const zbClient = {
 		activateJobs: vi.fn().mockResolvedValue([]),
 		failJob: vi.fn().mockResolvedValue(undefined),
+		completeJob: vi.fn().mockResolvedValue(undefined),
 	}
 	const log = {
 		logInfo: vi.fn(),
@@ -126,6 +127,120 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 
 			await worker.close()
 			expect(pollTimerCount(worker)).toBe(0)
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * The stream only pushes jobs that become activatable after it opens. Jobs
+ * that already exist (a backlog) are picked up by the poll. A poll that
+ * returns a full batch means more jobs are probably waiting, so the worker
+ * must poll again as soon as that batch is handled — not wait a whole
+ * `pollInterval` (30 s by default) per batch. Otherwise a backlog drains at
+ * only `pollMaxJobsToActivate` jobs per `pollInterval`.
+ */
+const fakeJob = (key: number) => ({
+	key: String(key),
+	type: 'test-task',
+	processInstanceKey: '1',
+	bpmnProcessId: 'p',
+	processDefinitionVersion: 1,
+	processDefinitionKey: '1',
+	elementId: 'e',
+	elementInstanceKey: '1',
+	customHeaders: {},
+	worker: 'test-worker',
+	retries: 3,
+	deadline: '0',
+	variables: {},
+	tenantId: '<default>',
+})
+
+const fakeBatch = (size: number, offset: number) =>
+	Array.from({ length: size }, (_, i) => fakeJob(offset + i))
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker drains a backlog without waiting a pollInterval per full batch',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			// Two full batches of 3, then a partial batch, then nothing.
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(3, 0))
+				.mockResolvedValueOnce(fakeBatch(3, 3))
+				.mockResolvedValueOnce(fakeBatch(1, 6))
+				.mockResolvedValue([])
+			const handled: string[] = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					handled.push(job.key)
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 3,
+				pollInterval: 30000,
+			})
+
+			// Let the background drain run, without advancing the sidecar timer.
+			await vi.advanceTimersByTimeAsync(0)
+
+			// Full batches trigger an immediate re-poll; the partial batch ends the drain.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			expect(handled).toHaveLength(7)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker waits for a batch to be handled before polling again',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0))
+				.mockResolvedValue([])
+			const pending: Array<() => void> = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				// Handlers stay in flight until the test releases them.
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(0)
+			// The full batch is still being handled: no second poll yet.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			expect(pending).toHaveLength(2)
+
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			await worker.close()
 		} finally {
 			vi.useRealTimers()
 		}
