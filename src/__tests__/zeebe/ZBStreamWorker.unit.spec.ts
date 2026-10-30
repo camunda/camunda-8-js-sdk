@@ -704,6 +704,187 @@ describe('ZBStreamWorker dead stream recovery', () => {
 	)
 
 	unitTest(
+		'async callbacks that reject are observed (no unhandled rejection) and recovery continues',
+		async () => {
+			const unhandled: unknown[] = []
+			const onUnhandled = (reason: unknown) => unhandled.push(reason)
+			process.on('unhandledRejection', onUnhandled)
+			try {
+				const { worker, grpcClient, created } = setup()
+				const logError = (
+					worker as unknown as {
+						logger: { logError: ReturnType<typeof vi.fn> }
+					}
+				).logger.logError
+				const boom = (name: string) => async () => {
+					throw new Error(`${name} rejected`)
+				}
+				const onStreamError = vi.fn(boom('onStreamError'))
+				const onStreamEnd = vi.fn(boom('onStreamEnd'))
+				const onStreamReconnect = vi.fn(boom('onStreamReconnect'))
+				await worker.streamJobs({
+					...baseReq,
+					onStreamError,
+					onStreamEnd,
+					onStreamReconnect,
+				})
+
+				created[0].emit('error', new Error('boom'))
+				await vi.advanceTimersByTimeAsync(1000)
+				expect(opens(grpcClient)).toBe(2)
+
+				created[1].emit('end')
+				await vi.advanceTimersByTimeAsync(2000)
+				expect(opens(grpcClient)).toBe(3)
+
+				// Let any (wrongly) unobserved rejection surface
+				await vi.advanceTimersByTimeAsync(0)
+				vi.useRealTimers()
+				await new Promise<void>((resolve) => setImmediate(resolve))
+
+				expect(unhandled).toEqual([])
+				expect(onStreamError).toHaveBeenCalledTimes(1)
+				expect(onStreamEnd).toHaveBeenCalledTimes(1)
+				expect(onStreamReconnect).toHaveBeenCalledTimes(2)
+				for (const name of [
+					'onStreamError',
+					'onStreamEnd',
+					'onStreamReconnect',
+				]) {
+					expect(logError).toHaveBeenCalledWith(
+						`Exception in ${name} callback of stream worker: ${name} rejected`
+					)
+				}
+				await worker.close()
+			} finally {
+				process.off('unhandledRejection', onUnhandled)
+			}
+		}
+	)
+
+	unitTest('async callbacks that resolve work as sync ones do', async () => {
+		const { worker, grpcClient, created } = setup()
+		const logError = (
+			worker as unknown as { logger: { logError: ReturnType<typeof vi.fn> } }
+		).logger.logError
+		const onStreamError = vi.fn(async () => {})
+		const onStreamEnd = vi.fn(async () => {})
+		const onStreamReconnect = vi.fn(async () => {})
+		await worker.streamJobs({
+			...baseReq,
+			onStreamError,
+			onStreamEnd,
+			onStreamReconnect,
+		})
+
+		created[0].emit('error', new Error('boom'))
+		await vi.advanceTimersByTimeAsync(1000)
+		created[1].emit('end')
+		await vi.advanceTimersByTimeAsync(2000)
+
+		expect(opens(grpcClient)).toBe(3)
+		expect(onStreamError).toHaveBeenCalledTimes(1)
+		expect(onStreamEnd).toHaveBeenCalledTimes(1)
+		expect(onStreamReconnect).toHaveBeenCalledTimes(2)
+		expect(logError).not.toHaveBeenCalledWith(
+			expect.stringContaining('callback of stream worker')
+		)
+		await worker.close()
+	})
+
+	describe('close() while a reconnect open is pending', () => {
+		// Kill the first stream, advance to the reconnect attempt, and leave
+		// that open pending until `settle` is called.
+		const setupPendingReconnectOpen = async () => {
+			const ctx = setup()
+			const onStreamError = vi.fn()
+			const onStreamReconnect = vi.fn()
+			const handle = await ctx.worker.streamJobs({
+				...baseReq,
+				onStreamError,
+				onStreamReconnect,
+			})
+			let settle!: (result: unknown, mode: 'resolve' | 'reject') => void
+			ctx.grpcClient.streamActivatedJobsStream.mockImplementation(
+				() =>
+					new Promise((resolve, reject) => {
+						settle = (result, mode) =>
+							mode === 'resolve' ? resolve(result) : reject(result)
+					})
+			)
+			ctx.created[0].emit('error', new Error('boom'))
+			expect(onStreamError).toHaveBeenCalledTimes(1)
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(opens(ctx.grpcClient)).toBe(2) // reconnect open is now pending
+			return { ...ctx, handle, onStreamError, onStreamReconnect, settle }
+		}
+
+		const expectQuiet = async (
+			ctx: Awaited<ReturnType<typeof setupPendingReconnectOpen>>
+		) => {
+			await vi.advanceTimersByTimeAsync(0)
+			expect(ctx.onStreamError).toHaveBeenCalledTimes(1) // only the original
+			expect(vi.getTimerCount()).toBe(0) // no retry scheduled
+			await vi.advanceTimersByTimeAsync(120_000)
+			expect(opens(ctx.grpcClient)).toBe(2)
+			expect(ctx.onStreamReconnect).toHaveBeenCalledTimes(1)
+			expect(ctx.onStreamError).toHaveBeenCalledTimes(1)
+		}
+
+		unitTest(
+			'handle close(), then the open rejects: no onStreamError, no retry',
+			async () => {
+				const ctx = await setupPendingReconnectOpen()
+				ctx.handle.close()
+				ctx.settle(new Error('UNAVAILABLE'), 'reject')
+				await expectQuiet(ctx)
+			}
+		)
+
+		unitTest(
+			'handle close(), then the open returns { error }: no onStreamError, no retry',
+			async () => {
+				const ctx = await setupPendingReconnectOpen()
+				ctx.handle.close()
+				ctx.settle({ error: new Error('UNAVAILABLE') }, 'resolve')
+				await expectQuiet(ctx)
+			}
+		)
+
+		unitTest(
+			'worker close(), then the open rejects: no onStreamError, no retry',
+			async () => {
+				const ctx = await setupPendingReconnectOpen()
+				await ctx.worker.close()
+				ctx.settle(new Error('UNAVAILABLE'), 'reject')
+				await expectQuiet(ctx)
+			}
+		)
+
+		unitTest(
+			'worker close(), then the open returns { error }: no onStreamError, no retry',
+			async () => {
+				const ctx = await setupPendingReconnectOpen()
+				await ctx.worker.close()
+				ctx.settle({ error: new Error('UNAVAILABLE') }, 'resolve')
+				await expectQuiet(ctx)
+			}
+		)
+
+		unitTest(
+			'control: without close(), a failed reconnect open is reported and retried',
+			async () => {
+				const ctx = await setupPendingReconnectOpen()
+				ctx.settle({ error: new Error('UNAVAILABLE') }, 'resolve')
+				await vi.advanceTimersByTimeAsync(0)
+				expect(ctx.onStreamError).toHaveBeenCalledTimes(2)
+				expect(vi.getTimerCount()).toBe(1)
+				ctx.handle.close()
+			}
+		)
+	})
+
+	unitTest(
 		'recovery options are not passed through to the gRPC stream request',
 		async () => {
 			const { worker, grpcClient } = setup()

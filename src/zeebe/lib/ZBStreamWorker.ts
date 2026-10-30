@@ -26,22 +26,24 @@ import { parseVariablesAndCustomHeadersToJSON } from '.'
 export interface StreamJobsRecoveryOptions {
 	/**
 	 * Called when the job stream fails: a stream `error` event, or a failed
-	 * attempt to open the stream. Exceptions thrown by the callback are caught
-	 * and logged.
+	 * attempt to open the stream. Exceptions thrown by the callback, and
+	 * rejections of a returned promise, are caught and logged.
 	 */
-	onStreamError?: (error: Error) => void
+	onStreamError?: (error: Error) => void | Promise<void>
 	/**
 	 * Called when the server ends or closes the job stream without an error.
-	 * Exceptions thrown by the callback are caught and logged.
+	 * Exceptions thrown by the callback, and rejections of a returned
+	 * promise, are caught and logged.
 	 */
-	onStreamEnd?: () => void
+	onStreamEnd?: () => void | Promise<void>
 	/**
 	 * Called just before each attempt to re-open a dead stream. `attempt` is
 	 * the number of consecutive failed streams or open attempts, starting at 1.
 	 * It resets once a re-opened stream delivers a job or stays up for at least
-	 * `maxDelayMs`. Exceptions thrown by the callback are caught and logged.
+	 * `maxDelayMs`. Exceptions thrown by the callback, and rejections of a
+	 * returned promise, are caught and logged.
 	 */
-	onStreamReconnect?: (attempt: number) => void
+	onStreamReconnect?: (attempt: number) => void | Promise<void>
 	/**
 	 * Re-open the stream when it dies. Defaults to `true`, with exponential
 	 * backoff starting at 1000ms and capped at 30000ms. Pass `false` to disable
@@ -181,15 +183,19 @@ export class ZBStreamWorker implements IZBJobWorker {
 
 		// Invoke a caller-supplied lifecycle callback. A throwing callback must
 		// not break stream recovery (or crash the process from an event handler).
-		const notify = (name: string, callback: () => void) => {
-			try {
-				callback()
-			} catch (e) {
+		// Callbacks may be async, so a returned promise is observed as well: a
+		// rejection is logged rather than surfacing as an unhandled rejection.
+		const notify = (name: string, callback: () => void | Promise<void>) => {
+			const logFailure = (e: unknown) =>
 				this.logger.logError(
 					`Exception in ${name} callback of stream worker: ${
 						toError(e).message
 					}`
 				)
+			try {
+				Promise.resolve(callback()).catch(logFailure)
+			} catch (e) {
+				logFailure(e)
 			}
 		}
 
@@ -361,11 +367,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// activation, so there is no risk of duplicate delivery.
 		const reconnect = async () => {
 			const openError = await openStream()
+			if (isClosed()) {
+				// close() was called while the stream was being opened: a failed
+				// open is expected fallout, so neither report it nor retry.
+				return
+			}
 			if (openError) {
 				return handleOpenFailure(openError)
-			}
-			if (isClosed()) {
-				return
 			}
 			await runPoll().catch((e) =>
 				this.logger.logError(
