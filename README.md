@@ -755,7 +755,16 @@ Observe and configure this with:
 
 Exceptions thrown by these callbacks are caught and logged; they do not affect reconnection. If the stream cannot be opened on the first attempt and `streamReconnect` is `false`, the promise returned by `streamJobs` rejects with the underlying error.
 
-`streamJobs` returns a promise, so `await` it to obtain the handle with the `close()` method.
+`streamJobs` returns a promise, so `await` it to obtain the handle. Besides `close()`, the handle reports the state of the job stream:
+
+- **`state`** — the current state: `{ status: 'open' }`, `{ status: 'reconnecting', attempt, cause }` while a dead stream is being re-opened, or `{ status: 'closed', reason }`. `reason.kind` is `closed-by-caller`, `client-closed`, or `stream-failed` (reconnection is disabled and the stream died; the sidecar poll keeps running until you call `close()`).
+- **`done`** — a promise that resolves (it never rejects) with the closed `reason` when the handle reaches `closed`.
+
+```typescript
+const handle = await client.streamJobs({ /* ... */ })
+console.log(handle.state.status) // 'open'
+handle.done.then((reason) => console.log('Job stream closed:', reason.kind))
+```
 
 You can optionally pass a `jitter` parameter (in milliseconds) to delay the start by a random period up to that value. This is useful when starting multiple stream workers simultaneously, to avoid saturating the gateway at application startup.
 
