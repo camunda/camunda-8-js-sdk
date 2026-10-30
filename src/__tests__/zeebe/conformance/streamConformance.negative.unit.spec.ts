@@ -45,12 +45,24 @@ interface Flaws {
 	doesNotCancelOnClose: boolean
 	/** Calls caller callbacks without observing the promise they return. */
 	leaksCallbackRejection: boolean
+	/** Called on a closed owner, returns a handle that claims to be open forever. */
+	ignoresClosedOwner: boolean
 	/** Never moves out of `open`. */
 	stateNeverChanges: boolean
 }
 
 const miniOp = (flaws: Partial<Flaws> = {}): StreamConformanceCase => ({
 	hang: { mechanism: 'grpc-keepalive' },
+	openOnClosedOwner: async () => {
+		const machine = createStreamStateMachine()
+		if (!flaws.ignoresClosedOwner) {
+			machine.transition({
+				status: 'closed',
+				reason: { kind: 'client-closed' },
+			})
+		}
+		return createStreamHandle(machine, () => undefined)
+	},
 	open: async ({ transport, observers, reconnect }) => {
 		const machine = createStreamStateMachine()
 		const initialDelayMs = reconnect === false ? 0 : reconnect.initialDelayMs
@@ -245,6 +257,12 @@ describe.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		test('an async callback whose rejection is not observed fails', async () => {
 			await failsScenarios(miniOp({ leaksCallbackRejection: true }), [
 				'async rejecting callbacks: no unhandled rejection, recovery continues',
+			])
+		})
+
+		test('a handle from a closed owner that reports open forever fails', async () => {
+			await failsScenarios(miniOp({ ignoresClosedOwner: true }), [
+				'owner already closed: closed handle (client-closed), nothing opened, no leaks',
 			])
 		})
 

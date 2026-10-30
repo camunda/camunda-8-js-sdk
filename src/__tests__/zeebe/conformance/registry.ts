@@ -44,6 +44,16 @@ export interface StreamConformanceCase {
 		reconnect: StreamBackoff | false
 	}): Promise<OpenedStream>
 	/**
+	 * Call the operation on an owner (for `streamJobs`, the client's stream
+	 * worker) that has already been closed. It must not throw and must open
+	 * nothing; the handle it returns must be closed (`client-closed`).
+	 */
+	openOnClosedOwner(args: {
+		transport: FakeStreamTransport
+		observers: StreamObservers
+		reconnect: StreamBackoff | false
+	}): Promise<StreamHandle>
+	/**
 	 * How the operation detects a connection that has silently stopped
 	 * delivering without any event. The suite asserts that the mechanism is
 	 * configured; it cannot simulate the network.
@@ -76,38 +86,53 @@ const silentLog = {
 	logError: () => undefined,
 }
 
+const newStreamJobsWorker = (transport: FakeStreamTransport) =>
+	new ZBStreamWorker({
+		grpcClient: {
+			streamActivatedJobsStream: transport.open,
+			close: async () => undefined,
+		} as unknown as ZBGrpc,
+		log: silentLog as unknown as StatefulLogInterceptor,
+		zbClient: {
+			activateJobs: async () => [],
+			failJob: async () => undefined,
+		} as unknown as ZeebeGrpcClient,
+	})
+
+const callStreamJobs = (
+	worker: ZBStreamWorker,
+	observers: StreamObservers,
+	reconnect: StreamBackoff | false
+) =>
+	worker.streamJobs({
+		type: 'conformance-task',
+		worker: 'conformance-worker',
+		timeout: 30_000,
+		tenantIds: ['<default>'],
+		taskHandler: () => {
+			throw new Error('no jobs are activated in the conformance suite')
+		},
+		inputVariableDto: LosslessDto,
+		customHeadersDto: LosslessDto,
+		// The sidecar poll is left on, so that "no leaked timers after
+		// close" also covers it.
+		pollInterval: 5_000,
+		onStreamError: observers.onError,
+		onStreamEnd: observers.onEnd,
+		onStreamReconnect: observers.onReconnect,
+		streamReconnect: reconnect,
+	})
+
 const streamJobsCase: StreamConformanceCase = {
 	open: async ({ transport, observers, reconnect }) => {
-		const worker = new ZBStreamWorker({
-			grpcClient: {
-				streamActivatedJobsStream: transport.open,
-				close: async () => undefined,
-			} as unknown as ZBGrpc,
-			log: silentLog as unknown as StatefulLogInterceptor,
-			zbClient: {
-				activateJobs: async () => [],
-				failJob: async () => undefined,
-			} as unknown as ZeebeGrpcClient,
-		})
-		const handle = await worker.streamJobs({
-			type: 'conformance-task',
-			worker: 'conformance-worker',
-			timeout: 30_000,
-			tenantIds: ['<default>'],
-			taskHandler: () => {
-				throw new Error('no jobs are activated in the conformance suite')
-			},
-			inputVariableDto: LosslessDto,
-			customHeadersDto: LosslessDto,
-			// The sidecar poll is left on, so that "no leaked timers after
-			// close" also covers it.
-			pollInterval: 5_000,
-			onStreamError: observers.onError,
-			onStreamEnd: observers.onEnd,
-			onStreamReconnect: observers.onReconnect,
-			streamReconnect: reconnect,
-		})
+		const worker = newStreamJobsWorker(transport)
+		const handle = await callStreamJobs(worker, observers, reconnect)
 		return { handle, closeOwner: () => worker.close() }
+	},
+	openOnClosedOwner: async ({ transport, observers, reconnect }) => {
+		const worker = newStreamJobsWorker(transport)
+		await worker.close()
+		return callStreamJobs(worker, observers, reconnect)
 	},
 	hang: { mechanism: 'grpc-keepalive' },
 }

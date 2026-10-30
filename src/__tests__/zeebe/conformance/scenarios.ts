@@ -350,6 +350,39 @@ export const scenarios = {
 		await run.finish()
 	},
 
+	/** Calling the operation on an owner that is already closed: no stream, no callbacks, no timers, and a handle that is closed. */
+	'owner already closed: closed handle (client-closed), nothing opened, no leaks':
+		async (testCase: StreamConformanceCase) => {
+			const transport = new FakeStreamTransport()
+			const errors: Error[] = []
+			const calls: string[] = []
+			const handle = await testCase.openOnClosedOwner({
+				transport,
+				reconnect: BACKOFF,
+				observers: {
+					onError: (e) => void errors.push(e),
+					onEnd: () => void calls.push('end'),
+					onReconnect: () => void calls.push('reconnect'),
+				},
+			})
+			await settle()
+			expect(handle.state).toEqual({
+				status: 'closed',
+				reason: { kind: 'client-closed' },
+			})
+			await expect(handle.done).resolves.toEqual({ kind: 'client-closed' })
+			await advance(10 * BACKOFF.maxDelayMs)
+			expect(transport.opens, 'no stream is opened').toBe(0)
+			expect(errors).toEqual([])
+			expect(calls).toEqual([])
+			expect(vi.getTimerCount(), 'no timers are started').toBe(0)
+			handle.close() // idempotent, and does not change the reason
+			expect(handle.state).toEqual({
+				status: 'closed',
+				reason: { kind: 'client-closed' },
+			})
+		},
+
 	/** Reconnection disabled: the failure is still reported, and the handle says the stream is gone for good. */
 	'reconnect disabled: caller notified, state closed (stream-failed), no re-open':
 		async (testCase: StreamConformanceCase) => {

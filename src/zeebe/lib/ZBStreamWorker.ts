@@ -441,6 +441,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 		const handle: StreamHandle = createStreamHandle(machine, closeHandle)
 
 		const pollAndStream = async (): Promise<StreamHandle> => {
+			if (this.closed) {
+				// The client was already closed: open nothing, and give the caller a
+				// handle that says so, instead of one that reports `open` forever.
+				transition({ status: 'closed', reason: { kind: 'client-closed' } })
+				return handle
+			}
+
 			// Optional jitter to stagger multiple workers
 			if (jitter) {
 				await new Promise((resolve) =>

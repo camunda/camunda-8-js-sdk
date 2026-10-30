@@ -324,6 +324,26 @@ describe.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			await worker.close()
 		})
 
+		test('streamJobs after the client was closed returns a closed handle and opens nothing', async () => {
+			const onStreamError = vi.fn()
+			const { transport, zbClient, streamJobs, worker, log } = setup()
+			await worker.close()
+
+			const handle = await streamJobs({ onStreamError, pollInterval: 1_000 })
+
+			expect(handle.state).toEqual({
+				status: 'closed',
+				reason: { kind: 'client-closed' },
+			})
+			await expect(handle.done).resolves.toEqual({ kind: 'client-closed' })
+			await vi.advanceTimersByTimeAsync(60_000)
+			expect(transport.opens).toBe(0)
+			expect(zbClient.activateJobs).not.toHaveBeenCalled()
+			expect(onStreamError).not.toHaveBeenCalled()
+			expect(log.logError).not.toHaveBeenCalled()
+			expect(vi.getTimerCount()).toBe(0)
+		})
+
 		test('jitter delays opening the stream by a random period up to the given value', async () => {
 			const random = vi.spyOn(Math, 'random').mockReturnValue(0.5)
 			try {

@@ -114,8 +114,12 @@ export const severAndRecover = async (env: FaultEnvironment) => {
 		expect(handle.state).toEqual({ status: 'open' })
 	} finally {
 		handle.close()
-		await expect(handle.done).resolves.toEqual({ kind: 'closed-by-caller' })
-		await client.close()
+		try {
+			await expect(handle.done).resolves.toEqual({ kind: 'closed-by-caller' })
+		} finally {
+			// Always release the gRPC channels, even if the assertion fails.
+			await client.close()
+		}
 	}
 }
 
@@ -179,5 +183,7 @@ export const closeStopsReconnecting = async (env: FaultEnvironment) => {
 		await expect(handle.done).resolves.toEqual({ kind: 'client-closed' })
 	} finally {
 		handle.close()
+		// Idempotent: also reached when a wait above rejected before the close.
+		await client.close()
 	}
 }
