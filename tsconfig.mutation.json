@@ -1,0 +1,13 @@
+{
+	// Used by Stryker's TypeScript checker (see stryker.config.json). The checker
+	// type-checks every mutant against this program, and forces noUnusedLocals off,
+	// which makes the intentional `@ts-expect-error` in src/c8/index.ts an error.
+	// So this program holds only the stream modules and what they import.
+	"extends": "./tsconfig.json",
+	"compilerOptions": { "composite": false, "incremental": false, "noEmit": true },
+	"include": [
+		"src/zeebe/lib/StreamLifecycle.ts",
+		"src/zeebe/lib/ZBStreamWorker.ts"
+	],
+	"exclude": ["node_modules", "dist"]
+}

@@ -1,9 +1,22 @@
-import { ClientReadableStream } from '@grpc/grpc-js'
-import chalk from 'chalk'
-
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
+import {
+	StreamAttachment,
+	StreamClosedReason,
+	StreamFailure,
+	StreamHandle,
+	StreamStateMachine,
+	asStream,
+	attachStream,
+	backoffDelayMs,
+	cancelStream,
+	createStreamHandle,
+	createStreamStateMachine,
+	describeStreamState,
+	getOpenError,
+	toError,
+} from './StreamLifecycle'
 import {
 	ErrorJobWithVariables,
 	IZBJobWorker,
@@ -57,26 +70,12 @@ export interface StreamJobsRecoveryOptions {
 const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
 const DEFAULT_RECONNECT_MAX_DELAY_MS = 30_000
 
-const toError = (e: unknown): Error =>
-	e instanceof Error ? e : new Error(String(e))
-
-/**
- * `streamActivatedJobsStream` resolves to `{ error }` (or `undefined` when the
- * client is closing) instead of a stream when the stream cannot be opened.
- */
-const getOpenError = (result: unknown): Error | undefined => {
-	if (!result) return new Error('Job stream could not be opened')
-	if (typeof result === 'object' && 'error' in result) {
-		return toError((result as { error: unknown }).error)
-	}
-	return undefined
-}
-
 export class ZBStreamWorker implements IZBJobWorker {
 	private grpcClient: ZBGrpc
 	private logger: StatefulLogInterceptor
 	private zbClient: ZeebeGrpcClient
-	private streams: ClientReadableStream<unknown>[] = []
+	private streams: StreamAttachment[] = []
+	private machines = new Set<StreamStateMachine>()
 	private closed = false
 	private pollTimers: ReturnType<typeof setTimeout>[] = []
 	private reconnectTimers = new Set<ReturnType<typeof setTimeout>>()
@@ -94,7 +93,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 		this.zbClient = zbClient
 
 		if (!this.zbClient) {
-			console.log(`Missing ZBClient`)
+			this.logger.logError(`Missing ZBClient`)
 		}
 	}
 
@@ -133,7 +132,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			 */
 			pollInterval?: number
 		} & StreamJobsRecoveryOptions
-	) {
+	): Promise<StreamHandle> {
 		const {
 			taskHandler,
 			inputVariableDto,
@@ -202,7 +201,19 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// Mutable per-streamJobs-call state. Mutation is confined to the
 		// stream lifecycle handlers below.
 		let handleClosed = false // set by the returned handle's close()
-		let currentStream: ClientReadableStream<unknown> | undefined
+		let currentStream: StreamAttachment | undefined
+		const machine = createStreamStateMachine()
+		this.machines.add(machine)
+		void machine.done.then(() => this.machines.delete(machine))
+		const transition = (
+			next: Parameters<StreamStateMachine['transition']>[0]
+		) => {
+			if (machine.transition(next)) {
+				this.logger.logDebug(
+					`Job stream for ${req.type}: ${describeStreamState(next)}`
+				)
+			}
+		}
 		let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 		let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 		let consecutiveFailures = 0 // drives the exponential backoff
@@ -230,24 +241,41 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 		}
 
-		const discardStream = (stream: ClientReadableStream<unknown>) => {
-			const index = this.streams.indexOf(stream)
+		const discardStream = (attachment: StreamAttachment) => {
+			const index = this.streams.indexOf(attachment)
 			if (index !== -1) {
 				this.streams.splice(index, 1)
 			}
+		}
+
+		// The stream is down. Re-open it with backoff, or, if reconnection is
+		// disabled, record that it is closed for good.
+		const onStreamDown = (cause: StreamFailure) => {
+			if (isClosed()) {
+				return
+			}
+			if (!reconnectEnabled) {
+				transition({
+					status: 'closed',
+					reason: { kind: 'stream-failed', failure: cause },
+				})
+				return
+			}
+			scheduleReconnect(cause)
 		}
 
 		// Schedule a single re-open of the stream with exponential backoff. Only
 		// one reconnect timer is ever pending, so an `error` and an `end` for the
 		// same dead stream (or a failed open racing a stream failure) cannot
 		// result in duplicate re-opens.
-		const scheduleReconnect = () => {
+		const scheduleReconnect = (cause: StreamFailure) => {
 			if (!reconnectEnabled || isClosed() || reconnectTimer) {
 				return
 			}
 			consecutiveFailures++
 			const attempt = consecutiveFailures
-			const delay = Math.min(initialDelayMs * 2 ** (attempt - 1), maxDelayMs)
+			const delay = backoffDelayMs(attempt, initialDelayMs, maxDelayMs)
+			transition({ status: 'reconnecting', attempt, cause })
 			const timer = setTimeout(() => {
 				reconnectTimer = undefined
 				this.reconnectTimers.delete(timer)
@@ -270,7 +298,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 				`Failed to open job stream for ${req.type}: ${error.message}`
 			)
 			notify('onStreamError', () => onStreamError?.(error))
-			scheduleReconnect()
+			onStreamDown({ kind: 'open-failed', error })
 		}
 
 		// Open the stream. Returns an Error if it could not be opened (the
@@ -287,78 +315,86 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (openError) {
 				return openError
 			}
-			const stream = result as ClientReadableStream<unknown>
+			const stream = asStream<ActivatedJob>(result)
 			if (isClosed()) {
 				// close() was called while the stream was being opened.
-				stream.cancel()
-				stream.destroy()
+				cancelStream(stream)
 				return undefined
 			}
 
 			const openedAt = Date.now()
 			let receivedData = false
-			let dead = false
-			// `error`, `end` and `close` can all fire for one dead stream; only
-			// the first is acted on.
-			const onStreamDead = (notifyCaller: () => void) => {
-				if (dead) {
-					return
-				}
-				dead = true
-				discardStream(stream)
-				if (currentStream === stream) {
-					currentStream = undefined
-				}
-				if (isClosed()) {
-					// Expected: we cancelled it ourselves.
-					return
-				}
-				// A stream that delivered a job, or stayed up for a while, was
-				// healthy: restart the backoff from the beginning.
+			let cause: StreamFailure = { kind: 'end' }
+			// A stream that delivered a job, or stayed up for a while, was
+			// healthy: restart the backoff from the beginning.
+			const resetBackoffIfHealthy = () => {
 				if (receivedData || Date.now() - openedAt >= maxDelayMs) {
 					consecutiveFailures = 0
 				}
-				notifyCaller()
-				scheduleReconnect()
 			}
-			stream.on('error', (e: unknown) =>
-				onStreamDead(() => {
-					const error = toError(e)
+			// The adapter is the only code that attaches listeners to the raw
+			// stream. It delivers exactly one of `error`/`end`, then `close`.
+			const attachment: StreamAttachment = attachStream(stream, {
+				data: (res) => {
+					if (!receivedData) {
+						receivedData = true
+						consecutiveFailures = 0
+					}
+					try {
+						const parsedJob = parseVariablesAndCustomHeadersToJSON<
+							WorkerInputVariables,
+							CustomHeaderShape
+						>(res, inputVariableDto, customHeadersDto)
+						handleJob(parsedJob)
+					} catch (e) {
+						this.zbClient
+							.failJob({
+								jobKey: res.key,
+								errorMessage: `Error parsing variable payload ${e}`,
+								retries: res.retries - 1,
+								retryBackOff: 0,
+							})
+							.catch((failError: unknown) =>
+								this.logger.logError(
+									`Failed to fail job ${res.key} after a payload parse error: ${
+										toError(failError).message
+									}`
+								)
+							)
+					}
+				},
+				error: (error) => {
+					cause = { kind: 'error', error }
+					if (isClosed()) {
+						// Expected: we cancelled it ourselves.
+						return
+					}
+					resetBackoffIfHealthy()
 					this.logger.logError(
 						`Job stream for ${req.type} failed: ${error.message}`
 					)
 					notify('onStreamError', () => onStreamError?.(error))
-				})
-			)
-			const onEnd = () =>
-				onStreamDead(() => {
+				},
+				end: () => {
+					cause = { kind: 'end' }
+					if (isClosed()) {
+						return
+					}
+					resetBackoffIfHealthy()
 					this.logger.logError(`Job stream for ${req.type} ended`)
 					notify('onStreamEnd', () => onStreamEnd?.())
-				})
-			stream.on('end', onEnd)
-			stream.on('close', onEnd)
-			stream.on('data', (res: ActivatedJob) => {
-				if (!receivedData) {
-					receivedData = true
-					consecutiveFailures = 0
-				}
-				try {
-					const parsedJob = parseVariablesAndCustomHeadersToJSON<
-						WorkerInputVariables,
-						CustomHeaderShape
-					>(res, inputVariableDto, customHeadersDto)
-					handleJob(parsedJob)
-				} catch (e) {
-					this.zbClient.failJob({
-						jobKey: res.key,
-						errorMessage: `Error parsing variable payload ${e}`,
-						retries: res.retries - 1,
-						retryBackOff: 0,
-					})
-				}
+				},
+				close: () => {
+					discardStream(attachment)
+					if (currentStream === attachment) {
+						currentStream = undefined
+					}
+					onStreamDown(cause)
+				},
 			})
-			this.streams.push(stream)
-			currentStream = stream
+			this.streams.push(attachment)
+			currentStream = attachment
+			transition({ status: 'open' })
 			return undefined
 		}
 
@@ -384,7 +420,34 @@ export class ZBStreamWorker implements IZBJobWorker {
 			)
 		}
 
-		const pollAndStream = async () => {
+		// The handle returned to the caller. `close()` is idempotent.
+		const closeHandle = () => {
+			handleClosed = true
+			transition({ status: 'closed', reason: { kind: 'closed-by-caller' } })
+			if (sidecarTimer) {
+				clearTimeout(sidecarTimer)
+			}
+			if (reconnectTimer) {
+				clearTimeout(reconnectTimer)
+				this.reconnectTimers.delete(reconnectTimer)
+				reconnectTimer = undefined
+			}
+			if (currentStream) {
+				discardStream(currentStream)
+				currentStream.dispose()
+				currentStream = undefined
+			}
+		}
+		const handle: StreamHandle = createStreamHandle(machine, closeHandle)
+
+		const pollAndStream = async (): Promise<StreamHandle> => {
+			if (this.closed) {
+				// The client was already closed: open nothing, and give the caller a
+				// handle that says so, instead of one that reports `open` forever.
+				transition({ status: 'closed', reason: { kind: 'client-closed' } })
+				return handle
+			}
+
 			// Optional jitter to stagger multiple workers
 			if (jitter) {
 				await new Promise((resolve) =>
@@ -396,7 +459,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			const openError = await openStream()
 			if (isClosed()) {
 				// close() was called while the stream was being opened.
-				return { close: () => {} }
+				return handle
 			}
 			if (openError) {
 				handleOpenFailure(openError)
@@ -446,25 +509,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 				schedulePoll()
 			}
 
-			return {
-				close: () => {
-					handleClosed = true
-					if (sidecarTimer) {
-						clearTimeout(sidecarTimer)
-					}
-					if (reconnectTimer) {
-						clearTimeout(reconnectTimer)
-						this.reconnectTimers.delete(reconnectTimer)
-						reconnectTimer = undefined
-					}
-					if (currentStream) {
-						discardStream(currentStream)
-						currentStream.cancel()
-						currentStream.destroy()
-						currentStream = undefined
-					}
-				},
-			}
+			return handle
 		}
 
 		return pollAndStream()
@@ -476,10 +521,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 		this.pollTimers = []
 		this.reconnectTimers.forEach((t) => clearTimeout(t))
 		this.reconnectTimers.clear()
-		this.streams.forEach((s) => {
-			s.cancel()
-			s.destroy()
-		})
+		const clientClosed: StreamClosedReason = { kind: 'client-closed' }
+		this.machines.forEach((m) =>
+			m.transition({ status: 'closed', reason: clientClosed })
+		)
+		this.streams.forEach((s) => s.dispose())
 		this.streams = []
 		return this.grpcClient.close()
 	}
@@ -512,10 +558,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 		) => {
 			return (...args) => {
 				if (methodCalled !== undefined) {
-					// tslint:disable-next-line: no-console
-					console.log(
-						chalk.red(`WARNING: Call to ${thisMethod}() after ${methodCalled}() was called.
-You should call only one job action method in the worker handler. This is a bug in a Stream worker handler.`)
+					this.logger.logError(
+						`WARNING: Call to ${thisMethod}() after ${methodCalled}() was called.
+You should call only one job action method in the worker handler. This is a bug in a Stream worker handler.`
 					)
 
 					return wrappedFunction(...args)

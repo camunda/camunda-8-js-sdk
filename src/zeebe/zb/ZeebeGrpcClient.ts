@@ -34,6 +34,7 @@ import { ZBSimpleLogger } from '../lib/SimpleLogger'
 import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
 import { ZBJsonLogger } from '../lib/ZBJsonLogger'
+import { StreamHandle } from '../lib/StreamLifecycle'
 import {
 	StreamJobsRecoveryOptions,
 	ZBStreamWorker,
@@ -1243,6 +1244,10 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * `onStreamReconnect` to observe this, and `streamReconnect` to tune or
 	 * disable it.
 	 *
+	 * The returned `StreamHandle` has `close()`, a `state` property
+	 * (`open`, `reconnecting` or `closed`, with the reason for each) and a `done`
+	 * promise that resolves with the terminal reason when the handle closes.
+	 *
 	 * @example
 	 * ```
 	 * const zbc = new ZB.ZeebeGrpcClient()
@@ -1337,7 +1342,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				WorkerOutputVariables
 			>
 		} & StreamJobsRecoveryOptions
-	) {
+	): Promise<StreamHandle> {
 		if (!this.streamWorker) {
 			// Give worker its own gRPC connection
 			const { grpcClient, log } = this.constructGrpcClient({
