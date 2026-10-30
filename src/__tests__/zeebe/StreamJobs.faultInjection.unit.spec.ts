@@ -1,5 +1,5 @@
-import { FakeZeebeGateway } from '../../test-support/FakeZeebeGateway'
-import { TcpFaultProxy } from '../../test-support/TcpFaultProxy'
+import { FakeZeebeGateway } from '../support/FakeZeebeGateway'
+import { TcpFaultProxy } from '../support/TcpFaultProxy'
 import { allowAny } from '../../test-support/testTags'
 import {
 	FaultEnvironment,
@@ -7,7 +7,7 @@ import {
 	outageAndRecover,
 	severAndRecover,
 	waitFor,
-} from '../../test-support/streamFaultScenarios'
+} from '../support/streamFaultScenarios'
 
 /**
  * The fault-injection scenarios of the StreamJobs integration test, run in the

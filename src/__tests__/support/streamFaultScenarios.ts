@@ -1,5 +1,5 @@
-import { ZeebeGrpcClient } from '../zeebe'
-import { StreamState } from '../zeebe/lib/StreamLifecycle'
+import { ZeebeGrpcClient } from '../../zeebe'
+import { StreamState } from '../../zeebe/lib/StreamLifecycle'
 
 import { TcpFaultProxy } from './TcpFaultProxy'
 

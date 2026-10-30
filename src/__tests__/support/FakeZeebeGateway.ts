@@ -30,7 +30,7 @@ interface JobMessage {
 
 type JobStream = ServerWritableStream<{ type: string }, JobMessage>
 
-const protoPath = path.join(__dirname, '../proto/zeebe.proto')
+const protoPath = path.join(__dirname, '../../proto/zeebe.proto')
 
 export class FakeZeebeGateway {
 	private readonly server = new Server()

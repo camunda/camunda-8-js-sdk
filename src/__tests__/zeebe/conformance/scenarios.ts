@@ -109,6 +109,7 @@ const start = async (
 		opened.handle.close()
 		await settle()
 		expect(opened.handle.state.status).toBe('closed')
+		expect(vi.getTimerCount(), 'close() cancels every timer').toBe(0)
 		await opened.handle.done
 		await advance(10 * BACKOFF.maxDelayMs)
 		expect(uncaught, 'no uncaught exception or unhandled rejection').toEqual([])

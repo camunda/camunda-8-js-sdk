@@ -1,13 +1,13 @@
 import { CamundaEnvironmentConfigurator } from '../../../lib/Configuration'
 import { parseZeebeGrpcAddress } from '../../../lib/ZeebeGrpcAddressUtils'
-import { TcpFaultProxy } from '../../../test-support/TcpFaultProxy'
+import { TcpFaultProxy } from '../../support/TcpFaultProxy'
 import { allowAny } from '../../../test-support/testTags'
 import {
 	FaultEnvironment,
 	closeStopsReconnecting,
 	outageAndRecover,
 	severAndRecover,
-} from '../../../test-support/streamFaultScenarios'
+} from '../../support/streamFaultScenarios'
 import { ZeebeGrpcClient } from '../../../zeebe'
 import { cancelProcesses } from '../../../zeebe/lib/cancelProcesses'
 

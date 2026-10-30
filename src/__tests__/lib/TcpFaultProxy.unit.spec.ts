@@ -1,7 +1,7 @@
 import net from 'node:net'
 
 import { allowAny } from '../../test-support/testTags'
-import { TcpFaultProxy } from '../../test-support/TcpFaultProxy'
+import { TcpFaultProxy } from '../support/TcpFaultProxy'
 
 const echoServer = async () => {
 	const server = net.createServer((socket) => {
