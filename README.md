@@ -753,7 +753,7 @@ Observe and configure this with:
 - **`onStreamReconnect(attempt)`** — called before each attempt to re-open the stream. `attempt` is the number of consecutive failures, starting at 1.
 - **`streamReconnect`** — `true` (the default), `false` to disable reconnection (the callbacks above still fire), or `{ initialDelayMs, maxDelayMs }` to tune the backoff.
 
-Exceptions thrown by these callbacks are caught and logged; they do not affect reconnection. If the stream cannot be opened on the first attempt and `streamReconnect` is `false`, the promise returned by `streamJobs` rejects with the underlying error.
+The callbacks may be `async`. Exceptions thrown by these callbacks, and rejections of any promise they return, are caught and logged; they do not affect reconnection. If the stream cannot be opened on the first attempt and `streamReconnect` is `false`, the promise returned by `streamJobs` rejects with the underlying error.
 
 `streamJobs` returns a promise, so `await` it to obtain the handle. Besides `close()`, the handle reports the state of the job stream:
 
