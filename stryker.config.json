@@ -1,0 +1,20 @@
+{
+	"$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+	"testRunner": "vitest",
+	"checkers": ["typescript"],
+	"tsconfigFile": "tsconfig.mutation.json",
+	"vitest": {
+		"configFile": "vitest.mutation.config.js"
+	},
+	"mutate": [
+		"src/zeebe/lib/StreamLifecycle.ts",
+		"src/zeebe/lib/ZBStreamWorker.ts:1-524"
+	],
+	"coverageAnalysis": "perTest",
+	"reporters": ["clear-text", "progress", "html", "json"],
+	"htmlReporter": { "fileName": "reports/mutation/index.html" },
+	"jsonReporter": { "fileName": "reports/mutation/mutation.json" },
+	"tempDirName": ".stryker-tmp",
+	"cleanTempDir": true,
+	"thresholds": { "high": 90, "low": 80, "break": 78 }
+}
