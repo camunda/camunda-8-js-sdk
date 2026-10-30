@@ -34,7 +34,10 @@ import { ZBSimpleLogger } from '../lib/SimpleLogger'
 import { StatefulLogInterceptor } from '../lib/StatefulLogInterceptor'
 import { TypedEmitter } from '../lib/TypedEmitter'
 import { ZBJsonLogger } from '../lib/ZBJsonLogger'
-import { ZBStreamWorker } from '../lib/ZBStreamWorker'
+import {
+	StreamJobsRecoveryOptions,
+	ZBStreamWorker,
+} from '../lib/ZBStreamWorker'
 import { getResourceContentAndName, Resource } from '../lib/deployResource'
 import * as ZB from '../lib/interfaces-1.0'
 import { ZBWorkerTaskHandler } from '../lib/interfaces-1.0'
@@ -1234,15 +1237,23 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	 * queued before the stream was established. A low-frequency sidecar poll
 	 * continues running alongside the stream as a safety net for re-queued jobs.
 	 *
+	 * If the stream dies (a stream error, the server ending the stream, or a
+	 * failed attempt to open it), the worker re-opens it with exponential backoff
+	 * and runs a backfill poll. Use `onStreamError`, `onStreamEnd` and
+	 * `onStreamReconnect` to observe this, and `streamReconnect` to tune or
+	 * disable it.
+	 *
 	 * @example
 	 * ```
 	 * const zbc = new ZB.ZeebeGrpcClient()
 	 *
-	 * const zbStreamWorker = zbc.streamJobs({
+	 * const zbStreamWorker = await zbc.streamJobs({
 	 *   type: 'demo-service',
 	 *   worker: 'my-worker-uuid',
 	 *   taskHandler: myTaskHandler,
-	 * 	 timeout: 30000 // 30 seconds
+	 * 	 timeout: 30000, // 30 seconds
+	 *   onStreamError: (err) => console.error('Job stream failed', err),
+	 *   onStreamReconnect: (attempt) => console.log(`Re-opening job stream, attempt ${attempt}`),
 	 * })
 	 *
 	 * ....
@@ -1325,7 +1336,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 				CustomHeaderShape,
 				WorkerOutputVariables
 			>
-		}
+		} & StreamJobsRecoveryOptions
 	) {
 		if (!this.streamWorker) {
 			// Give worker its own gRPC connection
