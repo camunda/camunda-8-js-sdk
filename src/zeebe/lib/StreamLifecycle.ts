@@ -104,8 +104,15 @@ export interface StreamAttachment {
 export const asStream = <T>(opened: unknown): ClientReadableStream<T> =>
 	opened as ClientReadableStream<T>
 
-/** Cancel and destroy a raw stream that was never attached. */
+/**
+ * Cancel and destroy a raw stream. Also used for a stream that was never
+ * attached (for example one that finished opening after its handle was
+ * closed): cancelling reports CANCELLED as an `error` event, which with no
+ * listener would be an uncaught exception, so a listener for that expected
+ * error is added first.
+ */
 export const cancelStream = (stream: ClientReadableStream<unknown>): void => {
+	stream.on('error', () => undefined)
 	stream.cancel()
 	stream.destroy()
 }
