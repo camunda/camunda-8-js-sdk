@@ -31,6 +31,7 @@ const createWorker = () => {
 	const zbClient = {
 		activateJobs: vi.fn().mockResolvedValue([]),
 		failJob: vi.fn().mockResolvedValue(undefined),
+		completeJob: vi.fn().mockResolvedValue(undefined),
 	}
 	const log = {
 		logInfo: vi.fn(),
@@ -908,3 +909,458 @@ describe('ZBStreamWorker dead stream recovery', () => {
 		}
 	)
 })
+
+/**
+ * The stream only pushes jobs that become activatable after it opens. Jobs
+ * that already exist (a backlog) are picked up by the poll. A poll that
+ * returns a full batch means more jobs are probably waiting, so the worker
+ * must poll again as soon as that batch is handled — not wait a whole
+ * `pollInterval` (30 s by default) per batch. Otherwise a backlog drains at
+ * only `pollMaxJobsToActivate` jobs per `pollInterval`.
+ */
+const fakeJob = (key: number) => ({
+	key: String(key),
+	type: 'test-task',
+	processInstanceKey: '1',
+	bpmnProcessId: 'p',
+	processDefinitionVersion: 1,
+	processDefinitionKey: '1',
+	elementId: 'e',
+	elementInstanceKey: '1',
+	customHeaders: {},
+	worker: 'test-worker',
+	retries: 3,
+	deadline: '0',
+	variables: {},
+	tenantId: '<default>',
+})
+
+const fakeBatch = (size: number, offset: number) =>
+	Array.from({ length: size }, (_, i) => fakeJob(offset + i))
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker drains a backlog without waiting a pollInterval per full batch',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			// Two full batches of 3, then a partial batch, then nothing.
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(3, 0))
+				.mockResolvedValueOnce(fakeBatch(3, 3))
+				.mockResolvedValueOnce(fakeBatch(1, 6))
+				.mockResolvedValue([])
+			const handled: string[] = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					handled.push(job.key)
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 3,
+				pollInterval: 30000,
+			})
+
+			// Let the background drain run, without advancing the sidecar timer.
+			await vi.advanceTimersByTimeAsync(0)
+
+			// Full batches trigger an immediate re-poll; the partial batch ends the drain.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			expect(handled).toHaveLength(7)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker waits for a batch to be handled before polling again',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0))
+				.mockResolvedValue([])
+			const pending: Array<() => void> = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				// Handlers stay in flight until the test releases them.
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(0)
+			// The full batch is still being handled: no second poll yet.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			expect(pending).toHaveLength(2)
+
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker stops draining the backlog when the stream handle is closed',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			// Full batches forever: only the handle close may stop the drain.
+			zbClient.activateJobs.mockImplementation(() =>
+				Promise.resolve(fakeBatch(2, 0))
+			)
+			const pending: Array<() => void> = []
+
+			const handle = await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				// Handlers stay in flight until the test releases them.
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(0)
+			// The first full batch is in flight; the drain is waiting on it.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			expect(pending).toHaveLength(2)
+
+			// Close the handle while the full batch is still being handled, then
+			// release the handlers: the drain must stop instead of polling again.
+			handle.close()
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Regression tests for the drain/reconnect single-flight guarantee.
+ *
+ * The drain flag used to be set only when a poll response arrived, so a
+ * reconnect backfill that landed while a sidecar activation was still pending
+ * started a second activation, and both responses launched independent drains
+ * — exceeding the one-polled-batch limit and letting either drain clear the
+ * flag while the other was still running. The flag is now reserved *before*
+ * the activation call in both entry paths.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker runs no overlapping drains when a reconnect lands during a pending activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+
+			// The sidecar activation stays pending until the test releases it.
+			let releaseSidecar: (jobs: unknown[]) => void = () => {}
+			zbClient.activateJobs
+				.mockResolvedValueOnce([]) // initial backfill
+				.mockImplementationOnce(
+					() =>
+						new Promise((resolve) => {
+							releaseSidecar = resolve
+						})
+				)
+				.mockResolvedValue([]) // reconnect backfill + anything later
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: () => {
+					throw new Error('should not be called — no jobs activated')
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollInterval: 1000,
+			})
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1) // initial backfill
+
+			// Fire the sidecar poll: its activation is now pending (unresolved).
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// The stream dies and reconnects while the sidecar activation is
+			// still pending. The reconnect backfill must not start a second
+			// activation: it is deferred to the pending activation's drain.
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000) // reconnect delay
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Release the sidecar activation. Its drain honours the deferred
+			// backfill: exactly one more activation, and no concurrent drains.
+			releaseSidecar([])
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * A reconnect backfill that arrived while a drain was still awaiting a
+ * partial batch's handlers used to be dropped: once the handlers settled, the
+ * drain exited without polling for jobs created while the stream was down.
+ * With recurring polling disabled (pollInterval 0 or -1) those jobs were
+ * stranded indefinitely. The in-flight drain now runs the deferred backfill
+ * before exiting.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker preserves a reconnect backfill while a partial batch is still draining',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+
+			// Initial backfill: a partial batch (1 < pollMaxJobsToActivate 2)
+			// whose handler stays in flight until the test releases it.
+			const pending: Array<() => void> = []
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(1, 0))
+				.mockResolvedValueOnce(fakeBatch(1, 1)) // the deferred backfill
+				.mockResolvedValue([])
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 0, // recurring polling disabled: no sidecar safety net
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			expect(pending).toHaveLength(1)
+
+			// The stream dies and reconnects while the partial batch's handler is
+			// still in flight. The backfill must not be dropped.
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000) // reconnect delay
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			await vi.advanceTimersByTimeAsync(0)
+			// Still draining the partial batch: the backfill is deferred, not run.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			// Release the handler: the drain runs the deferred backfill before
+			// exiting, even though the batch was partial.
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * A taskHandler that throws *synchronously* used to escape handleJob before
+ * Promise.resolve could catch it: jobs.map(handleJob) aborted at the throwing
+ * job, later jobs in the batch were never dispatched, and the drain released
+ * its reservation without awaiting the handlers already started — allowing
+ * the next polled batch to overlap them. The handler is now invoked inside a
+ * promise continuation, so a synchronous throw rejects that job's promise and
+ * is logged, while the rest of the batch is dispatched and awaited.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker dispatches the whole batch when a handler throws synchronously',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			// One full batch (2 == pollMaxJobsToActivate), then nothing.
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0))
+				.mockResolvedValue([])
+
+			// The first job's handler stays pending until the test releases it;
+			// the second job's handler throws synchronously.
+			let releaseFirst: () => void = () => {}
+			const handled: string[] = []
+			const taskHandler = vi.fn(
+				(job: { key: string; complete: () => void }) => {
+					handled.push(job.key)
+					if (job.key === '0') {
+						return new Promise<void>((resolve) => {
+							releaseFirst = () => {
+								job.complete()
+								resolve()
+							}
+						})
+					}
+					throw new Error('sync boom')
+				}
+			)
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				taskHandler: taskHandler as any,
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 1000,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+
+			// Both jobs were dispatched: the synchronous throw on job 1 did not
+			// abort the map before job 0's handler started, nor skip job 1.
+			expect(taskHandler).toHaveBeenCalledTimes(2)
+			expect(handled).toEqual(['0', '1'])
+
+			// The drain is still awaiting the pending first handler: the full
+			// batch has not triggered the follow-up poll yet (backpressure).
+			await vi.advanceTimersByTimeAsync(1000)
+			const callsBeforeRelease = zbClient.activateJobs.mock.calls.length
+
+			// Release the pending handler. The drain now finishes the batch and
+			// polls again (the batch was full); the next batch is empty.
+			releaseFirst()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs.mock.calls.length).toBeGreaterThan(
+				callsBeforeRelease
+			)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * A reconnect backfill deferred while a drain's activation was pending used
+ * to be discarded by runDrain's finally when that activation rejected — even
+ * though the handle was still open. With recurring polling disabled
+ * (pollInterval 0 or -1) jobs created during the outage were stranded
+ * indefinitely. The finally now re-runs the deferred backfill after releasing
+ * the reservation, unless the handle is closed.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker re-runs a deferred backfill when the in-flight activation fails',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+
+			// Initial backfill: a partial batch whose handler stays in flight
+			// until the test releases it. The drain's follow-up activation then
+			// rejects, and the re-run backfill must still poll.
+			const pending: Array<() => void> = []
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(1, 0)) // initial backfill (partial)
+				.mockRejectedValueOnce(new Error('activation failed')) // drain re-poll
+				.mockResolvedValueOnce(fakeBatch(1, 1)) // the re-run backfill
+				.mockResolvedValue([])
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 0, // recurring polling disabled: no sidecar safety net
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			expect(pending).toHaveLength(1)
+
+			// The stream dies and reconnects while the partial batch's handler is
+			// still in flight: the backfill is deferred to the in-flight drain.
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000) // reconnect delay
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			// Release the handler: the drain honours the deferred backfill, but
+			// that activation rejects. The deferred backfill must not be dropped
+			// — the handle is still open, so it is re-run after the reservation
+			// is released.
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
