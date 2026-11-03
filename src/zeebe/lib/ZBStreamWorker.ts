@@ -157,28 +157,39 @@ export class ZBStreamWorker implements IZBJobWorker {
 			initialDelayMs
 		)
 
-		const handleJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+		// Returns the handler's promise, which never rejects: a failure is
+		// logged here. The backlog drain awaits it for backpressure.
+		const handleJob = (
+			job: Job<WorkerInputVariables, CustomHeaderShape>
+		): Promise<unknown> =>
+			// Invoke the handler inside a promise continuation: a synchronous
+			// throw must reject this promise rather than escape handleJob,
+			// which would abort jobs.map(handleJob) mid-batch — leaving later
+			// jobs undispatched and releasing the drain's reservation before
+			// the handlers already started have settled.
+			//
 			// Observe the handler's returned promise so that a rejected job
 			// action (for example, a completion command that fails because the
 			// job was already completed, failed, or the process instance was
 			// cancelled) is handled here rather than surfacing as an unhandled
 			// promise rejection that could terminate the process.
-			Promise.resolve(
-				taskHandler(
-					{
-						...job,
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						...this.makeCompleteHandlers(job as any, req.type),
-					},
-					this
+			Promise.resolve()
+				.then(() =>
+					taskHandler(
+						{
+							...job,
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							...this.makeCompleteHandlers(job as any, req.type),
+						},
+						this
+					)
 				)
-			).catch((e: unknown) => {
-				const message = e instanceof Error ? e.message : String(e)
-				this.logger.logError(
-					`Unhandled exception in stream worker task handler for job ${job.key}: ${message}`
-				)
-			})
-		}
+				.catch((e: unknown) => {
+					const message = e instanceof Error ? e.message : String(e)
+					this.logger.logError(
+						`Unhandled exception in stream worker task handler for job ${job.key}: ${message}`
+					)
+				})
 
 		// Invoke a caller-supplied lifecycle callback. A throwing callback must
 		// not break stream recovery (or crash the process from an event handler).
@@ -220,12 +231,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 
 		const isClosed = () => this.closed || handleClosed
 
-		// Helper to run a single poll cycle and feed results to handleJob.
-		const runPoll = async () => {
-			const jobs = await this.zbClient.activateJobs<
-				WorkerInputVariables,
-				CustomHeaderShape
-			>({
+		// Activate up to pollMaxJobsToActivate jobs.
+		const activate = () =>
+			this.zbClient.activateJobs<WorkerInputVariables, CustomHeaderShape>({
 				type: req.type,
 				worker: req.worker,
 				timeout: req.timeout,
@@ -236,8 +244,122 @@ export class ZBStreamWorker implements IZBJobWorker {
 				customHeadersDto,
 				requestTimeout: -1,
 			})
-			for (const job of jobs) {
-				handleJob(job)
+
+		// Hand a polled batch to the handler, then keep polling while polls
+		// come back full. The stream only pushes jobs that become activatable
+		// after it opens; a backlog that already exists is reachable only by
+		// polling. A full batch means more jobs are probably waiting, so poll
+		// again as soon as this batch is handled, rather than waiting a whole
+		// pollInterval per batch. Waiting for the batch's handlers to settle
+		// is the backpressure: the worker never holds more than one batch of
+		// polled jobs, so they don't sit activated until their timeout.
+		//
+		// Iterative, not recursive: a recursion would retain one pending
+		// promise per backlog batch until the whole backlog finishes, so a
+		// large or continuously replenished backlog would grow memory without
+		// bound. The loop holds only the current batch.
+		//
+		// A reconnect backfill requested while this drain was in flight is
+		// honoured before the drain exits: jobs created while the stream was
+		// down must not be stranded when recurring polling is disabled.
+		const drain = async (
+			firstBatch: Job<WorkerInputVariables, CustomHeaderShape>[]
+		): Promise<void> => {
+			let jobs = firstBatch
+			for (;;) {
+				await Promise.all(jobs.map(handleJob))
+				if (backfillRequested && !isClosed()) {
+					// The stream reconnected while this drain was in flight and
+					// its backfill was deferred (see backfill). Run it now, even
+					// if this batch was partial: jobs created while the stream
+					// was down are not visible to any other poll when recurring
+					// polling is disabled. If the activation fails, restore the
+					// deferral before re-throwing so runDrain's finally can
+					// re-run it once the reservation is released — the backfill
+					// must not be discarded while the handle is open.
+					backfillRequested = false
+					try {
+						jobs = await activate()
+					} catch (e) {
+						backfillRequested = true
+						throw e
+					}
+					continue
+				}
+				if (jobs.length < pollMaxJobsToActivate || isClosed()) {
+					return
+				}
+				jobs = await activate()
+			}
+		}
+
+		// Only one activation is ever in flight. The flag is reserved *before*
+		// the activation call and released only when the drain it fed finishes
+		// (or the activation fails), so a reconnect backfill can never start a
+		// second activation while a sidecar activation is still pending — that
+		// would launch two independent drains, exceed the one-polled-batch
+		// limit, and let either drain clear the flag while the other runs.
+		let activationReserved = false // mutated by runDrain/backfill/sidecar
+		// Set when a reconnect backfill arrives while an activation is in
+		// flight; the in-flight drain runs the backfill before exiting, or
+		// re-runs it from runDrain's finally if the drain's activation failed
+		// while the handle is still open.
+		let backfillRequested = false
+		const runDrain = (jobs: Job<WorkerInputVariables, CustomHeaderShape>[]) =>
+			drain(jobs)
+				.catch((e: unknown) => {
+					// The stream is the primary channel; the next sidecar poll retries.
+					this.logger.logError(
+						`Stream worker backlog poll failed: ${toError(e).message}`
+					)
+				})
+				.finally(() => {
+					activationReserved = false
+					// A backfill deferred to this drain that never ran — the
+					// drain's activation failed, either before the deferral was
+					// consumed or in the activation that consumed it (drain
+					// restores the flag before re-throwing) — must not be
+					// dropped while the handle is open: with recurring polling
+					// disabled there is no other poll to pick up jobs created
+					// while the stream was down. Run it now that the reservation
+					// is released. If the handle is closed the reservation is
+					// stale instead: clear it so a later backfill is free to
+					// reserve and run its own poll.
+					if (backfillRequested) {
+						backfillRequested = false
+						if (!isClosed()) {
+							// Observe the rejection: backfill rethrows a failed
+							// initial activation after releasing the reservation,
+							// and this call is fire-and-forget.
+							void backfill().catch((e: unknown) =>
+								this.logger.logError(
+									`Stream worker backfill poll failed: ${toError(e).message}`
+								)
+							)
+						}
+					}
+				})
+
+		// Run a backfill poll. Only the first activation is awaited (so its
+		// errors reach the caller); the rest of the backlog drains in the
+		// background. If an activation is already in flight, the backfill is
+		// not dropped: the in-flight drain runs it before exiting, so jobs
+		// created while the stream was down are picked up even when recurring
+		// polling is disabled (pollInterval 0 or -1).
+		const backfill = async () => {
+			if (isClosed()) {
+				return
+			}
+			if (activationReserved) {
+				backfillRequested = true
+				return
+			}
+			activationReserved = true
+			try {
+				void runDrain(await activate())
+			} catch (e) {
+				activationReserved = false
+				throw e
 			}
 		}
 
@@ -345,7 +467,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 							WorkerInputVariables,
 							CustomHeaderShape
 						>(res, inputVariableDto, customHeadersDto)
-						handleJob(parsedJob)
+						void handleJob(parsedJob)
 					} catch (e) {
 						this.zbClient
 							.failJob({
@@ -411,7 +533,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (openError) {
 				return handleOpenFailure(openError)
 			}
-			await runPoll().catch((e) =>
+			await backfill().catch((e) =>
 				this.logger.logError(
 					`Backfill poll after job stream reconnect failed: ${
 						toError(e).message
@@ -470,7 +592,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 				// Initial backfill poll: pick up jobs that existed before the stream.
 				// The broker guarantees single activation, so there is no risk of
 				// duplicate delivery between the poll and the stream.
-				await runPoll()
+				await backfill()
 			}
 
 			// Recurring sidecar poll: a low-frequency safety net that catches
@@ -497,10 +619,24 @@ export class ZBStreamWorker implements IZBJobWorker {
 						if (index !== -1) {
 							this.pollTimers.splice(index, 1)
 						}
-						runPoll()
-							.catch(() => {
+						// An activation already in flight is doing this poll's job.
+						if (activationReserved || isClosed()) {
+							schedulePoll()
+							return
+						}
+						// Reserve before activating: a reconnect backfill arriving
+						// while this activation is pending must not start a second,
+						// overlapping drain. The reservation is released by
+						// runDrain's finally, or here if the activation fails.
+						activationReserved = true
+						activate()
+							.then(runDrain, (e: unknown) => {
+								activationReserved = false
 								// Swallow errors — the stream is the primary channel.
 								// The next poll cycle will retry.
+								this.logger.logDebug(
+									`Stream worker sidecar poll failed: ${toError(e).message}`
+								)
 							})
 							.finally(schedulePoll)
 					}, pollInterval)
