@@ -245,14 +245,22 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// pollInterval per batch. Waiting for the batch's handlers to settle
 		// is the backpressure: the worker never holds more than one batch of
 		// polled jobs, so they don't sit activated until their timeout.
+		//
+		// Iterative, not recursive: a recursion would retain one pending
+		// promise per backlog batch until the whole backlog finishes, so a
+		// large or continuously replenished backlog would grow memory without
+		// bound. The loop holds only the current batch.
 		const drain = async (
-			jobs: Job<WorkerInputVariables, CustomHeaderShape>[]
+			firstBatch: Job<WorkerInputVariables, CustomHeaderShape>[]
 		): Promise<void> => {
-			await Promise.all(jobs.map(handleJob))
-			if (jobs.length < pollMaxJobsToActivate || isClosed()) {
-				return
+			let jobs = firstBatch
+			for (;;) {
+				await Promise.all(jobs.map(handleJob))
+				if (jobs.length < pollMaxJobsToActivate || isClosed()) {
+					return
+				}
+				jobs = await activate()
 			}
-			return drain(await activate())
 		}
 
 		// Only one drain runs at a time; a poll that would start while a drain

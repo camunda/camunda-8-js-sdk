@@ -1023,3 +1023,50 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker stops draining the backlog when the stream handle is closed',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			// Full batches forever: only the handle close may stop the drain.
+			zbClient.activateJobs.mockImplementation(() =>
+				Promise.resolve(fakeBatch(2, 0))
+			)
+			const pending: Array<() => void> = []
+
+			const handle = await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				// Handlers stay in flight until the test releases them.
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(0)
+			// The first full batch is in flight; the drain is waiting on it.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			expect(pending).toHaveLength(2)
+
+			// Close the handle while the full batch is still being handled, then
+			// release the handlers: the drain must stop instead of polling again.
+			handle.close()
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
