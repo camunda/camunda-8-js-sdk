@@ -1,3 +1,10 @@
+# [8.9.0-alpha.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.16...v8.9.0-alpha.17) (2026-11-03)
+
+
+### Bug Fixes
+
+* **zeebe:** drain a job backlog in ZBStreamWorker instead of one batch per poll interval ([#872](https://github.com/camunda/camunda-8-js-sdk/issues/872)) ([f3c8f25](https://github.com/camunda/camunda-8-js-sdk/commit/f3c8f25158f83612990eb83ec87035f9d66ab897))
+
 # [8.9.0-alpha.16](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.15...v8.9.0-alpha.16) (2026-11-03)
 
 
