@@ -731,7 +731,7 @@ When `streamJobs` is called, it first opens a stream to receive any newly create
 
 ### Sidecar polling
 
-After the initial backfill, a low-frequency sidecar poll runs alongside the stream as a safety net. This catches edge cases the stream alone cannot handle — for example, jobs that are re-queued after a worker fails to complete them within the timeout, or jobs that arrive during a brief stream reconnect.
+After the initial backfill, a low-frequency sidecar poll runs alongside the stream as a safety net. This catches edge cases the stream alone cannot handle — for example, jobs that are re-queued after a worker fails to complete them within the timeout, or jobs that arrive while a dead stream is being re-opened (see [Stream failure and recovery](#stream-failure-and-recovery)).
 
 Each poll is a command on the broker, so the default interval is deliberately long (30 seconds) to minimise server load. The stream remains the primary delivery mechanism.
 
@@ -740,12 +740,29 @@ Configure the sidecar poll with:
 - **`pollInterval`** — milliseconds between sidecar poll cycles. Defaults to `30000` (30 s). Set to `0` or `-1` to disable recurring polling entirely (the initial backfill poll still runs).
 - **`pollMaxJobsToActivate`** — maximum jobs per poll cycle (both initial and recurring). Defaults to `32`.
 
+### Stream failure and recovery
+
+A job stream can die while the worker process keeps running: the connection drops, the gateway restarts or rejects the stream, or the server ends it. Without recovery, a worker whose stream has died receives only the jobs found by the low-frequency sidecar poll.
+
+`streamJobs` detects a dead stream (an `error`, `end` or `close` event, or a failed attempt to open it) and, by default, re-opens it with exponential backoff (1 s, doubling to a cap of 30 s). Once the stream is re-established it runs one backfill poll to pick up jobs created while the stream was down. The backoff restarts from the beginning once a re-opened stream delivers a job or stays up for at least the maximum delay. Calling `close()` on the returned handle (or on the client) stops all reconnection attempts.
+
+Observe and configure this with:
+
+- **`onStreamError(error)`** — called when the stream errors or cannot be opened.
+- **`onStreamEnd()`** — called when the server ends or closes the stream without an error.
+- **`onStreamReconnect(attempt)`** — called before each attempt to re-open the stream. `attempt` is the number of consecutive failures, starting at 1.
+- **`streamReconnect`** — `true` (the default), `false` to disable reconnection (the callbacks above still fire), or `{ initialDelayMs, maxDelayMs }` to tune the backoff.
+
+The callbacks may be `async`. Exceptions thrown by these callbacks, and rejections of any promise they return, are caught and logged; they do not affect reconnection. If the stream cannot be opened on the first attempt and `streamReconnect` is `false`, the promise returned by `streamJobs` rejects with the underlying error.
+
+`streamJobs` returns a promise, so `await` it to obtain the handle with the `close()` method.
+
 You can optionally pass a `jitter` parameter (in milliseconds) to delay the start by a random period up to that value. This is useful when starting multiple stream workers simultaneously, to avoid saturating the gateway at application startup.
 
 Example:
 
 ```typescript
-client.streamJobs({
+const streamWorker = await client.streamJobs({
 	type: 'payment-service',
 	worker: 'my-worker',
 	timeout: 30000,
@@ -760,7 +777,15 @@ client.streamJobs({
 	pollMaxJobsToActivate: 64,
 	// Optional: sidecar poll every 60 s instead of the default 30 s
 	pollInterval: 60_000,
+	// Optional: be told when the job stream dies and when it is re-opened
+	onStreamError: (error) => console.error('Job stream failed', error),
+	onStreamReconnect: (attempt) => console.log(`Re-opening stream (${attempt})`),
+	// Optional: tune the reconnect backoff (default: 1 s doubling to 30 s)
+	streamReconnect: { initialDelayMs: 1000, maxDelayMs: 30_000 },
 })
+
+// Stop the worker, including any pending reconnect
+streamWorker.close()
 ```
 
 ## Multi-tenant workers
