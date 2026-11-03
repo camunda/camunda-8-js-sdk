@@ -1,0 +1,63 @@
+name: Bug report
+description: Something doesn't work as documented or intended
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Include errors and logs.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: The smallest code or configuration that shows the problem.
+  - type: input
+    attributes:
+      label: SDK version
+      placeholder: e.g. 8.8.3
+  - type: input
+    attributes:
+      label: Camunda version
+      placeholder: e.g. 8.8.0, SaaS or Self-Managed
+  - type: dropdown
+    attributes:
+      label: How was this found?
+      description: Which quality layer caught it. If you use the SDK, pick the first option.
+      options:
+        - Using the SDK (as a user, or reported by one)
+        - Code review
+        - CI (build, tests, generation drift, publish)
+        - Conformance test
+        - Performance test
+        - Integration (docs examples, runnable scenarios, other tooling)
+        - Manual test against a cluster
+        - Audit (security, API surface, runtime)
+      default: 0
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Which release line?
+      description: Where the bug is present. Leave as "Don't know" if unsure; a maintainer will set it.
+      options:
+        - Don't know
+        - main (alpha / next release)
+        - stable (latest release)
+        - Both
+      default: 0
+  - type: dropdown
+    attributes:
+      label: Severity
+      description: Leave as "Don't know" if unsure; a maintainer will set it.
+      options:
+        - Don't know
+        - "Critical: data loss, security, or production down; no workaround"
+        - "High: core feature broken; workaround is painful"
+        - "Medium: broken, with a reasonable workaround"
+        - "Low: cosmetic, typing, or docs-level inaccuracy"
+      default: 0
+  - type: input
+    attributes:
+      label: Introduced-by
+      description: Optional. The commit, PR (#123) or release tag that caused it, if you know.
