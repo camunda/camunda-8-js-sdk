@@ -250,12 +250,26 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// promise per backlog batch until the whole backlog finishes, so a
 		// large or continuously replenished backlog would grow memory without
 		// bound. The loop holds only the current batch.
+		//
+		// A reconnect backfill requested while this drain was in flight is
+		// honoured before the drain exits: jobs created while the stream was
+		// down must not be stranded when recurring polling is disabled.
 		const drain = async (
 			firstBatch: Job<WorkerInputVariables, CustomHeaderShape>[]
 		): Promise<void> => {
 			let jobs = firstBatch
 			for (;;) {
 				await Promise.all(jobs.map(handleJob))
+				if (backfillRequested && !isClosed()) {
+					// The stream reconnected while this drain was in flight and
+					// its backfill was deferred (see backfill). Run it now, even
+					// if this batch was partial: jobs created while the stream
+					// was down are not visible to any other poll when recurring
+					// polling is disabled.
+					backfillRequested = false
+					jobs = await activate()
+					continue
+				}
 				if (jobs.length < pollMaxJobsToActivate || isClosed()) {
 					return
 				}
@@ -263,12 +277,18 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 		}
 
-		// Only one drain runs at a time; a poll that would start while a drain
-		// is in flight is skipped, because the drain is already doing its job.
-		let draining = false // mutated by runDrain
-		const runDrain = (jobs: Job<WorkerInputVariables, CustomHeaderShape>[]) => {
-			draining = true
-			return drain(jobs)
+		// Only one activation is ever in flight. The flag is reserved *before*
+		// the activation call and released only when the drain it fed finishes
+		// (or the activation fails), so a reconnect backfill can never start a
+		// second activation while a sidecar activation is still pending — that
+		// would launch two independent drains, exceed the one-polled-batch
+		// limit, and let either drain clear the flag while the other runs.
+		let activationReserved = false // mutated by runDrain/backfill/sidecar
+		// Set when a reconnect backfill arrives while an activation is in
+		// flight; the in-flight drain runs the backfill before exiting.
+		let backfillRequested = false
+		const runDrain = (jobs: Job<WorkerInputVariables, CustomHeaderShape>[]) =>
+			drain(jobs)
 				.catch((e: unknown) => {
 					// The stream is the primary channel; the next sidecar poll retries.
 					this.logger.logError(
@@ -276,18 +296,34 @@ export class ZBStreamWorker implements IZBJobWorker {
 					)
 				})
 				.finally(() => {
-					draining = false
+					activationReserved = false
+					// Drop a backfill deferred to this drain if it never ran
+					// (the drain exited closed): the reservation is stale, and a
+					// later backfill must be free to reserve and run its own poll.
+					backfillRequested = false
 				})
-		}
 
 		// Run a backfill poll. Only the first activation is awaited (so its
 		// errors reach the caller); the rest of the backlog drains in the
-		// background.
+		// background. If an activation is already in flight, the backfill is
+		// not dropped: the in-flight drain runs it before exiting, so jobs
+		// created while the stream was down are picked up even when recurring
+		// polling is disabled (pollInterval 0 or -1).
 		const backfill = async () => {
-			if (draining) {
+			if (isClosed()) {
 				return
 			}
-			void runDrain(await activate())
+			if (activationReserved) {
+				backfillRequested = true
+				return
+			}
+			activationReserved = true
+			try {
+				void runDrain(await activate())
+			} catch (e) {
+				activationReserved = false
+				throw e
+			}
 		}
 
 		const discardStream = (attachment: StreamAttachment) => {
@@ -546,16 +582,24 @@ export class ZBStreamWorker implements IZBJobWorker {
 						if (index !== -1) {
 							this.pollTimers.splice(index, 1)
 						}
-						// A drain already in flight is doing this poll's job.
-						if (draining) {
+						// An activation already in flight is doing this poll's job.
+						if (activationReserved || isClosed()) {
 							schedulePoll()
 							return
 						}
+						// Reserve before activating: a reconnect backfill arriving
+						// while this activation is pending must not start a second,
+						// overlapping drain. The reservation is released by
+						// runDrain's finally, or here if the activation fails.
+						activationReserved = true
 						activate()
-							.then(runDrain)
-							.catch(() => {
+							.then(runDrain, (e: unknown) => {
+								activationReserved = false
 								// Swallow errors — the stream is the primary channel.
 								// The next poll cycle will retry.
+								this.logger.logDebug(
+									`Stream worker sidecar poll failed: ${toError(e).message}`
+								)
 							})
 							.finally(schedulePoll)
 					}, pollInterval)
