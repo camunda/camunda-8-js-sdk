@@ -19,6 +19,59 @@ import { ActivatedJob, StreamActivatedJobsRequest } from './interfaces-grpc-1.0'
 
 import { parseVariablesAndCustomHeadersToJSON } from '.'
 
+/**
+ * Options controlling how `streamJobs` reports and recovers from a job stream
+ * that dies (stream error, server-side end/close, or a failed open).
+ */
+export interface StreamJobsRecoveryOptions {
+	/**
+	 * Called when the job stream fails: a stream `error` event, or a failed
+	 * attempt to open the stream. Exceptions thrown by the callback, and
+	 * rejections of a returned promise, are caught and logged.
+	 */
+	onStreamError?: (error: Error) => void | Promise<void>
+	/**
+	 * Called when the server ends or closes the job stream without an error.
+	 * Exceptions thrown by the callback, and rejections of a returned
+	 * promise, are caught and logged.
+	 */
+	onStreamEnd?: () => void | Promise<void>
+	/**
+	 * Called just before each attempt to re-open a dead stream. `attempt` is
+	 * the number of consecutive failed streams or open attempts, starting at 1.
+	 * It resets once a re-opened stream delivers a job or stays up for at least
+	 * `maxDelayMs`. Exceptions thrown by the callback, and rejections of a
+	 * returned promise, are caught and logged.
+	 */
+	onStreamReconnect?: (attempt: number) => void | Promise<void>
+	/**
+	 * Re-open the stream when it dies. Defaults to `true`, with exponential
+	 * backoff starting at 1000ms and capped at 30000ms. Pass `false` to disable
+	 * reconnection (the `onStream*` callbacks still fire), or an object to tune
+	 * the backoff. After a re-opened stream is established, one backfill poll
+	 * runs to pick up jobs that were created while the stream was down.
+	 */
+	streamReconnect?: boolean | { initialDelayMs?: number; maxDelayMs?: number }
+}
+
+const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
+const DEFAULT_RECONNECT_MAX_DELAY_MS = 30_000
+
+const toError = (e: unknown): Error =>
+	e instanceof Error ? e : new Error(String(e))
+
+/**
+ * `streamActivatedJobsStream` resolves to `{ error }` (or `undefined` when the
+ * client is closing) instead of a stream when the stream cannot be opened.
+ */
+const getOpenError = (result: unknown): Error | undefined => {
+	if (!result) return new Error('Job stream could not be opened')
+	if (typeof result === 'object' && 'error' in result) {
+		return toError((result as { error: unknown }).error)
+	}
+	return undefined
+}
+
 export class ZBStreamWorker implements IZBJobWorker {
 	private grpcClient: ZBGrpc
 	private logger: StatefulLogInterceptor
@@ -26,6 +79,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private streams: ClientReadableStream<unknown>[] = []
 	private closed = false
 	private pollTimers: ReturnType<typeof setTimeout>[] = []
+	private reconnectTimers = new Set<ReturnType<typeof setTimeout>>()
 	constructor({
 		grpcClient,
 		log,
@@ -78,7 +132,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			 * polling (the initial backfill poll still runs).
 			 */
 			pollInterval?: number
-		}
+		} & StreamJobsRecoveryOptions
 	) {
 		const {
 			taskHandler,
@@ -87,8 +141,22 @@ export class ZBStreamWorker implements IZBJobWorker {
 			jitter,
 			pollMaxJobsToActivate = 32,
 			pollInterval = 30_000,
+			onStreamError,
+			onStreamEnd,
+			onStreamReconnect,
+			streamReconnect = true,
 			...streamReq
 		} = req
+
+		const reconnectEnabled = streamReconnect !== false
+		const reconnectOptions =
+			typeof streamReconnect === 'object' ? streamReconnect : {}
+		const initialDelayMs =
+			reconnectOptions.initialDelayMs ?? DEFAULT_RECONNECT_INITIAL_DELAY_MS
+		const maxDelayMs = Math.max(
+			reconnectOptions.maxDelayMs ?? DEFAULT_RECONNECT_MAX_DELAY_MS,
+			initialDelayMs
+		)
 
 		const handleJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
 			// Observe the handler's returned promise so that a rejected job
@@ -113,20 +181,167 @@ export class ZBStreamWorker implements IZBJobWorker {
 			})
 		}
 
-		const pollAndStream = async () => {
-			// Optional jitter to stagger multiple workers
-			if (jitter) {
-				await new Promise((resolve) =>
-					setTimeout(resolve, Math.random() * jitter)
+		// Invoke a caller-supplied lifecycle callback. A throwing callback must
+		// not break stream recovery (or crash the process from an event handler).
+		// Callbacks may be async, so a returned promise is observed as well: a
+		// rejection is logged rather than surfacing as an unhandled rejection.
+		const notify = (name: string, callback: () => void | Promise<void>) => {
+			const logFailure = (e: unknown) =>
+				this.logger.logError(
+					`Exception in ${name} callback of stream worker: ${
+						toError(e).message
+					}`
 				)
+			try {
+				Promise.resolve(callback()).catch(logFailure)
+			} catch (e) {
+				logFailure(e)
+			}
+		}
+
+		// Mutable per-streamJobs-call state. Mutation is confined to the
+		// stream lifecycle handlers below.
+		let handleClosed = false // set by the returned handle's close()
+		let currentStream: ClientReadableStream<unknown> | undefined
+		let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+		let sidecarTimer: ReturnType<typeof setTimeout> | undefined
+		let consecutiveFailures = 0 // drives the exponential backoff
+
+		const isClosed = () => this.closed || handleClosed
+
+		// Helper to run a single poll cycle and feed results to handleJob.
+		const runPoll = async () => {
+			const jobs = await this.zbClient.activateJobs<
+				WorkerInputVariables,
+				CustomHeaderShape
+			>({
+				type: req.type,
+				worker: req.worker,
+				timeout: req.timeout,
+				maxJobsToActivate: pollMaxJobsToActivate,
+				tenantIds: req.tenantIds,
+				fetchVariable: req.fetchVariable,
+				inputVariableDto,
+				customHeadersDto,
+				requestTimeout: -1,
+			})
+			for (const job of jobs) {
+				handleJob(job)
+			}
+		}
+
+		const discardStream = (stream: ClientReadableStream<unknown>) => {
+			const index = this.streams.indexOf(stream)
+			if (index !== -1) {
+				this.streams.splice(index, 1)
+			}
+		}
+
+		// Schedule a single re-open of the stream with exponential backoff. Only
+		// one reconnect timer is ever pending, so an `error` and an `end` for the
+		// same dead stream (or a failed open racing a stream failure) cannot
+		// result in duplicate re-opens.
+		const scheduleReconnect = () => {
+			if (!reconnectEnabled || isClosed() || reconnectTimer) {
+				return
+			}
+			consecutiveFailures++
+			const attempt = consecutiveFailures
+			const delay = Math.min(initialDelayMs * 2 ** (attempt - 1), maxDelayMs)
+			const timer = setTimeout(() => {
+				reconnectTimer = undefined
+				this.reconnectTimers.delete(timer)
+				if (isClosed()) {
+					return
+				}
+				notify('onStreamReconnect', () => onStreamReconnect?.(attempt))
+				reconnect().catch((e) =>
+					this.logger.logError(
+						`Unexpected error re-opening job stream: ${toError(e).message}`
+					)
+				)
+			}, delay)
+			reconnectTimer = timer
+			this.reconnectTimers.add(timer)
+		}
+
+		const handleOpenFailure = (error: Error) => {
+			this.logger.logError(
+				`Failed to open job stream for ${req.type}: ${error.message}`
+			)
+			notify('onStreamError', () => onStreamError?.(error))
+			scheduleReconnect()
+		}
+
+		// Open the stream. Returns an Error if it could not be opened (the
+		// caller decides what to do), otherwise attaches the lifecycle handlers.
+		const openStream = async (): Promise<Error | undefined> => {
+			const result: unknown = await (async () => {
+				try {
+					return await this.grpcClient.streamActivatedJobsStream(streamReq)
+				} catch (e) {
+					return { error: e }
+				}
+			})()
+			const openError = getOpenError(result)
+			if (openError) {
+				return openError
+			}
+			const stream = result as ClientReadableStream<unknown>
+			if (isClosed()) {
+				// close() was called while the stream was being opened.
+				stream.cancel()
+				stream.destroy()
+				return undefined
 			}
 
-			// Open the stream first so no new jobs are missed
-			const stream = await this.grpcClient.streamActivatedJobsStream(streamReq)
-			stream.on('error', (e) => {
-				console.error(e)
-			})
+			const openedAt = Date.now()
+			let receivedData = false
+			let dead = false
+			// `error`, `end` and `close` can all fire for one dead stream; only
+			// the first is acted on.
+			const onStreamDead = (notifyCaller: () => void) => {
+				if (dead) {
+					return
+				}
+				dead = true
+				discardStream(stream)
+				if (currentStream === stream) {
+					currentStream = undefined
+				}
+				if (isClosed()) {
+					// Expected: we cancelled it ourselves.
+					return
+				}
+				// A stream that delivered a job, or stayed up for a while, was
+				// healthy: restart the backoff from the beginning.
+				if (receivedData || Date.now() - openedAt >= maxDelayMs) {
+					consecutiveFailures = 0
+				}
+				notifyCaller()
+				scheduleReconnect()
+			}
+			stream.on('error', (e: unknown) =>
+				onStreamDead(() => {
+					const error = toError(e)
+					this.logger.logError(
+						`Job stream for ${req.type} failed: ${error.message}`
+					)
+					notify('onStreamError', () => onStreamError?.(error))
+				})
+			)
+			const onEnd = () =>
+				onStreamDead(() => {
+					this.logger.logError(`Job stream for ${req.type} ended`)
+					notify('onStreamEnd', () => onStreamEnd?.())
+				})
+			stream.on('end', onEnd)
+			stream.on('close', onEnd)
 			stream.on('data', (res: ActivatedJob) => {
+				if (!receivedData) {
+					receivedData = true
+					consecutiveFailures = 0
+				}
 				try {
 					const parsedJob = parseVariablesAndCustomHeadersToJSON<
 						WorkerInputVariables,
@@ -143,48 +358,72 @@ export class ZBStreamWorker implements IZBJobWorker {
 				}
 			})
 			this.streams.push(stream)
+			currentStream = stream
+			return undefined
+		}
 
-			// Helper to run a single poll cycle and feed results to handleJob.
-			const runPoll = async () => {
-				const jobs = await this.zbClient.activateJobs<
-					WorkerInputVariables,
-					CustomHeaderShape
-				>({
-					type: req.type,
-					worker: req.worker,
-					timeout: req.timeout,
-					maxJobsToActivate: pollMaxJobsToActivate,
-					tenantIds: req.tenantIds,
-					fetchVariable: req.fetchVariable,
-					inputVariableDto,
-					customHeadersDto,
-					requestTimeout: -1,
-				})
-				for (const job of jobs) {
-					handleJob(job)
-				}
+		// Re-open a dead stream, then backfill: jobs created while the stream
+		// was down were never delivered to it. The broker guarantees single
+		// activation, so there is no risk of duplicate delivery.
+		const reconnect = async () => {
+			const openError = await openStream()
+			if (isClosed()) {
+				// close() was called while the stream was being opened: a failed
+				// open is expected fallout, so neither report it nor retry.
+				return
+			}
+			if (openError) {
+				return handleOpenFailure(openError)
+			}
+			await runPoll().catch((e) =>
+				this.logger.logError(
+					`Backfill poll after job stream reconnect failed: ${
+						toError(e).message
+					}`
+				)
+			)
+		}
+
+		const pollAndStream = async () => {
+			// Optional jitter to stagger multiple workers
+			if (jitter) {
+				await new Promise((resolve) =>
+					setTimeout(resolve, Math.random() * jitter)
+				)
 			}
 
-			// Initial backfill poll: pick up jobs that existed before the stream.
-			// The broker guarantees single activation, so there is no risk of
-			// duplicate delivery between the poll and the stream.
-			await runPoll()
+			// Open the stream first so no new jobs are missed
+			const openError = await openStream()
+			if (isClosed()) {
+				// close() was called while the stream was being opened.
+				return { close: () => {} }
+			}
+			if (openError) {
+				handleOpenFailure(openError)
+				if (!reconnectEnabled) {
+					throw openError
+				}
+			} else {
+				// Initial backfill poll: pick up jobs that existed before the stream.
+				// The broker guarantees single activation, so there is no risk of
+				// duplicate delivery between the poll and the stream.
+				await runPoll()
+			}
 
 			// Recurring sidecar poll: a low-frequency safety net that catches
 			// jobs the stream may have missed (e.g. jobs re-queued after a
-			// timeout or during a brief stream reconnect). Uses a setTimeout
-			// chain so each cycle waits for the previous poll to finish before
-			// scheduling the next, preventing overlapping polls.
+			// timeout or while the stream is down and being re-opened). Uses a
+			// setTimeout chain so each cycle waits for the previous poll to
+			// finish before scheduling the next, preventing overlapping polls.
 			//
 			// The live timer is tracked in `this.pollTimers` so that `close()`
 			// can cancel it. Each cycle removes the timer that just fired
 			// before scheduling the next one, so the array holds at most one
 			// live timer per stream rather than growing by one per poll cycle.
-			let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 			if (pollInterval > 0) {
 				const schedulePoll = () => {
 					// A poll in flight when close() is called must not schedule another.
-					if (this.closed) {
+					if (isClosed()) {
 						return
 					}
 					sidecarTimer = setTimeout(() => {
@@ -209,11 +448,21 @@ export class ZBStreamWorker implements IZBJobWorker {
 
 			return {
 				close: () => {
+					handleClosed = true
 					if (sidecarTimer) {
 						clearTimeout(sidecarTimer)
 					}
-					stream.cancel()
-					stream.destroy()
+					if (reconnectTimer) {
+						clearTimeout(reconnectTimer)
+						this.reconnectTimers.delete(reconnectTimer)
+						reconnectTimer = undefined
+					}
+					if (currentStream) {
+						discardStream(currentStream)
+						currentStream.cancel()
+						currentStream.destroy()
+						currentStream = undefined
+					}
 				},
 			}
 		}
@@ -225,10 +474,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 		this.closed = true
 		this.pollTimers.forEach((t) => clearTimeout(t))
 		this.pollTimers = []
+		this.reconnectTimers.forEach((t) => clearTimeout(t))
+		this.reconnectTimers.clear()
 		this.streams.forEach((s) => {
 			s.cancel()
 			s.destroy()
 		})
+		this.streams = []
 		return this.grpcClient.close()
 	}
 
