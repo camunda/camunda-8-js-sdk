@@ -1,0 +1,14 @@
+name: Feature request
+description: A new capability or an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: What would you like?
+      description: The problem you want solved, and how you would like the SDK to help.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alternatives
+      description: Workarounds you use today, or other approaches you considered.

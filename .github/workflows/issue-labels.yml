@@ -1,0 +1,15 @@
+# Labels issues from the issue form and from "Found-by: / Affects: / Severity: / Type:" lines,
+# so issues opened in the browser and by agents over the API are labelled the same way.
+# Implementation and rules: camunda/sdk-infra (sdk-issue-labels.yml, policies/AGENTS.md#opening-issues).
+name: Issue labels
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    uses: camunda/sdk-infra/.github/workflows/sdk-issue-labels.yml@v1
