@@ -1,3 +1,10 @@
+## [8.8.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.18...v8.8.19) (2026-11-03)
+
+
+### Bug Fixes
+
+* **zeebe:** detect and recover from dead job streams in streamJobs ([#874](https://github.com/camunda/camunda-8-js-sdk/issues/874)) ([#876](https://github.com/camunda/camunda-8-js-sdk/issues/876)) ([a539943](https://github.com/camunda/camunda-8-js-sdk/commit/a539943f27761637f2ccbd55d7a83446dffb0b70))
+
 ## [8.8.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.17...v8.8.18) (2026-10-09)
 
 
