@@ -129,6 +129,104 @@ interface GrpcStreamError {
 	message: string
 }
 
+/**
+ * The gRPC channel arguments for a Zeebe client. Extracted so that the
+ * liveness settings (HTTP/2 keepalive pings, which are what detects a stream
+ * whose connection died silently) can be asserted in a unit test.
+ */
+export const buildGrpcChannelOptions = (
+	settings: CamundaPlatform8Configuration['zeebeGrpcSettings']
+): Record<string, string | number> => ({
+	/**
+	 * If set to zero, disables retry behavior.
+	 * Otherwise, transparent retries are enabled for all RPCs,
+	 * and configurable retries are enabled when they are configured
+	 * via the service config. For details, see:
+	 * https://github.com/grpc/proposal/blob/master/A6-client-retries.md
+	 */
+	'grpc.enable_retries': 1,
+	/**
+	 * The time between the first and second connection attempts,
+	 * in ms
+	 */
+	'grpc.initial_reconnect_backoff_ms':
+		settings.GRPC_INITIAL_RECONNECT_BACKOFF_MS,
+	/**
+	 * The maximum time between subsequent connection attempts,
+	 * in ms
+	 */
+	'grpc.max_reconnect_backoff_ms': settings.GRPC_MAX_RECONNECT_BACKOFF_MS,
+	/**
+	 * The minimum time between subsequent connection attempts,
+	 * in ms. Default is 1000ms, but this can cause an SSL Handshake failure.
+	 * This causes an intermittent failure in the Worker-LongPoll test when run
+	 * against Camunda Cloud.
+	 * Raised to 5000ms.
+	 * See: https://github.com/grpc/grpc/issues/8382#issuecomment-259482949
+	 */
+	'grpc.min_reconnect_backoff_ms': settings.GRPC_INITIAL_RECONNECT_BACKOFF_MS,
+	/**
+	 * After a duration of this time the client/server
+	 * pings its peer to see if the transport is still alive.
+	 * Int valued, milliseconds.
+	 */
+	'grpc.keepalive_time_ms': settings.GRPC_KEEPALIVE_TIME_MS,
+	/**
+	 * After waiting for a duration of this time,
+	 * if the keepalive ping sender does
+	 * not receive the ping ack, it will close the
+	 * transport. Int valued, milliseconds.
+	 */
+	'grpc.keepalive_timeout_ms': settings.GRPC_KEEPALIVE_TIMEOUT_MS,
+	'grpc.http2.min_time_between_pings_ms':
+		settings.GRPC_HTTP2_MIN_TIME_BETWEEN_PINGS_MS,
+	/**
+	 * Minimum allowed time between a server receiving
+	 * successive ping frames without sending any data
+	 * frame. Int valued, milliseconds. Default: 90000
+	 */
+	'grpc.http2.min_ping_interval_without_data_ms':
+		settings.GRPC_HTTP2_MIN_PING_INTERVAL_WITHOUT_DATA_MS,
+	/**
+	 * This channel argument if set to 1
+	 * (0 : false; 1 : true), allows keepalive pings
+	 * to be sent even if there are no calls in flight.
+	 * Default is 1.
+	 */
+	'grpc.keepalive_permit_without_calls':
+		settings.GRPC_KEEPALIVE_PERMIT_WITHOUT_CALLS,
+	/**
+	 * This channel argument controls the maximum number
+	 * of pings that can be sent when there is no other
+	 * data (data frame or header frame) to be sent.
+	 * GRPC Core will not continue sending pings if we
+	 * run over the limit. Setting it to 0 allows sending
+	 * pings without sending data.
+	 */
+	'grpc.http2.max_pings_without_data':
+		settings.GRPC_HTTP2_MAX_PINGS_WITHOUT_DATA,
+	/**
+	 * Default compression algorithm for the channel, applies to sending messages.
+	 *
+	 * Possible values for this option are:
+	 * - `0` - No compression
+	 * - `1` - Compress with DEFLATE algorithm
+	 * - `2` - Compress with GZIP algorithm
+	 * - `3` - Stream compression with GZIP algorithm
+	 */
+	'grpc.default_compression_algorithm': 2,
+	/**
+	 * Default compression level for the channel, applies to receiving messages.
+	 *
+	 * Possible values for this option are:
+	 * - `0` - None
+	 * - `1` - Low level
+	 * - `2` - Medium level
+	 * - `3` - High level
+	 */
+	'grpc.default_compression_level': 2,
+})
+
 export class GrpcClient extends EventEmitter {
 	public channelClosed = false
 	public longPoll?: MaybeTimeDuration
@@ -215,99 +313,7 @@ export class GrpcClient extends EventEmitter {
 		debug('channelCredentials:', channelCredentials)
 		// Options documented here: https://github.com/grpc/grpc/blob/master/include/grpc/impl/codegen/grpc_types.h
 		this.client = new proto[service](host, channelCredentials, {
-			/**
-			 * If set to zero, disables retry behavior.
-			 * Otherwise, transparent retries are enabled for all RPCs,
-			 * and configurable retries are enabled when they are configured
-			 * via the service config. For details, see:
-			 * https://github.com/grpc/proposal/blob/master/A6-client-retries.md
-			 */
-			'grpc.enable_retries': 1,
-			/**
-			 * The time between the first and second connection attempts,
-			 * in ms
-			 */
-			'grpc.initial_reconnect_backoff_ms':
-				this.config.zeebeGrpcSettings.GRPC_INITIAL_RECONNECT_BACKOFF_MS,
-			/**
-			 * The maximum time between subsequent connection attempts,
-			 * in ms
-			 */
-			'grpc.max_reconnect_backoff_ms':
-				this.config.zeebeGrpcSettings.GRPC_MAX_RECONNECT_BACKOFF_MS,
-			/**
-			 * The minimum time between subsequent connection attempts,
-			 * in ms. Default is 1000ms, but this can cause an SSL Handshake failure.
-			 * This causes an intermittent failure in the Worker-LongPoll test when run
-			 * against Camunda Cloud.
-			 * Raised to 5000ms.
-			 * See: https://github.com/grpc/grpc/issues/8382#issuecomment-259482949
-			 */
-			'grpc.min_reconnect_backoff_ms':
-				this.config.zeebeGrpcSettings.GRPC_INITIAL_RECONNECT_BACKOFF_MS,
-			/**
-			 * After a duration of this time the client/server
-			 * pings its peer to see if the transport is still alive.
-			 * Int valued, milliseconds.
-			 */
-			'grpc.keepalive_time_ms':
-				this.config.zeebeGrpcSettings.GRPC_KEEPALIVE_TIME_MS,
-			/**
-			 * After waiting for a duration of this time,
-			 * if the keepalive ping sender does
-			 * not receive the ping ack, it will close the
-			 * transport. Int valued, milliseconds.
-			 */
-			'grpc.keepalive_timeout_ms':
-				this.config.zeebeGrpcSettings.GRPC_KEEPALIVE_TIMEOUT_MS,
-			'grpc.http2.min_time_between_pings_ms':
-				this.config.zeebeGrpcSettings.GRPC_HTTP2_MIN_TIME_BETWEEN_PINGS_MS,
-			/**
-			 * Minimum allowed time between a server receiving
-			 * successive ping frames without sending any data
-			 * frame. Int valued, milliseconds. Default: 90000
-			 */
-			'grpc.http2.min_ping_interval_without_data_ms':
-				this.config.zeebeGrpcSettings
-					.GRPC_HTTP2_MIN_PING_INTERVAL_WITHOUT_DATA_MS,
-			/**
-			 * This channel argument if set to 1
-			 * (0 : false; 1 : true), allows keepalive pings
-			 * to be sent even if there are no calls in flight.
-			 * Default is 1.
-			 */
-			'grpc.keepalive_permit_without_calls':
-				this.config.zeebeGrpcSettings.GRPC_KEEPALIVE_PERMIT_WITHOUT_CALLS,
-			/**
-			 * This channel argument controls the maximum number
-			 * of pings that can be sent when there is no other
-			 * data (data frame or header frame) to be sent.
-			 * GRPC Core will not continue sending pings if we
-			 * run over the limit. Setting it to 0 allows sending
-			 * pings without sending data.
-			 */
-			'grpc.http2.max_pings_without_data':
-				this.config.zeebeGrpcSettings.GRPC_HTTP2_MAX_PINGS_WITHOUT_DATA,
-			/**
-			 * Default compression algorithm for the channel, applies to sending messages.
-			 *
-			 * Possible values for this option are:
-			 * - `0` - No compression
-			 * - `1` - Compress with DEFLATE algorithm
-			 * - `2` - Compress with GZIP algorithm
-			 * - `3` - Stream compression with GZIP algorithm
-			 */
-			'grpc.default_compression_algorithm': 2,
-			/**
-			 * Default compression level for the channel, applies to receiving messages.
-			 *
-			 * Possible values for this option are:
-			 * - `0` - None
-			 * - `1` - Low level
-			 * - `2` - Medium level
-			 * - `3` - High level
-			 */
-			'grpc.default_compression_level': 2,
+			...buildGrpcChannelOptions(this.config.zeebeGrpcSettings),
 			interceptors: [this.interceptor],
 		})
 		this.listNameMethods = []

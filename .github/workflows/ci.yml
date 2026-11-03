@@ -107,11 +107,17 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          npm run test:8.8:sm
+          npm run test:8.8:sm -- --reporter=default --reporter=json --outputFile.json=vitest-integration-report.json
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
           CAMUNDA_TENANT_ID: <default>
+
+      # Most integration tests gate themselves on the environment, so many skip
+      # legitimately. This fails the job if the tests that guard the broker-facing
+      # behaviour (scripts/required-integration-specs.json) were skipped or did not run.
+      - name: Assert required integration tests ran and passed
+        run: npm run test:assert-required-ran -- vitest-integration-report.json
 
       - name: Cleanup
         if: always()
@@ -156,11 +162,17 @@ jobs:
 
       - name: Run Integration Tests (8.8 tests against 8.9 server)
         run: |
-          npm run test:8.8:sm
+          npm run test:8.8:sm -- --reporter=default --reporter=json --outputFile.json=vitest-integration-report.json
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
           CAMUNDA_TENANT_ID: <default>
+
+      # Most integration tests gate themselves on the environment, so many skip
+      # legitimately. This fails the job if the tests that guard the broker-facing
+      # behaviour (scripts/required-integration-specs.json) were skipped or did not run.
+      - name: Assert required integration tests ran and passed
+        run: npm run test:assert-required-ran -- vitest-integration-report.json
 
       - name: Cleanup
         if: always()
@@ -205,11 +217,17 @@ jobs:
 
       - name: Run Integration Tests (8.8 tests against 8.10 server)
         run: |
-          npm run test:8.8:sm
+          npm run test:8.8:sm -- --reporter=default --reporter=json --outputFile.json=vitest-integration-report.json
         env:
           ZEEBE_GRPC_ADDRESS: grpc://localhost:26500
           CAMUNDA_AUTH_STRATEGY: NONE
           CAMUNDA_TENANT_ID: <default>
+
+      # Most integration tests gate themselves on the environment, so many skip
+      # legitimately. This fails the job if the tests that guard the broker-facing
+      # behaviour (scripts/required-integration-specs.json) were skipped or did not run.
+      - name: Assert required integration tests ran and passed
+        run: npm run test:assert-required-ran -- vitest-integration-report.json
 
       - name: Cleanup
         if: always()

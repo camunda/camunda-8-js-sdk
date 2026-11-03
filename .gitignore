@@ -157,3 +157,7 @@ docs
 camunda-support.log*
 # local git worktrees (e.g. backport checkouts)
 .worktree/
+
+# Stryker mutation testing
+.stryker-tmp/
+reports/

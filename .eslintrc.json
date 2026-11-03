@@ -28,6 +28,85 @@
 		"import/newline-after-import": "error",
 		"prettier/prettier": "error"
 	},
+	"overrides": [
+		{
+			// Stream lifecycle (see src/zeebe/lib/StreamLifecycle.ts): stream workers
+			// must not attach listeners to a raw gRPC stream themselves. The adapter
+			// owns that, and requires a handler for every event. The selectors match
+			// on the receiver's name, because the rule has no type information.
+			//
+			// GrpcClient.ts (the transport that creates streams), ZBWorkerBase.ts (the
+			// long-poll worker, which has its own handling) and ZeebeGrpcClient.ts
+			// (activateJobs, a finite request/response stream) are existing call
+			// sites and are exempt for now.
+			"files": ["src/zeebe/**/*.ts"],
+			"excludedFiles": [
+				"src/zeebe/lib/StreamLifecycle.ts",
+				"src/zeebe/lib/GrpcClient.ts",
+				"src/zeebe/lib/ZBWorkerBase.ts",
+				"src/zeebe/zb/ZeebeGrpcClient.ts"
+			],
+			"rules": {
+				"no-restricted-syntax": [
+					"error",
+					{
+						"selector": "CallExpression[callee.property.name=/^(on|once|addListener|prependListener|prependOnceListener)$/][callee.object.name=/stream/i]",
+						"message": "Do not attach listeners to a gRPC stream directly. Use attachStream() from src/zeebe/lib/StreamLifecycle.ts, which requires handlers for data, error, end and close."
+					},
+					{
+						"selector": "CallExpression[callee.property.name=/^(on|once|addListener|prependListener|prependOnceListener)$/][callee.object.property.name=/stream/i]",
+						"message": "Do not attach listeners to a gRPC stream directly. Use attachStream() from src/zeebe/lib/StreamLifecycle.ts, which requires handlers for data, error, end and close."
+					}
+				]
+			}
+		},
+		{
+			// Stream workers must not name the raw gRPC stream types, so they cannot
+			// hold a typed reference to a stream and attach listeners to it.
+			"files": ["src/zeebe/**/*.ts"],
+			"excludedFiles": [
+				"src/zeebe/lib/StreamLifecycle.ts",
+				"src/zeebe/lib/GrpcClient.ts",
+				"src/zeebe/lib/ZBWorkerBase.ts",
+				"src/zeebe/lib/interfaces-1.0.ts"
+			],
+			"rules": {
+				"no-restricted-imports": [
+					"error",
+					{
+						"paths": [
+							{
+								"name": "@grpc/grpc-js",
+								"importNames": [
+									"ClientReadableStream",
+									"ClientDuplexStream",
+									"ClientWritableStream"
+								],
+								"message": "Stream workers must go through src/zeebe/lib/StreamLifecycle.ts instead of using the raw gRPC stream types."
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			// Stream modules: a failure must reach the caller or the logger, never
+			// vanish. `no-console` is scoped to these files because the rest of the
+			// library still logs to the console in places; widening it is a
+			// separate clean-up. `no-floating-promises` needs type information.
+			"files": [
+				"src/zeebe/lib/StreamLifecycle.ts",
+				"src/zeebe/lib/ZBStreamWorker.ts"
+			],
+			"parserOptions": {
+				"project": "./tsconfig.json"
+			},
+			"rules": {
+				"no-console": "error",
+				"@typescript-eslint/no-floating-promises": "error"
+			}
+		}
+	],
 	"env": {
 		"node": true
 	}

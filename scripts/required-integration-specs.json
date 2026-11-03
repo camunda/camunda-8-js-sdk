@@ -1,0 +1,4 @@
+[
+	"src/__tests__/zeebe/integration/StreamJobs.spec.ts",
+	"src/__tests__/zeebe/integration/StreamJobs.FaultInjection.spec.ts"
+]

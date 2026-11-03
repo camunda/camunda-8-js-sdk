@@ -44,12 +44,13 @@ All workflows live under [.github/workflows/](.github/workflows/).
 
 | Workflow                                  | Trigger                                                  | Purpose                                                                                                              |
 | ----------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`                                  | push to feature branches, all PRs                        | Fast feedback for contributors. Unit tests + 8.8 SM integration. Heavier 8.7 jobs are PR-only and gated by environment. |
+| `ci.yml`                                  | push to feature branches, all PRs                        | Fast feedback for contributors. Unit tests + 8.8 SM integration. The 8.8 SM jobs also run `npm run test:assert-required-ran`, which fails if the specs in `scripts/required-integration-specs.json` were skipped. Heavier 8.7 jobs are PR-only and gated by environment. |
 | `release.yml`                             | push to `main` or `stable/**`, manual dispatch           | Full integration suite **plus** semantic-release publish step.                                                       |
 | `commitlint.yml`                          | PR                                                       | Enforces conventional commits.                                                                                       |
 | `code-scanning.yml`                       | scheduled / push                                         | CodeQL.                                                                                                              |
 | `backport.yml`                            | PR closed, `/backport` comment                           | Creates backport PRs (e.g. `main` → `stable/8.8`) via `korthout/backport-action`.                                    |
 | `integration-test-matrix.yml`             | scheduled (02:00 UTC), manual dispatch                   | Cross-version client × server compatibility matrix. Runs from `main` and tests released SDK versions (from git tags) ≥ the current minor against released server versions from the **next** minor onwards, plus `SNAPSHOT`. |
+| `mutation.yml`                            | PRs touching the stream modules or their tests, manual dispatch | Stryker mutation tests of the stream lifecycle modules (`npm run test:mutation`). Unit tests only; fails below the `break` threshold in `stryker.config.json`. |
 
 ### CI vs. Release: why feature branches and `main`/`stable/**` are separated
 

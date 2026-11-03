@@ -1,0 +1,54 @@
+name: Mutation Tests
+
+# Mutation testing of the stream lifecycle modules (src/zeebe/lib/StreamLifecycle.ts
+# and src/zeebe/lib/ZBStreamWorker.ts). Coverage says which lines ran; this says
+# whether the tests would notice if a line were wrong. The run takes several
+# minutes, so it is path-filtered to the stream modules and their tests rather
+# than running on every pull request, and it can be started by hand.
+#
+# No secrets and no broker: it runs the unit tests only. The `break` threshold in
+# stryker.config.json fails the job if the mutation score drops below it.
+on:
+  pull_request:
+    paths:
+      - 'src/zeebe/lib/StreamLifecycle.ts'
+      - 'src/zeebe/lib/ZBStreamWorker.ts'
+      - 'src/__tests__/zeebe/ZBStreamWorker.unit.spec.ts'
+      - 'src/__tests__/zeebe/ZBStreamWorker.lifecycle.unit.spec.ts'
+      - 'src/__tests__/zeebe/StreamLifecycle.unit.spec.ts'
+      - 'src/__tests__/zeebe/conformance/**'
+      - 'stryker.config.json'
+      - 'tsconfig.mutation.json'
+      - 'vitest.mutation.config.js'
+      - '.github/workflows/mutation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run mutation tests
+        run: npm run test:mutation
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          if-no-files-found: ignore

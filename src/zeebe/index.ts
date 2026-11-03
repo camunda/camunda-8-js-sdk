@@ -7,6 +7,12 @@ import * as Interfaces from './lib/interfaces-1.0'
 import * as GrpcInterfaces from './lib/interfaces-grpc-1.0'
 import * as PublishedContract from './lib/interfaces-published-contract'
 
+export type {
+	StreamClosedReason,
+	StreamFailure,
+	StreamHandle,
+	StreamState,
+} from './lib/StreamLifecycle'
 export * from './zb/ZBWorker'
 export * from './zb/ZeebeGrpcClient'
 

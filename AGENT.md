@@ -90,6 +90,7 @@ npm run test:8.7:sm    # 8.7 self-managed integration
 npm run test:8.7:mt    # 8.7 multi-tenancy integration
 npm run test:8.7:saas  # 8.7 SaaS integration
 npm run test:c8run     # C8Run integration
+npm run test:mutation  # Stryker mutation tests of the stream lifecycle modules (several minutes)
 ```
 
 Run a single test file:
@@ -340,6 +341,14 @@ async searchEntities(
 - Integration tests: `*.integration.spec.ts` (and `*.rest.spec.ts`) — test against real services.
 - Local integration: `*local-integration.spec.ts` — local Docker setup.
 - Tests are organized by component and version under `src/__tests__/`.
+
+### Streaming operations (long-lived streams and background loops)
+
+A stream, subscription or background loop that fails without the caller being able to see it, and without recovering, is a defect class this repository guards against in three layers. Follow them when adding or changing one:
+
+1. **Types and lint.** Listen to a raw gRPC stream only through `attachStream()` in `src/zeebe/lib/StreamLifecycle.ts`, whose handler contract requires `data`, `error`, `end` and `close`. A streaming method returns a `StreamHandle` (`close()`, `state`, `done`). ESLint forbids listeners on streams, naming the raw gRPC stream types, `console.*` and floating promises in the stream modules.
+2. **Conformance registry.** `src/__tests__/zeebe/conformance/registry.ts` has one entry per method of `ZeebeGrpcClient` that returns a `StreamHandle`; `tsc` (`npm run typecheck:tests`) fails if a streaming method has no entry. The shared suite runs every entry against a fake transport for errors, graceful ends, open failures, close and leaks.
+3. **CI.** `src/__tests__/zeebe/integration/StreamJobs.FaultInjection.spec.ts` cuts the connection to a real broker with `TcpFaultProxy`. `scripts/required-integration-specs.json` lists the integration specs that must run and pass (none skipped) in the broker jobs, enforced by `npm run test:assert-required-ran`. `npm run test:mutation` mutates the stream modules; a score below the `break` threshold in `stryker.config.json` fails the `Mutation Tests` workflow.
 
 ### Test Environment Variables
 
