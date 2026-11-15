@@ -1489,6 +1489,10 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			const calls = zbClient.activateJobs.mock.calls.length
 			expect(calls).toBeGreaterThan(2)
 			handle.close()
+			// The pending backoff timer must be cancelled immediately on close,
+			// not left to expire naturally (it would keep the process alive).
+			await vi.advanceTimersByTimeAsync(0)
+			expect(vi.getTimerCount()).toBe(0)
 			await vi.advanceTimersByTimeAsync(60_000)
 			expect(zbClient.activateJobs).toHaveBeenCalledTimes(calls)
 
