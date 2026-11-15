@@ -83,8 +83,11 @@ export interface StreamJobsRecoveryOptions {
 	 * exponential backoff from 50ms by a factor of 1.6, capped at 5000ms,
 	 * with full jitter — each delay is a uniform random value in `[0, cap]`,
 	 * so a fleet that is throttled together does not retry in lockstep.
-	 * Pass `false` to restore the old behaviour (give up and wait for the
-	 * next sidecar poll), or an object to tune the retry. `jitter` is the
+	 * Pass `false` to restore the old behaviour (no retry), or an object to
+	 * tune the retry. With `false`, a failed initial startup backfill rejects
+	 * `streamJobs()` before recurring polling is scheduled; a later failed
+	 * activation is recovered by the next sidecar poll only when recurring
+	 * polling is enabled (`pollInterval` > 0). `jitter` is the
 	 * jitter width as a fraction of the capped base delay: `1` (the default)
 	 * is full jitter `[0, cap]`, `0.1` is ±10% around the base, `0` disables
 	 * jitter. `random` is a random source returning `[0, 1)`; inject a

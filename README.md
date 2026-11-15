@@ -759,7 +759,7 @@ A backlog activation (the initial backfill, a reconnect backfill, or a sidecar p
 
 Configure it with **`backlogRetry`**:
 
-- **`backlogRetry: false`** — do not retry; a failed activation gives up and waits for the next sidecar poll (the behaviour before this retry existed).
+- **`backlogRetry: false`** — do not retry (the behaviour before this retry existed). A failed initial startup backfill rejects `streamJobs()` before recurring polling is scheduled, so the caller must handle that rejection. A later failed activation (a reconnect backfill or a sidecar poll) gives up and is recovered by the next sidecar poll only when recurring polling is enabled (`pollInterval` > 0); with recurring polling disabled, those jobs wait for the next reconnect backfill or their activation timeout.
 - **`backlogRetry: { minDelayMs, maxDelayMs, factor, jitter }`** — tune the retry. `minDelayMs` (default `50`), `maxDelayMs` (default `5000`) and `factor` (default `1.6`) set the exponential curve. `jitter` is the jitter width as a fraction of the capped base delay: `1` (the default) is full jitter `[0, cap]`, `0.1` is ±10% around the base (the Java client's default), and `0` disables jitter. Widen `minDelayMs`/`maxDelayMs` to slow a fleet's retries under sustained broker backpressure.
 
 ### Tuning a large fleet
