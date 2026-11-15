@@ -1,3 +1,10 @@
+# [8.9.0-alpha.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.18...v8.9.0-alpha.19) (2026-11-15)
+
+
+### Bug Fixes
+
+* **zeebe:** jitter streamJobs reconnect backoff and make backlog retry configurable ([#887](https://github.com/camunda/camunda-8-js-sdk/issues/887)) ([995f446](https://github.com/camunda/camunda-8-js-sdk/commit/995f4468db6fe624ac73875de50f932502d189a6)), closes [#886](https://github.com/camunda/camunda-8-js-sdk/issues/886)
+
 # [8.9.0-alpha.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.17...v8.9.0-alpha.18) (2026-11-15)
 
 
