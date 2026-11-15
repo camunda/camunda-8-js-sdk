@@ -527,7 +527,12 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 			activationReserved = true
 			try {
-				void runDrain(await activate())
+				// Route the first activation through activateWithRetry so the
+				// initial and reconnect backfills honour backlogRetry: a transient
+				// failure (RESOURCE_EXHAUSTED, UNAVAILABLE, DEADLINE_EXCEEDED) is
+				// retried rather than rejecting startup or stranding jobs created
+				// while the stream was down when recurring polling is disabled.
+				void runDrain(await activateWithRetry())
 			} catch (e) {
 				activationReserved = false
 				throw e

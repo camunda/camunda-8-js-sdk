@@ -1766,3 +1766,122 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		).toBe(true)
 	}
 )
+
+/**
+ * Regression tests for the backfill retry gap.
+ *
+ * `backfill()` called `activate()` directly, so the first activation of the
+ * initial backfill and of a reconnect backfill bypassed `backlogRetry` — a
+ * transient failure (RESOURCE_EXHAUSTED, UNAVAILABLE, DEADLINE_EXCEEDED)
+ * rejected `streamJobs()` startup, or abandoned the reconnect backfill and
+ * stranded jobs created while the stream was down when recurring polling was
+ * disabled. The first activation now goes through `activateWithRetry()`.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker retries a transient failure on the first startup backfill activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockRejectedValueOnce(resourceExhausted()) // first startup activation
+				.mockRejectedValueOnce(resourceExhausted()) // first retry
+				.mockResolvedValue([])
+
+			// streamJobs awaits the backfill's first activation, which now
+			// retries through activateWithRetry — and that retry waits on a
+			// (fake) timer. Start it without awaiting so the retry timers can
+			// be advanced, then await the startup once it has recovered.
+			const started = worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollInterval: 0,
+				// Pin the retry jitter at the top of its range: the delays are
+				// then the exact base curve, 50ms then 80ms.
+				backlogRetry: { random: () => 1 - Number.EPSILON },
+			})
+			// Attach a no-op catch immediately so a rejection is never
+			// unhandled if the test fails before awaiting `started`.
+			started.catch(() => {})
+
+			// Let the stream open and the first activation fail transiently.
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+			// 50ms backoff, then the first retry (also fails transiently).
+			await vi.advanceTimersByTimeAsync(50)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+			// 80ms backoff, then the second retry (which succeeds): startup
+			// recovers rather than rejecting.
+			await vi.advanceTimersByTimeAsync(80)
+			await started
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker retries a transient failure on the reconnect backfill activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			zbClient.activateJobs
+				.mockResolvedValueOnce([]) // initial backfill
+				.mockRejectedValueOnce(resourceExhausted()) // reconnect backfill
+				.mockResolvedValue([]) // reconnect backfill retry + anything later
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: () => {
+					throw new Error('should not be called — no jobs activated')
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				// Disable the sidecar poll so only backfill polls are counted: a
+				// stranded reconnect backfill would leave these jobs unreachable.
+				pollInterval: 0,
+				// Pin the reconnect jitter at the top of its range so the
+				// reconnect delay is the exact 1000ms initial backoff.
+				streamReconnect: { random: () => 1 - Number.EPSILON },
+				// Pin the retry jitter at the top of its range: the reconnect
+				// backfill retry delay is then the exact 50ms base.
+				backlogRetry: { random: () => 1 - Number.EPSILON },
+			})
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1) // initial backfill
+
+			// The stream dies and is re-opened after the 1000ms reconnect backoff.
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			// The reconnect backfill's first activation fails transiently.
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// It must be retried after the 50ms backoff rather than abandoned.
+			await vi.advanceTimersByTimeAsync(50)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
