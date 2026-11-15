@@ -15,7 +15,13 @@ import { FakeStreamTransport } from './conformance/FakeStreamTransport'
  * testing (npm run test:mutation) is what showed these gaps.
  */
 
-const BACKOFF = { initialDelayMs: 1_000, maxDelayMs: 8_000 }
+// Deterministic jitter: always draw the full cap, so a reconnect is never
+// scheduled with a zero delay and the timing assertions below hold.
+const BACKOFF = {
+	initialDelayMs: 1_000,
+	maxDelayMs: 8_000,
+	random: () => 1 - Number.EPSILON,
+}
 
 const setup = (zbClientOverrides: Record<string, unknown> = {}) => {
 	const transport = new FakeStreamTransport()

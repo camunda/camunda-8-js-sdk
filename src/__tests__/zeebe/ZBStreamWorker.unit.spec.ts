@@ -1440,6 +1440,72 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 )
 
 /**
+ * With backlogRetry: false, a failed deferred backfill must not be re-run
+ * immediately by runDrain's finally: the caller opted out of retrying failed
+ * backlog activations, so recovery is left to the next sidecar poll.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker with backlogRetry: false does not re-run a failed deferred backfill',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+
+			const pending: Array<() => void> = []
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(1, 0)) // initial backfill (partial)
+				.mockRejectedValueOnce(new Error('activation failed')) // deferred backfill
+				.mockResolvedValue([])
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) =>
+					new Promise((resolve) => {
+						pending.push(() => resolve(job.complete()))
+					}),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 60_000,
+				backlogRetry: false,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000) // reconnect delay
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			// Release the handler: the deferred backfill runs and fails. It is
+			// not re-run immediately; the sidecar poll recovers it later.
+			pending.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			await vi.advanceTimersByTimeAsync(60_000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
  * Regression tests for https://github.com/camunda/camunda-8-js-sdk/issues/882
  *
  * A temporary activation failure (e.g. RESOURCE_EXHAUSTED under broker

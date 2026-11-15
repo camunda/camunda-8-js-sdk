@@ -449,12 +449,17 @@ export class ZBStreamWorker implements IZBJobWorker {
 					// polling is disabled. If the activation fails, restore the
 					// deferral before re-throwing so runDrain's finally can
 					// re-run it once the reservation is released — the backfill
-					// must not be discarded while the handle is open.
+					// must not be discarded while the handle is open. With
+					// backlogRetry disabled, the caller opted out of retrying
+					// failed backlog activations: leave recovery to the next
+					// sidecar poll instead of immediately re-activating.
 					backfillRequested = false
 					try {
 						jobs = await activateWithRetry()
 					} catch (e) {
-						backfillRequested = true
+						if (drainRetryEnabled) {
+							backfillRequested = true
+						}
 						throw e
 					}
 					continue
