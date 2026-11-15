@@ -1,5 +1,6 @@
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
 
+import { GrpcError } from './GrpcError'
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
 import {
 	StreamAttachment,
@@ -70,6 +71,51 @@ export interface StreamJobsRecoveryOptions {
 const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
 const DEFAULT_RECONNECT_MAX_DELAY_MS = 30_000
 
+// Backoff for retrying a backlog activation that failed with a temporary
+// error. Matches the Java client's default ExponentialBackoff: min 50ms,
+// max 5s, factor 1.6, jitter 0.1.
+export const DRAIN_RETRY_MIN_DELAY_MS = 50
+export const DRAIN_RETRY_MAX_DELAY_MS = 5_000
+const DRAIN_RETRY_FACTOR = 1.6
+const DRAIN_RETRY_JITTER = 0.1
+
+const TRANSIENT_GRPC_CODES: ReadonlySet<number> = new Set([
+	GrpcError.RESOURCE_EXHAUSTED,
+	GrpcError.UNAVAILABLE,
+	GrpcError.DEADLINE_EXCEEDED,
+])
+const TRANSIENT_MESSAGE =
+	/\b(?:RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED)\b/
+
+/**
+ * Whether an activation error is temporary (broker backpressure, gateway
+ * unavailable, deadline exceeded) and the activation should be retried.
+ */
+export const isTransientActivationError = (e: unknown): boolean => {
+	const code = (e as { code?: unknown } | undefined)?.code
+	if (typeof code === 'number' && TRANSIENT_GRPC_CODES.has(code)) {
+		return true
+	}
+	return TRANSIENT_MESSAGE.test(toError(e).message)
+}
+
+/**
+ * Delay before the `attempt`-th retry (1-based) of a failed backlog
+ * activation: exponential from 50ms by a factor of 1.6, capped at 5s, with
+ * +/-10% jitter.
+ */
+export const drainRetryDelayMs = (
+	attempt: number,
+	random: () => number = Math.random
+): number => {
+	const base = Math.min(
+		DRAIN_RETRY_MIN_DELAY_MS * DRAIN_RETRY_FACTOR ** (attempt - 1),
+		DRAIN_RETRY_MAX_DELAY_MS
+	)
+	const jitter = base * DRAIN_RETRY_JITTER * (2 * random() - 1)
+	return Math.max(0, Math.round(base + jitter))
+}
+
 export class ZBStreamWorker implements IZBJobWorker {
 	private grpcClient: ZBGrpc
 	private logger: StatefulLogInterceptor
@@ -79,6 +125,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private closed = false
 	private pollTimers: ReturnType<typeof setTimeout>[] = []
 	private reconnectTimers = new Set<ReturnType<typeof setTimeout>>()
+	// Pending activation-retry waits; close() wakes them so they exit.
+	private retryWaits = new Set<() => void>()
 	constructor({
 		grpcClient,
 		log,
@@ -245,6 +293,55 @@ export class ZBStreamWorker implements IZBJobWorker {
 				requestTimeout: -1,
 			})
 
+		// Wait before retrying an activation. Resolves early when the handle
+		// or the client is closed, so a pending retry never outlives close().
+		const handleRetryWaits = new Set<() => void>()
+		const retryWait = (ms: number) =>
+			new Promise<void>((resolve) => {
+				const wake = () => {
+					clearTimeout(timer)
+					handleRetryWaits.delete(wake)
+					this.retryWaits.delete(wake)
+					resolve()
+				}
+				const timer = setTimeout(wake, ms)
+				handleRetryWaits.add(wake)
+				this.retryWaits.add(wake)
+			})
+
+		// Activate, retrying temporary failures (RESOURCE_EXHAUSTED,
+		// UNAVAILABLE, DEADLINE_EXCEEDED) with exponential backoff while the
+		// handle is open, like the Java client's poller. Abandoning the drain
+		// on broker backpressure would leave the backlog untouched until the
+		// next sidecar poll — up to a whole pollInterval (30s by default).
+		// Returns an empty batch if the handle closes while retrying.
+		// Non-transient errors are rethrown.
+		const activateWithRetry = async (): Promise<
+			Job<WorkerInputVariables, CustomHeaderShape>[]
+		> => {
+			for (let attempt = 1; ; attempt++) {
+				try {
+					return await activate()
+				} catch (e) {
+					if (isClosed() || !isTransientActivationError(e)) {
+						throw e
+					}
+					const delay = drainRetryDelayMs(attempt)
+					this.logger.logDebug(
+						`Stream worker backlog poll for ${
+							req.type
+						} failed with a temporary error, retrying in ${delay}ms: ${
+							toError(e).message
+						}`
+					)
+					await retryWait(delay)
+					if (isClosed()) {
+						return []
+					}
+				}
+			}
+		}
+
 		// Hand a polled batch to the handler, then keep polling while polls
 		// come back full. The stream only pushes jobs that become activatable
 		// after it opens; a backlog that already exists is reachable only by
@@ -279,7 +376,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 					// must not be discarded while the handle is open.
 					backfillRequested = false
 					try {
-						jobs = await activate()
+						jobs = await activateWithRetry()
 					} catch (e) {
 						backfillRequested = true
 						throw e
@@ -289,7 +386,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 				if (jobs.length < pollMaxJobsToActivate || isClosed()) {
 					return
 				}
-				jobs = await activate()
+				jobs = await activateWithRetry()
 			}
 		}
 
@@ -308,7 +405,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 		const runDrain = (jobs: Job<WorkerInputVariables, CustomHeaderShape>[]) =>
 			drain(jobs)
 				.catch((e: unknown) => {
-					// The stream is the primary channel; the next sidecar poll retries.
+					// Temporary failures were already retried in activateWithRetry;
+					// this is a non-transient error. The next sidecar poll retries.
 					this.logger.logError(
 						`Stream worker backlog poll failed: ${toError(e).message}`
 					)
@@ -549,6 +647,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (sidecarTimer) {
 				clearTimeout(sidecarTimer)
 			}
+			handleRetryWaits.forEach((wake) => wake())
 			if (reconnectTimer) {
 				clearTimeout(reconnectTimer)
 				this.reconnectTimers.delete(reconnectTimer)
@@ -629,7 +728,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 						// overlapping drain. The reservation is released by
 						// runDrain's finally, or here if the activation fails.
 						activationReserved = true
-						activate()
+						activateWithRetry()
 							.then(runDrain, (e: unknown) => {
 								activationReserved = false
 								// Swallow errors — the stream is the primary channel.
@@ -657,6 +756,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 		this.pollTimers = []
 		this.reconnectTimers.forEach((t) => clearTimeout(t))
 		this.reconnectTimers.clear()
+		this.retryWaits.forEach((wake) => wake())
 		const clientClosed: StreamClosedReason = { kind: 'client-closed' }
 		this.machines.forEach((m) =>
 			m.transition({ status: 'closed', reason: clientClosed })

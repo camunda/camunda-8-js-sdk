@@ -2,7 +2,11 @@ import { EventEmitter } from 'events'
 
 import { LosslessDto } from '../../lib'
 import { allowAny } from '../../test-support/testTags'
-import { ZBStreamWorker } from '../../zeebe/lib/ZBStreamWorker'
+import {
+	ZBStreamWorker,
+	drainRetryDelayMs,
+	isTransientActivationError,
+} from '../../zeebe/lib/ZBStreamWorker'
 
 /**
  * Regression test for https://github.com/camunda/camunda-8-js-sdk/issues/828
@@ -1362,5 +1366,150 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		} finally {
 			vi.useRealTimers()
 		}
+	}
+)
+
+/**
+ * Regression tests for https://github.com/camunda/camunda-8-js-sdk/issues/882
+ *
+ * A temporary activation failure (e.g. RESOURCE_EXHAUSTED under broker
+ * backpressure) abandoned the backlog drain until the next sidecar poll, a
+ * whole pollInterval (30s by default) later. It is now retried with a short
+ * exponential backoff while the handle is open.
+ */
+const resourceExhausted = () =>
+	Object.assign(
+		new Error(
+			"8 RESOURCE_EXHAUSTED: Expected to activate jobs of type 'test-task', but no jobs available and at least one broker returned 'RESOURCE_EXHAUSTED'. Please try again later."
+		),
+		{ code: 8 }
+	)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker retries a backlog activation that fails with RESOURCE_EXHAUSTED',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(3, 0))
+				.mockRejectedValueOnce(resourceExhausted())
+				.mockRejectedValueOnce(resourceExhausted())
+				.mockResolvedValueOnce(fakeBatch(1, 3))
+				.mockResolvedValue([])
+			const handled: string[] = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					handled.push(job.key)
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 3,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+			// Well under a pollInterval: 50ms then ~80ms backoff.
+			await vi.advanceTimersByTimeAsync(200)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(4)
+			expect(handled).toHaveLength(4)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker does not retry a non-transient backlog activation failure',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(3, 0))
+				.mockRejectedValueOnce(
+					Object.assign(new Error('3 INVALID_ARGUMENT: bad'), { code: 3 })
+				)
+				.mockResolvedValue([])
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 3,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(10_000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker stops retrying a backlog activation when the handle is closed',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(3, 0))
+				.mockRejectedValue(resourceExhausted())
+
+			const handle = await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 3,
+				pollInterval: 0,
+			})
+
+			await vi.advanceTimersByTimeAsync(1_000)
+			const calls = zbClient.activateJobs.mock.calls.length
+			expect(calls).toBeGreaterThan(2)
+			handle.close()
+			await vi.advanceTimersByTimeAsync(60_000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(calls)
+
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'drainRetryDelayMs follows the Java backoff curve',
+	() => {
+		expect(drainRetryDelayMs(1, () => 0.5)).toBe(50)
+		expect(drainRetryDelayMs(2, () => 0.5)).toBe(80)
+		expect(drainRetryDelayMs(100, () => 0.5)).toBe(5000)
+		expect(drainRetryDelayMs(100, () => 1)).toBe(5500)
+		expect(isTransientActivationError(resourceExhausted())).toBe(true)
+		expect(isTransientActivationError(new Error('14 UNAVAILABLE: x'))).toBe(
+			true
+		)
+		expect(isTransientActivationError(new Error('boom'))).toBe(false)
 	}
 )
