@@ -183,12 +183,29 @@ export const getOpenError = (result: unknown): Error | undefined => {
 	return undefined
 }
 
-/** Delay before reconnect `attempt` (1-based): exponential, capped. */
+/**
+ * Delay before reconnect `attempt` (1-based): exponential, capped, with full
+ * jitter — a uniform random value in `[0, cap]`, where `cap` is the
+ * deterministic exponential delay for the attempt.
+ *
+ * Jitter is not optional: when a gateway restarts, every worker's stream dies
+ * at the same moment, and an unjittered backoff (1s, 2s, 4s…) makes the whole
+ * fleet reconnect — and backfill-poll — in lockstep on every attempt. Full
+ * jitter spreads the herd across the backoff window while keeping the
+ * exponential cap as the expected upper bound.
+ *
+ * `random` is injectable (returning `[0, 1)`, like `Math.random`) so tests can
+ * pin the delay sequence.
+ */
 export const backoffDelayMs = (
 	attempt: number,
 	initialDelayMs: number,
-	maxDelayMs: number
-): number => Math.min(initialDelayMs * 2 ** (attempt - 1), maxDelayMs)
+	maxDelayMs: number,
+	random: () => number = Math.random
+): number => {
+	const cap = Math.min(initialDelayMs * 2 ** (attempt - 1), maxDelayMs)
+	return Math.floor(random() * (cap + 1))
+}
 
 export const STREAM_HANDLE_BRAND: unique symbol = Symbol('StreamHandle')
 

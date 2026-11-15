@@ -170,7 +170,15 @@ export const closeStopsReconnecting = async (env: FaultEnvironment) => {
 		env.proxy.pause()
 		await waitFor(() => failures() >= 1, 'the outage is reported')
 		await client.close()
-		await new Promise((resolve) => setTimeout(resolve, 500))
+		// A reconnect attempt that was already scheduled (or in flight) when
+		// close() ran may still open one last connection; close() guarantees
+		// nothing new is *scheduled* after it, not that an in-flight open is
+		// pre-empted. Wait long enough for any such straggler to land before
+		// taking the snapshot. The wait is bounded by the reconnect backoff:
+		// with jitter the pending attempt fires somewhere in [0, maxDelayMs].
+		await new Promise((resolve) =>
+			setTimeout(resolve, RECONNECT.maxDelayMs + 500)
+		)
 		const settled = env.proxy.acceptedConnections
 
 		await new Promise((resolve) =>

@@ -223,10 +223,33 @@ describe.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			])
 		})
 
-		test('backoffDelayMs doubles and is capped', () => {
-			expect([1, 2, 3, 4, 5].map((n) => backoffDelayMs(n, 1000, 8000))).toEqual(
-				[1000, 2000, 4000, 8000, 8000]
+		test('backoffDelayMs doubles and is capped, with full jitter', () => {
+			// A deterministic random source gives deterministic delays: pinned at
+			// the top of the range, the delay is the exact exponential curve.
+			const max = () => 1 - Number.EPSILON
+			expect(
+				[1, 2, 3, 4, 5].map((n) => backoffDelayMs(n, 1000, 8000, max))
+			).toEqual([1000, 2000, 4000, 8000, 8000])
+			// Pinned at the bottom, the delay is 0.
+			expect(backoffDelayMs(1, 1000, 8000, () => 0)).toBe(0)
+			expect(backoffDelayMs(4, 1000, 8000, () => 0)).toBe(0)
+		})
+
+		test('backoffDelayMs spreads delays across [0, cap]', () => {
+			// Sample a deterministic pseudo-random source: the delays must cover
+			// the whole window, not cluster at the cap.
+			let seed = 42
+			const random = () => {
+				seed = (seed * 1103515245 + 12345) % 2 ** 31
+				return seed / 2 ** 31
+			}
+			const delays = Array.from({ length: 100 }, () =>
+				backoffDelayMs(3, 1000, 8000, random)
 			)
+			expect(Math.min(...delays)).toBeGreaterThanOrEqual(0)
+			expect(Math.max(...delays)).toBeLessThanOrEqual(4000)
+			expect(Math.min(...delays)).toBeLessThan(400)
+			expect(Math.max(...delays)).toBeGreaterThan(3600)
 		})
 	}
 )

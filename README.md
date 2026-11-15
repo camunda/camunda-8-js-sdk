@@ -744,14 +744,32 @@ Configure the sidecar poll with:
 
 A job stream can die while the worker process keeps running: the connection drops, the gateway restarts or rejects the stream, or the server ends it. Without recovery, a worker whose stream has died receives only the jobs found by the low-frequency sidecar poll.
 
-`streamJobs` detects a dead stream (an `error`, `end` or `close` event, or a failed attempt to open it) and, by default, re-opens it with exponential backoff (1 s, doubling to a cap of 30 s). Once the stream is re-established it runs one backfill poll to pick up jobs created while the stream was down. The backoff restarts from the beginning once a re-opened stream delivers a job or stays up for at least the maximum delay. Calling `close()` on the returned handle (or on the client) stops all reconnection attempts.
+`streamJobs` detects a dead stream (an `error`, `end` or `close` event, or a failed attempt to open it) and, by default, re-opens it with exponential backoff (1 s, doubling to a cap of 30 s) with **full jitter**: each delay is a uniform random value between 0 and the backoff cap for that attempt. When a gateway restarts, every worker's stream dies at the same moment — jitter spreads the reconnects (and the backfill polls that follow them) across the backoff window instead of firing the whole fleet in lockstep. Once the stream is re-established it runs one backfill poll to pick up jobs created while the stream was down. The backoff restarts from the beginning once a re-opened stream delivers a job or stays up for at least the maximum delay. Calling `close()` on the returned handle (or on the client) stops all reconnection attempts.
 
 Observe and configure this with:
 
 - **`onStreamError(error)`** — called when the stream errors or cannot be opened.
 - **`onStreamEnd()`** — called when the server ends or closes the stream without an error.
 - **`onStreamReconnect(attempt)`** — called before each attempt to re-open the stream. `attempt` is the number of consecutive failures, starting at 1.
-- **`streamReconnect`** — `true` (the default), `false` to disable reconnection (the callbacks above still fire), or `{ initialDelayMs, maxDelayMs }` to tune the backoff.
+- **`streamReconnect`** — `true` (the default), `false` to disable reconnection (the callbacks above still fire), or `{ initialDelayMs, maxDelayMs }` to tune the backoff. Jitter is always applied; it is never what you want to turn off, because a lockstep reconnect is a thundering herd.
+
+### Backlog activation retry
+
+A backlog activation (the initial backfill, a reconnect backfill, or a sidecar poll) that fails with a transient error — `RESOURCE_EXHAUSTED` (broker backpressure), `UNAVAILABLE`, or `DEADLINE_EXCEEDED` — is retried with exponential backoff while the handle is open, rather than waiting for the next sidecar poll. The default curve matches the Java client's default `ExponentialBackoff` (50 ms, growing by a factor of 1.6, capped at 5 s), but with full jitter: each retry delay is a uniform random value between 0 and the cap for that attempt, so a fleet that is throttled together does not retry in lockstep.
+
+Configure it with **`backlogRetry`**:
+
+- **`backlogRetry: false`** — do not retry (the behaviour before this retry existed). A failed initial startup backfill rejects `streamJobs()` before recurring polling is scheduled, so the caller must handle that rejection. A later failed activation (a reconnect backfill or a sidecar poll) gives up and is recovered by the next sidecar poll only when recurring polling is enabled (`pollInterval` > 0); with recurring polling disabled, those jobs wait for the next reconnect backfill or their activation timeout.
+- **`backlogRetry: { minDelayMs, maxDelayMs, factor, jitter }`** — tune the retry. `minDelayMs` (default `50`), `maxDelayMs` (default `5000`) and `factor` (default `1.6`) set the exponential curve. `jitter` is the jitter width as a fraction of the capped base delay: `1` (the default) is full jitter `[0, cap]`, `0.1` is ±10% around the base (the Java client's default), and `0` disables jitter. Widen `minDelayMs`/`maxDelayMs` to slow a fleet's retries under sustained broker backpressure.
+
+### Tuning a large fleet
+
+When you run hundreds of `streamJobs` workers, a single gateway event (restart, failover, backpressure) can otherwise turn into a herd of activations against the gateway and broker. The knobs, in order of impact:
+
+1. **`jitter`** (startup) — delay each worker's start by a random period up to this many milliseconds, so a mass deployment does not open every stream and backfill poll in the same instant.
+2. **`pollInterval`** — each sidecar poll is a command on the broker. With a large fleet, raise it well above the default 30 s (or set `0`/`-1` to disable recurring polling; the initial backfill and reconnect backfills still run).
+3. **Reconnect jitter** — always on. Tune the window with `streamReconnect: { initialDelayMs, maxDelayMs }`; a larger `initialDelayMs` moves the reconnect spike, and the jitter spreads it.
+4. **`backlogRetry`** — widen or slow the backlog retry (`{ minDelayMs: 500, maxDelayMs: 30_000 }`, for example) when the broker is overloaded for sustained periods.
 
 The callbacks may be `async`. Exceptions thrown by these callbacks, and rejections of any promise they return, are caught and logged; they do not affect reconnection. If the stream cannot be opened on the first attempt and `streamReconnect` is `false`, the promise returned by `streamJobs` rejects with the underlying error.
 
@@ -789,8 +807,12 @@ const streamWorker = await client.streamJobs({
 	// Optional: be told when the job stream dies and when it is re-opened
 	onStreamError: (error) => console.error('Job stream failed', error),
 	onStreamReconnect: (attempt) => console.log(`Re-opening stream (${attempt})`),
-	// Optional: tune the reconnect backoff (default: 1 s doubling to 30 s)
+	// Optional: tune the reconnect backoff (default: 1 s doubling to 30 s,
+	// with full jitter applied to every delay)
 	streamReconnect: { initialDelayMs: 1000, maxDelayMs: 30_000 },
+	// Optional: tune the backlog activation retry (default: 50 ms growing by
+	// 1.6x to 5 s, with full jitter). Pass false to disable retrying.
+	backlogRetry: { minDelayMs: 50, maxDelayMs: 5000, factor: 1.6, jitter: 1 },
 })
 
 // Stop the worker, including any pending reconnect
