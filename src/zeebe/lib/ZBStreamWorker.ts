@@ -84,8 +84,10 @@ const TRANSIENT_GRPC_CODES: ReadonlySet<number> = new Set([
 	GrpcError.UNAVAILABLE,
 	GrpcError.DEADLINE_EXCEEDED,
 ])
+// Only the leading gRPC status prefix ("14 UNAVAILABLE: ...") is trusted, so
+// a status name appearing later in free text cannot mark an error transient.
 const TRANSIENT_MESSAGE =
-	/\b(?:RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED)\b/
+	/^\s*(?:\d+\s+)?(?:RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED)\b/
 
 /**
  * Whether an activation error is temporary (broker backpressure, gateway
@@ -93,8 +95,9 @@ const TRANSIENT_MESSAGE =
  */
 export const isTransientActivationError = (e: unknown): boolean => {
 	const code = (e as { code?: unknown } | undefined)?.code
-	if (typeof code === 'number' && TRANSIENT_GRPC_CODES.has(code)) {
-		return true
+	// A numeric gRPC status is authoritative; the message is only a fallback.
+	if (typeof code === 'number') {
+		return TRANSIENT_GRPC_CODES.has(code)
 	}
 	return TRANSIENT_MESSAGE.test(toError(e).message)
 }

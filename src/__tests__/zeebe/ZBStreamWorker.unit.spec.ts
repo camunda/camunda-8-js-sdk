@@ -1511,5 +1511,22 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			true
 		)
 		expect(isTransientActivationError(new Error('boom'))).toBe(false)
+		// A numeric code is authoritative over the message text
+		const denied = Object.assign(
+			new Error(
+				"7 PERMISSION_DENIED: not authorized for job type 'UNAVAILABLE'"
+			),
+			{ code: 7 }
+		)
+		expect(isTransientActivationError(denied)).toBe(false)
+		// Without a code, only the leading status prefix counts
+		expect(
+			isTransientActivationError(
+				new Error("7 PERMISSION_DENIED: job type 'DEADLINE_EXCEEDED'")
+			)
+		).toBe(false)
+		expect(
+			isTransientActivationError(new Error('8 RESOURCE_EXHAUSTED: busy'))
+		).toBe(true)
 	}
 )
