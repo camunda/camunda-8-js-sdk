@@ -23,6 +23,12 @@ export interface StreamObservers {
 export interface StreamBackoff {
 	initialDelayMs: number
 	maxDelayMs: number
+	/**
+	 * Random source for the reconnect jitter. The suite pins it at the top of
+	 * the range so the jittered delay is exactly the exponential cap and the
+	 * timing assertions stay exact.
+	 */
+	random?: () => number
 }
 
 export interface OpenedStream {
@@ -86,6 +92,12 @@ const silentLog = {
 	logError: () => undefined,
 }
 
+/**
+ * A random source pinned at the top of the jitter range: the jittered delay
+ * is exactly the exponential cap, so the suite's timing assertions stay exact.
+ */
+const maxJitter = () => 1 - Number.EPSILON
+
 const newStreamJobsWorker = (transport: FakeStreamTransport) =>
 	new ZBStreamWorker({
 		grpcClient: {
@@ -120,7 +132,10 @@ const callStreamJobs = (
 		onStreamError: observers.onError,
 		onStreamEnd: observers.onEnd,
 		onStreamReconnect: observers.onReconnect,
-		streamReconnect: reconnect,
+		streamReconnect:
+			reconnect === false
+				? false
+				: { ...reconnect, random: reconnect.random ?? maxJitter },
 	})
 
 const streamJobsCase: StreamConformanceCase = {

@@ -60,24 +60,59 @@ export interface StreamJobsRecoveryOptions {
 	onStreamReconnect?: (attempt: number) => void | Promise<void>
 	/**
 	 * Re-open the stream when it dies. Defaults to `true`, with exponential
-	 * backoff starting at 1000ms and capped at 30000ms. Pass `false` to disable
-	 * reconnection (the `onStream*` callbacks still fire), or an object to tune
-	 * the backoff. After a re-opened stream is established, one backfill poll
-	 * runs to pick up jobs that were created while the stream was down.
+	 * backoff starting at 1000ms, capped at 30000ms, and full jitter applied
+	 * (each delay is a uniform random value in `[0, cap]`, so a fleet of
+	 * workers whose streams die together does not reconnect in lockstep).
+	 * Pass `false` to disable reconnection (the `onStream*` callbacks still
+	 * fire), or an object to tune the backoff. `random` is a random source
+	 * returning `[0, 1)` (like `Math.random`); inject a deterministic one in
+	 * tests. After a re-opened stream is established, one backfill poll runs
+	 * to pick up jobs that were created while the stream was down.
 	 */
-	streamReconnect?: boolean | { initialDelayMs?: number; maxDelayMs?: number }
+	streamReconnect?:
+		| boolean
+		| {
+				initialDelayMs?: number
+				maxDelayMs?: number
+				random?: () => number
+		  }
+	/**
+	 * Retry a backlog activation (the initial backfill, a reconnect backfill,
+	 * or a sidecar poll) that fails with a transient error
+	 * (RESOURCE_EXHAUSTED, UNAVAILABLE, DEADLINE_EXCEEDED). Defaults to
+	 * exponential backoff from 50ms by a factor of 1.6, capped at 5000ms,
+	 * with full jitter — each delay is a uniform random value in `[0, cap]`,
+	 * so a fleet that is throttled together does not retry in lockstep.
+	 * Pass `false` to restore the old behaviour (give up and wait for the
+	 * next sidecar poll), or an object to tune the retry. `jitter` is the
+	 * jitter width as a fraction of the capped base delay: `1` (the default)
+	 * is full jitter `[0, cap]`, `0.1` is ±10% around the base, `0` disables
+	 * jitter. `random` is a random source returning `[0, 1)`; inject a
+	 * deterministic one in tests.
+	 */
+	backlogRetry?:
+		| false
+		| {
+				minDelayMs?: number
+				maxDelayMs?: number
+				factor?: number
+				jitter?: number
+				random?: () => number
+		  }
 }
 
 const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
 const DEFAULT_RECONNECT_MAX_DELAY_MS = 30_000
 
 // Backoff for retrying a backlog activation that failed with a temporary
-// error. Matches the Java client's default ExponentialBackoff: min 50ms,
-// max 5s, factor 1.6, jitter 0.1.
+// error. The base curve matches the Java client's default ExponentialBackoff
+// (min 50ms, max 5s, factor 1.6); the jitter is full jitter rather than the
+// Java client's ±10%, so a fleet that is throttled together spreads its
+// retries across the whole backoff window instead of a narrow band.
 export const DRAIN_RETRY_MIN_DELAY_MS = 50
 export const DRAIN_RETRY_MAX_DELAY_MS = 5_000
 const DRAIN_RETRY_FACTOR = 1.6
-const DRAIN_RETRY_JITTER = 0.1
+const DRAIN_RETRY_JITTER = 1
 
 const TRANSIENT_GRPC_CODES: ReadonlySet<number> = new Set([
 	GrpcError.RESOURCE_EXHAUSTED,
@@ -102,21 +137,45 @@ export const isTransientActivationError = (e: unknown): boolean => {
 	return TRANSIENT_MESSAGE.test(toError(e).message)
 }
 
+/** Options for `drainRetryDelayMs`; see `StreamJobsRecoveryOptions.backlogRetry`. */
+export interface DrainRetryOptions {
+	minDelayMs?: number
+	maxDelayMs?: number
+	factor?: number
+	jitter?: number
+	random?: () => number
+}
+
 /**
  * Delay before the `attempt`-th retry (1-based) of a failed backlog
- * activation: exponential from 50ms by a factor of 1.6, capped at 5s, with
- * +/-10% jitter.
+ * activation: exponential from `minDelayMs` by `factor`, capped at
+ * `maxDelayMs`, jittered by `random`.
+ *
+ * `jitter` is the jitter width as a fraction of the capped base delay: `1`
+ * (the default) is full jitter, a uniform value in `[0, cap]`; `0.1` is ±10%
+ * around the base (the Java client's default); `0` is the plain exponential
+ * curve. Defaults match the Java client's curve (50ms → 5s, factor 1.6) with
+ * full jitter.
  */
 export const drainRetryDelayMs = (
 	attempt: number,
-	random: () => number = Math.random
+	options: DrainRetryOptions = {}
 ): number => {
-	const base = Math.min(
-		DRAIN_RETRY_MIN_DELAY_MS * DRAIN_RETRY_FACTOR ** (attempt - 1),
-		DRAIN_RETRY_MAX_DELAY_MS
-	)
-	const jitter = base * DRAIN_RETRY_JITTER * (2 * random() - 1)
-	return Math.max(0, Math.round(base + jitter))
+	const {
+		minDelayMs = DRAIN_RETRY_MIN_DELAY_MS,
+		maxDelayMs = DRAIN_RETRY_MAX_DELAY_MS,
+		factor = DRAIN_RETRY_FACTOR,
+		jitter = DRAIN_RETRY_JITTER,
+		random = Math.random,
+	} = options
+	const base = Math.min(minDelayMs * factor ** (attempt - 1), maxDelayMs)
+	if (jitter >= 1) {
+		// Full jitter: uniform in [0, base].
+		return Math.floor(random() * (base + 1))
+	}
+	// base * (1 - jitter + 2 * jitter * random())
+	const offset = base * jitter * (2 * random() - 1)
+	return Math.max(0, Math.round(base + offset))
 }
 
 export class ZBStreamWorker implements IZBJobWorker {
@@ -195,6 +254,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			onStreamEnd,
 			onStreamReconnect,
 			streamReconnect = true,
+			backlogRetry,
 			...streamReq
 		} = req
 
@@ -207,6 +267,12 @@ export class ZBStreamWorker implements IZBJobWorker {
 			reconnectOptions.maxDelayMs ?? DEFAULT_RECONNECT_MAX_DELAY_MS,
 			initialDelayMs
 		)
+		const reconnectRandom = reconnectOptions.random ?? Math.random
+
+		// `undefined` and `{}` both mean the default retry policy; `false`
+		// disables retrying (a failed activation waits for the next poll).
+		const drainRetryEnabled = backlogRetry !== false
+		const drainRetryOptions: DrainRetryOptions = backlogRetry || {}
 
 		// Returns the handler's promise, which never rejects: a failure is
 		// logged here. The backlog drain awaits it for backpressure.
@@ -326,10 +392,14 @@ export class ZBStreamWorker implements IZBJobWorker {
 				try {
 					return await activate()
 				} catch (e) {
-					if (isClosed() || !isTransientActivationError(e)) {
+					if (
+						isClosed() ||
+						!drainRetryEnabled ||
+						!isTransientActivationError(e)
+					) {
 						throw e
 					}
-					const delay = drainRetryDelayMs(attempt)
+					const delay = drainRetryDelayMs(attempt, drainRetryOptions)
 					this.logger.logDebug(
 						`Stream worker backlog poll for ${
 							req.type
@@ -497,7 +567,12 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 			consecutiveFailures++
 			const attempt = consecutiveFailures
-			const delay = backoffDelayMs(attempt, initialDelayMs, maxDelayMs)
+			const delay = backoffDelayMs(
+				attempt,
+				initialDelayMs,
+				maxDelayMs,
+				reconnectRandom
+			)
 			transition({ status: 'reconnecting', attempt, cause })
 			const timer = setTimeout(() => {
 				reconnectTimer = undefined

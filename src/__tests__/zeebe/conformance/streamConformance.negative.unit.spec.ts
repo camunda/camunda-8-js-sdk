@@ -67,6 +67,13 @@ const miniOp = (flaws: Partial<Flaws> = {}): StreamConformanceCase => ({
 		const machine = createStreamStateMachine()
 		const initialDelayMs = reconnect === false ? 0 : reconnect.initialDelayMs
 		const maxDelayMs = reconnect === false ? 0 : reconnect.maxDelayMs
+		// Pin the jitter at the top of its range so the jittered delay is
+		// exactly the exponential cap and the scenario's timing assertions
+		// stay exact.
+		const random =
+			reconnect === false
+				? () => 1 - Number.EPSILON
+				: reconnect.random ?? (() => 1 - Number.EPSILON)
 		let closed = false
 		let failures = 0
 		let timer: ReturnType<typeof setTimeout> | undefined
@@ -99,7 +106,7 @@ const miniOp = (flaws: Partial<Flaws> = {}): StreamConformanceCase => ({
 				})
 			const delay = flaws.noBackoff
 				? 0
-				: backoffDelayMs(failures, initialDelayMs, maxDelayMs)
+				: backoffDelayMs(failures, initialDelayMs, maxDelayMs, random)
 			timer = setTimeout(() => {
 				notify(() => observers.onReconnect(failures))
 				void open()
