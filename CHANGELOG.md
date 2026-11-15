@@ -1,3 +1,10 @@
+# [8.9.0-alpha.18](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.17...v8.9.0-alpha.18) (2026-11-15)
+
+
+### Bug Fixes
+
+* **zeebe:** retry streamJobs backlog activation on transient errors ([#884](https://github.com/camunda/camunda-8-js-sdk/issues/884)) ([4f49714](https://github.com/camunda/camunda-8-js-sdk/commit/4f4971405e91762d0046f6d0c493d2d05bc5ccba)), closes [#882](https://github.com/camunda/camunda-8-js-sdk/issues/882)
+
 # [8.9.0-alpha.17](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.16...v8.9.0-alpha.17) (2026-11-03)
 
 
