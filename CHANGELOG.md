@@ -1,3 +1,11 @@
+## [8.8.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.20...v8.8.21) (2026-11-15)
+
+
+### Bug Fixes
+
+* **zeebe:** jitter streamJobs reconnect backoff and make backlog retry configurable ([#887](https://github.com/camunda/camunda-8-js-sdk/issues/887)) ([#889](https://github.com/camunda/camunda-8-js-sdk/issues/889)) ([555acf8](https://github.com/camunda/camunda-8-js-sdk/commit/555acf890ee30f4ca789585678401f7cef3ecce8)), closes [#886](https://github.com/camunda/camunda-8-js-sdk/issues/886)
+* **zeebe:** retry streamJobs backlog activation on transient errors ([#884](https://github.com/camunda/camunda-8-js-sdk/issues/884)) ([#885](https://github.com/camunda/camunda-8-js-sdk/issues/885)) ([430a7ef](https://github.com/camunda/camunda-8-js-sdk/commit/430a7ef13df11daa8e439b86dc1dfb9948f43b76))
+
 ## [8.8.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.19...v8.8.20) (2026-11-03)
 
 
