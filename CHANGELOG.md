@@ -1,3 +1,10 @@
+## [8.8.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.21...v8.8.22) (2026-11-17)
+
+
+### Bug Fixes
+
+* **zeebe:** poll stream worker backlog on freed capacity ([#894](https://github.com/camunda/camunda-8-js-sdk/issues/894)) ([#896](https://github.com/camunda/camunda-8-js-sdk/issues/896)) ([cf1efbd](https://github.com/camunda/camunda-8-js-sdk/commit/cf1efbd5fe2a6394c32d84411869a0c7a7b73897)), closes [#891](https://github.com/camunda/camunda-8-js-sdk/issues/891)
+
 ## [8.8.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.20...v8.8.21) (2026-11-15)
 
 
