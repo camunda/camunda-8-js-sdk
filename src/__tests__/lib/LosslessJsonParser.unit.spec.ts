@@ -468,7 +468,7 @@ test('It correctly throws when encountering a number rather than an array in a s
 
 describe('losslessParse native fast path (#890)', () => {
 	const cases = [
-		'{"a":1,"b":-2.5,"c":"x\\\\\\"9999999999999999","d":[1e21,0,-0.001],"e":null,"f":true}',
+		'{"a":1,"b":-2.5,"c":"x\\\\\\"9999999999999999","d":[1e3,0,-0.001],"e":null,"f":true}',
 		'{"a":1.0,"b":1e3,"c":-0}',
 		'[{"n":12345678901234},{"n":"str"}]',
 		'{"s":"\\u00e9\\n\\\\","n":3.14}',
@@ -511,6 +511,17 @@ describe('losslessParse native fast path (#890)', () => {
 		)
 	})
 
+	test.each([
+		'{"x":1,"x":2}',
+		'{"x":"a","x":"b"}',
+		'{"o":{"k":1,"k":2}}',
+		'[{"k":true},{"k":1,"k":"s"}]',
+		'{"\\u0078":1,"x":2}',
+		'{"a\\"b":1, "a\\"b" : 2}',
+	])('throws like lossless-json on conflicting duplicate keys: %s', (json) => {
+		expect(() => losslessParse(json)).toThrow(/Duplicate key/)
+	})
+
 	test('a digit run inside a string does not affect numbers', () => {
 		expect(losslessParse('{"s":"99999999999999999999","n":1}')).toEqual({
 			s: '99999999999999999999',
@@ -521,21 +532,24 @@ describe('losslessParse native fast path (#890)', () => {
 	test('does not retain per-character heap for large string variables', () => {
 		const big = 'x'.repeat(10_000)
 		const payload = JSON.stringify({ data: big, count: 1 })
+		const gc = (globalThis as { gc?: () => void }).gc
+		gc?.()
+		const baseline = process.memoryUsage().heapUsed
 		const start = Date.now()
 		const kept: unknown[] = []
 		for (let i = 0; i < 1600; i++) {
 			kept.push(losslessParse(payload))
 		}
 		const elapsed = Date.now() - start
-		expect(kept.length).toBe(1600)
 		// lossless-json 4.3.x takes ~500ms+ and ~500MB here; JSON.parse ~10ms
 		expect(elapsed).toBeLessThan(300)
-		const gc = (globalThis as { gc?: () => void }).gc
 		if (gc) {
 			gc()
-			const heap = process.memoryUsage().heapUsed
+			const retained = process.memoryUsage().heapUsed - baseline
 			// 1600 * 10KB = 16MB of payload; allow a generous multiple
-			expect(heap).toBeLessThan(200 * 1024 * 1024)
+			expect(retained).toBeLessThan(150 * 1024 * 1024)
 		}
+		// Read the payloads after the final GC so they stay live during measurement
+		expect(kept.length).toBe(1600)
 	})
 })

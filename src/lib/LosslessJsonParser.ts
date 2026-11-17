@@ -406,7 +406,8 @@ function parseArrayWithAnnotations<T>(
  * literal. Otherwise we fall back to lossless-json. The output is therefore the same as lossless-json's in both paths.
  */
 function parseToLossless(json: string): any {
-	if (!canParseNatively(json)) {
+	const scannedKeys = scanForNativeParse(json)
+	if (scannedKeys < 0) {
 		return parse(json)
 	}
 	let result: any
@@ -416,18 +417,27 @@ function parseToLossless(json: string): any {
 		// Let lossless-json produce its own (familiar) error message
 		return parse(json)
 	}
-	return wrapNumbers(result)
+	const counter = { keys: 0 }
+	const wrapped = wrapNumbers(result, counter)
+	if (counter.keys !== scannedKeys) {
+		// JSON.parse silently collapsed duplicate object keys. lossless-json throws on conflicting
+		// duplicates, so defer to it to keep identical semantics.
+		return parse(json)
+	}
+	return wrapped
 }
 
 const MAX_SAFE_NATIVE_DIGITS = 14
 
 /**
  * Scan the JSON text (skipping string contents) and check that every numeric literal can round-trip through
- * a JS number unchanged.
+ * a JS number unchanged. Returns the number of object keys in the text (used to detect duplicate keys, which
+ * JSON.parse silently collapses), or -1 if the text must be parsed by lossless-json.
  */
-function canParseNatively(json: string): boolean {
+function scanForNativeParse(json: string): number {
 	const len = json.length
 	let i = 0
+	let keys = 0
 	while (i < len) {
 		const c = json.charCodeAt(i)
 		if (c === 34 /* " */) {
@@ -436,7 +446,7 @@ function canParseNatively(json: string): boolean {
 			for (;;) {
 				const q = json.indexOf('"', i)
 				if (q === -1) {
-					return false // malformed: let lossless-json report it
+					return -1 // malformed: let lossless-json report it
 				}
 				let backslashes = 0
 				let k = q - 1
@@ -448,6 +458,19 @@ function canParseNatively(json: string): boolean {
 				if (backslashes % 2 === 0) {
 					break
 				}
+			}
+			// A string followed by ':' is an object key
+			let n = i
+			while (n < len) {
+				const w = json.charCodeAt(n)
+				if (w === 32 || w === 9 || w === 10 || w === 13) {
+					n++
+				} else {
+					break
+				}
+			}
+			if (n < len && json.charCodeAt(n) === 58 /* : */) {
+				keys++
 			}
 			continue
 		}
@@ -481,28 +504,30 @@ function canParseNatively(json: string): boolean {
 				digits > MAX_SAFE_NATIVE_DIGITS ||
 				String(Number(literal)) !== literal
 			) {
-				return false
+				return -1
 			}
 			continue
 		}
 		i++
 	}
-	return true
+	return keys
 }
 
-function wrapNumbers(value: any): any {
+function wrapNumbers(value: any, counter: { keys: number }): any {
 	if (typeof value === 'number') {
 		return new LosslessNumber(String(value))
 	}
 	if (Array.isArray(value)) {
 		for (let i = 0; i < value.length; i++) {
-			value[i] = wrapNumbers(value[i])
+			value[i] = wrapNumbers(value[i], counter)
 		}
 		return value
 	}
 	if (value !== null && typeof value === 'object') {
-		for (const key of Object.keys(value)) {
-			value[key] = wrapNumbers(value[key])
+		const keys = Object.keys(value)
+		counter.keys += keys.length
+		for (const key of keys) {
+			value[key] = wrapNumbers(value[key], counter)
 		}
 	}
 	return value
