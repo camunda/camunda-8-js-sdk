@@ -431,8 +431,14 @@ export class ZBStreamWorker implements IZBJobWorker {
 		}> => {
 			for (let attempt = 1; ; attempt++) {
 				const count = freeCapacity()
-				if (count <= 0 || isClosed()) {
+				if (isClosed()) {
 					return { jobs: [], full: false }
+				}
+				if (count <= 0) {
+					// Stream jobs filled the capacity (e.g. during a retry
+					// wait). This is not an empty poll: keep the backlog
+					// signal so freed capacity resumes the activation.
+					return { jobs: [], full: true }
 				}
 				try {
 					const jobs = await activate(count)
@@ -472,6 +478,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// activation to finish. Jobs created while the stream was down must
 		// not be stranded when recurring polling is disabled.
 		let backfillRequested = false
+		// The requested backfill is already a retry of a failed backfill:
+		// retry a failed backfill only once.
+		let backfillIsRetry = false
 
 		// Run a handler and count it against the capacity. Each settled job
 		// may free enough capacity for the next activation. Event-driven,
@@ -498,13 +507,19 @@ export class ZBStreamWorker implements IZBJobWorker {
 			activationReserved = true
 			try {
 				const { jobs, full } = await activateWithRetry()
-				backlogPending = full
+				activationReserved = false
+				backlogPending = full && !isClosed()
 				jobs.forEach(dispatch)
 			} catch (e) {
 				backlogPending = false
-				throw e
-			} finally {
+				// Release before servicing a deferred backfill below, which
+				// takes its own reservation (no finally may clear it after).
 				activationReserved = false
+				// A reconnect backfill deferred behind this activation was
+				// never attempted: service it now, or it is stranded when
+				// recurring polling is disabled and no handler settles.
+				maybeActivate()
+				throw e
 			}
 			// Capacity may have been freed while the activation was pending.
 			maybeActivate()
@@ -518,7 +533,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 				return
 			}
 			const isBackfill = backfillRequested
+			const isRetry = backfillIsRetry
 			backfillRequested = false
+			backfillIsRetry = false
 			runActivation().catch((e: unknown) => {
 				// Temporary failures were already retried in activateWithRetry;
 				// this is a non-transient error. The next sidecar poll retries.
@@ -531,12 +548,18 @@ export class ZBStreamWorker implements IZBJobWorker {
 				// Re-run it once. With backlogRetry disabled, the caller opted
 				// out of retrying failed backlog activations: leave recovery to
 				// the next sidecar poll.
-				if (isBackfill && drainRetryEnabled && !isClosed()) {
-					void backfill().catch((e2: unknown) =>
-						this.logger.logError(
-							`Stream worker backfill poll failed: ${toError(e2).message}`
-						)
-					)
+				// If a deferred backfill already started after the failure, it
+				// covers this one: don't run a duplicate poll.
+				if (
+					isBackfill &&
+					!isRetry &&
+					drainRetryEnabled &&
+					!isClosed() &&
+					!activationReserved
+				) {
+					backfillRequested = true
+					backfillIsRetry = true
+					maybeActivate()
 				}
 			})
 		}
@@ -554,6 +577,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 			if (!canActivate()) {
 				backfillRequested = true
+				// A fresh request: it may be retried once if it fails.
+				backfillIsRetry = false
 				return
 			}
 			// Route the activation through activateWithRetry so the initial

@@ -2069,3 +2069,125 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+/**
+ * Regression tests for PR #894 review: backlog / backfill signals must not be
+ * lost when recurring polling is disabled (pollInterval 0).
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker keeps the backlog when stream jobs fill capacity during a retry wait',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0)) // full: backlog pending
+				.mockRejectedValueOnce(resourceExhausted()) // retried after a wait
+				.mockResolvedValueOnce(fakeBatch(1, 2)) // resumed backlog poll
+				.mockResolvedValue([])
+			const held: Array<() => void> = []
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) =>
+					Number(job.key) >= 100
+						? new Promise((resolve) => {
+								held.push(() => resolve(job.complete()))
+							})
+						: job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				maxJobsActive: 2,
+				pollInterval: 0,
+				backlogRetry: { random: () => 1 - Number.EPSILON },
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// During the retry wait, stream jobs fill all capacity.
+			for (const key of ['100', '101']) {
+				createdStreams[0].emit('data', {
+					key,
+					retries: 3,
+					variables: '{}',
+					customHeaders: '{}',
+				})
+			}
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(2)
+			await vi.advanceTimersByTimeAsync(1000) // retry wait elapses, no capacity
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Capacity frees up: the backlog poll resumes.
+			held.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker services a backfill deferred behind a failed backlog activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			let rejectPoll: (e: Error) => void = () => {}
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0)) // full: backlog pending
+				.mockImplementationOnce(
+					() =>
+						new Promise((_, reject) => {
+							rejectPoll = reject
+						})
+				) // backlog poll, rejected later
+				.mockResolvedValueOnce(fakeBatch(1, 2)) // the deferred backfill
+				.mockResolvedValue([])
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 0,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Reconnect while the backlog poll is pending: backfill deferred.
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// The backlog poll fails non-transiently: the deferred backfill runs.
+			rejectPoll(new Error('activation failed'))
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
