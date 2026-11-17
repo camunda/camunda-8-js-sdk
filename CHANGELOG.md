@@ -1,3 +1,10 @@
+## [8.8.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.22...v8.8.23) (2026-11-17)
+
+
+### Bug Fixes
+
+* **lossless-parser:** use JSON.parse fast path to avoid per-char string ropes ([#893](https://github.com/camunda/camunda-8-js-sdk/issues/893)) ([#895](https://github.com/camunda/camunda-8-js-sdk/issues/895)) ([7e37e4b](https://github.com/camunda/camunda-8-js-sdk/commit/7e37e4b8d4c8a2fc90b55bf39c46b0efc81a14b4)), closes [#890](https://github.com/camunda/camunda-8-js-sdk/issues/890)
+
 ## [8.8.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.21...v8.8.22) (2026-11-17)
 
 
