@@ -415,10 +415,14 @@ export class ZBStreamWorker implements IZBJobWorker {
 			applyStreamBackpressure()
 			return job
 		}
-		// Start buffered stream jobs in the free handler slots.
+		// Start buffered stream jobs in the free handler slots. While an
+		// activation is pending, the free slots are reserved for its response
+		// (it asked for exactly the free capacity), so nothing is drained
+		// until it settles — every path releases the reservation first.
 		const drainStreamBuffer = () => {
 			while (
 				!isClosed() &&
+				!activationReserved &&
 				streamBuffer.length > 0 &&
 				inFlight < maxJobsActive
 			) {

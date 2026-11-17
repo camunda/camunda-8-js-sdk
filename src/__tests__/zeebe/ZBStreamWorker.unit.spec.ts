@@ -2438,3 +2438,93 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+/**
+ * Round-5 review finding: a handler settling while a poll is pending must not
+ * start buffered stream jobs in the slots reserved for that poll, or the
+ * worker exceeds `maxJobsActive` when the poll returns.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker does not drain buffered jobs into slots reserved by a pending poll',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(10, 0)) // full: backlog pending
+				.mockImplementationOnce(
+					() =>
+						new Promise((resolve) => {
+							resolvePoll = resolve as typeof resolvePoll
+						})
+				) // backlog poll, held pending
+				.mockResolvedValue([])
+			let inFlight = 0
+			let maxSeen = 0
+			const held: Array<() => void> = []
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					inFlight++
+					maxSeen = Math.max(maxSeen, inFlight)
+					return new Promise((resolve) => {
+						held.push(() => {
+							inFlight--
+							resolve(job.complete())
+						})
+					})
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 10,
+				maxJobsActive: 10,
+				pollInterval: 0,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(10)
+
+			// Settle 8 handlers: below the threshold, the backlog poll asks for 8.
+			held.splice(0, 8).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Stream jobs arrive during the pending poll: buffered.
+			for (const key of ['100', '101']) {
+				createdStreams[0].emit('data', {
+					key,
+					retries: 3,
+					variables: '{}',
+					customHeaders: '{}',
+				})
+			}
+			await vi.advanceTimersByTimeAsync(0)
+			// A handler settles while the poll is still pending: the buffered
+			// jobs must stay buffered, the freed slot belongs to the poll.
+			held.splice(0, 1)[0]()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(inFlight).toBe(1)
+
+			resolvePoll(fakeBatch(8, 10))
+			await vi.advanceTimersByTimeAsync(0)
+			expect(maxSeen).toBeLessThanOrEqual(10)
+			held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(maxSeen).toBeLessThanOrEqual(10)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
