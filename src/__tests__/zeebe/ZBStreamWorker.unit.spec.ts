@@ -1951,3 +1951,121 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+/**
+ * Regression tests for https://github.com/camunda/camunda-8-js-sdk/issues/891
+ *
+ * The backlog drain waited for every handler in a polled batch to settle
+ * before activating again, so the slowest job set the pace for the whole
+ * batch. The worker now tracks jobs in flight against `maxJobsActive` and
+ * activates more as soon as fewer than 30% of that capacity is in use, like
+ * the Java client's JobWorkerImpl.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker activates more jobs before a slow job in the batch finishes',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(10, 0))
+				.mockResolvedValueOnce(fakeBatch(5, 10))
+				.mockResolvedValue([])
+			let releaseSlow: () => void = () => {}
+			const handled: string[] = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					handled.push(job.key)
+					if (job.key === '0') {
+						// The slow job: stays in flight until released.
+						return new Promise((resolve) => {
+							releaseSlow = () => resolve(job.complete())
+						})
+					}
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 10,
+				pollInterval: 30000,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+
+			// The slow job is still in flight, yet the next activation already
+			// ran — as soon as fewer than 30% of the capacity was in use — and
+			// asked only for the free capacity.
+			expect(zbClient.activateJobs.mock.calls.length).toBeGreaterThanOrEqual(2)
+			const second = zbClient.activateJobs.mock.calls[1][0].maxJobsToActivate
+			expect(second).toBeGreaterThanOrEqual(8)
+			expect(second).toBeLessThan(10)
+			expect(handled).toHaveLength(15)
+
+			releaseSlow()
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker never holds more polled jobs in flight than maxJobsActive',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			let offset = 0
+			// An endless backlog: every poll is filled to the requested size.
+			zbClient.activateJobs.mockImplementation(
+				async ({ maxJobsToActivate }: { maxJobsToActivate: number }) => {
+					const batch = fakeBatch(maxJobsToActivate, offset)
+					offset += maxJobsToActivate
+					return batch
+				}
+			)
+			let inFlight = 0
+			let maxSeen = 0
+			const handle = await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: async (job) => {
+					inFlight++
+					maxSeen = Math.max(maxSeen, inFlight)
+					// Varying handler durations.
+					await new Promise((r) => setTimeout(r, (Number(job.key) % 7) * 10))
+					inFlight--
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 8,
+				maxJobsActive: 12,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(2_000)
+			expect(offset).toBeGreaterThan(100)
+			expect(maxSeen).toBeLessThanOrEqual(12)
+			for (const [req] of zbClient.activateJobs.mock.calls) {
+				expect(req.maxJobsToActivate).toBeGreaterThan(0)
+				expect(req.maxJobsToActivate).toBeLessThanOrEqual(8)
+			}
+
+			handle.close()
+			const calls = zbClient.activateJobs.mock.calls.length
+			await vi.advanceTimersByTimeAsync(2_000)
+			// Nothing is activated after close.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(calls)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
