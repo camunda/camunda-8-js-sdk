@@ -1,3 +1,5 @@
+import { parse } from 'lossless-json'
+
 import {
 	BigIntValue,
 	BigIntValueArray,
@@ -572,8 +574,11 @@ describe('__proto__ keys do not replace DTO prototypes', () => {
 			expect(dto.name).toBe('a')
 		})
 	}
-	test('nested __proto__ in an array matches lossless-json (no own __proto__ key)', () => {
-		const parsed = losslessParse('[{"__proto__":{"x":1}}]')
-		expect(Object.keys(parsed[0])).not.toContain('__proto__')
+	test('nested __proto__ in an array matches the installed lossless-json', () => {
+		const json = '[{"__proto__":{"x":1}}]'
+		const expected = parse(json) as Array<object>
+		expect(Object.keys(losslessParse(json)[0])).toEqual(
+			Object.keys(expected[0])
+		)
 	})
 })

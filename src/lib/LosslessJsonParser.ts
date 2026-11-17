@@ -269,6 +269,12 @@ function parseWithAnnotations<T>(
 	const instance = new dto()
 
 	for (const [key, value] of Object.entries(obj)) {
+		// Never assign `__proto__` onto the DTO: `instance[key] = value` would invoke the prototype
+		// setter and replace the DTO's prototype. Some lossless-json versions (e.g. 4.3.x) keep it as
+		// an own enumerable property, so guard here instead of relying on the parser's behaviour.
+		if (key === '__proto__') {
+			continue
+		}
 		const childClass = Reflect.getMetadata(
 			MetadataKey.CHILD_DTO,
 			dto.prototype,
