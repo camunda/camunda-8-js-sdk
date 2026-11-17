@@ -2295,3 +2295,146 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+/**
+ * Round-4 review findings on the stream buffer: it must be bounded by
+ * transport backpressure, a closed handle must not start buffered or polled
+ * handlers, and a rejected activation must not strand buffered jobs.
+ */
+const setupBufferedWorker = async (
+	activation: () => Promise<Array<{ key: string }>>
+) => {
+	vi.useFakeTimers()
+	const createdStreams: Array<
+		ReturnType<typeof createMockStream> & {
+			pause: ReturnType<typeof vi.fn>
+			resume: ReturnType<typeof vi.fn>
+		}
+	> = []
+	const { worker, grpcClient, zbClient } = createWorker()
+	grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+		const s = Object.assign(createMockStream(), {
+			pause: vi.fn(),
+			resume: vi.fn(),
+		})
+		createdStreams.push(s)
+		return s
+	})
+	zbClient.activateJobs.mockImplementationOnce(activation)
+	const started: string[] = []
+	const held: Array<() => void> = []
+	const handlePromise = worker.streamJobs({
+		type: 'test-task',
+		worker: 'test-worker',
+		timeout: 30000,
+		tenantIds: ['<default>'],
+		taskHandler: (job) => {
+			started.push(job.key)
+			return new Promise((resolve) => {
+				held.push(() => resolve(job.complete()))
+			})
+		},
+		inputVariableDto: LosslessDto,
+		customHeadersDto: LosslessDto,
+		pollMaxJobsToActivate: 2,
+		maxJobsActive: 2,
+		pollInterval: 0,
+	})
+	// Swallow here; tests that care await it explicitly.
+	handlePromise.catch(() => {})
+	await vi.advanceTimersByTimeAsync(0)
+	const emit = (key: string) =>
+		createdStreams[0].emit('data', {
+			key,
+			retries: 3,
+			variables: '{}',
+			customHeaders: '{}',
+		})
+	return {
+		worker,
+		zbClient,
+		createdStreams,
+		started,
+		held,
+		handlePromise,
+		emit,
+	}
+}
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker pauses the stream while the buffer is full and resumes as it drains',
+	async () => {
+		try {
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve
+					})
+			)
+			ctx.emit('100')
+			expect(ctx.createdStreams[0].pause).not.toHaveBeenCalled()
+			ctx.emit('101')
+			// Buffer reached maxJobsActive: transport backpressure kicks in.
+			expect(ctx.createdStreams[0].pause).toHaveBeenCalledTimes(1)
+			resolvePoll([])
+			await vi.advanceTimersByTimeAsync(0)
+			// Empty activation: buffered jobs start, the stream resumes.
+			expect(ctx.started).toEqual(['100', '101'])
+			expect(ctx.createdStreams[0].resume).toHaveBeenCalledTimes(1)
+			ctx.held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker starts no handlers when closed while an activation is pending',
+	async () => {
+		try {
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve
+					})
+			)
+			ctx.emit('100')
+			const closing = ctx.worker.close()
+			resolvePoll(fakeBatch(2, 0))
+			await vi.advanceTimersByTimeAsync(0)
+			await closing
+			expect(ctx.started).toEqual([])
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker starts buffered stream jobs when the activation rejects',
+	async () => {
+		try {
+			let rejectPoll: (e: Error) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((_, reject) => {
+						rejectPoll = reject
+					})
+			)
+			ctx.emit('100')
+			expect(ctx.started).toEqual([])
+			rejectPoll(new Error('INVALID_ARGUMENT: nope'))
+			await vi.advanceTimersByTimeAsync(0)
+			expect(ctx.started).toEqual(['100'])
+			ctx.held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)

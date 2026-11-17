@@ -385,9 +385,46 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// Stream jobs are pushed by the broker and can't be refused, so they
 		// are buffered while the worker is at capacity and started as
 		// handlers settle: both delivery paths share the `maxJobsActive`
-		// limit. The buffer is bounded by the broker's own flow control —
-		// it stops sending once the worker stops acknowledging.
+		// limit. The buffer is bounded by transport backpressure: once it
+		// holds `maxJobsActive` jobs the stream is paused (gRPC stops reading,
+		// so HTTP/2 flow control stops the broker sending) and resumed when
+		// the buffer drains below that bound.
 		const streamBuffer: Job<WorkerInputVariables, CustomHeaderShape>[] = []
+		const streamBufferLimit = maxJobsActive
+		// The raw stream currently delivering jobs, so it can be paused.
+		let currentRawStream:
+			| { pause?: () => unknown; resume?: () => unknown }
+			| undefined
+		let streamPaused = false
+		// Pause or resume the stream to keep the buffer bounded.
+		const applyStreamBackpressure = () => {
+			const shouldPause =
+				!isClosed() && streamBuffer.length >= streamBufferLimit
+			if (shouldPause === streamPaused || !currentRawStream) {
+				return
+			}
+			streamPaused = shouldPause
+			if (shouldPause) {
+				currentRawStream.pause?.()
+			} else {
+				currentRawStream.resume?.()
+			}
+		}
+		const takeBuffered = () => {
+			const job = streamBuffer.shift()
+			applyStreamBackpressure()
+			return job
+		}
+		// Start buffered stream jobs in the free handler slots.
+		const drainStreamBuffer = () => {
+			while (
+				!isClosed() &&
+				streamBuffer.length > 0 &&
+				inFlight < maxJobsActive
+			) {
+				runJob(takeBuffered()!)
+			}
+		}
 		// Polled jobs never take in-flight work above maxJobsActive. Buffered
 		// stream jobs count against the capacity too, so polls back off while
 		// the stream is busy instead of competing with it for handlers.
@@ -506,10 +543,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 				// A settled handler frees capacity: start a buffered stream
 				// job before polling for more, so pushed jobs are not
 				// starved by a continuously replenished backlog.
-				const buffered = streamBuffer.shift()
-				if (buffered && !isClosed()) {
-					runJob(buffered)
-				}
+				drainStreamBuffer()
 				maybeActivate()
 			})
 		}
@@ -533,6 +567,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 			if (inFlight >= maxJobsActive || activationReserved) {
 				streamBuffer.push(job)
+				applyStreamBackpressure()
 				return
 			}
 			runJob(job)
@@ -552,6 +587,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 				const { jobs, full } = await activateWithRetry()
 				activationReserved = false
 				backlogPending = full && !isClosed()
+				if (isClosed()) {
+					// The handle closed while the activation was pending: start
+					// no handlers, neither polled nor buffered.
+					return
+				}
 				// Dispatch this activation's jobs first: the activation asked for
 				// exactly the free capacity, and buffered stream jobs were counted
 				// against it, so the batch always fits. Buffered stream jobs then
@@ -559,14 +599,15 @@ export class ZBStreamWorker implements IZBJobWorker {
 				// short) — they arrived before the polled jobs, and freeing the
 				// reservation must not leave them stranded behind the batch.
 				jobs.forEach(dispatch)
-				while (streamBuffer.length > 0 && inFlight < maxJobsActive) {
-					runJob(streamBuffer.shift()!)
-				}
+				drainStreamBuffer()
 			} catch (e) {
 				backlogPending = false
 				// Release before servicing a deferred backfill below, which
 				// takes its own reservation (no finally may clear it after).
 				activationReserved = false
+				// Stream jobs buffered behind the failed activation must not be
+				// stranded: start them in the free slots (no poll retry here).
+				drainStreamBuffer()
 				// A reconnect backfill deferred behind this activation was
 				// never attempted: service it now, or it is stranded when
 				// recurring polling is disabled and no handler settles.
@@ -798,6 +839,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 			})
 			this.streams.push(attachment)
 			currentStream = attachment
+			currentRawStream = stream
+			// A new stream starts flowing: re-apply backpressure if the buffer
+			// is still full from the previous one.
+			streamPaused = false
+			applyStreamBackpressure()
 			transition({ status: 'open' })
 			return undefined
 		}
