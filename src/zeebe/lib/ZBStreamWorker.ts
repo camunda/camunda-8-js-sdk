@@ -415,18 +415,36 @@ export class ZBStreamWorker implements IZBJobWorker {
 			applyStreamBackpressure()
 			return job
 		}
+		// A buffered job whose activation deadline has passed may already be
+		// reactivated elsewhere: starting its handler risks duplicate side
+		// effects. Pausing the stream does not extend deadlines. A missing or
+		// unparseable deadline is treated as unknown (not expired).
+		const isExpired = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+			const deadline = Number(job.deadline)
+			return Number.isFinite(deadline) && deadline > 0 && deadline <= Date.now()
+		}
 		// Start buffered stream jobs in the free handler slots. While an
-		// activation is pending, the free slots are reserved for its response
-		// (it asked for exactly the free capacity), so nothing is drained
-		// until it settles — every path releases the reservation first.
+		// activation request is on the wire, the free slots are reserved for
+		// its response (it asked for exactly the free capacity), so nothing is
+		// drained until it settles — every path releases the reservation
+		// first. Expired buffered jobs are discarded, and a backlog poll is
+		// arranged so the broker can hand them out again.
 		const drainStreamBuffer = () => {
 			while (
 				!isClosed() &&
-				!activationReserved &&
+				!capacityReserved &&
 				streamBuffer.length > 0 &&
 				inFlight < maxJobsActive
 			) {
-				runJob(takeBuffered()!)
+				const job = takeBuffered()!
+				if (isExpired(job)) {
+					this.logger.logDebug(
+						`Discarding buffered stream job ${job.key} of type ${req.type}: its activation deadline has passed`
+					)
+					backlogPending = true
+					continue
+				}
+				runJob(job)
 			}
 		}
 		// Polled jobs never take in-flight work above maxJobsActive. Buffered
@@ -492,10 +510,17 @@ export class ZBStreamWorker implements IZBJobWorker {
 					// signal so freed capacity resumes the activation.
 					return { jobs: [], full: true }
 				}
+				// Reserve the requested capacity for the response. runActivation
+				// releases it once the returned jobs are dispatched.
+				capacityReserved = true
 				try {
 					const jobs = await activate(count)
 					return { jobs, full: jobs.length >= count }
 				} catch (e) {
+					// No request is on the wire during the retry backoff: release
+					// the capacity so buffered stream jobs can use idle slots.
+					// The next attempt recalculates the free capacity.
+					capacityReserved = false
 					if (
 						isClosed() ||
 						!drainRetryEnabled ||
@@ -511,6 +536,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 							toError(e).message
 						}`
 					)
+					drainStreamBuffer()
 					await retryWait(delay)
 					if (isClosed()) {
 						return { jobs: [], full: false }
@@ -524,6 +550,10 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// the activation fails), so a reconnect backfill can never start a
 		// second activation while another is still pending.
 		let activationReserved = false
+		// The free capacity is reserved for an activation request currently on
+		// the wire (not during its retry backoff). Separate from
+		// activationReserved, which guards the whole retry sequence.
+		let capacityReserved = false
 		// More jobs are probably waiting: the last poll came back full.
 		let backlogPending = false
 		// A reconnect backfill is waiting for capacity or for the in-flight
@@ -569,7 +599,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (isClosed()) {
 				return
 			}
-			if (inFlight >= maxJobsActive || activationReserved) {
+			if (inFlight >= maxJobsActive || capacityReserved) {
 				streamBuffer.push(job)
 				applyStreamBackpressure()
 				return
@@ -590,6 +620,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			try {
 				const { jobs, full } = await activateWithRetry()
 				activationReserved = false
+				capacityReserved = false
 				backlogPending = full && !isClosed()
 				if (isClosed()) {
 					// The handle closed while the activation was pending: start
@@ -609,6 +640,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 				// Release before servicing a deferred backfill below, which
 				// takes its own reservation (no finally may clear it after).
 				activationReserved = false
+				capacityReserved = false
 				// Stream jobs buffered behind the failed activation must not be
 				// stranded: start them in the free slots (no poll retry here).
 				drainStreamBuffer()

@@ -2113,9 +2113,9 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			await vi.advanceTimersByTimeAsync(0)
 			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
 
-			// During the retry wait, stream jobs arrive while the retrying
-			// activation holds its reservation: they are buffered, and their
-			// capacity is spoken for, so the retry finds none free.
+			// During the retry wait, stream jobs arrive. No request is on the
+			// wire, so they start in the idle slots and the retry finds no
+			// free capacity.
 			for (const key of ['100', '101']) {
 				createdStreams[0].emit('data', {
 					key,
@@ -2125,14 +2125,11 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 				})
 			}
 			await vi.advanceTimersByTimeAsync(0)
-			expect(held).toHaveLength(0)
-			await vi.advanceTimersByTimeAsync(1000) // retry wait elapses, no capacity
-			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
-
-			// The retry comes back empty-but-full (no free capacity): the
-			// backlog signal is kept and the buffered stream jobs start.
-			await vi.advanceTimersByTimeAsync(1000)
 			expect(held).toHaveLength(2)
+			// The retry wait elapses with no free capacity: no request is
+			// sent, and the backlog signal is kept.
+			await vi.advanceTimersByTimeAsync(2000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
 
 			// Capacity frees up: the backlog poll resumes.
 			held.forEach((release) => release())
@@ -2523,6 +2520,87 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			await vi.advanceTimersByTimeAsync(0)
 			expect(maxSeen).toBeLessThanOrEqual(10)
 			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Round-6 review findings: the capacity reservation must not be held during
+ * a poll's retry backoff (buffered jobs would idle beside free slots), and
+ * buffered stream jobs whose activation deadline passed must not be started.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker starts buffered stream jobs during a poll retry backoff',
+	async () => {
+		try {
+			let rejectPoll: (e: Error) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((_, reject) => {
+						rejectPoll = reject
+					})
+			)
+			ctx.zbClient.activateJobs.mockImplementation(() => new Promise(() => {}))
+			ctx.emit('100')
+			expect(ctx.started).toEqual([])
+			rejectPoll(resourceExhausted())
+			await vi.advanceTimersByTimeAsync(0)
+			// No request on the wire: the buffered job uses the idle slot.
+			expect(ctx.started).toEqual(['100'])
+			const callsBefore = ctx.zbClient.activateJobs.mock.calls.length
+			await vi.advanceTimersByTimeAsync(10_000)
+			// The retry recalculates the free capacity (1 of 2 in flight).
+			const retry = ctx.zbClient.activateJobs.mock.calls[callsBefore]
+			expect(retry?.[0].maxJobsToActivate).toBe(1)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker discards buffered stream jobs whose deadline has passed',
+	async () => {
+		try {
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve
+					})
+			)
+			ctx.zbClient.activateJobs.mockResolvedValue([])
+			ctx.createdStreams[0].emit('data', {
+				key: '100',
+				retries: 3,
+				deadline: String(Date.now() + 1000),
+				variables: '{}',
+				customHeaders: '{}',
+			})
+			ctx.createdStreams[0].emit('data', {
+				key: '101',
+				retries: 3,
+				deadline: String(Date.now() + 60_000),
+				variables: '{}',
+				customHeaders: '{}',
+			})
+			const callsBefore = ctx.zbClient.activateJobs.mock.calls.length
+			await vi.advanceTimersByTimeAsync(2000)
+			resolvePoll([])
+			await vi.advanceTimersByTimeAsync(0)
+			// The expired job is dropped; the live one starts.
+			expect(ctx.started).toEqual(['101'])
+			// A fresh backlog poll is arranged for the discarded job once
+			// capacity frees up.
+			ctx.held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(ctx.zbClient.activateJobs.mock.calls.length).toBeGreaterThan(
+				callsBefore
+			)
+			await ctx.worker.close()
 		} finally {
 			vi.useRealTimers()
 		}
