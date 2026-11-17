@@ -1951,3 +1951,658 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+/**
+ * Regression tests for https://github.com/camunda/camunda-8-js-sdk/issues/891
+ *
+ * The backlog drain waited for every handler in a polled batch to settle
+ * before activating again, so the slowest job set the pace for the whole
+ * batch. The worker now tracks jobs in flight against `maxJobsActive` and
+ * activates more as soon as fewer than 30% of that capacity is in use, like
+ * the Java client's JobWorkerImpl.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker activates more jobs before a slow job in the batch finishes',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(10, 0))
+				.mockResolvedValueOnce(fakeBatch(5, 10))
+				.mockResolvedValue([])
+			let releaseSlow: () => void = () => {}
+			const handled: string[] = []
+
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					handled.push(job.key)
+					if (job.key === '0') {
+						// The slow job: stays in flight until released.
+						return new Promise((resolve) => {
+							releaseSlow = () => resolve(job.complete())
+						})
+					}
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 10,
+				pollInterval: 30000,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+
+			// The slow job is still in flight, yet the next activation already
+			// ran — as soon as fewer than 30% of the capacity was in use — and
+			// asked only for the free capacity.
+			expect(zbClient.activateJobs.mock.calls.length).toBeGreaterThanOrEqual(2)
+			const second = zbClient.activateJobs.mock.calls[1][0].maxJobsToActivate
+			expect(second).toBeGreaterThanOrEqual(8)
+			expect(second).toBeLessThan(10)
+			expect(handled).toHaveLength(15)
+
+			releaseSlow()
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker never holds more polled jobs in flight than maxJobsActive',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const { worker, zbClient } = createWorker()
+			let offset = 0
+			// An endless backlog: every poll is filled to the requested size.
+			zbClient.activateJobs.mockImplementation(
+				async ({ maxJobsToActivate }: { maxJobsToActivate: number }) => {
+					const batch = fakeBatch(maxJobsToActivate, offset)
+					offset += maxJobsToActivate
+					return batch
+				}
+			)
+			let inFlight = 0
+			let maxSeen = 0
+			const handle = await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: async (job) => {
+					inFlight++
+					maxSeen = Math.max(maxSeen, inFlight)
+					// Varying handler durations.
+					await new Promise((r) => setTimeout(r, (Number(job.key) % 7) * 10))
+					inFlight--
+					return job.complete()
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 8,
+				maxJobsActive: 12,
+				pollInterval: 30000,
+			})
+
+			await vi.advanceTimersByTimeAsync(2_000)
+			expect(offset).toBeGreaterThan(100)
+			expect(maxSeen).toBeLessThanOrEqual(12)
+			for (const [req] of zbClient.activateJobs.mock.calls) {
+				expect(req.maxJobsToActivate).toBeGreaterThan(0)
+				expect(req.maxJobsToActivate).toBeLessThanOrEqual(8)
+			}
+
+			handle.close()
+			const calls = zbClient.activateJobs.mock.calls.length
+			await vi.advanceTimersByTimeAsync(2_000)
+			// Nothing is activated after close.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(calls)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Regression tests for PR #894 review: backlog / backfill signals must not be
+ * lost when recurring polling is disabled (pollInterval 0).
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker keeps the backlog when stream jobs fill capacity during a retry wait',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0)) // full: backlog pending
+				.mockRejectedValueOnce(resourceExhausted()) // retried after a wait
+				.mockResolvedValueOnce(fakeBatch(1, 2)) // resumed backlog poll
+				.mockResolvedValue([])
+			const held: Array<() => void> = []
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) =>
+					Number(job.key) >= 100
+						? new Promise((resolve) => {
+								held.push(() => resolve(job.complete()))
+							})
+						: job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				maxJobsActive: 2,
+				pollInterval: 0,
+				backlogRetry: { random: () => 1 - Number.EPSILON },
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// During the retry wait, stream jobs arrive. No request is on the
+			// wire, so they start in the idle slots and the retry finds no
+			// free capacity.
+			for (const key of ['100', '101']) {
+				createdStreams[0].emit('data', {
+					key,
+					retries: 3,
+					variables: '{}',
+					customHeaders: '{}',
+				})
+			}
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(2)
+			// The retry wait elapses with no free capacity: no request is
+			// sent, and the backlog signal is kept.
+			await vi.advanceTimersByTimeAsync(2000)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Capacity frees up: the backlog poll resumes.
+			held.forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker services a backfill deferred behind a failed backlog activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			let rejectPoll: (e: Error) => void = () => {}
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(2, 0)) // full: backlog pending
+				.mockImplementationOnce(
+					() =>
+						new Promise((_, reject) => {
+							rejectPoll = reject
+						})
+				) // backlog poll, rejected later
+				.mockResolvedValueOnce(fakeBatch(1, 2)) // the deferred backfill
+				.mockResolvedValue([])
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => job.complete(),
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				pollInterval: 0,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Reconnect while the backlog poll is pending: backfill deferred.
+			createdStreams[0].emit('error', new Error('boom'))
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(grpcClient.streamActivatedJobsStream).toHaveBeenCalledTimes(2)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// The backlog poll fails non-transiently: the deferred backfill runs.
+			rejectPoll(new Error('activation failed'))
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Regression test for PR #894 review: both delivery paths must share the
+ * `maxJobsActive` limit. A poll can request up to the free capacity, then
+ * stream jobs can arrive before the activation response lands; dispatching
+ * both started more concurrent handlers than `maxJobsActive`. Stream jobs
+ * are now buffered while the worker is at capacity — including the capacity
+ * an in-flight activation will consume — and started as handlers settle.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker buffers stream jobs that arrive during a pending activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			zbClient.activateJobs.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve as typeof resolvePoll
+					})
+			)
+			let inFlight = 0
+			let maxSeen = 0
+			const held: Array<() => void> = []
+			// Not awaited yet: streamJobs() awaits the initial backfill
+			// activation, which this test keeps pending until below.
+			const handlePromise = worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					inFlight++
+					maxSeen = Math.max(maxSeen, inFlight)
+					return new Promise((resolve) => {
+						held.push(() => {
+							inFlight--
+							resolve(job.complete())
+						})
+					})
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				maxJobsActive: 2,
+				pollInterval: 0,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			// The initial backfill poll is in flight; it will ask for 2 jobs.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			// Two stream jobs arrive before the activation response lands.
+			// With the activation's capacity already spoken for, both are
+			// buffered instead of starting handlers past the limit.
+			for (const key of ['100', '101']) {
+				createdStreams[0].emit('data', {
+					key,
+					retries: 3,
+					variables: '{}',
+					customHeaders: '{}',
+				})
+			}
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(0)
+
+			// The activation returns the 2 jobs it asked for. Old code ran 4
+			// handlers concurrently here (2 polled + 2 streamed); now the
+			// streamed jobs stay buffered at capacity.
+			resolvePoll(fakeBatch(2, 0))
+			await vi.advanceTimersByTimeAsync(0)
+			// Fail fast on the old code instead of hanging on held handlers.
+			expect(maxSeen).toBeLessThanOrEqual(2)
+			expect(held).toHaveLength(2)
+			expect(maxSeen).toBe(2)
+
+			// Buffered stream jobs start as handlers settle — the limit holds.
+			held.splice(0, 1)[0]()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(2)
+			expect(maxSeen).toBe(2)
+			held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(maxSeen).toBeLessThanOrEqual(2)
+			await handlePromise
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Round-4 review findings on the stream buffer: it must be bounded by
+ * transport backpressure, a closed handle must not start buffered or polled
+ * handlers, and a rejected activation must not strand buffered jobs.
+ */
+const setupBufferedWorker = async (
+	activation: () => Promise<Array<{ key: string }>>
+) => {
+	vi.useFakeTimers()
+	const createdStreams: Array<
+		ReturnType<typeof createMockStream> & {
+			pause: ReturnType<typeof vi.fn>
+			resume: ReturnType<typeof vi.fn>
+		}
+	> = []
+	const { worker, grpcClient, zbClient } = createWorker()
+	grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+		const s = Object.assign(createMockStream(), {
+			pause: vi.fn(),
+			resume: vi.fn(),
+		})
+		createdStreams.push(s)
+		return s
+	})
+	zbClient.activateJobs.mockImplementationOnce(activation)
+	const started: string[] = []
+	const held: Array<() => void> = []
+	const handlePromise = worker.streamJobs({
+		type: 'test-task',
+		worker: 'test-worker',
+		timeout: 30000,
+		tenantIds: ['<default>'],
+		taskHandler: (job) => {
+			started.push(job.key)
+			return new Promise((resolve) => {
+				held.push(() => resolve(job.complete()))
+			})
+		},
+		inputVariableDto: LosslessDto,
+		customHeadersDto: LosslessDto,
+		pollMaxJobsToActivate: 2,
+		maxJobsActive: 2,
+		pollInterval: 0,
+	})
+	// Swallow here; tests that care await it explicitly.
+	handlePromise.catch(() => {})
+	await vi.advanceTimersByTimeAsync(0)
+	const emit = (key: string) =>
+		createdStreams[0].emit('data', {
+			key,
+			retries: 3,
+			variables: '{}',
+			customHeaders: '{}',
+		})
+	return {
+		worker,
+		zbClient,
+		createdStreams,
+		started,
+		held,
+		handlePromise,
+		emit,
+	}
+}
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker pauses the stream while the buffer is full and resumes as it drains',
+	async () => {
+		try {
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve
+					})
+			)
+			ctx.emit('100')
+			expect(ctx.createdStreams[0].pause).not.toHaveBeenCalled()
+			ctx.emit('101')
+			// Buffer reached maxJobsActive: transport backpressure kicks in.
+			expect(ctx.createdStreams[0].pause).toHaveBeenCalledTimes(1)
+			resolvePoll([])
+			await vi.advanceTimersByTimeAsync(0)
+			// Empty activation: buffered jobs start, the stream resumes.
+			expect(ctx.started).toEqual(['100', '101'])
+			expect(ctx.createdStreams[0].resume).toHaveBeenCalledTimes(1)
+			ctx.held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker starts no handlers when closed while an activation is pending',
+	async () => {
+		try {
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve
+					})
+			)
+			ctx.emit('100')
+			const closing = ctx.worker.close()
+			resolvePoll(fakeBatch(2, 0))
+			await vi.advanceTimersByTimeAsync(0)
+			await closing
+			expect(ctx.started).toEqual([])
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker starts buffered stream jobs when the activation rejects',
+	async () => {
+		try {
+			let rejectPoll: (e: Error) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((_, reject) => {
+						rejectPoll = reject
+					})
+			)
+			ctx.emit('100')
+			expect(ctx.started).toEqual([])
+			rejectPoll(new Error('INVALID_ARGUMENT: nope'))
+			await vi.advanceTimersByTimeAsync(0)
+			expect(ctx.started).toEqual(['100'])
+			ctx.held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Round-5 review finding: a handler settling while a poll is pending must not
+ * start buffered stream jobs in the slots reserved for that poll, or the
+ * worker exceeds `maxJobsActive` when the poll returns.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker does not drain buffered jobs into slots reserved by a pending poll',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			zbClient.activateJobs
+				.mockResolvedValueOnce(fakeBatch(10, 0)) // full: backlog pending
+				.mockImplementationOnce(
+					() =>
+						new Promise((resolve) => {
+							resolvePoll = resolve as typeof resolvePoll
+						})
+				) // backlog poll, held pending
+				.mockResolvedValue([])
+			let inFlight = 0
+			let maxSeen = 0
+			const held: Array<() => void> = []
+			await worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					inFlight++
+					maxSeen = Math.max(maxSeen, inFlight)
+					return new Promise((resolve) => {
+						held.push(() => {
+							inFlight--
+							resolve(job.complete())
+						})
+					})
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 10,
+				maxJobsActive: 10,
+				pollInterval: 0,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(10)
+
+			// Settle 8 handlers: below the threshold, the backlog poll asks for 8.
+			held.splice(0, 8).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// Stream jobs arrive during the pending poll: buffered.
+			for (const key of ['100', '101']) {
+				createdStreams[0].emit('data', {
+					key,
+					retries: 3,
+					variables: '{}',
+					customHeaders: '{}',
+				})
+			}
+			await vi.advanceTimersByTimeAsync(0)
+			// A handler settles while the poll is still pending: the buffered
+			// jobs must stay buffered, the freed slot belongs to the poll.
+			held.splice(0, 1)[0]()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(inFlight).toBe(1)
+
+			resolvePoll(fakeBatch(8, 10))
+			await vi.advanceTimersByTimeAsync(0)
+			expect(maxSeen).toBeLessThanOrEqual(10)
+			held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(maxSeen).toBeLessThanOrEqual(10)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Round-6 review findings: the capacity reservation must not be held during
+ * a poll's retry backoff (buffered jobs would idle beside free slots), and
+ * buffered stream jobs whose activation deadline passed must not be started.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker starts buffered stream jobs during a poll retry backoff',
+	async () => {
+		try {
+			let rejectPoll: (e: Error) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((_, reject) => {
+						rejectPoll = reject
+					})
+			)
+			ctx.zbClient.activateJobs.mockImplementation(() => new Promise(() => {}))
+			ctx.emit('100')
+			expect(ctx.started).toEqual([])
+			rejectPoll(resourceExhausted())
+			await vi.advanceTimersByTimeAsync(0)
+			// No request on the wire: the buffered job uses the idle slot.
+			expect(ctx.started).toEqual(['100'])
+			const callsBefore = ctx.zbClient.activateJobs.mock.calls.length
+			await vi.advanceTimersByTimeAsync(10_000)
+			// The retry recalculates the free capacity (1 of 2 in flight).
+			const retry = ctx.zbClient.activateJobs.mock.calls[callsBefore]
+			expect(retry?.[0].maxJobsToActivate).toBe(1)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker discards buffered stream jobs whose deadline has passed',
+	async () => {
+		try {
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			const ctx = await setupBufferedWorker(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve
+					})
+			)
+			ctx.zbClient.activateJobs.mockResolvedValue([])
+			ctx.createdStreams[0].emit('data', {
+				key: '100',
+				retries: 3,
+				deadline: String(Date.now() + 1000),
+				variables: '{}',
+				customHeaders: '{}',
+			})
+			ctx.createdStreams[0].emit('data', {
+				key: '101',
+				retries: 3,
+				deadline: String(Date.now() + 60_000),
+				variables: '{}',
+				customHeaders: '{}',
+			})
+			const callsBefore = ctx.zbClient.activateJobs.mock.calls.length
+			await vi.advanceTimersByTimeAsync(2000)
+			resolvePoll([])
+			await vi.advanceTimersByTimeAsync(0)
+			// The expired job is dropped; the live one starts.
+			expect(ctx.started).toEqual(['101'])
+			// A fresh backlog poll is arranged for the discarded job once
+			// capacity frees up.
+			ctx.held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(ctx.zbClient.activateJobs.mock.calls.length).toBeGreaterThan(
+				callsBefore
+			)
+			await ctx.worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)

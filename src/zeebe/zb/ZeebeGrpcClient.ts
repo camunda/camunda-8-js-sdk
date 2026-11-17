@@ -1322,6 +1322,14 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			 */
 			pollMaxJobsToActivate?: number
 			/**
+			 * Maximum number of jobs this registration handles concurrently,
+			 * counting jobs from the stream and from backlog polls. While a
+			 * backlog exists, the worker polls again as soon as fewer than 30%
+			 * of this many jobs are in flight, rather than waiting for a whole
+			 * batch to finish. Defaults to `pollMaxJobsToActivate`.
+			 */
+			maxJobsActive?: number
+			/**
 			 * Interval in milliseconds between sidecar poll cycles. The sidecar poll
 			 * is a low-frequency safety net that picks up jobs the stream may have
 			 * missed (e.g. jobs re-queued after a timeout). Each poll is a command on
