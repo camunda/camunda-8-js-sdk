@@ -1,3 +1,5 @@
+import { parse } from 'lossless-json'
+
 import {
 	BigIntValue,
 	BigIntValueArray,
@@ -464,4 +466,121 @@ test('It correctly throws when encountering a number rather than an array in a s
 
 	const json = `{"message":"Hello from automation","userId":null,"sendTo":12022907}`
 	expect(() => losslessParse(json, Dto)).toThrow('expected Array')
+})
+
+describe('losslessParse native fast path (#890)', () => {
+	const cases = [
+		'{"a":1,"b":-2.5,"c":"x\\\\\\"9999999999999999","d":[1e3,0,-0.001],"e":null,"f":true}',
+		'{"a":1.0,"b":1e3,"c":-0}',
+		'[{"n":12345678901234},{"n":"str"}]',
+		'{"s":"\\u00e9\\n\\\\","n":3.14}',
+	]
+	test.each(cases)('matches lossless-json semantics for %s', (json) => {
+		class Dto extends LosslessDto {
+			n!: number
+		}
+		expect(losslessParse(json)).toEqual(JSON.parse(json))
+		expect(losslessParse(json, Dto)).toEqual(
+			expect.objectContaining(
+				Array.isArray(JSON.parse(json)) ? {} : JSON.parse(json)
+			)
+		)
+	})
+
+	test('preserves literal text for Int64String fields on fast and slow paths', () => {
+		class Dto extends LosslessDto {
+			@Int64String
+			key!: string
+			@BigIntValue
+			big!: bigint
+		}
+		expect(losslessParse('{"key": 123, "big": 5}', Dto)).toMatchObject({
+			key: '123',
+			big: BigInt(5),
+		})
+		expect(
+			losslessParse('{"key": 2251799813685249, "big": 9007199254740993}', Dto)
+		).toMatchObject({
+			key: '2251799813685249',
+			big: BigInt('9007199254740993'),
+		})
+		expect(losslessParse('{"key": 1.50}', Dto).key).toBe('1.50')
+	})
+
+	test('still throws on unsafe number without a Dto', () => {
+		expect(() => losslessParse('{"x": 9007199254740993}')).toThrow(
+			/unsafe number value was received for "x"/
+		)
+	})
+
+	test.each([
+		'{"x":1,"x":2}',
+		'{"x":"a","x":"b"}',
+		'{"o":{"k":1,"k":2}}',
+		'[{"k":true},{"k":1,"k":"s"}]',
+		'{"\\u0078":1,"x":2}',
+		'{"a\\"b":1, "a\\"b" : 2}',
+	])('throws like lossless-json on conflicting duplicate keys: %s', (json) => {
+		expect(() => losslessParse(json)).toThrow(/Duplicate key/)
+	})
+
+	test('a digit run inside a string does not affect numbers', () => {
+		expect(losslessParse('{"s":"99999999999999999999","n":1}')).toEqual({
+			s: '99999999999999999999',
+			n: 1,
+		})
+	})
+
+	test('does not retain per-character heap for large string variables', () => {
+		const big = 'x'.repeat(10_000)
+		const payload = JSON.stringify({ data: big, count: 1 })
+		const gc = (globalThis as { gc?: () => void }).gc
+		gc?.()
+		const baseline = process.memoryUsage().heapUsed
+		const start = Date.now()
+		const kept: unknown[] = []
+		for (let i = 0; i < 1600; i++) {
+			kept.push(losslessParse(payload))
+		}
+		const elapsed = Date.now() - start
+		// lossless-json 4.3.x takes ~500ms+ and ~500MB here; JSON.parse ~10ms
+		expect(elapsed).toBeLessThan(300)
+		if (gc) {
+			gc()
+			const retained = process.memoryUsage().heapUsed - baseline
+			// 1600 * 10KB = 16MB of payload; allow a generous multiple
+			expect(retained).toBeLessThan(150 * 1024 * 1024)
+		}
+		// Read the payloads after the final GC so they stay live during measurement
+		expect(kept.length).toBe(1600)
+	})
+})
+
+describe('__proto__ keys do not replace DTO prototypes', () => {
+	class ProtoDto extends LosslessDto {
+		name!: string
+	}
+	const payloads = [
+		'{"__proto__":{"injected":true},"name":"a"}',
+		'{"\\u005f_proto__":{"injected":true},"name":"a"}',
+		'{"name":"a","child":{"__proto__":{"injected":true}}}',
+	]
+	for (const json of payloads) {
+		test(`DTO stays intact for ${json}`, () => {
+			const dto = losslessParse(json, ProtoDto)
+			expect(dto).toBeInstanceOf(ProtoDto)
+			expect(Object.getPrototypeOf(dto)).toBe(ProtoDto.prototype)
+			expect(Object.keys(dto)).not.toContain('__proto__')
+			expect(dto.name).toBe('a')
+		})
+	}
+	test('nested __proto__ in an array matches the installed lossless-json', () => {
+		const json = '[{"__proto__":{"x":1}}]'
+		const expected = parse(json) as Array<object>
+		// The DTO mapping guard always drops an own `__proto__` key, so exclude
+		// it from the expectation to support both lossless-json 4.0.x and 4.3.x.
+		expect(Object.keys(losslessParse(json)[0])).toEqual(
+			Object.keys(expected[0]).filter((k) => k !== '__proto__')
+		)
+	})
 })
