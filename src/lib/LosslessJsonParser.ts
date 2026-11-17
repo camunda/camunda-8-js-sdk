@@ -214,7 +214,7 @@ export function losslessParse<T = any>(
 	 * or throw if we find an unsafe number.
 	 */
 
-	const parsedLossless = parse(json) as any
+	const parsedLossless = parseToLossless(json)
 
 	/**
 	 * Specifying a keyToParse value applies all the mapping functionality to a key of the object in the JSON.
@@ -386,11 +386,126 @@ function parseArrayWithAnnotations<T>(
 	json: string,
 	dto: { new (...args: any[]): T }
 ): T[] {
-	const array = parse(json) as any[]
+	const array = parseToLossless(json) as any[]
 
 	return array.map((item) =>
 		losslessParse(stringify(item) as string, dto)
 	) as T[]
+}
+
+/**
+ * Parse JSON into a structure where every number is a `LosslessNumber`, exactly as lossless-json `parse` does.
+ *
+ * lossless-json (<= 4.3.3) builds string values one character at a time, which V8 stores as cons-string ropes
+ * retaining ~30 bytes of heap per character (see https://github.com/camunda/camunda-8-js-sdk/issues/890 and
+ * josdejong/lossless-json#293). For large job variables this makes workers slow and memory-hungry.
+ *
+ * Fast path: when every numeric literal in the text is in canonical form (`String(Number(literal)) === literal`)
+ * and has fewer than 15 significant digits, native `JSON.parse` loses no information. We parse with it (flat strings,
+ * ~60x faster) and wrap each number in a `LosslessNumber` built from its canonical text, which is identical to the
+ * literal. Otherwise we fall back to lossless-json. The output is therefore the same as lossless-json's in both paths.
+ */
+function parseToLossless(json: string): any {
+	if (!canParseNatively(json)) {
+		return parse(json)
+	}
+	let result: any
+	try {
+		result = JSON.parse(json)
+	} catch {
+		// Let lossless-json produce its own (familiar) error message
+		return parse(json)
+	}
+	return wrapNumbers(result)
+}
+
+const MAX_SAFE_NATIVE_DIGITS = 14
+
+/**
+ * Scan the JSON text (skipping string contents) and check that every numeric literal can round-trip through
+ * a JS number unchanged.
+ */
+function canParseNatively(json: string): boolean {
+	const len = json.length
+	let i = 0
+	while (i < len) {
+		const c = json.charCodeAt(i)
+		if (c === 34 /* " */) {
+			// Skip string. Fast-forward to the next quote, honouring escapes.
+			i++
+			for (;;) {
+				const q = json.indexOf('"', i)
+				if (q === -1) {
+					return false // malformed: let lossless-json report it
+				}
+				let backslashes = 0
+				let k = q - 1
+				while (k >= i && json.charCodeAt(k) === 92 /* \ */) {
+					backslashes++
+					k--
+				}
+				i = q + 1
+				if (backslashes % 2 === 0) {
+					break
+				}
+			}
+			continue
+		}
+		if (c === 45 /* - */ || (c >= 48 && c <= 57)) {
+			const start = i
+			i++
+			while (i < len) {
+				const d = json.charCodeAt(i)
+				if (
+					(d >= 48 && d <= 57) ||
+					d === 46 /* . */ ||
+					d === 101 /* e */ ||
+					d === 69 /* E */ ||
+					d === 43 /* + */ ||
+					d === 45 /* - */
+				) {
+					i++
+				} else {
+					break
+				}
+			}
+			const literal = json.slice(start, i)
+			let digits = 0
+			for (let j = 0; j < literal.length; j++) {
+				const d = literal.charCodeAt(j)
+				if (d >= 48 && d <= 57) {
+					digits++
+				}
+			}
+			if (
+				digits > MAX_SAFE_NATIVE_DIGITS ||
+				String(Number(literal)) !== literal
+			) {
+				return false
+			}
+			continue
+		}
+		i++
+	}
+	return true
+}
+
+function wrapNumbers(value: any): any {
+	if (typeof value === 'number') {
+		return new LosslessNumber(String(value))
+	}
+	if (Array.isArray(value)) {
+		for (let i = 0; i < value.length; i++) {
+			value[i] = wrapNumbers(value[i])
+		}
+		return value
+	}
+	if (value !== null && typeof value === 'object') {
+		for (const key of Object.keys(value)) {
+			value[key] = wrapNumbers(value[key])
+		}
+	}
+	return value
 }
 
 /**

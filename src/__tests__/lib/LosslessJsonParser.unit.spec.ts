@@ -465,3 +465,77 @@ test('It correctly throws when encountering a number rather than an array in a s
 	const json = `{"message":"Hello from automation","userId":null,"sendTo":12022907}`
 	expect(() => losslessParse(json, Dto)).toThrow('expected Array')
 })
+
+describe('losslessParse native fast path (#890)', () => {
+	const cases = [
+		'{"a":1,"b":-2.5,"c":"x\\\\\\"9999999999999999","d":[1e21,0,-0.001],"e":null,"f":true}',
+		'{"a":1.0,"b":1e3,"c":-0}',
+		'[{"n":12345678901234},{"n":"str"}]',
+		'{"s":"\\u00e9\\n\\\\","n":3.14}',
+	]
+	test.each(cases)('matches lossless-json semantics for %s', (json) => {
+		class Dto extends LosslessDto {
+			n!: number
+		}
+		expect(losslessParse(json)).toEqual(JSON.parse(json))
+		expect(losslessParse(json, Dto)).toEqual(
+			expect.objectContaining(
+				Array.isArray(JSON.parse(json)) ? {} : JSON.parse(json)
+			)
+		)
+	})
+
+	test('preserves literal text for Int64String fields on fast and slow paths', () => {
+		class Dto extends LosslessDto {
+			@Int64String
+			key!: string
+			@BigIntValue
+			big!: bigint
+		}
+		expect(losslessParse('{"key": 123, "big": 5}', Dto)).toMatchObject({
+			key: '123',
+			big: BigInt(5),
+		})
+		expect(
+			losslessParse('{"key": 2251799813685249, "big": 9007199254740993}', Dto)
+		).toMatchObject({
+			key: '2251799813685249',
+			big: BigInt('9007199254740993'),
+		})
+		expect(losslessParse('{"key": 1.50}', Dto).key).toBe('1.50')
+	})
+
+	test('still throws on unsafe number without a Dto', () => {
+		expect(() => losslessParse('{"x": 9007199254740993}')).toThrow(
+			/unsafe number value was received for "x"/
+		)
+	})
+
+	test('a digit run inside a string does not affect numbers', () => {
+		expect(losslessParse('{"s":"99999999999999999999","n":1}')).toEqual({
+			s: '99999999999999999999',
+			n: 1,
+		})
+	})
+
+	test('does not retain per-character heap for large string variables', () => {
+		const big = 'x'.repeat(10_000)
+		const payload = JSON.stringify({ data: big, count: 1 })
+		const start = Date.now()
+		const kept: unknown[] = []
+		for (let i = 0; i < 1600; i++) {
+			kept.push(losslessParse(payload))
+		}
+		const elapsed = Date.now() - start
+		expect(kept.length).toBe(1600)
+		// lossless-json 4.3.x takes ~500ms+ and ~500MB here; JSON.parse ~10ms
+		expect(elapsed).toBeLessThan(300)
+		const gc = (globalThis as { gc?: () => void }).gc
+		if (gc) {
+			gc()
+			const heap = process.memoryUsage().heapUsed
+			// 1600 * 10KB = 16MB of payload; allow a generous multiple
+			expect(heap).toBeLessThan(200 * 1024 * 1024)
+		}
+	})
+})
