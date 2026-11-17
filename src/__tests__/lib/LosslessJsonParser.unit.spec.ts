@@ -577,8 +577,10 @@ describe('__proto__ keys do not replace DTO prototypes', () => {
 	test('nested __proto__ in an array matches the installed lossless-json', () => {
 		const json = '[{"__proto__":{"x":1}}]'
 		const expected = parse(json) as Array<object>
+		// The DTO mapping guard always drops an own `__proto__` key, so exclude
+		// it from the expectation to support both lossless-json 4.0.x and 4.3.x.
 		expect(Object.keys(losslessParse(json)[0])).toEqual(
-			Object.keys(expected[0])
+			Object.keys(expected[0]).filter((k) => k !== '__proto__')
 		)
 	})
 })
