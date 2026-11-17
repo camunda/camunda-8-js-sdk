@@ -240,12 +240,14 @@ export class ZBStreamWorker implements IZBJobWorker {
 			pollMaxJobsToActivate?: number
 			/**
 			 * Maximum number of jobs this registration handles concurrently,
-			 * counting jobs from the stream and from backlog polls. Polls never
-			 * activate more than the free capacity, and while a backlog exists
-			 * the worker polls again as soon as fewer than 30% of this many
-			 * jobs are in flight, rather than waiting for a whole batch to
-			 * finish (like the Java client's `maxJobsActive`). Defaults to
-			 * `pollMaxJobsToActivate`.
+			 * counting jobs from the stream and from backlog polls. Stream
+			 * jobs that arrive while the worker is at capacity are buffered
+			 * and started as handlers settle, so both delivery paths share
+			 * the limit. Polls never activate more than the free capacity,
+			 * and while a backlog exists the worker polls again as soon as
+			 * fewer than 30% of this many jobs are in flight, rather than
+			 * waiting for a whole batch to finish (like the Java client's
+			 * `maxJobsActive`). Defaults to `pollMaxJobsToActivate`.
 			 */
 			maxJobsActive?: number
 			/**
@@ -380,11 +382,20 @@ export class ZBStreamWorker implements IZBJobWorker {
 			1,
 			Math.round(maxJobsActive * ACTIVATION_THRESHOLD_RATIO)
 		)
-		// Polled jobs never take in-flight work above maxJobsActive. Stream
-		// jobs are pushed by the broker and can't be refused, but they are
-		// counted, so polls back off while the stream is busy.
+		// Stream jobs are pushed by the broker and can't be refused, so they
+		// are buffered while the worker is at capacity and started as
+		// handlers settle: both delivery paths share the `maxJobsActive`
+		// limit. The buffer is bounded by the broker's own flow control —
+		// it stops sending once the worker stops acknowledging.
+		const streamBuffer: Job<WorkerInputVariables, CustomHeaderShape>[] = []
+		// Polled jobs never take in-flight work above maxJobsActive. Buffered
+		// stream jobs count against the capacity too, so polls back off while
+		// the stream is busy instead of competing with it for handlers.
 		const freeCapacity = () =>
-			Math.min(pollMaxJobsToActivate, maxJobsActive - inFlight)
+			Math.min(
+				pollMaxJobsToActivate,
+				maxJobsActive - inFlight - streamBuffer.length
+			)
 
 		// Activate up to `count` jobs.
 		const activate = (count: number) =>
@@ -483,16 +494,48 @@ export class ZBStreamWorker implements IZBJobWorker {
 		let backfillIsRetry = false
 
 		// Run a handler and count it against the capacity. Each settled job
-		// may free enough capacity for the next activation. Event-driven,
-		// not a loop or a recursion: nothing is retained per batch, so a
-		// large or continuously replenished backlog keeps memory bounded.
-		const dispatch = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+		// may free enough capacity for a buffered stream job or the next
+		// activation. Event-driven, not a loop or a recursion: nothing is
+		// retained per batch, so a large or continuously replenished backlog
+		// keeps memory bounded.
+		const runJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
 			inFlight++
 			// handleJob never rejects.
 			void handleJob(job).then(() => {
 				inFlight--
+				// A settled handler frees capacity: start a buffered stream
+				// job before polling for more, so pushed jobs are not
+				// starved by a continuously replenished backlog.
+				const buffered = streamBuffer.shift()
+				if (buffered && !isClosed()) {
+					runJob(buffered)
+				}
 				maybeActivate()
 			})
+		}
+
+		// Polled jobs always fit the capacity: the activation asked for no
+		// more than the free capacity, and buffered stream jobs are counted
+		// against it, so dispatching a polled batch never starts more than
+		// `maxJobsActive` concurrent handlers.
+		const dispatch = (job: Job<WorkerInputVariables, CustomHeaderShape>) =>
+			runJob(job)
+
+		// Stream jobs are pushed and can't be refused: buffer them while the
+		// worker is at capacity (including capacity an in-flight activation
+		// will consume when its response arrives) and start them as handlers
+		// settle, so both delivery paths share the `maxJobsActive` limit.
+		const dispatchStreamJob = (
+			job: Job<WorkerInputVariables, CustomHeaderShape>
+		) => {
+			if (isClosed()) {
+				return
+			}
+			if (inFlight >= maxJobsActive || activationReserved) {
+				streamBuffer.push(job)
+				return
+			}
+			runJob(job)
 		}
 
 		const canActivate = () =>
@@ -509,7 +552,16 @@ export class ZBStreamWorker implements IZBJobWorker {
 				const { jobs, full } = await activateWithRetry()
 				activationReserved = false
 				backlogPending = full && !isClosed()
+				// Dispatch this activation's jobs first: the activation asked for
+				// exactly the free capacity, and buffered stream jobs were counted
+				// against it, so the batch always fits. Buffered stream jobs then
+				// fill any remaining capacity (the batch may have come back
+				// short) — they arrived before the polled jobs, and freeing the
+				// reservation must not leave them stranded behind the batch.
 				jobs.forEach(dispatch)
+				while (streamBuffer.length > 0 && inFlight < maxJobsActive) {
+					runJob(streamBuffer.shift()!)
+				}
 			} catch (e) {
 				backlogPending = false
 				// Release before servicing a deferred backfill below, which
@@ -695,7 +747,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 							WorkerInputVariables,
 							CustomHeaderShape
 						>(res, inputVariableDto, customHeadersDto)
-						dispatch(parsedJob)
+						// Buffer when the worker is at capacity rather than
+						// starting a handler past the maxJobsActive limit.
+						dispatchStreamJob(parsedJob)
 					} catch (e) {
 						this.zbClient
 							.failJob({

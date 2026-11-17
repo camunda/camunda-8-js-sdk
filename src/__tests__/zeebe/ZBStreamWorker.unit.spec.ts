@@ -2113,7 +2113,9 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			await vi.advanceTimersByTimeAsync(0)
 			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
 
-			// During the retry wait, stream jobs fill all capacity.
+			// During the retry wait, stream jobs arrive while the retrying
+			// activation holds its reservation: they are buffered, and their
+			// capacity is spoken for, so the retry finds none free.
 			for (const key of ['100', '101']) {
 				createdStreams[0].emit('data', {
 					key,
@@ -2123,9 +2125,14 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 				})
 			}
 			await vi.advanceTimersByTimeAsync(0)
-			expect(held).toHaveLength(2)
+			expect(held).toHaveLength(0)
 			await vi.advanceTimersByTimeAsync(1000) // retry wait elapses, no capacity
 			expect(zbClient.activateJobs).toHaveBeenCalledTimes(2)
+
+			// The retry comes back empty-but-full (no free capacity): the
+			// backlog signal is kept and the buffered stream jobs start.
+			await vi.advanceTimersByTimeAsync(1000)
+			expect(held).toHaveLength(2)
 
 			// Capacity frees up: the backlog poll resumes.
 			held.forEach((release) => release())
@@ -2185,6 +2192,103 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 			rejectPoll(new Error('activation failed'))
 			await vi.advanceTimersByTimeAsync(0)
 			expect(zbClient.activateJobs).toHaveBeenCalledTimes(3)
+			await worker.close()
+		} finally {
+			vi.useRealTimers()
+		}
+	}
+)
+
+/**
+ * Regression test for PR #894 review: both delivery paths must share the
+ * `maxJobsActive` limit. A poll can request up to the free capacity, then
+ * stream jobs can arrive before the activation response lands; dispatching
+ * both started more concurrent handlers than `maxJobsActive`. Stream jobs
+ * are now buffered while the worker is at capacity — including the capacity
+ * an in-flight activation will consume — and started as handlers settle.
+ */
+test.runIf(allowAny([{ deployment: 'unit-test' }]))(
+	'ZBStreamWorker buffers stream jobs that arrive during a pending activation',
+	async () => {
+		vi.useFakeTimers()
+		try {
+			const createdStreams: Array<ReturnType<typeof createMockStream>> = []
+			const { worker, grpcClient, zbClient } = createWorker()
+			grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+				const s = createMockStream()
+				createdStreams.push(s)
+				return s
+			})
+			let resolvePoll: (jobs: Array<{ key: string }>) => void = () => {}
+			zbClient.activateJobs.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						resolvePoll = resolve as typeof resolvePoll
+					})
+			)
+			let inFlight = 0
+			let maxSeen = 0
+			const held: Array<() => void> = []
+			// Not awaited yet: streamJobs() awaits the initial backfill
+			// activation, which this test keeps pending until below.
+			const handlePromise = worker.streamJobs({
+				type: 'test-task',
+				worker: 'test-worker',
+				timeout: 30000,
+				tenantIds: ['<default>'],
+				taskHandler: (job) => {
+					inFlight++
+					maxSeen = Math.max(maxSeen, inFlight)
+					return new Promise((resolve) => {
+						held.push(() => {
+							inFlight--
+							resolve(job.complete())
+						})
+					})
+				},
+				inputVariableDto: LosslessDto,
+				customHeadersDto: LosslessDto,
+				pollMaxJobsToActivate: 2,
+				maxJobsActive: 2,
+				pollInterval: 0,
+			})
+			await vi.advanceTimersByTimeAsync(0)
+			// The initial backfill poll is in flight; it will ask for 2 jobs.
+			expect(zbClient.activateJobs).toHaveBeenCalledTimes(1)
+
+			// Two stream jobs arrive before the activation response lands.
+			// With the activation's capacity already spoken for, both are
+			// buffered instead of starting handlers past the limit.
+			for (const key of ['100', '101']) {
+				createdStreams[0].emit('data', {
+					key,
+					retries: 3,
+					variables: '{}',
+					customHeaders: '{}',
+				})
+			}
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(0)
+
+			// The activation returns the 2 jobs it asked for. Old code ran 4
+			// handlers concurrently here (2 polled + 2 streamed); now the
+			// streamed jobs stay buffered at capacity.
+			resolvePoll(fakeBatch(2, 0))
+			await vi.advanceTimersByTimeAsync(0)
+			// Fail fast on the old code instead of hanging on held handlers.
+			expect(maxSeen).toBeLessThanOrEqual(2)
+			expect(held).toHaveLength(2)
+			expect(maxSeen).toBe(2)
+
+			// Buffered stream jobs start as handlers settle — the limit holds.
+			held.splice(0, 1)[0]()
+			await vi.advanceTimersByTimeAsync(0)
+			expect(held).toHaveLength(2)
+			expect(maxSeen).toBe(2)
+			held.splice(0).forEach((release) => release())
+			await vi.advanceTimersByTimeAsync(0)
+			expect(maxSeen).toBeLessThanOrEqual(2)
+			await handlePromise
 			await worker.close()
 		} finally {
 			vi.useRealTimers()
