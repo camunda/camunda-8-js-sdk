@@ -1,3 +1,11 @@
+# [8.9.0-alpha.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.19...v8.9.0-alpha.20) (2026-11-17)
+
+
+### Bug Fixes
+
+* **lossless-parser:** use JSON.parse fast path to avoid per-char string ropes ([#893](https://github.com/camunda/camunda-8-js-sdk/issues/893)) ([b1745b8](https://github.com/camunda/camunda-8-js-sdk/commit/b1745b8c00baadc9fe50349cf190dbbdccb3073e)), closes [#890](https://github.com/camunda/camunda-8-js-sdk/issues/890)
+* **zeebe:** poll stream worker backlog on freed capacity ([#894](https://github.com/camunda/camunda-8-js-sdk/issues/894)) ([fbc99bc](https://github.com/camunda/camunda-8-js-sdk/commit/fbc99bc6adca63dc5c232096690ae36b3b206431)), closes [#891](https://github.com/camunda/camunda-8-js-sdk/issues/891)
+
 # [8.9.0-alpha.19](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.18...v8.9.0-alpha.19) (2026-11-15)
 
 
