@@ -107,6 +107,10 @@ export interface StreamJobsRecoveryOptions {
 const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
 const DEFAULT_RECONNECT_MAX_DELAY_MS = 30_000
 
+// Activate more jobs once in-flight work drops below this fraction of
+// maxJobsActive, like the Java client's JobWorkerImpl.
+const ACTIVATION_THRESHOLD_RATIO = 0.3
+
 // Backoff for retrying a backlog activation that failed with a temporary
 // error. The base curve matches the Java client's default ExponentialBackoff
 // (min 50ms, max 5s, factor 1.6); the jitter is full jitter rather than the
@@ -235,6 +239,18 @@ export class ZBStreamWorker implements IZBJobWorker {
 			 */
 			pollMaxJobsToActivate?: number
 			/**
+			 * Maximum number of jobs this registration handles concurrently,
+			 * counting jobs from the stream and from backlog polls. Stream
+			 * jobs that arrive while the worker is at capacity are buffered
+			 * and started as handlers settle, so both delivery paths share
+			 * the limit. Polls never activate more than the free capacity,
+			 * and while a backlog exists the worker polls again as soon as
+			 * fewer than 30% of this many jobs are in flight, rather than
+			 * waiting for a whole batch to finish (like the Java client's
+			 * `maxJobsActive`). Defaults to `pollMaxJobsToActivate`.
+			 */
+			maxJobsActive?: number
+			/**
 			 * Interval in milliseconds between sidecar poll cycles. The sidecar poll
 			 * is a low-frequency safety net that picks up jobs the stream may have
 			 * missed (e.g. jobs re-queued after a timeout). Each poll is a command on
@@ -252,6 +268,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			customHeadersDto,
 			jitter,
 			pollMaxJobsToActivate = 32,
+			maxJobsActive: maxJobsActiveOption = pollMaxJobsToActivate,
 			pollInterval = 30_000,
 			onStreamError,
 			onStreamEnd,
@@ -260,6 +277,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 			backlogRetry,
 			...streamReq
 		} = req
+
+		const maxJobsActive = Math.max(1, Math.floor(maxJobsActiveOption))
 
 		const reconnectEnabled = streamReconnect !== false
 		const reconnectOptions =
@@ -278,13 +297,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 		const drainRetryOptions: DrainRetryOptions = backlogRetry || {}
 
 		// Returns the handler's promise, which never rejects: a failure is
-		// logged here. The backlog drain awaits it for backpressure.
+		// logged here. dispatch() awaits it to free capacity.
 		const handleJob = (
 			job: Job<WorkerInputVariables, CustomHeaderShape>
 		): Promise<unknown> =>
 			// Invoke the handler inside a promise continuation: a synchronous
 			// throw must reject this promise rather than escape handleJob,
-			// which would abort jobs.map(handleJob) mid-batch — leaving later
+			// which would abort dispatching mid-batch — leaving later
 			// jobs undispatched and releasing the drain's reservation before
 			// the handlers already started have settled.
 			//
@@ -351,13 +370,99 @@ export class ZBStreamWorker implements IZBJobWorker {
 
 		const isClosed = () => this.closed || handleClosed
 
-		// Activate up to pollMaxJobsToActivate jobs.
-		const activate = () =>
+		// Capacity model (like the Java client's JobWorkerImpl): count the
+		// jobs in flight — from the stream and from backlog polls — against
+		// `maxJobsActive`. While a backlog exists, activate more as soon as
+		// enough capacity is free, instead of waiting for every job in a
+		// polled batch to settle. The slowest job in a batch then no longer
+		// sets the pace for the whole batch.
+		let inFlight = 0
+		// Activate again once fewer than this many jobs are in flight.
+		const activationThreshold = Math.max(
+			1,
+			Math.round(maxJobsActive * ACTIVATION_THRESHOLD_RATIO)
+		)
+		// Stream jobs are pushed by the broker and can't be refused, so they
+		// are buffered while the worker is at capacity and started as
+		// handlers settle: both delivery paths share the `maxJobsActive`
+		// limit. The buffer is bounded by transport backpressure: once it
+		// holds `maxJobsActive` jobs the stream is paused (gRPC stops reading,
+		// so HTTP/2 flow control stops the broker sending) and resumed when
+		// the buffer drains below that bound.
+		const streamBuffer: Job<WorkerInputVariables, CustomHeaderShape>[] = []
+		const streamBufferLimit = maxJobsActive
+		// The raw stream currently delivering jobs, so it can be paused.
+		let currentRawStream:
+			| { pause?: () => unknown; resume?: () => unknown }
+			| undefined
+		let streamPaused = false
+		// Pause or resume the stream to keep the buffer bounded.
+		const applyStreamBackpressure = () => {
+			const shouldPause =
+				!isClosed() && streamBuffer.length >= streamBufferLimit
+			if (shouldPause === streamPaused || !currentRawStream) {
+				return
+			}
+			streamPaused = shouldPause
+			if (shouldPause) {
+				currentRawStream.pause?.()
+			} else {
+				currentRawStream.resume?.()
+			}
+		}
+		const takeBuffered = () => {
+			const job = streamBuffer.shift()
+			applyStreamBackpressure()
+			return job
+		}
+		// A buffered job whose activation deadline has passed may already be
+		// reactivated elsewhere: starting its handler risks duplicate side
+		// effects. Pausing the stream does not extend deadlines. A missing or
+		// unparseable deadline is treated as unknown (not expired).
+		const isExpired = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+			const deadline = Number(job.deadline)
+			return Number.isFinite(deadline) && deadline > 0 && deadline <= Date.now()
+		}
+		// Start buffered stream jobs in the free handler slots. While an
+		// activation request is on the wire, the free slots are reserved for
+		// its response (it asked for exactly the free capacity), so nothing is
+		// drained until it settles — every path releases the reservation
+		// first. Expired buffered jobs are discarded, and a backlog poll is
+		// arranged so the broker can hand them out again.
+		const drainStreamBuffer = () => {
+			while (
+				!isClosed() &&
+				!capacityReserved &&
+				streamBuffer.length > 0 &&
+				inFlight < maxJobsActive
+			) {
+				const job = takeBuffered()!
+				if (isExpired(job)) {
+					this.logger.logDebug(
+						`Discarding buffered stream job ${job.key} of type ${req.type}: its activation deadline has passed`
+					)
+					backlogPending = true
+					continue
+				}
+				runJob(job)
+			}
+		}
+		// Polled jobs never take in-flight work above maxJobsActive. Buffered
+		// stream jobs count against the capacity too, so polls back off while
+		// the stream is busy instead of competing with it for handlers.
+		const freeCapacity = () =>
+			Math.min(
+				pollMaxJobsToActivate,
+				maxJobsActive - inFlight - streamBuffer.length
+			)
+
+		// Activate up to `count` jobs.
+		const activate = (count: number) =>
 			this.zbClient.activateJobs<WorkerInputVariables, CustomHeaderShape>({
 				type: req.type,
 				worker: req.worker,
 				timeout: req.timeout,
-				maxJobsToActivate: pollMaxJobsToActivate,
+				maxJobsToActivate: count,
 				tenantIds: req.tenantIds,
 				fetchVariable: req.fetchVariable,
 				inputVariableDto,
@@ -381,20 +486,41 @@ export class ZBStreamWorker implements IZBJobWorker {
 				this.retryWaits.add(wake)
 			})
 
-		// Activate, retrying temporary failures (RESOURCE_EXHAUSTED,
-		// UNAVAILABLE, DEADLINE_EXCEEDED) with exponential backoff while the
-		// handle is open, like the Java client's poller. Abandoning the drain
-		// on broker backpressure would leave the backlog untouched until the
-		// next sidecar poll — up to a whole pollInterval (30s by default).
-		// Returns an empty batch if the handle closes while retrying.
-		// Non-transient errors are rethrown.
-		const activateWithRetry = async (): Promise<
-			Job<WorkerInputVariables, CustomHeaderShape>[]
-		> => {
+		// Activate up to the free capacity, retrying temporary failures
+		// (RESOURCE_EXHAUSTED, UNAVAILABLE, DEADLINE_EXCEEDED) with
+		// exponential backoff while the handle is open, like the Java
+		// client's poller. Abandoning the backlog on broker backpressure
+		// would leave it untouched until the next sidecar poll — up to a
+		// whole pollInterval (30s by default). Returns an empty batch if the
+		// handle closes while retrying. Non-transient errors are rethrown.
+		// `full` reports whether the broker filled the request, i.e. more
+		// jobs are probably waiting.
+		const activateWithRetry = async (): Promise<{
+			jobs: Job<WorkerInputVariables, CustomHeaderShape>[]
+			full: boolean
+		}> => {
 			for (let attempt = 1; ; attempt++) {
+				const count = freeCapacity()
+				if (isClosed()) {
+					return { jobs: [], full: false }
+				}
+				if (count <= 0) {
+					// Stream jobs filled the capacity (e.g. during a retry
+					// wait). This is not an empty poll: keep the backlog
+					// signal so freed capacity resumes the activation.
+					return { jobs: [], full: true }
+				}
+				// Reserve the requested capacity for the response. runActivation
+				// releases it once the returned jobs are dispatched.
+				capacityReserved = true
 				try {
-					return await activate()
+					const jobs = await activate(count)
+					return { jobs, full: jobs.length >= count }
 				} catch (e) {
+					// No request is on the wire during the retry backoff: release
+					// the capacity so buffered stream jobs can use idle slots.
+					// The next attempt recalculates the free capacity.
+					capacityReserved = false
 					if (
 						isClosed() ||
 						!drainRetryEnabled ||
@@ -410,141 +536,183 @@ export class ZBStreamWorker implements IZBJobWorker {
 							toError(e).message
 						}`
 					)
+					drainStreamBuffer()
 					await retryWait(delay)
 					if (isClosed()) {
-						return []
+						return { jobs: [], full: false }
 					}
 				}
-			}
-		}
-
-		// Hand a polled batch to the handler, then keep polling while polls
-		// come back full. The stream only pushes jobs that become activatable
-		// after it opens; a backlog that already exists is reachable only by
-		// polling. A full batch means more jobs are probably waiting, so poll
-		// again as soon as this batch is handled, rather than waiting a whole
-		// pollInterval per batch. Waiting for the batch's handlers to settle
-		// is the backpressure: the worker never holds more than one batch of
-		// polled jobs, so they don't sit activated until their timeout.
-		//
-		// Iterative, not recursive: a recursion would retain one pending
-		// promise per backlog batch until the whole backlog finishes, so a
-		// large or continuously replenished backlog would grow memory without
-		// bound. The loop holds only the current batch.
-		//
-		// A reconnect backfill requested while this drain was in flight is
-		// honoured before the drain exits: jobs created while the stream was
-		// down must not be stranded when recurring polling is disabled.
-		const drain = async (
-			firstBatch: Job<WorkerInputVariables, CustomHeaderShape>[]
-		): Promise<void> => {
-			let jobs = firstBatch
-			for (;;) {
-				await Promise.all(jobs.map(handleJob))
-				if (backfillRequested && !isClosed()) {
-					// The stream reconnected while this drain was in flight and
-					// its backfill was deferred (see backfill). Run it now, even
-					// if this batch was partial: jobs created while the stream
-					// was down are not visible to any other poll when recurring
-					// polling is disabled. If the activation fails, restore the
-					// deferral before re-throwing so runDrain's finally can
-					// re-run it once the reservation is released — the backfill
-					// must not be discarded while the handle is open. With
-					// backlogRetry disabled, the caller opted out of retrying
-					// failed backlog activations: leave recovery to the next
-					// sidecar poll instead of immediately re-activating.
-					backfillRequested = false
-					try {
-						jobs = await activateWithRetry()
-					} catch (e) {
-						if (drainRetryEnabled) {
-							backfillRequested = true
-						}
-						throw e
-					}
-					continue
-				}
-				if (jobs.length < pollMaxJobsToActivate || isClosed()) {
-					return
-				}
-				jobs = await activateWithRetry()
 			}
 		}
 
 		// Only one activation is ever in flight. The flag is reserved *before*
-		// the activation call and released only when the drain it fed finishes
-		// (or the activation fails), so a reconnect backfill can never start a
-		// second activation while a sidecar activation is still pending — that
-		// would launch two independent drains, exceed the one-polled-batch
-		// limit, and let either drain clear the flag while the other runs.
-		let activationReserved = false // mutated by runDrain/backfill/sidecar
-		// Set when a reconnect backfill arrives while an activation is in
-		// flight; the in-flight drain runs the backfill before exiting, or
-		// re-runs it from runDrain's finally if the drain's activation failed
-		// while the handle is still open.
+		// the activation call and released once its jobs are dispatched (or
+		// the activation fails), so a reconnect backfill can never start a
+		// second activation while another is still pending.
+		let activationReserved = false
+		// The free capacity is reserved for an activation request currently on
+		// the wire (not during its retry backoff). Separate from
+		// activationReserved, which guards the whole retry sequence.
+		let capacityReserved = false
+		// More jobs are probably waiting: the last poll came back full.
+		let backlogPending = false
+		// A reconnect backfill is waiting for capacity or for the in-flight
+		// activation to finish. Jobs created while the stream was down must
+		// not be stranded when recurring polling is disabled.
 		let backfillRequested = false
-		const runDrain = (jobs: Job<WorkerInputVariables, CustomHeaderShape>[]) =>
-			drain(jobs)
-				.catch((e: unknown) => {
-					// Temporary failures were already retried in activateWithRetry;
-					// this is a non-transient error. The next sidecar poll retries.
-					this.logger.logError(
-						`Stream worker backlog poll failed: ${toError(e).message}`
-					)
-				})
-				.finally(() => {
-					activationReserved = false
-					// A backfill deferred to this drain that never ran — the
-					// drain's activation failed, either before the deferral was
-					// consumed or in the activation that consumed it (drain
-					// restores the flag before re-throwing) — must not be
-					// dropped while the handle is open: with recurring polling
-					// disabled there is no other poll to pick up jobs created
-					// while the stream was down. Run it now that the reservation
-					// is released. If the handle is closed the reservation is
-					// stale instead: clear it so a later backfill is free to
-					// reserve and run its own poll.
-					if (backfillRequested) {
-						backfillRequested = false
-						if (!isClosed()) {
-							// Observe the rejection: backfill rethrows a failed
-							// initial activation after releasing the reservation,
-							// and this call is fire-and-forget.
-							void backfill().catch((e: unknown) =>
-								this.logger.logError(
-									`Stream worker backfill poll failed: ${toError(e).message}`
-								)
-							)
-						}
-					}
-				})
+		// The requested backfill is already a retry of a failed backfill:
+		// retry a failed backfill only once.
+		let backfillIsRetry = false
 
-		// Run a backfill poll. Only the first activation is awaited (so its
-		// errors reach the caller); the rest of the backlog drains in the
-		// background. If an activation is already in flight, the backfill is
-		// not dropped: the in-flight drain runs it before exiting, so jobs
-		// created while the stream was down are picked up even when recurring
-		// polling is disabled (pollInterval 0 or -1).
+		// Run a handler and count it against the capacity. Each settled job
+		// may free enough capacity for a buffered stream job or the next
+		// activation. Event-driven, not a loop or a recursion: nothing is
+		// retained per batch, so a large or continuously replenished backlog
+		// keeps memory bounded.
+		const runJob = (job: Job<WorkerInputVariables, CustomHeaderShape>) => {
+			inFlight++
+			// handleJob never rejects.
+			void handleJob(job).then(() => {
+				inFlight--
+				// A settled handler frees capacity: start a buffered stream
+				// job before polling for more, so pushed jobs are not
+				// starved by a continuously replenished backlog.
+				drainStreamBuffer()
+				maybeActivate()
+			})
+		}
+
+		// Polled jobs always fit the capacity: the activation asked for no
+		// more than the free capacity, and buffered stream jobs are counted
+		// against it, so dispatching a polled batch never starts more than
+		// `maxJobsActive` concurrent handlers.
+		const dispatch = (job: Job<WorkerInputVariables, CustomHeaderShape>) =>
+			runJob(job)
+
+		// Stream jobs are pushed and can't be refused: buffer them while the
+		// worker is at capacity (including capacity an in-flight activation
+		// will consume when its response arrives) and start them as handlers
+		// settle, so both delivery paths share the `maxJobsActive` limit.
+		const dispatchStreamJob = (
+			job: Job<WorkerInputVariables, CustomHeaderShape>
+		) => {
+			if (isClosed()) {
+				return
+			}
+			if (inFlight >= maxJobsActive || capacityReserved) {
+				streamBuffer.push(job)
+				applyStreamBackpressure()
+				return
+			}
+			runJob(job)
+		}
+
+		const canActivate = () =>
+			!isClosed() &&
+			!activationReserved &&
+			inFlight < activationThreshold &&
+			freeCapacity() > 0
+
+		// Reserve the activation slot and activate. Rejects on a
+		// non-transient failure, after releasing the reservation.
+		const runActivation = async () => {
+			activationReserved = true
+			try {
+				const { jobs, full } = await activateWithRetry()
+				activationReserved = false
+				capacityReserved = false
+				backlogPending = full && !isClosed()
+				if (isClosed()) {
+					// The handle closed while the activation was pending: start
+					// no handlers, neither polled nor buffered.
+					return
+				}
+				// Dispatch this activation's jobs first: the activation asked for
+				// exactly the free capacity, and buffered stream jobs were counted
+				// against it, so the batch always fits. Buffered stream jobs then
+				// fill any remaining capacity (the batch may have come back
+				// short) — they arrived before the polled jobs, and freeing the
+				// reservation must not leave them stranded behind the batch.
+				jobs.forEach(dispatch)
+				drainStreamBuffer()
+			} catch (e) {
+				backlogPending = false
+				// Release before servicing a deferred backfill below, which
+				// takes its own reservation (no finally may clear it after).
+				activationReserved = false
+				capacityReserved = false
+				// Stream jobs buffered behind the failed activation must not be
+				// stranded: start them in the free slots (no poll retry here).
+				drainStreamBuffer()
+				// A reconnect backfill deferred behind this activation was
+				// never attempted: service it now, or it is stranded when
+				// recurring polling is disabled and no handler settles.
+				maybeActivate()
+				throw e
+			}
+			// Capacity may have been freed while the activation was pending.
+			maybeActivate()
+		}
+
+		// Called whenever capacity is freed or an activation finishes:
+		// activate when a backlog or a deferred backfill is waiting and
+		// enough capacity is free.
+		const maybeActivate = () => {
+			if (!(backfillRequested || backlogPending) || !canActivate()) {
+				return
+			}
+			const isBackfill = backfillRequested
+			const isRetry = backfillIsRetry
+			backfillRequested = false
+			backfillIsRetry = false
+			runActivation().catch((e: unknown) => {
+				// Temporary failures were already retried in activateWithRetry;
+				// this is a non-transient error. The next sidecar poll retries.
+				this.logger.logError(
+					`Stream worker backlog poll failed: ${toError(e).message}`
+				)
+				// A deferred reconnect backfill must not be dropped while the
+				// handle is open: with recurring polling disabled there is no
+				// other poll to pick up jobs created while the stream was down.
+				// Re-run it once. With backlogRetry disabled, the caller opted
+				// out of retrying failed backlog activations: leave recovery to
+				// the next sidecar poll.
+				// If a deferred backfill already started after the failure, it
+				// covers this one: don't run a duplicate poll.
+				if (
+					isBackfill &&
+					!isRetry &&
+					drainRetryEnabled &&
+					!isClosed() &&
+					!activationReserved
+				) {
+					backfillRequested = true
+					backfillIsRetry = true
+					maybeActivate()
+				}
+			})
+		}
+
+		// Run a backfill poll. Only the activation is awaited (so its errors
+		// reach the caller); the rest of the backlog drains in the background
+		// as capacity frees up. If an activation is already in flight, or
+		// not enough capacity is free, the backfill is not dropped: it runs
+		// as soon as it can, so jobs created while the stream was down are
+		// picked up even when recurring polling is disabled (pollInterval 0
+		// or -1).
 		const backfill = async () => {
 			if (isClosed()) {
 				return
 			}
-			if (activationReserved) {
+			if (!canActivate()) {
 				backfillRequested = true
+				// A fresh request: it may be retried once if it fails.
+				backfillIsRetry = false
 				return
 			}
-			activationReserved = true
-			try {
-				// Route the first activation through activateWithRetry so the
-				// initial and reconnect backfills honour backlogRetry: a transient
-				// failure (RESOURCE_EXHAUSTED, UNAVAILABLE, DEADLINE_EXCEEDED) is
-				// retried rather than rejecting startup or stranding jobs created
-				// while the stream was down when recurring polling is disabled.
-				void runDrain(await activateWithRetry())
-			} catch (e) {
-				activationReserved = false
-				throw e
-			}
+			// Route the activation through activateWithRetry so the initial
+			// and reconnect backfills honour backlogRetry.
+			await runActivation()
 		}
 
 		const discardStream = (attachment: StreamAttachment) => {
@@ -656,7 +824,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 							WorkerInputVariables,
 							CustomHeaderShape
 						>(res, inputVariableDto, customHeadersDto)
-						void handleJob(parsedJob)
+						// Buffer when the worker is at capacity rather than
+						// starting a handler past the maxJobsActive limit.
+						dispatchStreamJob(parsedJob)
 					} catch (e) {
 						this.zbClient
 							.failJob({
@@ -705,6 +875,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 			})
 			this.streams.push(attachment)
 			currentStream = attachment
+			currentRawStream = stream
+			// A new stream starts flowing: re-apply backpressure if the buffer
+			// is still full from the previous one.
+			streamPaused = false
+			applyStreamBackpressure()
 			transition({ status: 'open' })
 			return undefined
 		}
@@ -809,19 +984,24 @@ export class ZBStreamWorker implements IZBJobWorker {
 						if (index !== -1) {
 							this.pollTimers.splice(index, 1)
 						}
-						// An activation already in flight is doing this poll's job.
-						if (activationReserved || isClosed()) {
+						// An activation already in flight, or a backlog that is
+						// polled again as soon as capacity frees up, is doing this
+						// poll's job; with no free capacity there is nothing to
+						// poll for.
+						if (
+							activationReserved ||
+							backlogPending ||
+							isClosed() ||
+							freeCapacity() <= 0
+						) {
 							schedulePoll()
 							return
 						}
-						// Reserve before activating: a reconnect backfill arriving
-						// while this activation is pending must not start a second,
-						// overlapping drain. The reservation is released by
-						// runDrain's finally, or here if the activation fails.
-						activationReserved = true
-						activateWithRetry()
-							.then(runDrain, (e: unknown) => {
-								activationReserved = false
+						// runActivation reserves before activating: a reconnect
+						// backfill arriving while this activation is pending must
+						// not start a second, overlapping activation.
+						runActivation()
+							.catch((e: unknown) => {
 								// Swallow errors — the stream is the primary channel.
 								// The next poll cycle will retry.
 								this.logger.logDebug(
