@@ -417,9 +417,11 @@ function parseToLossless(json: string): any {
 		// Let lossless-json produce its own (familiar) error message
 		return parse(json)
 	}
-	const counter = { keys: 0 }
+	const counter = { keys: 0, unsafeKey: false }
 	const wrapped = wrapNumbers(result, counter)
-	if (counter.keys !== scannedKeys) {
+	if (counter.unsafeKey || counter.keys !== scannedKeys) {
+		// Also defer when a decoded key is `__proto__`: JSON.parse keeps it as an own property, which
+		// DTO mapping would then assign via `instance[key] = value`, replacing the prototype.
 		// JSON.parse silently collapsed duplicate object keys. lossless-json throws on conflicting
 		// duplicates, so defer to it to keep identical semantics.
 		return parse(json)
@@ -513,7 +515,10 @@ function scanForNativeParse(json: string): number {
 	return keys
 }
 
-function wrapNumbers(value: any, counter: { keys: number }): any {
+function wrapNumbers(
+	value: any,
+	counter: { keys: number; unsafeKey: boolean }
+): any {
 	if (typeof value === 'number') {
 		return new LosslessNumber(String(value))
 	}
@@ -527,6 +532,10 @@ function wrapNumbers(value: any, counter: { keys: number }): any {
 		const keys = Object.keys(value)
 		counter.keys += keys.length
 		for (const key of keys) {
+			if (key === '__proto__') {
+				counter.unsafeKey = true
+				return value
+			}
 			value[key] = wrapNumbers(value[key], counter)
 		}
 	}

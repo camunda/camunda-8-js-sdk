@@ -553,3 +553,27 @@ describe('losslessParse native fast path (#890)', () => {
 		expect(kept.length).toBe(1600)
 	})
 })
+
+describe('__proto__ keys do not replace DTO prototypes', () => {
+	class ProtoDto extends LosslessDto {
+		name!: string
+	}
+	const payloads = [
+		'{"__proto__":{"injected":true},"name":"a"}',
+		'{"\\u005f_proto__":{"injected":true},"name":"a"}',
+		'{"name":"a","child":{"__proto__":{"injected":true}}}',
+	]
+	for (const json of payloads) {
+		test(`DTO stays intact for ${json}`, () => {
+			const dto = losslessParse(json, ProtoDto)
+			expect(dto).toBeInstanceOf(ProtoDto)
+			expect(Object.getPrototypeOf(dto)).toBe(ProtoDto.prototype)
+			expect(Object.keys(dto)).not.toContain('__proto__')
+			expect(dto.name).toBe('a')
+		})
+	}
+	test('nested __proto__ in an array matches lossless-json (no own __proto__ key)', () => {
+		const parsed = losslessParse('[{"__proto__":{"x":1}}]')
+		expect(Object.keys(parsed[0])).not.toContain('__proto__')
+	})
+})
