@@ -2837,7 +2837,54 @@ describe('ZBStreamWorker sidecar poll backs off on empty polls (#898)', () => {
 				created[0].emit('error', new Error('boom'))
 				await vi.advanceTimersByTimeAsync(100) // reconnect delay
 				// The backfill's reset re-armed the pending poll at pollInterval.
+				// (A jittered reconnect timer may be scheduled after it, so check
+				// the tail of the delays rather than only the last entry.)
+				expect(delays.slice(-2)).toContain(1000)
+				await worker.close()
+			} finally {
+				restore()
+				vi.useRealTimers()
+			}
+		}
+	)
+
+	test.runIf(unit)(
+		'repeated reconnect failures do not postpone a base-cadence sidecar poll',
+		async () => {
+			vi.useFakeTimers()
+			const { delays, restore } = pollDelays()
+			try {
+				const { worker, grpcClient } = createWorker()
+				// Every stream open fails, so each reconnect re-opens and fails
+				// again: onStreamDown runs on every attempt.
+				grpcClient.streamActivatedJobsStream.mockRejectedValue(
+					new Error('down')
+				)
+				await worker.streamJobs({
+					...baseReq,
+					taskHandler: (job) => job.complete(),
+					pollInterval: 1000,
+					streamNoJobsBackoff: false,
+					// Reconnect attempts every 100ms — faster than pollInterval.
+					streamReconnect: {
+						initialDelayMs: 100,
+						maxDelayMs: 100,
+						random: () => 0.5,
+					},
+				})
+				// The first sidecar poll is armed at pollInterval (the initial
+				// stream open also schedules a reconnect timer).
 				expect(delays[delays.length - 1]).toBe(1000)
+				// Across three poll intervals, repeated failed opens each reset the
+				// sidecar delay. The pending base-cadence poll must be preserved,
+				// not churned: exactly one sidecar poll fires per 1000ms tick.
+				for (let i = 0; i < 3; i++) {
+					const before = delays.length
+					await vi.advanceTimersByTimeAsync(1000)
+					const scheduled = delays.slice(before)
+					// The poll fired once at the tick and re-armed at pollInterval.
+					expect(scheduled.filter((d) => d === 1000)).toHaveLength(1)
+				}
 				await worker.close()
 			} finally {
 				restore()

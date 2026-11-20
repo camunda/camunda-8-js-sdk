@@ -358,13 +358,17 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// the cycle (a disconnect, a backfill) re-arms the pending timer.
 		let sidecarPollInFlight = false
 		const resetSidecarDelay = () => {
+			const wasBackedOff = sidecarDelay > pollInterval
 			sidecarBaseDelay = pollInterval
 			sidecarDelay = pollInterval
-			// A pending sidecar timer still holds the pre-reset (possibly
-			// backed-off) delay: re-arm it at pollInterval so a disconnect or
-			// a non-empty reconnect backfill does not leave the worker waiting
-			// out the stale backoff before polling again.
-			if (!sidecarPollInFlight) {
+			// A pending sidecar timer still holds the pre-reset delay: re-arm it
+			// at pollInterval so a disconnect or a non-empty reconnect backfill
+			// does not leave the worker waiting out a stale backoff before
+			// polling again. Only re-arm when clearing a backed-off delay: a
+			// timer already armed at the base cadence is left alone, so repeated
+			// reconnect failures (each faster than pollInterval) cannot churn the
+			// timer and postpone polling indefinitely.
+			if (wasBackedOff && !sidecarPollInFlight) {
 				rearmSidecarPoll()
 			}
 		}
