@@ -6,6 +6,7 @@ import {
 	ZBStreamWorker,
 	drainRetryDelayMs,
 	isTransientActivationError,
+	streamNoJobsBackoffDelayMs,
 } from '../../zeebe/lib/ZBStreamWorker'
 
 /**
@@ -75,6 +76,8 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 				inputVariableDto: LosslessDto,
 				customHeadersDto: LosslessDto,
 				pollInterval: 1000,
+				// Fixed cadence: this test counts poll cycles.
+				streamNoJobsBackoff: false,
 			})
 
 			// The initial backfill poll ran during streamJobs(); exactly one
@@ -2606,3 +2609,157 @@ test.runIf(allowAny([{ deployment: 'unit-test' }]))(
 		}
 	}
 )
+
+/**
+ * https://github.com/camunda/camunda-8-js-sdk/issues/898
+ *
+ * While the stream is open, an empty sidecar poll backs off the next poll
+ * (Java client parity: ×1.6, ±10% jitter, max 60s); a poll that activates
+ * jobs resets the delay to pollInterval.
+ */
+describe('ZBStreamWorker sidecar poll backs off on empty polls (#898)', () => {
+	const unit = allowAny([{ deployment: 'unit-test' }])
+	const baseReq = {
+		type: 'test-task',
+		worker: 'test-worker',
+		timeout: 30000,
+		tenantIds: ['<default>'],
+		inputVariableDto: LosslessDto,
+		customHeadersDto: LosslessDto,
+	}
+	// Record the delay of each sidecar setTimeout scheduled by the worker.
+	const pollDelays = () => {
+		const delays: number[] = []
+		const original = globalThis.setTimeout
+		const spy = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
+			fn: () => void,
+			ms?: number
+		) => {
+			delays.push(ms ?? 0)
+			return original(fn, ms)
+		}) as typeof setTimeout)
+		return { delays, restore: () => spy.mockRestore() }
+	}
+
+	test.runIf(unit)(
+		'streamNoJobsBackoffDelayMs grows by 1.6, capped at 60s',
+		() => {
+			const random = () => 0.5 // no jitter offset
+			let current = 100
+			const seen: number[] = []
+			for (let i = 0; i < 20; i++) {
+				const { next, delay } = streamNoJobsBackoffDelayMs(current, 100, {
+					random,
+				})
+				expect(delay).toBe(Math.round(next))
+				seen.push(delay)
+				current = next
+			}
+			expect(seen.slice(0, 3)).toEqual([160, 256, 410])
+			expect(seen[seen.length - 1]).toBe(60_000)
+			expect(Math.max(...seen)).toBe(60_000)
+			// ±10% jitter
+			expect(
+				streamNoJobsBackoffDelayMs(1000, 100, { random: () => 0 }).delay
+			).toBe(1440)
+			expect(
+				streamNoJobsBackoffDelayMs(1000, 100, { random: () => 0.9999999 }).delay
+			).toBe(1760)
+		}
+	)
+
+	test.runIf(unit)(
+		'consecutive empty polls grow the delay to the cap; a non-empty poll resets it',
+		async () => {
+			vi.useFakeTimers()
+			const { delays, restore } = pollDelays()
+			try {
+				const { worker, zbClient } = createWorker()
+				await worker.streamJobs({
+					...baseReq,
+					taskHandler: (job) => job.complete(),
+					pollInterval: 1000,
+					streamNoJobsBackoff: { random: () => 0.5, maxDelayMs: 5000 },
+				})
+				expect(delays).toEqual([1000])
+				for (const expected of [1600, 2560, 4096, 5000, 5000]) {
+					await vi.advanceTimersByTimeAsync(delays[delays.length - 1])
+					expect(delays[delays.length - 1]).toBe(expected)
+				}
+				// The next poll returns a job: the delay resets to pollInterval.
+				zbClient.activateJobs.mockResolvedValueOnce([
+					{ key: '1', variables: {}, customHeaders: {} },
+				])
+				await vi.advanceTimersByTimeAsync(5000)
+				expect(delays[delays.length - 1]).toBe(1000)
+				// Empty again: backs off from the base.
+				await vi.advanceTimersByTimeAsync(1000)
+				expect(delays[delays.length - 1]).toBe(1600)
+				await worker.close()
+			} finally {
+				restore()
+				vi.useRealTimers()
+			}
+		}
+	)
+
+	test.runIf(unit)(
+		'streamNoJobsBackoff: false keeps a fixed cadence',
+		async () => {
+			vi.useFakeTimers()
+			const { delays, restore } = pollDelays()
+			try {
+				const { worker } = createWorker()
+				await worker.streamJobs({
+					...baseReq,
+					taskHandler: () => {
+						throw new Error('no jobs')
+					},
+					pollInterval: 1000,
+					streamNoJobsBackoff: false,
+				})
+				for (let i = 0; i < 4; i++) {
+					await vi.advanceTimersByTimeAsync(1000)
+				}
+				expect(delays).toEqual([1000, 1000, 1000, 1000, 1000])
+				await worker.close()
+			} finally {
+				restore()
+				vi.useRealTimers()
+			}
+		}
+	)
+
+	test.runIf(unit)(
+		'a transient poll error is retried with the backlog backoff, not the empty-poll backoff',
+		async () => {
+			vi.useFakeTimers()
+			const { delays, restore } = pollDelays()
+			try {
+				const { worker, zbClient } = createWorker()
+				await worker.streamJobs({
+					...baseReq,
+					taskHandler: () => {
+						throw new Error('no jobs')
+					},
+					pollInterval: 1000,
+					backlogRetry: { random: () => 0.5, jitter: 0 },
+					streamNoJobsBackoff: { random: () => 0.5 },
+				})
+				zbClient.activateJobs.mockRejectedValueOnce(
+					Object.assign(new Error('8 RESOURCE_EXHAUSTED'), { code: 8 })
+				)
+				await vi.advanceTimersByTimeAsync(1000)
+				// Retry wait from the backlog retry policy (50ms first attempt).
+				expect(delays[delays.length - 1]).toBe(50)
+				await vi.advanceTimersByTimeAsync(50)
+				// The retried poll came back empty: empty-poll backoff applies.
+				expect(delays[delays.length - 1]).toBe(1600)
+				await worker.close()
+			} finally {
+				restore()
+				vi.useRealTimers()
+			}
+		}
+	)
+})
