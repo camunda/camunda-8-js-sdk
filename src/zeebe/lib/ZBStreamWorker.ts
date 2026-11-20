@@ -114,6 +114,60 @@ export interface StreamJobsRecoveryOptions {
 	 * source returning `[0, 1)`; inject a deterministic one in tests.
 	 */
 	streamNoJobsBackoff?: false | StreamNoJobsBackoffOptions
+	/**
+	 * Maximum lifetime of one job stream, in milliseconds. When it is reached
+	 * the stream is recycled: a replacement stream is opened first, and only
+	 * then is the old stream cancelled, so no job is dropped in the gap.
+	 *
+	 * A job stream is one long-lived gRPC call pinned to the gateway it first
+	 * reached. Without a maximum lifetime, streams never move after a gateway
+	 * scale-out or restart: new gateways get no streams and the survivors stay
+	 * overloaded until the worker processes restart. Recycling spreads the
+	 * streams back across the gateways — provided the load balancer routes each
+	 * new stream independently (see the README's Job Streaming section: this
+	 * needs request-level/L7 balancing; a plain L4 balancer reuses the same
+	 * HTTP/2 connection and needs DNS or client-side balancing instead).
+	 *
+	 * Defaults to 8 hours (`28_800_000`), the Camunda Java client's
+	 * `streamTimeout` default. Pass `false` to disable recycling. Each stream's
+	 * deadline is jittered: a uniform random value in `[0.9 × streamTimeout,
+	 * streamTimeout]`, so a fleet that started together does not recycle every
+	 * stream in the same second every 8 hours. `random` is a random source
+	 * returning `[0, 1)` (like `Math.random`); inject a deterministic one in
+	 * tests.
+	 */
+	streamTimeout?:
+		| number
+		| false
+		| {
+				timeoutMs?: number
+				random?: () => number
+		  }
+	/**
+	 * Inactivity watchdog, in milliseconds. If no job arrives on the stream for
+	 * this long, the stream is cancelled and recreated. The timer resets on
+	 * every received job. This catches silent stalls where the transport is
+	 * healthy (HTTP/2 keepalive passes) but the stream no longer delivers jobs —
+	 * for example a proxy keeping the socket warm after the broker-side handler
+	 * stopped pushing.
+	 *
+	 * Defaults to 10 minutes (`600_000`), the Camunda Java client's
+	 * `streamInactivityTimeout` default. Pass `false` to disable the watchdog.
+	 * It must be less than `streamTimeout` (a watchdog that cannot fire before
+	 * the stream is recycled anyway is useless): when it is not, it is clamped
+	 * to 90% of the configured `streamTimeout` and a warning is logged. Each
+	 * stream's deadline is jittered the same way as `streamTimeout`: a uniform
+	 * random value in `[0.9 × streamInactivityTimeout, streamInactivityTimeout]`.
+	 * `random` is a random source returning `[0, 1)` (like `Math.random`);
+	 * inject a deterministic one in tests.
+	 */
+	streamInactivityTimeout?:
+		| number
+		| false
+		| {
+				timeoutMs?: number
+				random?: () => number
+		  }
 }
 
 /** Options for `streamNoJobsBackoffDelayMs`; see `StreamJobsRecoveryOptions.streamNoJobsBackoff`. */
@@ -154,6 +208,56 @@ export const streamNoJobsBackoffDelayMs = (
 
 const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
 const DEFAULT_RECONNECT_MAX_DELAY_MS = 30_000
+
+// Stream-lifecycle safeguards, on by default, matching the Camunda Java
+// client's JobWorkerBuilderImpl defaults.
+export const DEFAULT_STREAM_TIMEOUT_MS = 8 * 60 * 60 * 1_000 // 8 hours
+export const DEFAULT_STREAM_INACTIVITY_TIMEOUT_MS = 10 * 60 * 1_000 // 10 minutes
+
+// Each stream's lifetime and watchdog deadlines are jittered downward by up
+// to 10%. The Java client uses fixed values, so a fleet started together (for
+// example after a fleet-wide redeploy) recycles every stream in the same
+// second, every 8 h, indefinitely. A uniform spread over [0.9 ×, 1.0 ×] of
+// the configured value spreads recycling across the window instead.
+const STREAM_DEADLINE_JITTER = 0.1
+
+/**
+ * One stream's deadline: a uniform random value in
+ * `[(1 - STREAM_DEADLINE_JITTER) × timeoutMs, timeoutMs]`. `random` is
+ * injectable (returning `[0, 1)`, like `Math.random`) so tests can pin it.
+ */
+export const streamDeadlineMs = (
+	timeoutMs: number,
+	random: () => number = Math.random
+): number =>
+	Math.round(timeoutMs * (1 - STREAM_DEADLINE_JITTER * (1 - random())))
+
+/** Options accepted by the `streamTimeout` / `streamInactivityTimeout` object form. */
+export interface StreamDeadlineOptions {
+	timeoutMs?: number
+	random?: () => number
+}
+
+/**
+ * Normalise a `streamTimeout` / `streamInactivityTimeout` option. `undefined`
+ * and `{}` mean the default; `false` disables the deadline; a number is the
+ * deadline in milliseconds. Non-positive numbers disable the deadline, like
+ * `pollInterval`'s `0` / `-1`.
+ */
+export const resolveStreamDeadline = (
+	option: number | false | StreamDeadlineOptions | undefined,
+	defaultTimeoutMs: number
+): { timeoutMs: number; random: () => number } | undefined => {
+	if (option === false) {
+		return undefined
+	}
+	const { timeoutMs = defaultTimeoutMs, random = Math.random } =
+		typeof option === 'object' ? option : { timeoutMs: option }
+	if (!(timeoutMs > 0)) {
+		return undefined
+	}
+	return { timeoutMs, random }
+}
 
 // Activate more jobs once in-flight work drops below this fraction of
 // maxJobsActive, like the Java client's JobWorkerImpl.
@@ -242,6 +346,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 	private closed = false
 	private pollTimers: ReturnType<typeof setTimeout>[] = []
 	private reconnectTimers = new Set<ReturnType<typeof setTimeout>>()
+	// Max-lifetime and inactivity-watchdog timers for live streams.
+	private lifecycleTimers = new Set<ReturnType<typeof setTimeout>>()
 	// Pending activation-retry waits; close() wakes them so they exit.
 	private retryWaits = new Set<() => void>()
 	constructor({
@@ -324,6 +430,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 			streamReconnect = true,
 			backlogRetry,
 			streamNoJobsBackoff,
+			streamTimeout,
+			streamInactivityTimeout,
 			...streamReq
 		} = req
 
@@ -371,6 +479,29 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (wasBackedOff && !sidecarPollInFlight) {
 				rearmSidecarPoll()
 			}
+		}
+
+		// Stream-lifecycle safeguards: the max stream lifetime and the
+		// inactivity watchdog. Both default to the Java client's values and can
+		// be disabled with `false`.
+		const lifetime = resolveStreamDeadline(
+			streamTimeout,
+			DEFAULT_STREAM_TIMEOUT_MS
+		)
+		let watchdog = resolveStreamDeadline(
+			streamInactivityTimeout,
+			DEFAULT_STREAM_INACTIVITY_TIMEOUT_MS
+		)
+		// The watchdog must fire before the stream is recycled anyway; when it
+		// cannot, clamp it to 90% of the lifetime (the Java client rejects the
+		// configuration instead; clamping keeps a worker with a tuned-down
+		// `streamTimeout` and a default watchdog usable).
+		if (watchdog && lifetime && watchdog.timeoutMs >= lifetime.timeoutMs) {
+			const clamped = Math.max(1, Math.floor(lifetime.timeoutMs * 0.9))
+			this.logger.logError(
+				`streamInactivityTimeout (${watchdog.timeoutMs}ms) must be less than streamTimeout (${lifetime.timeoutMs}ms); clamping the watchdog to ${clamped}ms`
+			)
+			watchdog = { ...watchdog, timeoutMs: clamped }
 		}
 
 		// Returns the handler's promise, which never rejects: a failure is
@@ -444,6 +575,37 @@ export class ZBStreamWorker implements IZBJobWorker {
 		let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 		let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 		let consecutiveFailures = 0 // drives the exponential backoff
+		// The max-lifetime timer of the live stream. Recycled streams are
+		// re-opened *before* they are cancelled, so the old stream's timer can
+		// still fire while its replacement is already live: the callback must
+		// not mistake the replacement for the expiring stream.
+		let lifetimeTimer: ReturnType<typeof setTimeout> | undefined
+		// The inactivity watchdog of the live stream, and the stream it guards.
+		let inactivityTimer: ReturnType<typeof setTimeout> | undefined
+		let inactivityStream: StreamAttachment | undefined
+		// True while a max-lifetime recycle is opening its replacement: a
+		// watchdog firing in that window must not start a second re-open.
+		let recycling = false
+		// True while an open is in flight (initial open, reconnect, or the
+		// recycle's replacement). Only one open may be in flight at a time:
+		// two concurrent opens can both succeed, and the second one to land
+		// would silently overwrite `currentStream`, leaving a duplicate
+		// subscription that survives `handle.close()` (it is no longer
+		// tracked anywhere). A stream failure that arrives while an open is
+		// in flight queues a follow-up open instead of starting its own.
+		let openInFlight = false
+		// Set when the live stream failed while a replacement open was in
+		// flight: when that open settles, a fresh open runs (to replace the
+		// dead stream if the in-flight one was its planned replacement, or
+		// to recover if the in-flight open itself failed), followed by a
+		// backfill poll for the jobs the dead stream missed.
+		let openFollowUp = false
+		// A stream whose max lifetime expired while backpressure had it
+		// paused. Recycling a paused stream would discard the activated jobs
+		// still unread in its transport buffer (they are only redelivered
+		// after their activation timeout), so the recycle waits until reading
+		// resumes.
+		let recycleDue: StreamAttachment | undefined
 
 		// Schedules the next sidecar poll at the current sidecarDelay. Bound in
 		// pollAndStream once recurring polling is set up; a no-op until then
@@ -499,7 +661,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 			| { pause?: () => unknown; resume?: () => unknown }
 			| undefined
 		let streamPaused = false
-		// Pause or resume the stream to keep the buffer bounded.
+		// Pause or resume the stream to keep the buffer bounded. A paused
+		// stream is deliberately starved, not stalled: the inactivity
+		// watchdog is suspended while the pause holds and re-armed when
+		// reading resumes, so a long backpressure pause is not mistaken
+		// for a dead stream (which would cancel a healthy stream and
+		// delay the buffered, already-activated jobs until their
+		// activation timeout).
 		const applyStreamBackpressure = () => {
 			const shouldPause =
 				!isClosed() && streamBuffer.length >= streamBufferLimit
@@ -508,9 +676,21 @@ export class ZBStreamWorker implements IZBJobWorker {
 			}
 			streamPaused = shouldPause
 			if (shouldPause) {
+				suspendInactivityWatchdog()
 				currentRawStream.pause?.()
 			} else {
 				currentRawStream.resume?.()
+				// Reading resumes: restart the silence deadline from now. A
+				// stream that stays silent after the resume is genuinely
+				// stalled and the watchdog recycles it.
+				if (inactivityStream) {
+					armInactivityWatchdog(inactivityStream)
+				}
+				const due = recycleDue
+				recycleDue = undefined
+				if (due && currentStream === due && !isClosed()) {
+					startRecycle(due)
+				}
 			}
 		}
 		const takeBuffered = () => {
@@ -830,7 +1010,10 @@ export class ZBStreamWorker implements IZBJobWorker {
 		}
 
 		// The stream is down. Re-open it with backoff, or, if reconnection is
-		// disabled, record that it is closed for good.
+		// disabled, record that it is closed for good. While an open is
+		// already in flight (a recycle's replacement or a reconnect), no
+		// second open may be started: queue a follow-up instead, so the two
+		// opens can never both succeed and leave a duplicate subscription.
 		const onStreamDown = (cause: StreamFailure) => {
 			if (isClosed()) {
 				return
@@ -840,6 +1023,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 			// backed-off delay would leave the worker idle for up to the
 			// backoff cap before it polls again.
 			resetSidecarDelay()
+			if (openInFlight) {
+				// The in-flight open settles into the replacement for this
+				// dead stream (or fails, and the follow-up recovers). The
+				// follow-up backfills what the dead stream missed.
+				openFollowUp = true
+				return
+			}
 			if (!reconnectEnabled) {
 				transition({
 					status: 'closed',
@@ -889,111 +1079,373 @@ export class ZBStreamWorker implements IZBJobWorker {
 				`Failed to open job stream for ${req.type}: ${error.message}`
 			)
 			notify('onStreamError', () => onStreamError?.(error))
+			// The live stream failed while this open attempt was on the wire
+			// (its close handler queued a follow-up rather than racing a
+			// second open). The attempt delivered nothing, so nothing is
+			// recovering the dead stream: schedule the recovery now.
+			if (openFollowUp) {
+				openFollowUp = false
+				scheduleReconnect({ kind: 'open-failed', error })
+				return
+			}
 			onStreamDown({ kind: 'open-failed', error })
+		}
+
+		// Track a max-lifetime or inactivity-watchdog timer so close() can
+		// cancel it; the callback must drop it from the set when it fires.
+		const trackLifecycleTimer = (
+			timer: ReturnType<typeof setTimeout>
+		): void => {
+			this.lifecycleTimers.add(timer)
+		}
+		const cancelLifecycleTimer = (
+			timer: ReturnType<typeof setTimeout> | undefined
+		): void => {
+			if (timer) {
+				clearTimeout(timer)
+				this.lifecycleTimers.delete(timer)
+			}
+		}
+
+		// Arm the inactivity watchdog for a newly opened stream. It resets on
+		// every received job; if it fires, the stream has silently stalled and
+		// is cancelled and recreated.
+		const armInactivityWatchdog = (attachment: StreamAttachment) => {
+			cancelLifecycleTimer(inactivityTimer)
+			if (!watchdog) {
+				inactivityTimer = undefined
+				inactivityStream = undefined
+				return
+			}
+			inactivityStream = attachment
+			// A deliberately paused stream keeps watchdog ownership but gets
+			// no deadline: resuming re-arms it (see applyStreamBackpressure).
+			if (streamPaused) {
+				inactivityTimer = undefined
+				return
+			}
+			inactivityTimer = setTimeout(
+				() => {
+					this.lifecycleTimers.delete(inactivityTimer!)
+					inactivityTimer = undefined
+					if (isClosed() || currentStream !== attachment) {
+						inactivityStream = undefined
+						return
+					}
+					if (recycling) {
+						// A replacement is opening. Defer rather than consume the
+						// watchdog: if the replacement fails, the original keeps
+						// its stall protection; if it succeeds, the replacement's
+						// own watchdog supersedes this one.
+						armInactivityWatchdog(attachment)
+						return
+					}
+					inactivityStream = undefined
+					this.logger.logDebug(
+						`Job stream for ${req.type} delivered no job for ${watchdog.timeoutMs}ms (jittered): recycling a stalled stream`
+					)
+					// Cancel the stalled stream. Its `close` handler runs the normal
+					// failure path: backoff, onStreamError/onStreamEnd are skipped
+					// (the stream is disposed, so its CANCELLED error is suppressed),
+					// and the re-open plus backfill pick up anything it missed.
+					discardStream(attachment)
+					if (currentRawStream) {
+						currentRawStream = undefined
+					}
+					currentStream = undefined
+					attachment.dispose()
+					onStreamDown({ kind: 'end' })
+				},
+				streamDeadlineMs(watchdog.timeoutMs, watchdog.random)
+			)
+			trackLifecycleTimer(inactivityTimer)
+		}
+
+		// Suspend the watchdog while the stream is intentionally paused by
+		// backpressure: the silence is deliberate, not a stall. The guarded
+		// stream is remembered so reading resumes into a fresh deadline.
+		const suspendInactivityWatchdog = () => {
+			cancelLifecycleTimer(inactivityTimer)
+			inactivityTimer = undefined
+		}
+
+		// Recycle the live stream because its max lifetime was reached: open
+		// the replacement first, then cancel the old stream, so no job is
+		// dropped in the gap. Jobs already received keep running; the broker's
+		// single-activation guarantee prevents duplicate delivery between the
+		// two streams. A single backfill poll then covers the window before
+		// the server registered the replacement.
+		const recycleStream = async (expiring: StreamAttachment) => {
+			recycling = true
+			try {
+				const openError = await openStream()
+				if (openError) {
+					if (isClosed()) {
+						return
+					}
+					// The old stream is still alive: report the failed re-open
+					// and let it run until it dies on its own (the reconnect
+					// path then recovers it). Its lifetime timer already fired,
+					// so it is not re-armed. Unlike a reconnect's failed open,
+					// this must NOT schedule a recovery: while the original
+					// stream is live a retry would open a second subscription,
+					// run an unwanted backfill, and leave the original alive
+					// after `handle.close()`.
+					this.logger.logError(
+						`Failed to open job stream for ${req.type}: ${openError.message}`
+					)
+					notify('onStreamError', () => onStreamError?.(openError))
+					return
+				}
+				if (isClosed()) {
+					// openStream already cancelled the stream it opened; leave the
+					// old stream to close().
+					return
+				}
+				// The replacement is live. Cancel the expiring stream, suppressing
+				// its handlers so its CANCELLED error is not reported as a
+				// failure and no reconnect is scheduled for it.
+				discardStream(expiring)
+				expiring.dispose()
+				// The expiring stream failed while its replacement was opening:
+				// its close handler queued a follow-up instead of a concurrent
+				// reconnect. The replacement is now the live stream, but it
+				// never delivered the jobs the dead stream missed: recover
+				// exactly like a reconnect, with a backfill poll.
+				if (openFollowUp) {
+					openFollowUp = false
+					if (!reconnectEnabled) {
+						transition({
+							status: 'closed',
+							reason: {
+								kind: 'stream-failed',
+								failure: { kind: 'end' },
+							},
+						})
+						// Terminal: dispose the replacement and cancel its
+						// timers, so no jobs arrive after `done` resolved.
+						// (`closed` is terminal, so closeHandle's own
+						// transition is ignored and the reason is kept.)
+						closeHandle()
+						return
+					}
+				}
+				// The replacement call is local until the server accepts it, so
+				// jobs created between cancelling the original and the
+				// replacement's registration may only exist as backlog (or the
+				// original died early). One backfill poll closes that gap; the
+				// broker's single-activation guarantee prevents duplicates.
+				// Run it detached: the handoff is complete, so the recycle guard
+				// is released now and the replacement's inactivity watchdog is
+				// not suppressed by a slow or retrying backfill.
+				recycling = false
+				backfill().catch((e) =>
+					this.logger.logError(
+						`Backfill poll after job stream recycle failed: ${
+							toError(e).message
+						}`
+					)
+				)
+			} finally {
+				recycling = false
+			}
+		}
+
+		const startRecycle = (attachment: StreamAttachment) => {
+			this.logger.logDebug(
+				`Job stream for ${req.type} reached its max lifetime of ${lifetime?.timeoutMs}ms (jittered): recycling the stream`
+			)
+			recycleStream(attachment).catch((e) =>
+				this.logger.logError(
+					`Unexpected error recycling job stream: ${toError(e).message}`
+				)
+			)
+		}
+
+		// Arm the max-lifetime timer for a newly opened stream.
+		const armLifetimeTimer = (attachment: StreamAttachment) => {
+			cancelLifecycleTimer(lifetimeTimer)
+			if (!lifetime) {
+				lifetimeTimer = undefined
+				return
+			}
+			lifetimeTimer = setTimeout(
+				() => {
+					this.lifecycleTimers.delete(lifetimeTimer!)
+					lifetimeTimer = undefined
+					if (isClosed() || currentStream !== attachment) {
+						return
+					}
+					if (streamPaused) {
+						// Unread activated jobs may sit in the paused transport
+						// buffer: retire the stream only once it is read again.
+						recycleDue = attachment
+						return
+					}
+					startRecycle(attachment)
+				},
+				streamDeadlineMs(lifetime.timeoutMs, lifetime.random)
+			)
+			trackLifecycleTimer(lifetimeTimer)
 		}
 
 		// Open the stream. Returns an Error if it could not be opened (the
 		// caller decides what to do), otherwise attaches the lifecycle handlers.
+		//
+		// `openInFlight` marks the whole attempt — including the failure
+		// handling below — so a stream failure arriving during it queues a
+		// follow-up (see `onStreamDown`) rather than racing a second open.
+		// The flag is released only after the follow-up has been serviced (or
+		// deliberately left to the reconnect backoff), so the follow-up open
+		// itself never overlaps this one.
 		const openStream = async (): Promise<Error | undefined> => {
-			const result: unknown = await (async () => {
-				try {
-					return await this.grpcClient.streamActivatedJobsStream(streamReq)
-				} catch (e) {
-					return { error: e }
+			openInFlight = true
+			try {
+				const result: unknown = await (async () => {
+					try {
+						return await this.grpcClient.streamActivatedJobsStream(streamReq)
+					} catch (e) {
+						return { error: e }
+					}
+				})()
+				const openError = getOpenError(result)
+				if (openError) {
+					// A failed open opens nothing, but the live stream may have
+					// failed while the attempt was on the wire: nothing is
+					// recovering it now, so start the recovery immediately
+					// rather than after a pointless backoff delay. The finally
+					// clears `openInFlight` as this returns, so the scheduled
+					// reconnect's open cannot overlap this attempt.
+					if (openFollowUp) {
+						openFollowUp = false
+						if (!isClosed()) {
+							if (reconnectEnabled) {
+								scheduleReconnect({ kind: 'open-failed', error: openError })
+							} else {
+								// No live stream remains and nothing will recover
+								// it: end the handle so `done` resolves.
+								transition({
+									status: 'closed',
+									reason: {
+										kind: 'stream-failed',
+										failure: { kind: 'open-failed', error: openError },
+									},
+								})
+								closeHandle()
+							}
+						}
+					}
+					return openError
 				}
-			})()
-			const openError = getOpenError(result)
-			if (openError) {
-				return openError
-			}
-			const stream = asStream<ActivatedJob>(result)
-			if (isClosed()) {
-				// close() was called while the stream was being opened.
-				cancelStream(stream)
-				return undefined
-			}
+				const stream = asStream<ActivatedJob>(result)
+				if (isClosed()) {
+					// close() was called while the stream was being opened.
+					cancelStream(stream)
+					return undefined
+				}
 
-			const openedAt = Date.now()
-			let receivedData = false
-			let cause: StreamFailure = { kind: 'end' }
-			// A stream that delivered a job, or stayed up for a while, was
-			// healthy: restart the backoff from the beginning.
-			const resetBackoffIfHealthy = () => {
-				if (receivedData || Date.now() - openedAt >= maxDelayMs) {
-					consecutiveFailures = 0
-				}
-			}
-			// The adapter is the only code that attaches listeners to the raw
-			// stream. It delivers exactly one of `error`/`end`, then `close`.
-			const attachment: StreamAttachment = attachStream(stream, {
-				data: (res) => {
-					if (!receivedData) {
-						receivedData = true
+				const openedAt = Date.now()
+				let receivedData = false
+				let cause: StreamFailure = { kind: 'end' }
+				// A stream that delivered a job, or stayed up for a while, was
+				// healthy: restart the backoff from the beginning.
+				const resetBackoffIfHealthy = () => {
+					if (receivedData || Date.now() - openedAt >= maxDelayMs) {
 						consecutiveFailures = 0
 					}
-					try {
-						const parsedJob = parseVariablesAndCustomHeadersToJSON<
-							WorkerInputVariables,
-							CustomHeaderShape
-						>(res, inputVariableDto, customHeadersDto)
-						// Buffer when the worker is at capacity rather than
-						// starting a handler past the maxJobsActive limit.
-						dispatchStreamJob(parsedJob)
-					} catch (e) {
-						this.zbClient
-							.failJob({
-								jobKey: res.key,
-								errorMessage: `Error parsing variable payload ${e}`,
-								retries: res.retries - 1,
-								retryBackOff: 0,
-							})
-							.catch((failError: unknown) =>
-								this.logger.logError(
-									`Failed to fail job ${res.key} after a payload parse error: ${
-										toError(failError).message
-									}`
+				}
+				// The adapter is the only code that attaches listeners to the raw
+				// stream. It delivers exactly one of `error`/`end`, then `close`.
+				const attachment: StreamAttachment = attachStream(stream, {
+					data: (res) => {
+						if (!receivedData) {
+							receivedData = true
+							consecutiveFailures = 0
+						}
+						// The stream is alive and delivering: restart the inactivity
+						// watchdog.
+						if (inactivityStream === attachment) {
+							armInactivityWatchdog(attachment)
+						}
+						try {
+							const parsedJob = parseVariablesAndCustomHeadersToJSON<
+								WorkerInputVariables,
+								CustomHeaderShape
+							>(res, inputVariableDto, customHeadersDto)
+							// Buffer when the worker is at capacity rather than
+							// starting a handler past the maxJobsActive limit.
+							dispatchStreamJob(parsedJob)
+						} catch (e) {
+							this.zbClient
+								.failJob({
+									jobKey: res.key,
+									errorMessage: `Error parsing variable payload ${e}`,
+									retries: res.retries - 1,
+									retryBackOff: 0,
+								})
+								.catch((failError: unknown) =>
+									this.logger.logError(
+										`Failed to fail job ${
+											res.key
+										} after a payload parse error: ${
+											toError(failError).message
+										}`
+									)
 								)
-							)
-					}
-				},
-				error: (error) => {
-					cause = { kind: 'error', error }
-					if (isClosed()) {
-						// Expected: we cancelled it ourselves.
-						return
-					}
-					resetBackoffIfHealthy()
-					this.logger.logError(
-						`Job stream for ${req.type} failed: ${error.message}`
-					)
-					notify('onStreamError', () => onStreamError?.(error))
-				},
-				end: () => {
-					cause = { kind: 'end' }
-					if (isClosed()) {
-						return
-					}
-					resetBackoffIfHealthy()
-					this.logger.logError(`Job stream for ${req.type} ended`)
-					notify('onStreamEnd', () => onStreamEnd?.())
-				},
-				close: () => {
-					discardStream(attachment)
-					if (currentStream === attachment) {
-						currentStream = undefined
-					}
-					onStreamDown(cause)
-				},
-			})
-			this.streams.push(attachment)
-			currentStream = attachment
-			currentRawStream = stream
-			// A new stream starts flowing: re-apply backpressure if the buffer
-			// is still full from the previous one.
-			streamPaused = false
-			applyStreamBackpressure()
-			transition({ status: 'open' })
-			return undefined
+						}
+					},
+					error: (error) => {
+						cause = { kind: 'error', error }
+						if (isClosed()) {
+							// Expected: we cancelled it ourselves.
+							return
+						}
+						resetBackoffIfHealthy()
+						this.logger.logError(
+							`Job stream for ${req.type} failed: ${error.message}`
+						)
+						notify('onStreamError', () => onStreamError?.(error))
+					},
+					end: () => {
+						cause = { kind: 'end' }
+						if (isClosed()) {
+							return
+						}
+						resetBackoffIfHealthy()
+						this.logger.logError(`Job stream for ${req.type} ended`)
+						notify('onStreamEnd', () => onStreamEnd?.())
+					},
+					close: () => {
+						discardStream(attachment)
+						if (currentStream === attachment) {
+							currentStream = undefined
+							// The live stream is gone: its deadlines are meaningless.
+							cancelLifecycleTimer(lifetimeTimer)
+							lifetimeTimer = undefined
+						}
+						if (inactivityStream === attachment) {
+							cancelLifecycleTimer(inactivityTimer)
+							inactivityTimer = undefined
+							inactivityStream = undefined
+						}
+						onStreamDown(cause)
+					},
+				})
+				this.streams.push(attachment)
+				currentStream = attachment
+				currentRawStream = stream
+				// A new stream starts flowing: re-apply backpressure if the buffer
+				// is still full from the previous one.
+				streamPaused = false
+				applyStreamBackpressure()
+				// Arm the stream-lifecycle safeguards for this stream.
+				armLifetimeTimer(attachment)
+				armInactivityWatchdog(attachment)
+				transition({ status: 'open' })
+				return undefined
+			} finally {
+				openInFlight = false
+			}
 		}
 
 		// Re-open a dead stream, then backfill: jobs created while the stream
@@ -1031,6 +1483,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 				this.reconnectTimers.delete(reconnectTimer)
 				reconnectTimer = undefined
 			}
+			cancelLifecycleTimer(lifetimeTimer)
+			lifetimeTimer = undefined
+			cancelLifecycleTimer(inactivityTimer)
+			inactivityTimer = undefined
+			inactivityStream = undefined
 			if (currentStream) {
 				discardStream(currentStream)
 				currentStream.dispose()
@@ -1165,6 +1622,8 @@ export class ZBStreamWorker implements IZBJobWorker {
 		this.pollTimers = []
 		this.reconnectTimers.forEach((t) => clearTimeout(t))
 		this.reconnectTimers.clear()
+		this.lifecycleTimers.forEach((t) => clearTimeout(t))
+		this.lifecycleTimers.clear()
 		this.retryWaits.forEach((wake) => wake())
 		const clientClosed: StreamClosedReason = { kind: 'client-closed' }
 		this.machines.forEach((m) =>
@@ -1227,8 +1686,10 @@ You should call only one job action method in the worker handler. This is a bug 
 					_conf: string | JobFailureConfiguration
 				): _conf is JobFailureConfiguration => typeof _conf === 'object'
 				const errorMessage = isFailureConfig(conf) ? conf.errorMessage : conf
-				const retryBackOff = isFailureConfig(conf) ? conf.retryBackOff ?? 0 : 0
-				const _retries = isFailureConfig(conf) ? conf.retries ?? 0 : retries
+				const retryBackOff = isFailureConfig(conf)
+					? (conf.retryBackOff ?? 0)
+					: 0
+				const _retries = isFailureConfig(conf) ? (conf.retries ?? 0) : retries
 				return this.failJob({
 					job,
 					errorMessage,
@@ -1248,7 +1709,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				): s is ErrorJobWithVariables => typeof s === 'object'
 				const errorCode = isErrorJobWithVariables(e) ? e.errorCode : e
 				errorMessage = isErrorJobWithVariables(e)
-					? e.errorMessage ?? ''
+					? (e.errorMessage ?? '')
 					: errorMessage
 				const variables = isErrorJobWithVariables(e) ? e.variables : {}
 

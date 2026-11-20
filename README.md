@@ -753,6 +753,24 @@ Observe and configure this with:
 - **`onStreamReconnect(attempt)`** — called before each attempt to re-open the stream. `attempt` is the number of consecutive failures, starting at 1.
 - **`streamReconnect`** — `true` (the default), `false` to disable reconnection (the callbacks above still fire), or `{ initialDelayMs, maxDelayMs }` to tune the backoff. Jitter is always applied; it is never what you want to turn off, because a lockstep reconnect is a thundering herd.
 
+### Stream lifetime and inactivity watchdog
+
+A job stream is one long-lived gRPC call, pinned to the gateway it first reached. Two safeguards, on by default and matching the Camunda Java client (`JobWorkerBuilderImpl`), keep a long-running fleet healthy:
+
+- **Max stream lifetime — `streamTimeout`, default 8 hours.** When a stream reaches its maximum lifetime it is recycled: the worker opens a replacement stream *first* and only then cancels the old one, so no job is dropped in the gap, jobs already received keep running, and one backfill poll then picks up any job created in the brief window before the gateway registered the replacement stream. Without a maximum lifetime, streams never move after a gateway scale-out or restart: new gateways get no streams and the survivors stay overloaded until the worker processes restart. Recycling spreads the streams back across the gateways. A stream whose lifetime expires while it is paused by backpressure (the job buffer is full) is recycled as soon as reading resumes, so activated jobs still unread in its transport buffer are not discarded.
+- **Inactivity watchdog — `streamInactivityTimeout`, default 10 minutes.** If no job arrives on the stream for this long, the stream is cancelled and recreated. The timer resets on every received job. This catches silent stalls where the transport is healthy (HTTP/2 keepalive passes) but the stream no longer delivers jobs — for example, a proxy keeping the socket warm after the broker-side handler stopped pushing. The watchdog must be less than `streamTimeout`; if it is not, it is clamped to 90% of `streamTimeout` and a warning is logged.
+
+Both deadlines are **jittered** — an improvement on the Java client, which uses fixed values. A fleet started together (for example after a fleet-wide redeploy) with fixed values recycles every stream in the same second, every 8 hours, indefinitely. Here each stream's deadline is a uniform random value in `[0.9 ×, 1.0 ×]` of the configured value, so recycling is spread across the window.
+
+Configure them with:
+
+- **`streamTimeout`** — milliseconds, `false` to disable, or `{ timeoutMs, random }` to tune (`random` is a `[0, 1)` random source, injectable for tests).
+- **`streamInactivityTimeout`** — milliseconds, `false` to disable, or `{ timeoutMs, random }`.
+
+Each recycle is logged at debug level.
+
+> **Rebalancing needs request-level load balancing.** Recycling a stream only moves it to a different gateway when the new stream can land somewhere else. That is true with request-level (L7) load balancing — Envoy, nginx gRPC, the Camunda SaaS ingress — where each new gRPC call is routed independently. With a plain L4 (TCP) load balancer, the client keeps reusing the same HTTP/2 connection, so a recycled stream goes back to the same gateway: L4 deployments need DNS-based or client-side (round-robin) balancing for recycling to rebalance. The inactivity watchdog is valuable in both deployments.
+
 ### Backlog activation retry
 
 A backlog activation (the initial backfill, a reconnect backfill, or a sidecar poll) that fails with a transient error — `RESOURCE_EXHAUSTED` (broker backpressure), `UNAVAILABLE`, or `DEADLINE_EXCEEDED` — is retried with exponential backoff while the handle is open, rather than waiting for the next sidecar poll. The default curve matches the Java client's default `ExponentialBackoff` (50 ms, growing by a factor of 1.6, capped at 5 s), but with full jitter: each retry delay is a uniform random value between 0 and the cap for that attempt, so a fleet that is throttled together does not retry in lockstep.
@@ -776,6 +794,7 @@ When you run hundreds of `streamJobs` workers, a single gateway event (restart, 
 2. **`pollInterval`** — each sidecar poll is a command on the broker. With a large fleet, raise it well above the default 30 s (or set `0`/`-1` to disable recurring polling; the initial backfill and reconnect backfills still run).
 3. **Reconnect jitter** — always on. Tune the window with `streamReconnect: { initialDelayMs, maxDelayMs }`; a larger `initialDelayMs` moves the reconnect spike, and the jitter spreads it.
 4. **`backlogRetry`** — widen or slow the backlog retry (`{ minDelayMs: 500, maxDelayMs: 30_000 }`, for example) when the broker is overloaded for sustained periods.
+5. **`streamTimeout` / `streamInactivityTimeout`** — the recycle deadlines are already jittered, so a fleet started together does not recycle in lockstep. Shortening `streamTimeout` rebalances streams onto new gateways sooner after a scale-out, at the cost of more frequent stream churn.
 
 The callbacks may be `async`. Exceptions thrown by these callbacks, and rejections of any promise they return, are caught and logged; they do not affect reconnection. If the stream cannot be opened on the first attempt and `streamReconnect` is `false`, the promise returned by `streamJobs` rejects with the underlying error.
 
@@ -819,6 +838,13 @@ const streamWorker = await client.streamJobs({
 	// Optional: tune the backlog activation retry (default: 50 ms growing by
 	// 1.6x to 5 s, with full jitter). Pass false to disable retrying.
 	backlogRetry: { minDelayMs: 50, maxDelayMs: 5000, factor: 1.6, jitter: 1 },
+	// Optional: recycle the job stream at most every 4 h instead of the
+	// default 8 h (each stream's deadline is jittered within [0.9x, 1.0x]).
+	// Pass false to disable recycling.
+	streamTimeout: 4 * 60 * 60 * 1000,
+	// Optional: recreate the stream when no job arrives for 5 min instead of
+	// the default 10 min. Pass false to disable the watchdog.
+	streamInactivityTimeout: 5 * 60 * 1000,
 })
 
 // Stop the worker, including any pending reconnect

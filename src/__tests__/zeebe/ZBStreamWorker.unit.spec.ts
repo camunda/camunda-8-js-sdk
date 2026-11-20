@@ -2626,6 +2626,10 @@ describe('ZBStreamWorker sidecar poll backs off on empty polls (#898)', () => {
 		tenantIds: ['<default>'],
 		inputVariableDto: LosslessDto,
 		customHeadersDto: LosslessDto,
+		// These tests record every setTimeout delay to observe the sidecar
+		// cadence: keep the stream lifetime / inactivity timers (#900) out.
+		streamTimeout: false as const,
+		streamInactivityTimeout: false as const,
 	}
 	// Record the delay of each sidecar setTimeout scheduled by the worker.
 	const pollDelays = () => {

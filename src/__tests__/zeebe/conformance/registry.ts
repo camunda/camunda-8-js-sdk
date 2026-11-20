@@ -129,6 +129,12 @@ const callStreamJobs = (
 		// The sidecar poll is left on, so that "no leaked timers after
 		// close" also covers it.
 		pollInterval: 5_000,
+		// The max-lifetime recycle and inactivity watchdog are disabled here:
+		// the suite pins down failure/reconnect timing exactly, and a stream
+		// recycling itself mid-scenario would break those assertions. Their
+		// behaviour is covered by the ZBStreamWorker lifecycle spec.
+		streamTimeout: false,
+		streamInactivityTimeout: false,
 		onStreamError: observers.onError,
 		onStreamEnd: observers.onEnd,
 		onStreamReconnect: observers.onReconnect,

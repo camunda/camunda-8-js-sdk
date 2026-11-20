@@ -1344,6 +1344,36 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			 * polling (the initial backfill poll still runs).
 			 */
 			pollInterval?: number
+			/**
+			 * Maximum lifetime of one job stream, in milliseconds. When it is
+			 * reached the stream is recycled: a replacement stream is opened
+			 * first, and only then is the old stream cancelled, so no job is
+			 * dropped in the gap. A job stream is pinned to the gateway it first
+			 * reached; recycling lets a fleet rebalance its streams across
+			 * gateways after a scale-out or restart (with request-level/L7 load
+			 * balancing — see the README's Job Streaming section).
+			 *
+			 * Defaults to 8 hours, the Camunda Java client's `streamTimeout`
+			 * default. Pass `false` to disable. Each stream's deadline is
+			 * jittered: a uniform random value in `[0.9 × streamTimeout,
+			 * streamTimeout]`, so a fleet that started together does not recycle
+			 * in lockstep.
+			 */
+			streamTimeout?: StreamJobsRecoveryOptions['streamTimeout']
+			/**
+			 * Inactivity watchdog, in milliseconds. If no job arrives on the
+			 * stream for this long, the stream is cancelled and recreated; the
+			 * timer resets on every received job. This catches silent stalls
+			 * where the transport is healthy (HTTP/2 keepalive passes) but the
+			 * stream no longer delivers jobs.
+			 *
+			 * Defaults to 10 minutes, the Camunda Java client's
+			 * `streamInactivityTimeout` default. Pass `false` to disable. It
+			 * must be less than `streamTimeout` (otherwise it is clamped to 90%
+			 * of it), and each stream's deadline is jittered like
+			 * `streamTimeout`'s.
+			 */
+			streamInactivityTimeout?: StreamJobsRecoveryOptions['streamInactivityTimeout']
 			taskHandler: ZBWorkerTaskHandler<
 				WorkerInputVariables,
 				CustomHeaderShape,
