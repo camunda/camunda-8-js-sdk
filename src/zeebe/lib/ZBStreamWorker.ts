@@ -102,6 +102,54 @@ export interface StreamJobsRecoveryOptions {
 				jitter?: number
 				random?: () => number
 		  }
+	/**
+	 * Back off the recurring sidecar poll while it keeps returning no jobs
+	 * and the stream is open, like the Camunda Java client's
+	 * `streamNoJobsBackoffSupplier`. Each empty poll schedules the next one
+	 * after `min(current * factor, maxDelayMs)`, jittered by ±`jitter`
+	 * (a fraction of the delay); a poll that activates at least one job, or a
+	 * poll while the stream is down, resets the delay to `pollInterval`.
+	 * Defaults match the Java client: factor 1.6, jitter 0.1, max 60000ms.
+	 * Pass `false` to poll at a fixed `pollInterval`. `random` is a random
+	 * source returning `[0, 1)`; inject a deterministic one in tests.
+	 */
+	streamNoJobsBackoff?: false | StreamNoJobsBackoffOptions
+}
+
+/** Options for `streamNoJobsBackoffDelayMs`; see `StreamJobsRecoveryOptions.streamNoJobsBackoff`. */
+export interface StreamNoJobsBackoffOptions {
+	maxDelayMs?: number
+	factor?: number
+	jitter?: number
+	random?: () => number
+}
+
+export const STREAM_NO_JOBS_BACKOFF_MAX_DELAY_MS = 60_000
+const STREAM_NO_JOBS_BACKOFF_FACTOR = 1.6
+const STREAM_NO_JOBS_BACKOFF_JITTER = 0.1
+
+/**
+ * The next sidecar poll delay after an empty poll while the stream is open:
+ * grows from the current (un-jittered) delay by `factor`, capped at
+ * `maxDelayMs` (never below `baseDelayMs`). Returns the un-jittered `next`
+ * delay, to grow from on the following empty poll, and the jittered `delay`
+ * to actually wait.
+ */
+export const streamNoJobsBackoffDelayMs = (
+	currentDelayMs: number,
+	baseDelayMs: number,
+	options: StreamNoJobsBackoffOptions = {}
+): { next: number; delay: number } => {
+	const {
+		maxDelayMs = STREAM_NO_JOBS_BACKOFF_MAX_DELAY_MS,
+		factor = STREAM_NO_JOBS_BACKOFF_FACTOR,
+		jitter = STREAM_NO_JOBS_BACKOFF_JITTER,
+		random = Math.random,
+	} = options
+	const cap = Math.max(maxDelayMs, baseDelayMs)
+	const next = Math.max(baseDelayMs, Math.min(currentDelayMs * factor, cap))
+	const offset = next * jitter * (2 * random() - 1)
+	return { next, delay: Math.max(0, Math.round(next + offset)) }
 }
 
 const DEFAULT_RECONNECT_INITIAL_DELAY_MS = 1_000
@@ -275,6 +323,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			onStreamReconnect,
 			streamReconnect = true,
 			backlogRetry,
+			streamNoJobsBackoff,
 			...streamReq
 		} = req
 
@@ -295,6 +344,34 @@ export class ZBStreamWorker implements IZBJobWorker {
 		// disables retrying (a failed activation waits for the next poll).
 		const drainRetryEnabled = backlogRetry !== false
 		const drainRetryOptions: DrainRetryOptions = backlogRetry || {}
+
+		// Sidecar poll delay: backs off on empty polls while the stream is
+		// open, resets to pollInterval when an activation returns jobs.
+		const noJobsBackoffEnabled = streamNoJobsBackoff !== false
+		const noJobsBackoffOptions: StreamNoJobsBackoffOptions =
+			streamNoJobsBackoff || {}
+		let sidecarBaseDelay = pollInterval // un-jittered current delay
+		let sidecarDelay = pollInterval // delay for the next scheduled poll
+		// A reset from inside the sidecar poll cycle itself is picked up by
+		// that cycle's finally, which schedules the next poll at the new delay;
+		// re-arming there too would run two timers. Only a reset from outside
+		// the cycle (a disconnect, a backfill) re-arms the pending timer.
+		let sidecarPollInFlight = false
+		const resetSidecarDelay = () => {
+			const wasBackedOff = sidecarDelay > pollInterval
+			sidecarBaseDelay = pollInterval
+			sidecarDelay = pollInterval
+			// A pending sidecar timer still holds the pre-reset delay: re-arm it
+			// at pollInterval so a disconnect or a non-empty reconnect backfill
+			// does not leave the worker waiting out a stale backoff before
+			// polling again. Only re-arm when clearing a backed-off delay: a
+			// timer already armed at the base cadence is left alone, so repeated
+			// reconnect failures (each faster than pollInterval) cannot churn the
+			// timer and postpone polling indefinitely.
+			if (wasBackedOff && !sidecarPollInFlight) {
+				rearmSidecarPoll()
+			}
+		}
 
 		// Returns the handler's promise, which never rejects: a failure is
 		// logged here. dispatch() awaits it to free capacity.
@@ -367,6 +444,32 @@ export class ZBStreamWorker implements IZBJobWorker {
 		let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 		let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 		let consecutiveFailures = 0 // drives the exponential backoff
+
+		// Schedules the next sidecar poll at the current sidecarDelay. Bound in
+		// pollAndStream once recurring polling is set up; a no-op until then
+		// (and forever when recurring polling is disabled, pollInterval <= 0).
+		let scheduleSidecarPoll: () => void = () => {}
+
+		// Replace a pending sidecar poll timer with one armed at the current
+		// sidecarDelay. Used when the delay state is reset while a poll timer
+		// is pending: the pending timer would otherwise still wait out the
+		// stale (possibly backed-off) delay. The cleared timer is removed from
+		// `pollTimers` and its replacement pushed, so the array keeps tracking
+		// exactly the live timer and `close()` still cancels it. No-op while a
+		// poll is in flight (its finally already schedules the next poll at
+		// the new delay) or when recurring polling never started.
+		const rearmSidecarPoll = () => {
+			if (isClosed() || !sidecarTimer) {
+				return
+			}
+			clearTimeout(sidecarTimer)
+			const index = this.pollTimers.indexOf(sidecarTimer)
+			if (index !== -1) {
+				this.pollTimers.splice(index, 1)
+			}
+			sidecarTimer = undefined
+			scheduleSidecarPoll()
+		}
 
 		const isClosed = () => this.closed || handleClosed
 
@@ -622,10 +725,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 				activationReserved = false
 				capacityReserved = false
 				backlogPending = full && !isClosed()
+				if (jobs.length > 0) {
+					resetSidecarDelay()
+				}
 				if (isClosed()) {
 					// The handle closed while the activation was pending: start
 					// no handlers, neither polled nor buffered.
-					return
+					return 0
 				}
 				// Dispatch this activation's jobs first: the activation asked for
 				// exactly the free capacity, and buffered stream jobs were counted
@@ -635,6 +741,9 @@ export class ZBStreamWorker implements IZBJobWorker {
 				// reservation must not leave them stranded behind the batch.
 				jobs.forEach(dispatch)
 				drainStreamBuffer()
+				// Capacity may have been freed while the activation was pending.
+				maybeActivate()
+				return jobs.length
 			} catch (e) {
 				backlogPending = false
 				// Release before servicing a deferred backfill below, which
@@ -650,8 +759,6 @@ export class ZBStreamWorker implements IZBJobWorker {
 				maybeActivate()
 				throw e
 			}
-			// Capacity may have been freed while the activation was pending.
-			maybeActivate()
 		}
 
 		// Called whenever capacity is freed or an activation finishes:
@@ -728,6 +835,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (isClosed()) {
 				return
 			}
+			// While the stream is down the sidecar poll is the only channel,
+			// so it must run at the base cadence: a pending timer armed at a
+			// backed-off delay would leave the worker idle for up to the
+			// backoff cap before it polls again.
+			resetSidecarDelay()
 			if (!reconnectEnabled) {
 				transition({
 					status: 'closed',
@@ -971,7 +1083,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			// before scheduling the next one, so the array holds at most one
 			// live timer per stream rather than growing by one per poll cycle.
 			if (pollInterval > 0) {
-				const schedulePoll = () => {
+				scheduleSidecarPoll = () => {
 					// A poll in flight when close() is called must not schedule another.
 					if (isClosed()) {
 						return
@@ -994,13 +1106,36 @@ export class ZBStreamWorker implements IZBJobWorker {
 							isClosed() ||
 							freeCapacity() <= 0
 						) {
-							schedulePoll()
+							scheduleSidecarPoll()
 							return
 						}
 						// runActivation reserves before activating: a reconnect
 						// backfill arriving while this activation is pending must
 						// not start a second, overlapping activation.
+						sidecarPollInFlight = true
 						runActivation()
+							.then((activated) => {
+								if (activated > 0) {
+									return
+								}
+								if (!noJobsBackoffEnabled || !currentStream) {
+									// Polling-only behaviour while the stream is down.
+									resetSidecarDelay()
+									return
+								}
+								// The stream is open and the poll came back empty:
+								// back off, like the Java client.
+								const { next, delay } = streamNoJobsBackoffDelayMs(
+									sidecarBaseDelay,
+									pollInterval,
+									noJobsBackoffOptions
+								)
+								sidecarBaseDelay = next
+								sidecarDelay = delay
+								this.logger.logDebug(
+									`Stream worker sidecar poll for ${req.type} returned no jobs, next poll in ${delay}ms`
+								)
+							})
 							.catch((e: unknown) => {
 								// Swallow errors — the stream is the primary channel.
 								// The next poll cycle will retry.
@@ -1008,11 +1143,14 @@ export class ZBStreamWorker implements IZBJobWorker {
 									`Stream worker sidecar poll failed: ${toError(e).message}`
 								)
 							})
-							.finally(schedulePoll)
-					}, pollInterval)
+							.finally(() => {
+								sidecarPollInFlight = false
+								scheduleSidecarPoll()
+							})
+					}, sidecarDelay)
 					this.pollTimers.push(sidecarTimer)
 				}
-				schedulePoll()
+				scheduleSidecarPoll()
 			}
 
 			return handle

@@ -762,6 +762,12 @@ Configure it with **`backlogRetry`**:
 - **`backlogRetry: false`** — do not retry (the behaviour before this retry existed). A failed initial startup backfill rejects `streamJobs()` before recurring polling is scheduled, so the caller must handle that rejection. A later failed activation (a reconnect backfill or a sidecar poll) gives up and is recovered by the next sidecar poll only when recurring polling is enabled (`pollInterval` > 0); with recurring polling disabled, those jobs wait for the next reconnect backfill or their activation timeout.
 - **`backlogRetry: { minDelayMs, maxDelayMs, factor, jitter }`** — tune the retry. `minDelayMs` (default `50`), `maxDelayMs` (default `5000`) and `factor` (default `1.6`) set the exponential curve. `jitter` is the jitter width as a fraction of the capped base delay: `1` (the default) is full jitter `[0, cap]`, `0.1` is ±10% around the base (the Java client's default), and `0` disables jitter. Widen `minDelayMs`/`maxDelayMs` to slow a fleet's retries under sustained broker backpressure.
 
+### Sidecar poll backoff on empty polls
+
+While the stream is open, a sidecar poll that activates no jobs backs off the next poll, like the Camunda Java client: the delay grows from the current interval by a factor of 1.6 (±10% jitter), capped at 60 s. A poll that activates at least one job resets the delay to `pollInterval`, so a real backlog is still drained at full speed. While the stream is down, the sidecar poll runs at `pollInterval`.
+
+Configure it with **`streamNoJobsBackoff`**: `false` polls at a fixed `pollInterval`; `{ maxDelayMs, factor, jitter }` tunes the curve (defaults `60000`, `1.6`, `0.1`).
+
 ### Tuning a large fleet
 
 When you run hundreds of `streamJobs` workers, a single gateway event (restart, failover, backpressure) can otherwise turn into a herd of activations against the gateway and broker. The knobs, in order of impact:
