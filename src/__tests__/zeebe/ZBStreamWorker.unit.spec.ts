@@ -2762,4 +2762,87 @@ describe('ZBStreamWorker sidecar poll backs off on empty polls (#898)', () => {
 			}
 		}
 	)
+
+	test.runIf(unit)(
+		'a stream disconnect re-arms the pending sidecar poll at pollInterval',
+		async () => {
+			vi.useFakeTimers()
+			const { delays, restore } = pollDelays()
+			try {
+				const { worker, grpcClient } = createWorker()
+				const created: Array<ReturnType<typeof createMockStream>> = []
+				grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+					const stream = createMockStream()
+					created.push(stream)
+					return stream
+				})
+				await worker.streamJobs({
+					...baseReq,
+					taskHandler: (job) => job.complete(),
+					pollInterval: 1000,
+					streamNoJobsBackoff: { random: () => 0.5, maxDelayMs: 60000 },
+					streamReconnect: { initialDelayMs: 100, maxDelayMs: 100 },
+				})
+				// Back the sidecar poll off: 1000 -> 1600 -> 2560.
+				await vi.advanceTimersByTimeAsync(1000)
+				expect(delays[delays.length - 1]).toBe(1600)
+				await vi.advanceTimersByTimeAsync(1600)
+				expect(delays[delays.length - 1]).toBe(2560)
+				// The stream dies while the 2560ms poll is pending: the pending
+				// timer must be re-armed at pollInterval, not wait out the backoff.
+				created[0].emit('error', new Error('boom'))
+				// The emit schedules the reconnect timer too, so check the tail:
+				expect(delays.slice(-2)).toContain(1000)
+				// The re-armed poll fires at pollInterval. By then the stream
+				// has re-opened (100ms reconnect delay), so the empty poll
+				// backs off again from the base — not from the stale 2560ms.
+				await vi.advanceTimersByTimeAsync(1000)
+				expect(delays[delays.length - 1]).toBe(1600)
+				await worker.close()
+			} finally {
+				restore()
+				vi.useRealTimers()
+			}
+		}
+	)
+
+	test.runIf(unit)(
+		'a non-empty reconnect backfill re-arms the pending sidecar poll at pollInterval',
+		async () => {
+			vi.useFakeTimers()
+			const { delays, restore } = pollDelays()
+			try {
+				const { worker, grpcClient, zbClient } = createWorker()
+				const created: Array<ReturnType<typeof createMockStream>> = []
+				grpcClient.streamActivatedJobsStream.mockImplementation(async () => {
+					const stream = createMockStream()
+					created.push(stream)
+					return stream
+				})
+				await worker.streamJobs({
+					...baseReq,
+					taskHandler: (job) => job.complete(),
+					pollInterval: 1000,
+					streamNoJobsBackoff: { random: () => 0.5, maxDelayMs: 60000 },
+					streamReconnect: { initialDelayMs: 100, maxDelayMs: 100 },
+				})
+				// Back the sidecar poll off: 1000 -> 1600.
+				await vi.advanceTimersByTimeAsync(1000)
+				expect(delays[delays.length - 1]).toBe(1600)
+				// The stream dies; the reconnect backfill returns a job while the
+				// backed-off poll is still pending.
+				zbClient.activateJobs.mockResolvedValueOnce([
+					{ key: '1', variables: {}, customHeaders: {} },
+				])
+				created[0].emit('error', new Error('boom'))
+				await vi.advanceTimersByTimeAsync(100) // reconnect delay
+				// The backfill's reset re-armed the pending poll at pollInterval.
+				expect(delays[delays.length - 1]).toBe(1000)
+				await worker.close()
+			} finally {
+				restore()
+				vi.useRealTimers()
+			}
+		}
+	)
 })

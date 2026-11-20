@@ -352,9 +352,21 @@ export class ZBStreamWorker implements IZBJobWorker {
 			streamNoJobsBackoff || {}
 		let sidecarBaseDelay = pollInterval // un-jittered current delay
 		let sidecarDelay = pollInterval // delay for the next scheduled poll
+		// A reset from inside the sidecar poll cycle itself is picked up by
+		// that cycle's finally, which schedules the next poll at the new delay;
+		// re-arming there too would run two timers. Only a reset from outside
+		// the cycle (a disconnect, a backfill) re-arms the pending timer.
+		let sidecarPollInFlight = false
 		const resetSidecarDelay = () => {
 			sidecarBaseDelay = pollInterval
 			sidecarDelay = pollInterval
+			// A pending sidecar timer still holds the pre-reset (possibly
+			// backed-off) delay: re-arm it at pollInterval so a disconnect or
+			// a non-empty reconnect backfill does not leave the worker waiting
+			// out the stale backoff before polling again.
+			if (!sidecarPollInFlight) {
+				rearmSidecarPoll()
+			}
 		}
 
 		// Returns the handler's promise, which never rejects: a failure is
@@ -428,6 +440,32 @@ export class ZBStreamWorker implements IZBJobWorker {
 		let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 		let sidecarTimer: ReturnType<typeof setTimeout> | undefined
 		let consecutiveFailures = 0 // drives the exponential backoff
+
+		// Schedules the next sidecar poll at the current sidecarDelay. Bound in
+		// pollAndStream once recurring polling is set up; a no-op until then
+		// (and forever when recurring polling is disabled, pollInterval <= 0).
+		let scheduleSidecarPoll: () => void = () => {}
+
+		// Replace a pending sidecar poll timer with one armed at the current
+		// sidecarDelay. Used when the delay state is reset while a poll timer
+		// is pending: the pending timer would otherwise still wait out the
+		// stale (possibly backed-off) delay. The cleared timer is removed from
+		// `pollTimers` and its replacement pushed, so the array keeps tracking
+		// exactly the live timer and `close()` still cancels it. No-op while a
+		// poll is in flight (its finally already schedules the next poll at
+		// the new delay) or when recurring polling never started.
+		const rearmSidecarPoll = () => {
+			if (isClosed() || !sidecarTimer) {
+				return
+			}
+			clearTimeout(sidecarTimer)
+			const index = this.pollTimers.indexOf(sidecarTimer)
+			if (index !== -1) {
+				this.pollTimers.splice(index, 1)
+			}
+			sidecarTimer = undefined
+			scheduleSidecarPoll()
+		}
 
 		const isClosed = () => this.closed || handleClosed
 
@@ -793,6 +831,11 @@ export class ZBStreamWorker implements IZBJobWorker {
 			if (isClosed()) {
 				return
 			}
+			// While the stream is down the sidecar poll is the only channel,
+			// so it must run at the base cadence: a pending timer armed at a
+			// backed-off delay would leave the worker idle for up to the
+			// backoff cap before it polls again.
+			resetSidecarDelay()
 			if (!reconnectEnabled) {
 				transition({
 					status: 'closed',
@@ -1036,7 +1079,7 @@ export class ZBStreamWorker implements IZBJobWorker {
 			// before scheduling the next one, so the array holds at most one
 			// live timer per stream rather than growing by one per poll cycle.
 			if (pollInterval > 0) {
-				const schedulePoll = () => {
+				scheduleSidecarPoll = () => {
 					// A poll in flight when close() is called must not schedule another.
 					if (isClosed()) {
 						return
@@ -1059,12 +1102,13 @@ export class ZBStreamWorker implements IZBJobWorker {
 							isClosed() ||
 							freeCapacity() <= 0
 						) {
-							schedulePoll()
+							scheduleSidecarPoll()
 							return
 						}
 						// runActivation reserves before activating: a reconnect
 						// backfill arriving while this activation is pending must
 						// not start a second, overlapping activation.
+						sidecarPollInFlight = true
 						runActivation()
 							.then((activated) => {
 								if (activated > 0) {
@@ -1095,11 +1139,14 @@ export class ZBStreamWorker implements IZBJobWorker {
 									`Stream worker sidecar poll failed: ${toError(e).message}`
 								)
 							})
-							.finally(schedulePoll)
+							.finally(() => {
+								sidecarPollInFlight = false
+								scheduleSidecarPoll()
+							})
 					}, sidecarDelay)
 					this.pollTimers.push(sidecarTimer)
 				}
-				schedulePoll()
+				scheduleSidecarPoll()
 			}
 
 			return handle
