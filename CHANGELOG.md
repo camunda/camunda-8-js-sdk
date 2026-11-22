@@ -1,3 +1,10 @@
+## [8.8.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.23...v8.8.24) (2026-11-22)
+
+
+### Features
+
+* **zeebe:** back off stream worker sidecar poll on empty polls ([#899](https://github.com/camunda/camunda-8-js-sdk/issues/899)) ([#902](https://github.com/camunda/camunda-8-js-sdk/issues/902)) ([38845fb](https://github.com/camunda/camunda-8-js-sdk/commit/38845fbd30b0c96b64d5d147d391b4cc33d30f2c))
+
 ## [8.8.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.22...v8.8.23) (2026-11-17)
 
 
