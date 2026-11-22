@@ -6,14 +6,6 @@
 * **zeebe:** add max stream lifetime and inactivity watchdog to streamJobs ([#901](https://github.com/camunda/camunda-8-js-sdk/issues/901)) ([564a9b9](https://github.com/camunda/camunda-8-js-sdk/commit/564a9b9492ddbbdbd88b8a1bc813546e837d0a56)), closes [#900](https://github.com/camunda/camunda-8-js-sdk/issues/900)
 * **zeebe:** back off stream worker sidecar poll on empty polls ([#899](https://github.com/camunda/camunda-8-js-sdk/issues/899)) ([ca2f69a](https://github.com/camunda/camunda-8-js-sdk/commit/ca2f69a70bdf7c9a32c443113942d30a71106b9e)), closes [#898](https://github.com/camunda/camunda-8-js-sdk/issues/898)
 
-# [8.9.0-alpha.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.20...v8.9.0-alpha.21) (2026-11-20)
-
-
-### Features
-
-* **zeebe:** add max stream lifetime and inactivity watchdog to streamJobs ([#901](https://github.com/camunda/camunda-8-js-sdk/issues/901)) ([564a9b9](https://github.com/camunda/camunda-8-js-sdk/commit/564a9b9492ddbbdbd88b8a1bc813546e837d0a56)), closes [#900](https://github.com/camunda/camunda-8-js-sdk/issues/900)
-* **zeebe:** back off stream worker sidecar poll on empty polls ([#899](https://github.com/camunda/camunda-8-js-sdk/issues/899)) ([ca2f69a](https://github.com/camunda/camunda-8-js-sdk/commit/ca2f69a70bdf7c9a32c443113942d30a71106b9e)), closes [#898](https://github.com/camunda/camunda-8-js-sdk/issues/898)
-
 # [8.9.0-alpha.20](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.19...v8.9.0-alpha.20) (2026-11-17)
 
 
