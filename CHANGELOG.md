@@ -1,3 +1,10 @@
+# [8.9.0-alpha.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.21...v8.9.0-alpha.22) (2026-11-24)
+
+
+### Bug Fixes
+
+* **lossless-parser:** vendor lossless-json parse with the string-run fix ([#897](https://github.com/camunda/camunda-8-js-sdk/issues/897)) ([265fcc2](https://github.com/camunda/camunda-8-js-sdk/commit/265fcc2f1ef4ca37ea0ac939d6ba3052bfab1c49)), closes [#893](https://github.com/camunda/camunda-8-js-sdk/issues/893) [josdejong/lossless-json#293](https://github.com/josdejong/lossless-json/issues/293) [#890](https://github.com/camunda/camunda-8-js-sdk/issues/890)
+
 # [8.9.0-alpha.21](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.20...v8.9.0-alpha.21) (2026-11-22)
 
 
