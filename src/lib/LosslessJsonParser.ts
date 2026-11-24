@@ -25,11 +25,14 @@ import { debug as d } from 'debug'
 import {
 	LosslessNumber,
 	isLosslessNumber,
-	parse,
 	stringify,
 	toSafeNumberOrThrow,
 } from 'lossless-json'
 import 'reflect-metadata'
+
+// Vendored lossless-json parse with the string-run fix (josdejong/lossless-json#293);
+// see src/vendor/lossless-json/README.md.
+import { parse } from '../vendor/lossless-json/parse'
 
 const debug = d('lossless-json-parser')
 
@@ -409,7 +412,9 @@ function parseArrayWithAnnotations<T>(
  * Fast path: when every numeric literal in the text is in canonical form (`String(Number(literal)) === literal`)
  * and has fewer than 15 significant digits, native `JSON.parse` loses no information. We parse with it (flat strings,
  * ~60x faster) and wrap each number in a `LosslessNumber` built from its canonical text, which is identical to the
- * literal. Otherwise we fall back to lossless-json. The output is therefore the same as lossless-json's in both paths.
+ * literal. Otherwise we fall back to lossless-json's `parse`, vendored in src/vendor/lossless-json with the
+ * string-run fix, so the fallback (int64 numbers, duplicate or `__proto__` keys) no longer builds ropes either.
+ * The output is the same as lossless-json's in both paths.
  */
 function parseToLossless(json: string): any {
 	const scannedKeys = scanForNativeParse(json)

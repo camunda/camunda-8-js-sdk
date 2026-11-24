@@ -1,6 +1,7 @@
-import { parse, stringify } from 'lossless-json'
+import { stringify } from 'lossless-json'
 
 import { losslessParse } from '../../lib'
+import { parse } from '../../vendor/lossless-json/parse'
 
 import { SearchResults } from './OperateDto'
 
