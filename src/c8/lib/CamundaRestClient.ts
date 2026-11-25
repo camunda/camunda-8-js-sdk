@@ -3,9 +3,10 @@ import path from 'node:path'
 
 import { debug } from 'debug'
 import { lookup as lookupMimeType } from 'mime-types'
-import { parse, stringify } from 'lossless-json'
+import { stringify } from 'lossless-json'
 import PCancelable from 'p-cancelable'
 
+import { parse } from '../../vendor/lossless-json/parse'
 import {
 	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
