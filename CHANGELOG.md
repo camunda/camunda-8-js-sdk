@@ -1,3 +1,10 @@
+## [8.8.25](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.24...v8.8.25) (2026-11-25)
+
+
+### Bug Fixes
+
+* **lossless-parser:** release the vendored lossless-json parser backport ([a2b3afc](https://github.com/camunda/camunda-8-js-sdk/commit/a2b3afc8e55d65a104b335ea01ce55b400618fca)), closes [#904](https://github.com/camunda/camunda-8-js-sdk/issues/904)
+
 ## [8.8.24](https://github.com/camunda/camunda-8-js-sdk/compare/v8.8.23...v8.8.24) (2026-11-22)
 
 
