@@ -459,20 +459,20 @@ const c8 = new Camunda8({
 Here is a complete configuration example for connection to Camunda SaaS:
 
 ```bash
-export ZEEBE_GRPC_ADDRESS='grpcs://5c34c0a7-7f29-4424-8414-125615f7a9b9.syd-1.zeebe.camunda.io:443'
-export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
-export ZEEBE_CLIENT_ID='yvvURO9TmBnP3zx4Xd8Ho6apgeiZTjn6'
-export ZEEBE_CLIENT_SECRET='iJJu-SHgUtuJTTAMnMLdcb8WGF8s2mHfXhXutEwe8eSbLXn98vUpoxtuLk5uG0en'
+export ZEEBE_GRPC_ADDRESS='grpcs://<cluster-id>.<region>.zeebe.camunda.io:443'
+export ZEEBE_REST_ADDRESS='https://<region>.zeebe.camunda.io/<cluster-id>'
+export ZEEBE_CLIENT_ID='<client-id>'
+export ZEEBE_CLIENT_SECRET='<client-secret>'
 
-export CAMUNDA_TASKLIST_BASE_URL='https://syd-1.tasklist.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
-export CAMUNDA_OPTIMIZE_BASE_URL='https://syd-1.optimize.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
-export CAMUNDA_OPERATE_BASE_URL='https://syd-1.operate.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
+export CAMUNDA_TASKLIST_BASE_URL='https://<region>.tasklist.camunda.io/<cluster-id>'
+export CAMUNDA_OPTIMIZE_BASE_URL='https://<region>.optimize.camunda.io/<cluster-id>'
+export CAMUNDA_OPERATE_BASE_URL='https://<region>.operate.camunda.io/<cluster-id>'
 export CAMUNDA_OAUTH_URL='https://login.cloud.camunda.io/oauth/token'
 export CAMUNDA_AUTH_STRATEGY='OAUTH'
 
 # Admin Console and Modeler API Client
-export CAMUNDA_CONSOLE_CLIENT_ID='e-JdgKfJy9hHSXzi'
-export CAMUNDA_CONSOLE_CLIENT_SECRET='DT8Pe-ANC6e3Je_ptLyzZvBNS0aFwaIV'
+export CAMUNDA_CONSOLE_CLIENT_ID='<console-client-id>'
+export CAMUNDA_CONSOLE_CLIENT_SECRET='<console-client-secret>'
 export CAMUNDA_CONSOLE_BASE_URL='https://api.cloud.camunda.io'
 export CAMUNDA_CONSOLE_OAUTH_AUDIENCE='api.cloud.camunda.io'
 ```

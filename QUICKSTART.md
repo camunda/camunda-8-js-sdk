@@ -66,7 +66,7 @@ export CAMUNDA_SECURE_CONNECTION=false
 
 ```bash
 export ZEEBE_GRPC_ADDRESS='5c34c0a7-...-125615f7a9b9.syd-1.zeebe.camunda.io:443'
-export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-7f29-4424-8414-125615f7a9b9'
+export ZEEBE_REST_ADDRESS='https://syd-1.zeebe.camunda.io/5c34c0a7-...-125615f7a9b9'
 export ZEEBE_CLIENT_ID='yvvURO...'
 export ZEEBE_CLIENT_SECRET='iJJu-SHg...'
 export CAMUNDA_TASKLIST_BASE_URL='https://syd-1.tasklist.camunda.io/5c34c0a7-...-125615f7a9b9'
