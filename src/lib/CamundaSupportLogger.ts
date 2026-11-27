@@ -125,54 +125,42 @@ function getOSInfo() {
 }
 
 const REDACTED = '[REDACTED]'
+// Keys matched exactly (after normalization) because they are too generic to
+// match as suffixes.
 const SENSITIVE_LOG_KEYS = new Set([
-	'authorization',
-	'proxyauthorization',
-	'body',
 	'cert',
-	'certificate',
 	'certificateauthority',
-	'clientsecret',
-	'cookie',
 	'form',
-	'idtoken',
 	'json',
 	'key',
+])
+const SENSITIVE_LOG_KEY_SUFFIXES = [
+	'accesstoken',
+	'apikey',
+	'authorization',
+	'body',
+	'certchain',
+	'certificate',
+	'certstring',
+	'clientassertion',
+	'clientsecret',
+	'cookie',
+	'idtoken',
 	'password',
 	'passphrase',
 	'privatekey',
 	'refreshtoken',
-	'secret',
-	'setcookie',
-	'token',
-	'accesstoken',
-	'certchain',
+	'rootcert',
 	'rootcerts',
-])
+	'secret',
+	'token',
+]
 
 function isSensitiveLogKey(key: string) {
 	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
 	return (
 		SENSITIVE_LOG_KEYS.has(normalizedKey) ||
-		[
-			'accesstoken',
-			'authorization',
-			'body',
-			'certchain',
-			'certificate',
-			'certstring',
-			'clientsecret',
-			'cookie',
-			'idtoken',
-			'password',
-			'passphrase',
-			'privatekey',
-			'refreshtoken',
-			'rootcert',
-			'rootcerts',
-			'secret',
-			'token',
-		].some((suffix) => normalizedKey.endsWith(suffix))
+		SENSITIVE_LOG_KEY_SUFFIXES.some((suffix) => normalizedKey.endsWith(suffix))
 	)
 }
 
@@ -184,21 +172,32 @@ export function sanitizeSensitiveString(value: string) {
 				REDACTED
 			)
 			// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
-			// so redact the whole remainder of the line for these headers.
+			// so redact a quoted value or the whole remainder of the line.
 			.replace(
-				/\b(authorization|proxy-authorization|cookie|set-cookie)(["']?\s*[:=]\s*)[^\n"]*/gi,
+				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\n"]*)/gi,
 				`$1$2${REDACTED}`
 			)
-			.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/gi, `$1 ${REDACTED}`)
+			// Case-sensitive, so prose such as "basic authentication" is kept.
+			.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, `$1 ${REDACTED}`)
 			.replace(
 				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
 				(_match, protocol, _userinfo, path) => `${protocol}${path}`
 			)
 			.replace(
-				/\b(access[_-]?token|authorization|client[_-]?secret|cookie|id[_-]?token|password|passphrase|proxy[_-]?authorization|refresh([_-]?token)?|secret|set-cookie|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
-				`$1$3${REDACTED}`
+				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
+				`$1$2${REDACTED}`
 			)
 	)
+}
+
+/** Keep only stack frames: the stack header repeats error.message, which can
+ * include a server response body. */
+export function stackFramesForLogging(stack: string | undefined) {
+	return (stack ?? '')
+		.split('\n')
+		.filter((line) => /^\s*at\s|^(RequestId|ApiMethod): /.test(line))
+		.map(sanitizeSensitiveString)
+		.join('\n')
 }
 
 export function redactUrlForLogging(url: URL | string | undefined) {

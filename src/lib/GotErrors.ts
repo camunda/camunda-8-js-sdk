@@ -9,7 +9,7 @@ import {
 import { CamundaPlatform8Configuration } from './Configuration'
 import safeStringify, {
 	redactUrlForLogging,
-	sanitizeSensitiveString,
+	stackFramesForLogging,
 } from './CamundaSupportLogger'
 import { supportLogger } from './GotHooks'
 
@@ -196,18 +196,18 @@ export const gotBeforeErrorHook =
 		}
 
 		/** Log details of errors to the Camunda Support log.
-		 * Only safe metadata is logged: response bodies (error.message, detail)
-		 * may contain credentials echoed by the server under unknown field names.
-		 * The error returned to callers is unchanged. */
+		 * Only safe metadata is logged: response bodies (in error.message, the
+		 * stack header, and detail) may contain credentials echoed by the server
+		 * under unknown field names. The error returned to callers is unchanged. */
 		supportLogger.log('**ERROR**: Got error during Rest call:')
 		supportLogger.log({
 			name: error.name,
 			code: error.code,
 			method,
 			url: redactUrlForLogging(url),
-			stack: sanitizeSensitiveString(error.stack ?? ''),
-			originalStack: sanitizeSensitiveString(
-				(error as RequestError & { originalStack?: string }).originalStack ?? ''
+			stack: stackFramesForLogging(error.stack),
+			originalStack: stackFramesForLogging(
+				(error as RequestError & { originalStack?: string }).originalStack
 			),
 			source: error.source,
 		})

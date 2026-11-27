@@ -350,14 +350,7 @@ export class GrpcClient extends EventEmitter {
 					} catch (error: unknown) {
 						const e = error as Error & { code: number }
 						debug(`${methodName}Stream error: ${e.code}`, e.message)
-						// The failure can originate from the token endpoint and its
-						// message may contain server-echoed credentials in free text.
-						// Emit a fixed message to the application logger and preserve
-						// the original error for the caller via the return value.
-						this.emit(
-							MiddlewareSignals.Log.Error,
-							`gRPC stream setup failed for ${methodName}`
-						)
+						this.emit(MiddlewareSignals.Log.Error, e.message)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
 						return { error }

@@ -415,7 +415,7 @@ export class OAuthProvider implements IHeadersProvider {
 						const err = e as NodeJS.ErrnoException
 						if (err.code !== 'ENOENT') {
 							this.log.warn(`Failed to delete token cache file ${filePath}`)
-							this.log.warn(err.message)
+							this.log.warn(err.message, err)
 						}
 					}
 				})
@@ -423,7 +423,7 @@ export class OAuthProvider implements IHeadersProvider {
 			const err = e as NodeJS.ErrnoException
 			if (err.code !== 'ENOENT') {
 				this.log.warn(`Failed to list OAuth token cache dir ${this.cacheDir}`)
-				this.log.warn(err.message)
+				this.log.warn(err.message, err)
 			}
 		}
 	}
@@ -502,7 +502,11 @@ export class OAuthProvider implements IHeadersProvider {
 				})
 				.catch((e) => {
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
-					this.log.error('Error requesting OAuth token')
+					this.log.error(
+						`Error requesting OAuth token (${
+							e.response?.statusCode ?? e.statusCode ?? e.code ?? 'no status'
+						})`
+					)
 					throw e
 				})
 				.then((t) => {
@@ -557,7 +561,7 @@ export class OAuthProvider implements IHeadersProvider {
 		} catch (e) {
 			const err = e as Error
 			this.log.error(`Failed to cache token in memory for audience ${audience}`)
-			this.log.error(err.message)
+			this.log.error(err.message, err)
 			throw e
 		}
 	}
@@ -604,7 +608,7 @@ export class OAuthProvider implements IHeadersProvider {
 			this.log.warn(
 				`Failed to read token from file cache for audience ${audience}. Ignoring cache entry.`
 			)
-			this.log.warn(err.message)
+			this.log.warn(err.message, err)
 			return null
 		}
 	}
@@ -627,7 +631,7 @@ export class OAuthProvider implements IHeadersProvider {
 			this.log.warn(
 				`Failed to decode OAuth token before writing to file cache for audience ${audience}`
 			)
-			this.log.warn(err.message)
+			this.log.warn(err.message, err)
 			return
 		}
 
@@ -659,7 +663,7 @@ export class OAuthProvider implements IHeadersProvider {
 					return
 				}
 				this.log.error(`Error writing OAuth token to file ${file}`)
-				this.log.error(e.message)
+				this.log.error(e.message, e)
 			}
 		)
 	}

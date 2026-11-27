@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import safeStringify, {
 	CamundaSupportLogger,
@@ -10,11 +10,11 @@ import { gotBeforeErrorHook } from '../../lib/GotErrors'
 import { beforeCallHook, supportLogger } from '../../lib/GotHooks'
 import { NormalizedOptions, RequestError } from '../../lib/HttpClient'
 
-describe('HTTP diagnostic logging', () => {
-	beforeEach(() => {
-		vi.restoreAllMocks()
-	})
+afterEach(() => {
+	vi.restoreAllMocks()
+})
 
+describe('HTTP diagnostic logging', () => {
 	it('does not log request bodies, authorization, cookies, or TLS keys', () => {
 		const log = vi
 			.spyOn(supportLogger, 'log')
@@ -149,13 +149,19 @@ describe('HTTP diagnostic logging', () => {
 			.spyOn(supportLogger, 'log')
 			.mockImplementation(() => undefined)
 		const options = {
-			context: {},
+			context: {
+				__stackTrace: {
+					stacks: [{ location: 'at caller (app.ts:1:1)' }],
+					requestId: 'request-1',
+					capturedAt: 0,
+				},
+			},
 			method: 'POST',
 			url: new URL('https://api.example.test/v1/jobs'),
 			headers: {},
 		}
-		// HTTPError appends non-HTML response bodies to error.message, and the
-		// parsed body lands in `detail`. Neither may reach the support file.
+		// HTTPError appends non-HTML response bodies to error.message, which is
+		// repeated in the header of the synthesized and original stacks.
 		const error = Object.assign(
 			new Error('Request failed - {"tenantSecret":"echoed-credential"}'),
 			{
@@ -164,7 +170,6 @@ describe('HTTP diagnostic logging', () => {
 				request: { options },
 			}
 		) as unknown as RequestError
-		error.stack = 'RequestError: Request failed'
 
 		await gotBeforeErrorHook({} as CamundaPlatform8Configuration)(error)
 		const output = safeStringify(log.mock.calls)
@@ -174,6 +179,8 @@ describe('HTTP diagnostic logging', () => {
 		expect(output).not.toContain('"message"')
 		expect(output).not.toContain('"detail"')
 		expect(output).toContain('"method": "POST"')
+		expect(output).toContain('at caller (app.ts:1:1)')
+		expect(output).toContain('RequestId: request-1')
 	})
 })
 
@@ -277,12 +284,35 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).not.toContain('first-token')
 		expect(output).not.toContain('second-token-secret')
 
-		// gRPC stream setup failures propagate the OAuth error message to the
-		// application logger; credentials embedded in it must be stripped.
 		const propagated =
 			'Error requesting token for Client Id zeebe-client: POST ' +
 			'https://oauth.example.test/token?client_secret=embedded-secret failed'
 		const sanitized = safeStringify({ message: propagated })
 		expect(sanitized).not.toContain('embedded-secret')
+	})
+
+	it('redacts quoted header values and API keys without redacting prose', () => {
+		const output = safeStringify({
+			message:
+				'{"authorization":"raw-header-token","cookie":"session=quoted-cookie"} ' +
+				"{'authorization': 'single-quoted-token'} " +
+				'x-api-key: header-api-key api_key=query-api-key ' +
+				'client_assertion=signed-assertion',
+			apiKey: 'structured-api-key',
+			prose: 'Using basic authentication; refresh: 30s',
+		})
+
+		for (const secret of [
+			'raw-header-token',
+			'quoted-cookie',
+			'single-quoted-token',
+			'header-api-key',
+			'query-api-key',
+			'signed-assertion',
+			'structured-api-key',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('Using basic authentication; refresh: 30s')
 	})
 })
