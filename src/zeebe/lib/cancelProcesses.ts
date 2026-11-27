@@ -1,4 +1,5 @@
 import { Camunda8 } from '../../c8'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 const c8 = new Camunda8()
 const camunda = c8.getCamundaRestClient()
@@ -43,7 +44,7 @@ export async function cancelProcesses(processDefinitionKey: string) {
 		console.log(
 			`Failed to search for process instances for ${processDefinitionKey}`
 		)
-		console.log(e)
+		console.log(errorForLogging(e))
 	})
 	if (processes) {
 		await Promise.all(

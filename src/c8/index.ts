@@ -20,7 +20,10 @@ import { TasklistApiClient } from '../tasklist'
 import { ZeebeGrpcClient } from '../zeebe'
 // Progressive adoption bridge: translate existing SDK config into OCA env-style overrides
 import { translateToOcaEnvOverrides } from '../lib/CamundaClientConfigTranslator'
-import { CamundaSupportLogger } from '../lib/CamundaSupportLogger'
+import {
+	CamundaSupportLogger,
+	errorForLogging,
+} from '../lib/CamundaSupportLogger'
 
 import { getLogger, Logger } from './lib/C8Logger'
 import { CamundaRestClient } from './lib/CamundaRestClient'
@@ -173,7 +176,10 @@ export class Camunda8 {
 				return client
 					.close()
 					.catch((err) =>
-						console.warn('Failed to close ZeebeGrpc client:', err)
+						console.warn(
+							'Failed to close ZeebeGrpc client:',
+							errorForLogging(err)
+						)
 					)
 			}
 			if (client instanceof CamundaRestClient) {

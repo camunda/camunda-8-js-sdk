@@ -6,6 +6,7 @@ import { debug } from 'debug'
 
 import { CamundaPlatform8Configuration } from './Configuration'
 import { getSystemCertificates } from './GetSystemCertificates'
+import { errorForLogging } from './CamundaSupportLogger'
 
 const trace = debug('camunda:certificate')
 
@@ -56,7 +57,10 @@ function readRootCertificate(certPath) {
 
 		cert = fs.readFileSync(absolutePath)
 	} catch (err) {
-		console.error('Failed to read custom SSL certificate:', err)
+		console.error(
+			'Failed to read custom SSL certificate:',
+			errorForLogging(err)
+		)
 
 		return
 	}
@@ -65,7 +69,10 @@ function readRootCertificate(certPath) {
 	try {
 		parsed = new X509Certificate(cert)
 	} catch (err) {
-		console.warn('Failed to parse custom SSL certificate:', err)
+		console.warn(
+			'Failed to parse custom SSL certificate:',
+			errorForLogging(err)
+		)
 	}
 
 	if (parsed && parsed.issuer !== parsed.subject) {

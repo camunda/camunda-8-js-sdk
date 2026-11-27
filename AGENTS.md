@@ -19,4 +19,4 @@ It holds the conventions shared by all Camunda SDK repos (commits, bug fixes, te
 
 ## Repo-specific instructions
 
-None yet. Add instructions that apply only to this repo here.
+- Do not pass a whole error object to a logger, `console`, or `debug`. HTTP errors carry request options with credentials. Log `errorForLogging(e)` from `src/lib/CamundaSupportLogger.ts`. ESLint enforces this with `no-restricted-syntax` in `.eslintrc.json`.

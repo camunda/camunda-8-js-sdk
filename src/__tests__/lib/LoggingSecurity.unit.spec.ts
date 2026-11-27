@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import safeStringify, {
 	CamundaSupportLogger,
+	errorForLogging,
 } from '../../lib/CamundaSupportLogger'
 import { CamundaPlatform8Configuration } from '../../lib/Configuration'
 import { gotBeforeErrorHook } from '../../lib/GotErrors'
@@ -320,5 +321,24 @@ describe('CamundaSupportLogger redaction', () => {
 			expect(output).not.toContain(secret)
 		}
 		expect(output).toContain('Using basic authentication; refresh: 30s')
+	})
+
+	it('reduces an error to its name, code, and sanitized message', () => {
+		const error = Object.assign(
+			new Error('Request failed with Bearer message-token'),
+			{
+				code: 'ERR_TEST',
+				options: { headers: { authorization: 'Bearer options-token' } },
+			}
+		)
+
+		const output = errorForLogging(error)
+
+		expect(output).toBe(
+			'Error [ERR_TEST]: Request failed with Bearer [REDACTED]'
+		)
+		expect(errorForLogging('client_secret=thrown-secret')).toBe(
+			'client_secret=[REDACTED]'
+		)
 	})
 })

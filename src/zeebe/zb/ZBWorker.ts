@@ -1,5 +1,6 @@
 import * as ZB from '../lib/interfaces-1.0'
 import { ZBWorkerBase, ZBWorkerConstructorConfig } from '../lib/ZBWorkerBase'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 export class ZBWorker<
 	WorkerInputVariables,
@@ -113,7 +114,7 @@ export class ZBWorker<
 							this.logger.logError(e.message)
 						})
 				} catch (e: unknown) {
-					this.logger.logDebug(e)
+					this.logger.logDebug(errorForLogging(e))
 				} finally {
 					this.drainOne()
 					if (retries > 0) {

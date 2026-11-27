@@ -45,7 +45,7 @@ export class StatefulLogInterceptor {
 		}
 	}
 
-	public logError = (err) => this.error(err)
+	public logError = (message) => this.error(message)
 	public logInfo = (msg) => this.info(msg)
 	public logDebug = (msg, ...args) => this.log.debug(msg, ...args)
 	public logDirect = (msg) => this.log._tag === 'ZBCLIENT' && this.log.info(msg)
@@ -63,7 +63,7 @@ export class StatefulLogInterceptor {
 		if (this.errors.length === 0) {
 			return
 		}
-		this.errors.forEach((err) => this.logError(err))
+		this.errors.forEach((message) => this.logError(message))
 		this.logDirect(chalk.redBright('Error connecting to Camunda Cloud.'))
 		this.errors = []
 	}
@@ -94,5 +94,5 @@ export class StatefulLogInterceptor {
 	private info = this.wrap(this.logs)((m) => this.log.info(m))
 
 	// tslint:disable-next-line: member-ordering
-	private error = this.wrap(this.errors)((e) => this.log.error(e))
+	private error = this.wrap(this.errors)((message) => this.log.error(message))
 }

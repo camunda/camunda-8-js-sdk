@@ -21,6 +21,7 @@ import {
 	RequireConfiguration,
 } from '../../lib'
 import { IHeadersProvider, Token, TokenError } from '../index'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 import { HeadersPromise, TokenGrantAudienceType } from './IHeadersProvider'
 
@@ -415,7 +416,7 @@ export class OAuthProvider implements IHeadersProvider {
 						const err = e as NodeJS.ErrnoException
 						if (err.code !== 'ENOENT') {
 							this.log.warn(`Failed to delete token cache file ${filePath}`)
-							this.log.warn(err.message, err)
+							this.log.warn(errorForLogging(err))
 						}
 					}
 				})
@@ -423,7 +424,7 @@ export class OAuthProvider implements IHeadersProvider {
 			const err = e as NodeJS.ErrnoException
 			if (err.code !== 'ENOENT') {
 				this.log.warn(`Failed to list OAuth token cache dir ${this.cacheDir}`)
-				this.log.warn(err.message, err)
+				this.log.warn(errorForLogging(err))
 			}
 		}
 	}
@@ -557,7 +558,7 @@ export class OAuthProvider implements IHeadersProvider {
 		} catch (e) {
 			const err = e as Error
 			this.log.error(`Failed to cache token in memory for audience ${audience}`)
-			this.log.error(err.message, err)
+			this.log.error(errorForLogging(err))
 			throw e
 		}
 	}
@@ -604,7 +605,7 @@ export class OAuthProvider implements IHeadersProvider {
 			this.log.warn(
 				`Failed to read token from file cache for audience ${audience}. Ignoring cache entry.`
 			)
-			this.log.warn(err.message, err)
+			this.log.warn(errorForLogging(err))
 			return null
 		}
 	}
@@ -627,7 +628,7 @@ export class OAuthProvider implements IHeadersProvider {
 			this.log.warn(
 				`Failed to decode OAuth token before writing to file cache for audience ${audience}`
 			)
-			this.log.warn(err.message, err)
+			this.log.warn(errorForLogging(err))
 			return
 		}
 
@@ -659,7 +660,7 @@ export class OAuthProvider implements IHeadersProvider {
 					return
 				}
 				this.log.error(`Error writing OAuth token to file ${file}`)
-				this.log.error(e.message, e)
+				this.log.error(errorForLogging(e))
 			}
 		)
 	}

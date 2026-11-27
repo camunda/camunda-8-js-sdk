@@ -16,6 +16,7 @@ import {
 	losslessStringify,
 } from '../../lib'
 import { IHeadersProvider } from '../../oauth'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 import {
 	ChangeStatus,
@@ -373,7 +374,7 @@ export class OperateApiClient {
 				throwHttpErrors: false,
 				parseJson: (text) => losslessParse(text, ChangeStatus),
 			})
-			res.catch((e) => console.log(e))
+			res.catch((e) => console.log(errorForLogging(e)))
 			return res.json()
 		} catch (e) {
 			throw new Error((e as Error).message)
@@ -595,7 +596,7 @@ export class OperateApiClient {
 		try {
 			return JSON.parse(thing)
 		} catch (e) {
-			console.log(e)
+			console.log(errorForLogging(e))
 			console.log(thing)
 			return thing
 		}

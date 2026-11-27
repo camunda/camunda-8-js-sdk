@@ -8,6 +8,7 @@ import { Duration, MaybeTimeDuration } from 'typed-duration'
 
 import { LosslessDto } from '../../lib'
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 import {
 	ConnectionStatusEvent,
@@ -458,7 +459,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.logger.logError(
 					`Exception while attempting to raise BPMN Error for job ${job.key} - ${errorMessage}`
 				)
-				this.logger.logError(e)
+				this.logger.logError(errorForLogging(e))
 			})
 			.then(() => {
 				this.drainOne()
@@ -516,7 +517,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.pollMutex = true
 				this.logger.logDebug(
 					`Stream [${id}] error after ${(Date.now() - start) / 1000} seconds`,
-					error
+					errorForLogging(error)
 				)
 				const errorCode = (error as Error & { code: number }).code
 				// Backoff on

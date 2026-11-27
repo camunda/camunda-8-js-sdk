@@ -103,7 +103,10 @@ export class CamundaSupportLogger {
 			// If this is async then messages are written out of order, which doesn't help with debugging
 			fs.appendFileSync(this.filepath, logMessage)
 		} catch (err) {
-			console.error(`Failed to write log to ${this.filepath}:`, err)
+			console.error(
+				`Failed to write log to ${this.filepath}:`,
+				errorForLogging(err)
+			)
 		}
 	}
 }
@@ -187,6 +190,21 @@ export function sanitizeSensitiveString(value: string) {
 				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
 				`$1$2${REDACTED}`
 			)
+	)
+}
+
+/**
+ * Use this instead of passing a whole error to a logger. HTTP errors carry
+ * request options (authorization headers, request bodies, TLS keys), which
+ * loggers serialize. Enforced by `no-restricted-syntax` in .eslintrc.json.
+ */
+export function errorForLogging(error: unknown): string {
+	if (!(error instanceof Error)) {
+		return sanitizeSensitiveString(String(error))
+	}
+	const code = (error as { code?: unknown }).code
+	return sanitizeSensitiveString(
+		`${error.name}${code === undefined ? '' : ` [${code}]`}: ${error.message}`
 	)
 }
 

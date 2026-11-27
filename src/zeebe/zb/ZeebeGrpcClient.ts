@@ -49,6 +49,7 @@ import {
 	ZBCustomLogger,
 } from '../lib/interfaces-published-contract'
 import { Utils } from '../lib/utils'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 import { ZBWorker } from './ZBWorker'
 
@@ -282,7 +283,10 @@ export class ZeebeGrpcClient extends TypedEmitter<
 			})
 
 			grpcClient.on(ConnectionStatusEvent.connectionError, (err: Error) => {
-				debug('grpcClient emitted error event to ZeebeGrpcClient, err: ', err)
+				debug(
+					'grpcClient emitted error event to ZeebeGrpcClient, err: ',
+					errorForLogging(err)
+				)
 				this.readied = false
 
 				if (this.connected !== false) {
