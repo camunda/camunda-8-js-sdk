@@ -177,20 +177,28 @@ function isSensitiveLogKey(key: string) {
 }
 
 export function sanitizeSensitiveString(value: string) {
-	return value
-		.replace(
-			/-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[^-\s]+ )?PRIVATE KEY-----/g,
-			REDACTED
-		)
-		.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/gi, `$1 ${REDACTED}`)
-		.replace(
-			/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
-			(_match, protocol, _userinfo, path) => `${protocol}${path}`
-		)
-		.replace(
-			/\b(access[_-]?token|authorization|client[_-]?secret|cookie|id[_-]?token|password|passphrase|proxy[_-]?authorization|refresh[_-]?token|secret|set-cookie|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s&,;}]+)/gi,
-			`$1$2${REDACTED}`
-		)
+	return (
+		value
+			.replace(
+				/-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[^-\s]+ )?PRIVATE KEY-----/g,
+				REDACTED
+			)
+			// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
+			// so redact the whole remainder of the line for these headers.
+			.replace(
+				/\b(authorization|proxy-authorization|cookie|set-cookie)(["']?\s*[:=]\s*)[^\n"]*/gi,
+				`$1$2${REDACTED}`
+			)
+			.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/gi, `$1 ${REDACTED}`)
+			.replace(
+				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
+				(_match, protocol, _userinfo, path) => `${protocol}${path}`
+			)
+			.replace(
+				/\b(access[_-]?token|authorization|client[_-]?secret|cookie|id[_-]?token|password|passphrase|proxy[_-]?authorization|refresh([_-]?token)?|secret|set-cookie|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
+				`$1$3${REDACTED}`
+			)
+	)
 }
 
 export function redactUrlForLogging(url: URL | string | undefined) {

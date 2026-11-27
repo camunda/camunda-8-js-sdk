@@ -143,6 +143,38 @@ describe('HTTP diagnostic logging', () => {
 		expect(result.message).toContain(credentialUrl)
 		expect(result.stack).toContain(credentialUrl)
 	})
+
+	it('logs only safe metadata when a response body echoes credentials', async () => {
+		const log = vi
+			.spyOn(supportLogger, 'log')
+			.mockImplementation(() => undefined)
+		const options = {
+			context: {},
+			method: 'POST',
+			url: new URL('https://api.example.test/v1/jobs'),
+			headers: {},
+		}
+		// HTTPError appends non-HTML response bodies to error.message, and the
+		// parsed body lands in `detail`. Neither may reach the support file.
+		const error = Object.assign(
+			new Error('Request failed - {"tenantSecret":"echoed-credential"}'),
+			{
+				code: 'ERR_TEST',
+				options,
+				request: { options },
+			}
+		) as unknown as RequestError
+		error.stack = 'RequestError: Request failed'
+
+		await gotBeforeErrorHook({} as CamundaPlatform8Configuration)(error)
+		const output = safeStringify(log.mock.calls)
+
+		expect(output).not.toContain('echoed-credential')
+		expect(output).not.toContain('tenantSecret')
+		expect(output).not.toContain('"message"')
+		expect(output).not.toContain('"detail"')
+		expect(output).toContain('"method": "POST"')
+	})
 })
 
 describe('CamundaSupportLogger redaction', () => {
@@ -232,5 +264,25 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).not.toContain('string-token')
 		expect(output).not.toContain('string-secret')
 		expect(output).not.toContain('password-secret')
+	})
+
+	it('redacts complete cookie headers, JSON arrays, and gRPC-propagated token errors', () => {
+		const output = safeStringify({
+			message:
+				'Cookie: session=first-cookie; refresh=second-cookie-secret\n' +
+				'{"access_token":["first-token","second-token-secret"]}',
+		})
+		expect(output).not.toContain('first-cookie')
+		expect(output).not.toContain('second-cookie-secret')
+		expect(output).not.toContain('first-token')
+		expect(output).not.toContain('second-token-secret')
+
+		// gRPC stream setup failures propagate the OAuth error message to the
+		// application logger; credentials embedded in it must be stripped.
+		const propagated =
+			'Error requesting token for Client Id zeebe-client: POST ' +
+			'https://oauth.example.test/token?client_secret=embedded-secret failed'
+		const sanitized = safeStringify({ message: propagated })
+		expect(sanitized).not.toContain('embedded-secret')
 	})
 })

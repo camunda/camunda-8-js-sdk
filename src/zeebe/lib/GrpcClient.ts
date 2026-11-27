@@ -15,7 +15,10 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
-import { CamundaSupportLogger } from '../../lib/CamundaSupportLogger'
+import {
+	CamundaSupportLogger,
+	sanitizeSensitiveString,
+} from '../../lib/CamundaSupportLogger'
 import { IHeadersProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
@@ -350,7 +353,12 @@ export class GrpcClient extends EventEmitter {
 					} catch (error: unknown) {
 						const e = error as Error & { code: number }
 						debug(`${methodName}Stream error: ${e.code}`, e.message)
-						this.emit(MiddlewareSignals.Log.Error, e.message)
+						// e.message may contain token endpoint error details; sanitize
+						// before it reaches the application logger via the middleware.
+						this.emit(
+							MiddlewareSignals.Log.Error,
+							sanitizeSensitiveString(e.message)
+						)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
 						return { error }
