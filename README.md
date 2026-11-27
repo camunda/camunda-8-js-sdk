@@ -649,7 +649,7 @@ This is intended for development debugging and it should not be enabled in produ
 
 ## Diagnostic Trace file
 
-You can output a diagnostic trace file to use with Camunda technical support by setting the environment variable `CAMUNDA_SUPPORT_LOG_ENABLED` to true. This will output a file `camunda-support.log` containing diagnostic information and tracing calls. This information is useful for debugging. Be aware that this log file will contain secrets such as bearer tokens, as well as exposing urls.
+You can output a diagnostic trace file to use with Camunda technical support by setting the environment variable `CAMUNDA_SUPPORT_LOG_ENABLED` to true. This will output a file `camunda-support.log` containing diagnostic information and tracing calls. Credentials, authorization headers, request bodies, and TLS key material are redacted. The log can still contain sensitive application data and URLs, so review it before sharing.
 
 ## Process Variable Typing
 

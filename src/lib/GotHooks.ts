@@ -10,7 +10,10 @@ import {
 	RequestError,
 } from './HttpClient'
 import { asyncOperationContext } from './AsyncTrace'
-import { CamundaSupportLogger } from './CamundaSupportLogger'
+import {
+	CamundaSupportLogger,
+	redactUrlForLogging,
+} from './CamundaSupportLogger'
 
 const trace = debug('camunda:gotHooks')
 
@@ -35,7 +38,10 @@ export const beforeCallHook: HandlerFunction = (options) => {
 		? `${creationStack}\n${(obj as any).stack as string}`
 		: ((obj as any).stack as string)
 	supportLogger.log(`Rest call:`)
-	supportLogger.log(options)
+	supportLogger.log({
+		method: options.method,
+		url: redactUrlForLogging(options.url),
+	})
 }
 
 /**

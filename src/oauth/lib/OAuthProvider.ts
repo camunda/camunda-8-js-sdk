@@ -415,7 +415,7 @@ export class OAuthProvider implements IHeadersProvider {
 						const err = e as NodeJS.ErrnoException
 						if (err.code !== 'ENOENT') {
 							this.log.warn(`Failed to delete token cache file ${filePath}`)
-							this.log.warn(err.message, err)
+							this.log.warn(err.message)
 						}
 					}
 				})
@@ -423,7 +423,7 @@ export class OAuthProvider implements IHeadersProvider {
 			const err = e as NodeJS.ErrnoException
 			if (err.code !== 'ENOENT') {
 				this.log.warn(`Failed to list OAuth token cache dir ${this.cacheDir}`)
-				this.log.warn(err.message, err)
+				this.log.warn(err.message)
 			}
 		}
 	}
@@ -482,8 +482,10 @@ export class OAuthProvider implements IHeadersProvider {
 		trace(`Making token request to the token endpoint: `)
 		trace(`  ${this.authServerUrl}`)
 		trace({
-			...options,
+			url: this.authServerUrl,
 			body: this.redactClientSecret(bodyWithScope),
+			hasClientCertificate: !!this.mTLSCertChain,
+			hasPrivateKey: !!this.mTLSPrivateKey,
 		})
 		return this.rest.then((rest) =>
 			rest
@@ -500,16 +502,14 @@ export class OAuthProvider implements IHeadersProvider {
 				})
 				.catch((e) => {
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
-					this.log.error(e)
+					this.log.error(
+						`Error requesting token for Client Id ${clientIdToUse}`
+					)
 					throw e
 				})
 				.then((t) => {
 					trace(
-						`Got token for Client Id ${clientIdToUse}: ${JSON.stringify(
-							{ ...t, access_token: '[REDACTED]' },
-							null,
-							2
-						)}`
+						`Got token for Client Id ${clientIdToUse} and audience ${audienceType}`
 					)
 					const isTokenError = (t: unknown): t is TokenError =>
 						!!(t as TokenError).error
@@ -522,7 +522,6 @@ export class OAuthProvider implements IHeadersProvider {
 						this.log.error(
 							`Failed to get token: no access_token in response for audience ${audienceType}`
 						)
-						this.log.error(JSON.stringify(t))
 						throw new Error('Failed to get token: no access_token in response')
 					}
 					const token = { ...(t as Token), audience: audienceType }
@@ -562,7 +561,7 @@ export class OAuthProvider implements IHeadersProvider {
 		} catch (e) {
 			const err = e as Error
 			this.log.error(`Failed to cache token in memory for audience ${audience}`)
-			this.log.error(err.message, err)
+			this.log.error(err.message)
 			throw e
 		}
 	}
@@ -609,7 +608,7 @@ export class OAuthProvider implements IHeadersProvider {
 			this.log.warn(
 				`Failed to read token from file cache for audience ${audience}. Ignoring cache entry.`
 			)
-			this.log.warn(err.message, err)
+			this.log.warn(err.message)
 			return null
 		}
 	}
@@ -632,7 +631,7 @@ export class OAuthProvider implements IHeadersProvider {
 			this.log.warn(
 				`Failed to decode OAuth token before writing to file cache for audience ${audience}`
 			)
-			this.log.warn(err.message, err)
+			this.log.warn(err.message)
 			return
 		}
 
@@ -664,7 +663,7 @@ export class OAuthProvider implements IHeadersProvider {
 					return
 				}
 				this.log.error(`Error writing OAuth token to file ${file}`)
-				this.log.error(e.message, e)
+				this.log.error(e.message)
 			}
 		)
 	}

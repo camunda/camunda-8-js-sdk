@@ -2,12 +2,9 @@ import fs from 'node:fs'
 import * as os from 'node:os'
 import path from 'node:path'
 
-import mergeWith from 'lodash.mergewith'
-
 import { packageVersion } from '../lib/GetPackageVersion'
 
 import {
-	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
@@ -47,7 +44,7 @@ export class CamundaSupportLogger {
 		this.log(`* https://camunda.com/services/camunda-success/`, false)
 		this.log(`* https://github.com/camunda/camunda-8-js-sdk/issues\n`, false)
 		this.log(
-			`**WARNING**: This log can continue sensitive secrets. Scan it before uploading it to a public site such as GitHub`,
+			`**WARNING**: This log can contain sensitive application data. Scan it before uploading it to a public site such as GitHub`,
 			false
 		)
 		this.log(
@@ -72,12 +69,10 @@ export class CamundaSupportLogger {
 			`/** Node Version */\n${JSON.stringify(nodeVersion, null, 2)}\n`,
 			false
 		)
+
 		/** Log Configuration */
-		const santisedConfig = obscureSensitiveInfo(mergedConfig)
-		this.log(
-			`/** Configuration */\n${JSON.stringify(santisedConfig, null, 2)}\n`,
-			false
-		)
+		const sanitizedConfig = safeStringify(mergedConfig)
+		this.log(`/** Configuration */\n${sanitizedConfig}\n`, false)
 	}
 
 	public static getInstance(): CamundaSupportLogger {
@@ -95,7 +90,11 @@ export class CamundaSupportLogger {
 			return
 		}
 		const _message =
-			typeof message === 'object' ? safeStringify(message) : message
+			typeof message === 'object'
+				? safeStringify(message)
+				: typeof message === 'string'
+					? sanitizeSensitiveString(message)
+					: message
 
 		const logMessage = addTimestamp
 			? `[${new Date().toISOString()}]: ${_message}\n`
@@ -107,24 +106,6 @@ export class CamundaSupportLogger {
 			console.error(`Failed to write log to ${this.filepath}:`, err)
 		}
 	}
-}
-
-/** Function to obscure secrets in log */
-function obscureSensitiveInfo(config: Camunda8ClientConfiguration) {
-	const sensitiveKeys = [
-		'CAMUNDA_BASIC_AUTH_PASSWORD',
-		'CAMUNDA_CONSOLE_CLIENT_SECRET',
-		'ZEEBE_CLIENT_SECRET',
-		'CAMUNDA_COOKIE_AUTH_PASSWORD',
-	]
-	return mergeWith({}, config, (_, srcValue, key) => {
-		if (sensitiveKeys.includes(key)) {
-			return `${srcValue?.slice(0, 4)}...[${
-				(srcValue?.length || 4) - 4
-			} chars omitted]`
-		}
-		return undefined
-	})
 }
 
 /** Function to get OS information */
@@ -143,12 +124,95 @@ function getOSInfo() {
 	}
 }
 
+const REDACTED = '[REDACTED]'
+const SENSITIVE_LOG_KEYS = new Set([
+	'authorization',
+	'proxyauthorization',
+	'body',
+	'cert',
+	'certificate',
+	'certificateauthority',
+	'clientsecret',
+	'cookie',
+	'form',
+	'idtoken',
+	'json',
+	'key',
+	'password',
+	'passphrase',
+	'privatekey',
+	'refreshtoken',
+	'secret',
+	'setcookie',
+	'token',
+	'accesstoken',
+])
+
+function isSensitiveLogKey(key: string) {
+	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
+	return (
+		SENSITIVE_LOG_KEYS.has(normalizedKey) ||
+		[
+			'accesstoken',
+			'authorization',
+			'body',
+			'certificate',
+			'clientsecret',
+			'cookie',
+			'idtoken',
+			'password',
+			'passphrase',
+			'privatekey',
+			'refreshtoken',
+			'secret',
+			'token',
+		].some((suffix) => normalizedKey.endsWith(suffix))
+	)
+}
+
+export function sanitizeSensitiveString(value: string) {
+	return value
+		.replace(
+			/-----BEGIN [^-]+ PRIVATE KEY-----[\s\S]*?-----END [^-]+ PRIVATE KEY-----/g,
+			REDACTED
+		)
+		.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/gi, `$1 ${REDACTED}`)
+		.replace(
+			/\b(access[_-]?token|authorization|client[_-]?secret|cookie|id[_-]?token|password|passphrase|proxy[_-]?authorization|refresh[_-]?token|secret|set-cookie|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s&,;}]+)/gi,
+			`$1$2${REDACTED}`
+		)
+}
+
+export function redactUrlForLogging(url: URL | string | undefined) {
+	if (!url) {
+		return undefined
+	}
+	try {
+		const parsed = new URL(url.toString())
+		parsed.username = ''
+		parsed.password = ''
+		parsed.search = ''
+		parsed.hash = ''
+		return parsed.toString()
+	} catch {
+		return sanitizeSensitiveString(url.toString())
+	}
+}
+
 /** Safe stringify to deal with circular JSON */
 function safeStringifyReplacer(seen) {
-	return function (_, value) {
+	return function (key, value) {
+		if (isSensitiveLogKey(key)) {
+			return REDACTED
+		}
+
 		// Handle objects with a custom `.toJSON()` method.
 		if (typeof value?.toJSON === 'function') {
 			value = value.toJSON()
+		}
+
+		if (typeof value === 'string') {
+			return sanitizeSensitiveString(value)
 		}
 
 		if (!(value !== null && typeof value === 'object')) {

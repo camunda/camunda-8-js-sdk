@@ -7,6 +7,10 @@ import {
 	RequestError,
 } from './HttpClient'
 import { CamundaPlatform8Configuration } from './Configuration'
+import {
+	redactUrlForLogging,
+	sanitizeSensitiveString,
+} from './CamundaSupportLogger'
 import { supportLogger } from './GotHooks'
 
 const Defaults: CamundaRestError = {
@@ -171,8 +175,8 @@ export const gotBeforeErrorHook =
 		if (error.message.includes('Invalid header token')) {
 			// This is a parse error, which means the response header was not valid JSON.
 			// Debugging for https://github.com/camunda/camunda-8-js-sdk/issues/491
-			error.message += ` (response headers: ${JSON.stringify(
-				error.response?.headers
+			error.message += ` (response headers: ${sanitizeSensitiveString(
+				JSON.stringify(error.response?.headers)
 			)})`
 		}
 		if (error.code === '401') {
@@ -196,12 +200,11 @@ export const gotBeforeErrorHook =
 			code: error.code,
 			message: error.message,
 			method,
-			url,
+			url: redactUrlForLogging(url),
 			detail,
 			stack: error.stack, // replaced stack
 			originalStack: (error as RequestError & { originalStack?: string })
 				.originalStack,
-			requestOptions: error.request?.options,
 			source: error.source,
 		})
 		return error

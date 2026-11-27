@@ -263,8 +263,10 @@ export class CamundaJobWorker<
 						'The server responded with a back pressure signal RESOURCE_EXHAUSTED. Check the server resource allocation and current load.'
 					)
 				} else {
-					this.log.error('Error during job worker poll')
-					this.log.error(e)
+					this.log.error('Error during job worker poll', {
+						code: e.code,
+						statusCode: e.statusCode,
+					})
 				}
 				this.emit('pollError', e)
 				this.activePoll = undefined
