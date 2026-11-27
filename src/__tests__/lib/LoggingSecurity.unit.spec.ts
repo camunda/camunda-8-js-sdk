@@ -150,6 +150,7 @@ describe('HTTP diagnostic logging', () => {
 			.mockImplementation(() => undefined)
 		const options = {
 			context: {
+				stack: 'at caller (app.ts:1:1)',
 				__stackTrace: {
 					stacks: [{ location: 'at caller (app.ts:1:1)' }],
 					requestId: 'request-1',
@@ -161,9 +162,14 @@ describe('HTTP diagnostic logging', () => {
 			headers: {},
 		}
 		// HTTPError appends non-HTML response bodies to error.message, which is
-		// repeated in the header of the synthesized and original stacks.
+		// repeated in the header of the synthesized and original stacks. Body
+		// lines can look like stack frames.
 		const error = Object.assign(
-			new Error('Request failed - {"tenantSecret":"echoed-credential"}'),
+			new Error(
+				'Request failed - {"tenantSecret":"echoed-credential"}\n' +
+					'    at echoed-frame-credential\n' +
+					'RequestId: echoed-request-credential'
+			),
 			{
 				code: 'ERR_TEST',
 				options,
@@ -174,13 +180,13 @@ describe('HTTP diagnostic logging', () => {
 		await gotBeforeErrorHook({} as CamundaPlatform8Configuration)(error)
 		const output = safeStringify(log.mock.calls)
 
-		expect(output).not.toContain('echoed-credential')
+		expect(output).not.toContain('echoed-')
 		expect(output).not.toContain('tenantSecret')
 		expect(output).not.toContain('"message"')
 		expect(output).not.toContain('"detail"')
 		expect(output).toContain('"method": "POST"')
 		expect(output).toContain('at caller (app.ts:1:1)')
-		expect(output).toContain('RequestId: request-1')
+		expect(output).toContain('"requestId": "request-1"')
 	})
 })
 

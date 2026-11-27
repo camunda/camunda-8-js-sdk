@@ -7,10 +7,7 @@ import {
 	RequestError,
 } from './HttpClient'
 import { CamundaPlatform8Configuration } from './Configuration'
-import safeStringify, {
-	redactUrlForLogging,
-	stackFramesForLogging,
-} from './CamundaSupportLogger'
+import safeStringify, { redactUrlForLogging } from './CamundaSupportLogger'
 import { supportLogger } from './GotHooks'
 
 const Defaults: CamundaRestError = {
@@ -205,11 +202,10 @@ export const gotBeforeErrorHook =
 			code: error.code,
 			method,
 			url: redactUrlForLogging(url),
-			stack: stackFramesForLogging(error.stack),
-			originalStack: stackFramesForLogging(
-				(error as RequestError & { originalStack?: string }).originalStack
-			),
+			// Not error.stack/originalStack: their header repeats error.message.
 			source: error.source,
+			requestId: structured?.requestId,
+			apiMethod: structured?.apiMethod,
 		})
 		return error
 	}

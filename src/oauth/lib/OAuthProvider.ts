@@ -502,11 +502,7 @@ export class OAuthProvider implements IHeadersProvider {
 				})
 				.catch((e) => {
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
-					this.log.error(
-						`Error requesting OAuth token (${
-							e.response?.statusCode ?? e.statusCode ?? e.code ?? 'no status'
-						})`
-					)
+					this.log.error('Error requesting OAuth token')
 					throw e
 				})
 				.then((t) => {

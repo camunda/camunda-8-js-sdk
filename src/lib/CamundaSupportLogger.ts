@@ -190,16 +190,6 @@ export function sanitizeSensitiveString(value: string) {
 	)
 }
 
-/** Keep only stack frames: the stack header repeats error.message, which can
- * include a server response body. */
-export function stackFramesForLogging(stack: string | undefined) {
-	return (stack ?? '')
-		.split('\n')
-		.filter((line) => /^\s*at\s|^(RequestId|ApiMethod): /.test(line))
-		.map(sanitizeSensitiveString)
-		.join('\n')
-}
-
 export function redactUrlForLogging(url: URL | string | undefined) {
 	if (!url) {
 		return undefined
