@@ -1,3 +1,10 @@
+# [8.9.0-alpha.23](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.22...v8.9.0-alpha.23) (2026-11-27)
+
+
+### Bug Fixes
+
+* **security:** redact credentials from diagnostic logs ([#912](https://github.com/camunda/camunda-8-js-sdk/issues/912)) ([1dbdfa6](https://github.com/camunda/camunda-8-js-sdk/commit/1dbdfa672a7721a5e8a988e90dba53e63481d841)), closes [PKCS#8](https://github.com/PKCS/issues/8) [#13](https://github.com/camunda/camunda-8-js-sdk/issues/13)
+
 # [8.9.0-alpha.22](https://github.com/camunda/camunda-8-js-sdk/compare/v8.9.0-alpha.21...v8.9.0-alpha.22) (2026-11-24)
 
 
