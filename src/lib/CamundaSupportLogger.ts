@@ -177,7 +177,7 @@ export function sanitizeSensitiveString(value: string) {
 			// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
 			// so redact a quoted value or the whole remainder of the line.
 			.replace(
-				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\n"]*)/gi,
+				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
 				`$1$2${REDACTED}`
 			)
 			// Case-sensitive, so prose such as "basic authentication" is kept.
@@ -187,7 +187,7 @@ export function sanitizeSensitiveString(value: string) {
 				(_match, protocol, _userinfo, path) => `${protocol}${path}`
 			)
 			.replace(
-				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
+				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
 				`$1$2${REDACTED}`
 			)
 	)

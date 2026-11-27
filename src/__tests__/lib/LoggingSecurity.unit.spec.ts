@@ -303,6 +303,7 @@ describe('CamundaSupportLogger redaction', () => {
 			message:
 				'{"authorization":"raw-header-token","cookie":"session=quoted-cookie"} ' +
 				"{'authorization': 'single-quoted-token'} " +
+				'{"client_secret":"before\\"escaped-secret"} ' +
 				'x-api-key: header-api-key api_key=query-api-key ' +
 				'client_assertion=signed-assertion',
 			apiKey: 'structured-api-key',
@@ -313,6 +314,7 @@ describe('CamundaSupportLogger redaction', () => {
 			'raw-header-token',
 			'quoted-cookie',
 			'single-quoted-token',
+			'escaped-secret',
 			'header-api-key',
 			'query-api-key',
 			'signed-assertion',
