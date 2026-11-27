@@ -305,3 +305,85 @@ describe('OAuthProvider redactClientSecret', () => {
 		}
 	})
 })
+
+describe('OAuthProvider credential-safe logging', () => {
+	const createLogger = (messages: unknown[][]) => {
+		const log = (message: string | undefined, ...meta: unknown[]) =>
+			messages.push([message, ...meta])
+		return {
+			info: log,
+			warn: log,
+			error: log,
+			debug: log,
+			trace: log,
+		}
+	}
+
+	const createProvider = async ({
+		post,
+		messages,
+	}: {
+		post: ReturnType<typeof vi.fn>
+		messages: unknown[][]
+	}) => {
+		const { OAuthProvider } = (await vi.importActual('../../oauth')) as {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			OAuthProvider: any
+		}
+		const provider = new OAuthProvider({
+			config: {
+				CAMUNDA_OAUTH_URL: 'https://oauth.example.test/token',
+				ZEEBE_CLIENT_ID: 'zeebe-client',
+				ZEEBE_CLIENT_SECRET: 'logging-secret',
+				CAMUNDA_TOKEN_DISK_CACHE_DISABLE: true,
+				CAMUNDA_OAUTH_FAIL_ON_ERROR: true,
+				logger: createLogger(messages),
+			},
+		})
+		;(provider as { rest: Promise<unknown> }).rest = Promise.resolve({ post })
+		return provider
+	}
+
+	it('does not pass token-request errors to a custom logger', async () => {
+		const messages: unknown[][] = []
+		const requestError = Object.assign(new Error('token endpoint failed'), {
+			options: {
+				body: 'client_secret=logging-secret&grant_type=client_credentials',
+				headers: { authorization: 'Bearer leaked-access-token' },
+			},
+		})
+		const provider = await createProvider({
+			messages,
+			post: vi.fn().mockRejectedValue(requestError),
+		})
+
+		await expect(provider.getHeaders('ZEEBE')).rejects.toThrow()
+
+		expect(messages.flat().some((entry) => typeof entry === 'object')).toBe(
+			false
+		)
+		expect(JSON.stringify(messages)).not.toContain('logging-secret')
+		expect(JSON.stringify(messages)).not.toContain('leaked-access-token')
+	})
+
+	it('does not log a malformed token response', async () => {
+		const messages: unknown[][] = []
+		const provider = await createProvider({
+			messages,
+			post: vi.fn().mockResolvedValue({
+				statusCode: 200,
+				body: JSON.stringify({
+					refresh_token: 'leaked-refresh-token',
+					id_token: 'leaked-id-token',
+				}),
+			}),
+		})
+
+		await expect(provider.getHeaders('ZEEBE')).rejects.toThrow(
+			'no access_token'
+		)
+
+		expect(JSON.stringify(messages)).not.toContain('leaked-refresh-token')
+		expect(JSON.stringify(messages)).not.toContain('leaked-id-token')
+	})
+})

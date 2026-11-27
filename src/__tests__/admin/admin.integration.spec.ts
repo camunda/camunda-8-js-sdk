@@ -63,4 +63,3 @@ test.runIf(
 	await c.deleteClient(clusterUuid, res.clientId)
 	expect(c).toBeTruthy()
 })
-

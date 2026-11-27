@@ -26,6 +26,21 @@
 			}
 		],
 		"import/newline-after-import": "error",
+		// Whole-error logging leaks credentials (code scanning alert #13). The
+		// selectors match on argument names, because the rule has no type
+		// information. Keep this list in sync with the src/zeebe override below,
+		// which replaces this rule for those files.
+		"no-restricted-syntax": [
+			"error",
+			{
+				"selector": "CallExpression[callee.property.name=/^(error|warn|info|debug|trace|log|logError|logInfo|logDebug|logDirect)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+			},
+			{
+				"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+			}
+		],
 		"prettier/prettier": "error"
 	},
 	"overrides": [
@@ -56,6 +71,14 @@
 					{
 						"selector": "CallExpression[callee.property.name=/^(on|once|addListener|prependListener|prependOnceListener)$/][callee.object.property.name=/stream/i]",
 						"message": "Do not attach listeners to a gRPC stream directly. Use attachStream() from src/zeebe/lib/StreamLifecycle.ts, which requires handlers for data, error, end and close."
+					},
+					{
+						"selector": "CallExpression[callee.property.name=/^(error|warn|info|debug|trace|log|logError|logInfo|logDebug|logDirect)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+					},
+					{
+						"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
 					}
 				]
 			}
@@ -104,6 +127,13 @@
 			"rules": {
 				"no-console": "error",
 				"@typescript-eslint/no-floating-promises": "error"
+			}
+		},
+		{
+			// Tests are not shipped and may log whole errors while debugging.
+			"files": ["src/__tests__/**/*.ts"],
+			"rules": {
+				"no-restricted-syntax": "off"
 			}
 		}
 	],

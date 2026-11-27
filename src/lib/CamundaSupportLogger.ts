@@ -2,12 +2,9 @@ import fs from 'node:fs'
 import * as os from 'node:os'
 import path from 'node:path'
 
-import mergeWith from 'lodash.mergewith'
-
 import { packageVersion } from '../lib/GetPackageVersion'
 
 import {
-	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	DeepPartial,
@@ -47,7 +44,7 @@ export class CamundaSupportLogger {
 		this.log(`* https://camunda.com/services/camunda-success/`, false)
 		this.log(`* https://github.com/camunda/camunda-8-js-sdk/issues\n`, false)
 		this.log(
-			`**WARNING**: This log can continue sensitive secrets. Scan it before uploading it to a public site such as GitHub`,
+			`**WARNING**: This log can contain sensitive application data. Scan it before uploading it to a public site such as GitHub`,
 			false
 		)
 		this.log(
@@ -72,12 +69,10 @@ export class CamundaSupportLogger {
 			`/** Node Version */\n${JSON.stringify(nodeVersion, null, 2)}\n`,
 			false
 		)
+
 		/** Log Configuration */
-		const santisedConfig = obscureSensitiveInfo(mergedConfig)
-		this.log(
-			`/** Configuration */\n${JSON.stringify(santisedConfig, null, 2)}\n`,
-			false
-		)
+		const sanitizedConfig = safeStringify(mergedConfig)
+		this.log(`/** Configuration */\n${sanitizedConfig}\n`, false)
 	}
 
 	public static getInstance(): CamundaSupportLogger {
@@ -95,7 +90,11 @@ export class CamundaSupportLogger {
 			return
 		}
 		const _message =
-			typeof message === 'object' ? safeStringify(message) : message
+			typeof message === 'object'
+				? safeStringify(message)
+				: typeof message === 'string'
+					? sanitizeSensitiveString(message)
+					: message
 
 		const logMessage = addTimestamp
 			? `[${new Date().toISOString()}]: ${_message}\n`
@@ -104,27 +103,12 @@ export class CamundaSupportLogger {
 			// If this is async then messages are written out of order, which doesn't help with debugging
 			fs.appendFileSync(this.filepath, logMessage)
 		} catch (err) {
-			console.error(`Failed to write log to ${this.filepath}:`, err)
+			console.error(
+				`Failed to write log to ${this.filepath}:`,
+				errorForLogging(err)
+			)
 		}
 	}
-}
-
-/** Function to obscure secrets in log */
-function obscureSensitiveInfo(config: Camunda8ClientConfiguration) {
-	const sensitiveKeys = [
-		'CAMUNDA_BASIC_AUTH_PASSWORD',
-		'CAMUNDA_CONSOLE_CLIENT_SECRET',
-		'ZEEBE_CLIENT_SECRET',
-		'CAMUNDA_COOKIE_AUTH_PASSWORD',
-	]
-	return mergeWith({}, config, (_, srcValue, key) => {
-		if (sensitiveKeys.includes(key)) {
-			return `${srcValue?.slice(0, 4)}...[${
-				(srcValue?.length || 4) - 4
-			} chars omitted]`
-		}
-		return undefined
-	})
 }
 
 /** Function to get OS information */
@@ -143,12 +127,117 @@ function getOSInfo() {
 	}
 }
 
+const REDACTED = '[REDACTED]'
+// Keys matched exactly (after normalization) because they are too generic to
+// match as suffixes.
+const SENSITIVE_LOG_KEYS = new Set([
+	'cert',
+	'certificateauthority',
+	'form',
+	'json',
+	'key',
+])
+const SENSITIVE_LOG_KEY_SUFFIXES = [
+	'accesstoken',
+	'apikey',
+	'authorization',
+	'body',
+	'certchain',
+	'certificate',
+	'certstring',
+	'clientassertion',
+	'clientsecret',
+	'cookie',
+	'idtoken',
+	'password',
+	'passphrase',
+	'privatekey',
+	'refreshtoken',
+	'rootcert',
+	'rootcerts',
+	'secret',
+	'token',
+]
+
+function isSensitiveLogKey(key: string) {
+	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
+	return (
+		SENSITIVE_LOG_KEYS.has(normalizedKey) ||
+		SENSITIVE_LOG_KEY_SUFFIXES.some((suffix) => normalizedKey.endsWith(suffix))
+	)
+}
+
+export function sanitizeSensitiveString(value: string) {
+	return (
+		value
+			.replace(
+				/-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[^-\s]+ )?PRIVATE KEY-----/g,
+				REDACTED
+			)
+			// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
+			// so redact a quoted value or the whole remainder of the line.
+			.replace(
+				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
+				`$1$2${REDACTED}`
+			)
+			// Case-sensitive, so prose such as "basic authentication" is kept.
+			.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, `$1 ${REDACTED}`)
+			.replace(
+				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
+				(_match, protocol, _userinfo, path) => `${protocol}${path}`
+			)
+			.replace(
+				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
+				`$1$2${REDACTED}`
+			)
+	)
+}
+
+/**
+ * Use this instead of passing a whole error to a logger. HTTP errors carry
+ * request options (authorization headers, request bodies, TLS keys), which
+ * loggers serialize. Enforced by `no-restricted-syntax` in .eslintrc.json.
+ */
+export function errorForLogging(error: unknown): string {
+	if (!(error instanceof Error)) {
+		return sanitizeSensitiveString(String(error))
+	}
+	const code = (error as { code?: unknown }).code
+	return sanitizeSensitiveString(
+		`${error.name}${code === undefined ? '' : ` [${code}]`}: ${error.message}`
+	)
+}
+
+export function redactUrlForLogging(url: URL | string | undefined) {
+	if (!url) {
+		return undefined
+	}
+	try {
+		const parsed = new URL(url.toString())
+		parsed.username = ''
+		parsed.password = ''
+		parsed.search = ''
+		parsed.hash = ''
+		return parsed.toString()
+	} catch {
+		return sanitizeSensitiveString(url.toString())
+	}
+}
+
 /** Safe stringify to deal with circular JSON */
 function safeStringifyReplacer(seen) {
-	return function (_, value) {
+	return function (key, value) {
+		if (isSensitiveLogKey(key)) {
+			return REDACTED
+		}
+
 		// Handle objects with a custom `.toJSON()` method.
 		if (typeof value?.toJSON === 'function') {
 			value = value.toJSON()
+		}
+
+		if (typeof value === 'string') {
+			return sanitizeSensitiveString(value)
 		}
 
 		if (!(value !== null && typeof value === 'object')) {

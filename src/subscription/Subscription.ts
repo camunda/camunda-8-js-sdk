@@ -1,5 +1,7 @@
 import EventEmitter from 'events'
 
+import { errorForLogging } from '../lib/CamundaSupportLogger'
+
 export class Subscription<T> extends EventEmitter {
 	private _cancelled = false
 	dataGenerator: (interval: number) => AsyncGenerator<T, void, unknown>
@@ -22,7 +24,7 @@ export class Subscription<T> extends EventEmitter {
 						break
 					}
 				} catch (error) {
-					console.error('Error fetching data:', error)
+					console.error('Error fetching data:', errorForLogging(error))
 				}
 				// Wait for the specified interval before trying again
 				await new Promise((resolve) => setTimeout(resolve, interval))

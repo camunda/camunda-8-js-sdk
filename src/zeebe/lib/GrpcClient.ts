@@ -15,7 +15,10 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
-import { CamundaSupportLogger } from '../../lib/CamundaSupportLogger'
+import {
+	CamundaSupportLogger,
+	errorForLogging,
+} from '../../lib/CamundaSupportLogger'
 import { IHeadersProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
@@ -367,7 +370,10 @@ export class GrpcClient extends EventEmitter {
 					stream.on('error', (error: GrpcStreamError) => {
 						_error = error
 						clearTimeout(clientSideTimeout)
-						debug(`${methodName}Stream error emitted by stream`, error)
+						debug(
+							`${methodName}Stream error emitted by stream`,
+							errorForLogging(error)
+						)
 						supportLogger.log(
 							`${methodName}Stream error emitted by stream - ${error.code} - ${error.message} - ${error.details}`
 						)

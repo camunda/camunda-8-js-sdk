@@ -7,6 +7,7 @@ import {
 	RequestError,
 } from './HttpClient'
 import { CamundaPlatform8Configuration } from './Configuration'
+import safeStringify, { redactUrlForLogging } from './CamundaSupportLogger'
 import { supportLogger } from './GotHooks'
 
 const Defaults: CamundaRestError = {
@@ -171,8 +172,9 @@ export const gotBeforeErrorHook =
 		if (error.message.includes('Invalid header token')) {
 			// This is a parse error, which means the response header was not valid JSON.
 			// Debugging for https://github.com/camunda/camunda-8-js-sdk/issues/491
-			error.message += ` (response headers: ${JSON.stringify(
-				error.response?.headers
+			error.message += ` (response headers: ${safeStringify(
+				error.response?.headers,
+				{ indentation: 0 }
 			)})`
 		}
 		if (error.code === '401') {
@@ -190,19 +192,20 @@ export const gotBeforeErrorHook =
 			}
 		}
 
-		/** Log details of errors to the Camunda Support log */
+		/** Log details of errors to the Camunda Support log.
+		 * Only safe metadata is logged: response bodies (in error.message, the
+		 * stack header, and detail) may contain credentials echoed by the server
+		 * under unknown field names. The error returned to callers is unchanged. */
 		supportLogger.log('**ERROR**: Got error during Rest call:')
 		supportLogger.log({
+			name: error.name,
 			code: error.code,
-			message: error.message,
 			method,
-			url,
-			detail,
-			stack: error.stack, // replaced stack
-			originalStack: (error as RequestError & { originalStack?: string })
-				.originalStack,
-			requestOptions: error.request?.options,
+			url: redactUrlForLogging(url),
+			// Not error.stack/originalStack: their header repeats error.message.
 			source: error.source,
+			requestId: structured?.requestId,
+			apiMethod: structured?.apiMethod,
 		})
 		return error
 	}

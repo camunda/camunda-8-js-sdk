@@ -1,4 +1,5 @@
 import { ZeebeGrpcClient } from '../zb/ZeebeGrpcClient'
+import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
 import { GrpcError } from './GrpcError'
 import { StatefulLogInterceptor } from './StatefulLogInterceptor'
@@ -1800,7 +1801,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.logger.logError(
 					`Exception while attempting to raise BPMN Error for job ${job.key} - ${errorMessage}`
 				)
-				this.logger.logError(e)
+				this.logger.logError(errorForLogging(e))
 			})
 			.then(() => {
 				return JOB_ACTION_ACKNOWLEDGEMENT
