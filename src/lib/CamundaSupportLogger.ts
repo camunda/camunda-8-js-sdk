@@ -146,6 +146,8 @@ const SENSITIVE_LOG_KEYS = new Set([
 	'setcookie',
 	'token',
 	'accesstoken',
+	'certchain',
+	'rootcerts',
 ])
 
 function isSensitiveLogKey(key: string) {
@@ -156,7 +158,9 @@ function isSensitiveLogKey(key: string) {
 			'accesstoken',
 			'authorization',
 			'body',
+			'certchain',
 			'certificate',
+			'certstring',
 			'clientsecret',
 			'cookie',
 			'idtoken',
@@ -164,6 +168,8 @@ function isSensitiveLogKey(key: string) {
 			'passphrase',
 			'privatekey',
 			'refreshtoken',
+			'rootcert',
+			'rootcerts',
 			'secret',
 			'token',
 		].some((suffix) => normalizedKey.endsWith(suffix))
@@ -173,10 +179,14 @@ function isSensitiveLogKey(key: string) {
 export function sanitizeSensitiveString(value: string) {
 	return value
 		.replace(
-			/-----BEGIN [^-]+ PRIVATE KEY-----[\s\S]*?-----END [^-]+ PRIVATE KEY-----/g,
+			/-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[^-\s]+ )?PRIVATE KEY-----/g,
 			REDACTED
 		)
 		.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/gi, `$1 ${REDACTED}`)
+		.replace(
+			/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
+			(_match, protocol, _userinfo, path) => `${protocol}${path}`
+		)
 		.replace(
 			/\b(access[_-]?token|authorization|client[_-]?secret|cookie|id[_-]?token|password|passphrase|proxy[_-]?authorization|refresh[_-]?token|secret|set-cookie|token)(["']?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s&,;}]+)/gi,
 			`$1$2${REDACTED}`
