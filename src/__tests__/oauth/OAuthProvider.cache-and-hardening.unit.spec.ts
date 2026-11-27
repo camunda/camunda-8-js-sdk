@@ -364,6 +364,7 @@ describe('OAuthProvider credential-safe logging', () => {
 		)
 		expect(JSON.stringify(messages)).not.toContain('logging-secret')
 		expect(JSON.stringify(messages)).not.toContain('leaked-access-token')
+		expect(JSON.stringify(messages)).not.toContain('zeebe-client')
 	})
 
 	it('does not log a malformed token response', async () => {

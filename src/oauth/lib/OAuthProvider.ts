@@ -502,15 +502,11 @@ export class OAuthProvider implements IHeadersProvider {
 				})
 				.catch((e) => {
 					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
-					this.log.error(
-						`Error requesting token for Client Id ${clientIdToUse}`
-					)
+					this.log.error('Error requesting OAuth token')
 					throw e
 				})
 				.then((t) => {
-					trace(
-						`Got token for Client Id ${clientIdToUse} and audience ${audienceType}`
-					)
+					trace(`Got token from OAuth endpoint`)
 					const isTokenError = (t: unknown): t is TokenError =>
 						!!(t as TokenError).error
 					if (isTokenError(t)) {
