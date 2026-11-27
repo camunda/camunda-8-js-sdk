@@ -15,10 +15,7 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
-import {
-	CamundaSupportLogger,
-	sanitizeSensitiveString,
-} from '../../lib/CamundaSupportLogger'
+import { CamundaSupportLogger } from '../../lib/CamundaSupportLogger'
 import { IHeadersProvider } from '../../oauth'
 
 import { GrpcError } from './GrpcError'
@@ -353,11 +350,13 @@ export class GrpcClient extends EventEmitter {
 					} catch (error: unknown) {
 						const e = error as Error & { code: number }
 						debug(`${methodName}Stream error: ${e.code}`, e.message)
-						// e.message may contain token endpoint error details; sanitize
-						// before it reaches the application logger via the middleware.
+						// The failure can originate from the token endpoint and its
+						// message may contain server-echoed credentials in free text.
+						// Emit a fixed message to the application logger and preserve
+						// the original error for the caller via the return value.
 						this.emit(
 							MiddlewareSignals.Log.Error,
-							sanitizeSensitiveString(e.message)
+							`gRPC stream setup failed for ${methodName}`
 						)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
