@@ -1,15 +1,20 @@
 import fs from 'node:fs'
+import { performance } from 'node:perf_hooks'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import safeStringify, {
 	CamundaSupportLogger,
 	errorForLogging,
+	sanitizeSensitiveString,
 } from '../../lib/CamundaSupportLogger'
 import { CamundaPlatform8Configuration } from '../../lib/Configuration'
 import { gotBeforeErrorHook } from '../../lib/GotErrors'
 import { beforeCallHook, supportLogger } from '../../lib/GotHooks'
 import { NormalizedOptions, RequestError } from '../../lib/HttpClient'
+
+// Inputs grow 4x; allow timing noise while staying below quadratic growth.
+const MAX_LINEAR_SCALING_RATIO = 12
 
 afterEach(() => {
 	vi.restoreAllMocks()
@@ -298,6 +303,228 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(sanitized).not.toContain('embedded-secret')
 	})
 
+	it('redacts complete namespaced cookie assignments', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA__COOKIE=session=first-cookie-secret; refresh=second-cookie-secret\n' +
+				'service-cookie: session=third-cookie-secret; custom=fourth-cookie-secret\n' +
+				'service_-_cookie=session=fifth-cookie-secret; arbitrary=sixth-cookie-secret\n' +
+				'service-cookie=; empty=seventh-cookie-secret\n' +
+				'service_cookie: "session=eighth-cookie-secret;\n' +
+				'refresh=ninth-cookie-secret"\n' +
+				'safe_setting=visible'
+		)
+
+		for (const secret of [
+			'first-cookie-secret',
+			'second-cookie-secret',
+			'third-cookie-secret',
+			'fourth-cookie-secret',
+			'fifth-cookie-secret',
+			'sixth-cookie-secret',
+			'seventh-cookie-secret',
+			'eighth-cookie-secret',
+			'ninth-cookie-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('safe_setting=visible')
+	})
+
+	it('redacts multiline object cookie values through nested objects', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA__COOKIE={"session":"session-secret",\n' +
+				'"nested":{"token":"nested-token-secret"},\n' +
+				'"refresh":"refresh-secret"}\n' +
+				'safe_setting=visible'
+		)
+
+		for (const secret of [
+			'session-secret',
+			'refresh-secret',
+			'nested-token-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('safe_setting=visible')
+	})
+
+	it('redacts indented cookie header continuations', () => {
+		const output = sanitizeSensitiveString(
+			'Cookie: session=header-session-secret;\r\n' +
+				'\trefresh=header-refresh-secret\r\n' +
+				'x-request-id: visible'
+		)
+
+		expect(output).not.toContain('header-session-secret')
+		expect(output).not.toContain('header-refresh-secret')
+		expect(output).toContain('x-request-id: visible')
+	})
+
+	it('redacts folded authorization headers without hiding following headers', () => {
+		const output = errorForLogging(
+			new Error(
+				'Authorization: Bearer authorization-header-secret\r\n' +
+					'\tcontinued-authorization-secret\r\n' +
+					'Proxy-Authorization: Basic proxy-header-secret\n' +
+					'  continued-proxy-secret\n' +
+					'X-API-Key: api-header-secret\n' +
+					'\tcontinued-api-secret\n' +
+					'X-Request-ID: visible'
+			)
+		)
+
+		for (const secret of [
+			'authorization-header-secret',
+			'continued-authorization-secret',
+			'proxy-header-secret',
+			'continued-proxy-secret',
+			'api-header-secret',
+			'continued-api-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('X-Request-ID: visible')
+	})
+
+	it('redacts complete namespaced authorization and API-key assignments', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA_AUTHORIZATION=Digest username="digest-user", ' +
+				'response="digest-response"\r\n' +
+				'  realm="continued-realm"\r\n' +
+				'CAMUNDA_X_API_KEY=first-line-api-secret\n' +
+				'\tcontinued-api-key-secret\n' +
+				'CAMUNDA_CLIENT_ID=visible-client'
+		)
+
+		for (const secret of [
+			'digest-user',
+			'digest-response',
+			'continued-realm',
+			'first-line-api-secret',
+			'continued-api-key-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('CAMUNDA_CLIENT_ID=visible-client')
+	})
+
+	it('redacts structured authorization values without hiding adjacent fields', () => {
+		const output = sanitizeSensitiveString(
+			'{"authorization":{"credential":"nested-auth-secret"},' +
+				'"tenant":"visible"}'
+		)
+
+		expect(output).not.toContain('nested-auth-secret')
+		expect(output).toContain('"tenant":"visible"')
+	})
+
+	it.each([
+		{
+			description: 'objects',
+			header: 'Authorization',
+			structuredValue: '{"token":"inner-secret"}',
+			suffix: ' trailing-secret',
+		},
+		{
+			description: 'arrays',
+			header: 'Proxy-Authorization',
+			structuredValue: '["inner-secret"]',
+			suffix: ' trailing-secret',
+		},
+		{
+			description: 'quoted strings',
+			header: 'X-API-Key',
+			structuredValue: '"inner-secret"',
+			suffix: ' trailing-secret',
+		},
+		{
+			description: 'objects with an unpaired comma suffix',
+			header: 'Authorization',
+			structuredValue: '{"token":"inner-secret"}',
+			suffix: ', trailing-secret',
+		},
+		{
+			description: 'objects with a NUL suffix',
+			header: 'Authorization',
+			structuredValue: '{"token":"inner-secret"}',
+			suffix: '\0 trailing-secret',
+		},
+	])(
+		'fails closed for non-delimiter suffixes after $description',
+		({ header, structuredValue, suffix }) => {
+			const output = sanitizeSensitiveString(
+				`${header}: ${structuredValue}${suffix}\r\n` + 'X-Request-ID: visible'
+			)
+
+			expect(output).not.toContain('inner-secret')
+			expect(output).not.toContain('trailing-secret')
+			expect(output).toContain('X-Request-ID: visible')
+		}
+	)
+
+	it('fails closed when a surrounding JSON object has a trailing suffix', () => {
+		const output = sanitizeSensitiveString(
+			'{"authorization":{"token":"inner-secret"}} trailing-secret\r\n' +
+				'X-Request-ID: visible'
+		)
+
+		expect(output).not.toContain('inner-secret')
+		expect(output).not.toContain('trailing-secret')
+		expect(output).toContain('X-Request-ID: visible')
+	})
+
+	it('redacts complete structured values for non-header credentials', () => {
+		const output = sanitizeSensitiveString(
+			'{"client_secret":{"first":"first-secret",' +
+				'"nested":{"value":"nested-secret"}},' +
+				'"password":["first-password","second-password"],' +
+				'"tenant":"visible"}'
+		)
+
+		for (const secret of [
+			'first-secret',
+			'nested-secret',
+			'first-password',
+			'second-password',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('"tenant":"visible"')
+	})
+
+	it('fails closed for incomplete structured credential values', () => {
+		const output = sanitizeSensitiveString(
+			'client_secret={"first":"first-secret",\n' + '"nested":"nested-secret"\n'
+		)
+
+		expect(output).not.toContain('first-secret')
+		expect(output).not.toContain('nested-secret')
+	})
+
+	it('redacts multiline object cookie headers', () => {
+		const output = sanitizeSensitiveString(
+			'Cookie: {"session":"object-cookie-secret",\n' +
+				'"nested":{"refresh":"nested-object-secret"}}\n' +
+				'safe_setting=visible'
+		)
+
+		expect(output).not.toContain('object-cookie-secret')
+		expect(output).not.toContain('nested-object-secret')
+		expect(output).toContain('safe_setting=visible')
+	})
+
+	it('redacts indented namespaced cookie continuations', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA__COOKIE=session=environment-session-secret;\n' +
+				'  refresh=environment-refresh-secret\n' +
+				'CAMUNDA__CLIENT_ID=visible-client'
+		)
+
+		expect(output).not.toContain('environment-session-secret')
+		expect(output).not.toContain('environment-refresh-secret')
+		expect(output).toContain('CAMUNDA__CLIENT_ID=visible-client')
+	})
+
 	it('redacts quoted header values and API keys without redacting prose', () => {
 		const output = safeStringify({
 			message:
@@ -305,7 +532,8 @@ describe('CamundaSupportLogger redaction', () => {
 				"{'authorization': 'single-quoted-token'} " +
 				'{"client_secret":"before\\"escaped-secret"} ' +
 				'x-api-key: header-api-key api_key=query-api-key ' +
-				'client_assertion=signed-assertion',
+				'client_assertion=signed-assertion ' +
+				'bearer token-value basic credentials',
 			apiKey: 'structured-api-key',
 			prose: 'Using basic authentication; refresh: 30s',
 		})
@@ -319,10 +547,78 @@ describe('CamundaSupportLogger redaction', () => {
 			'query-api-key',
 			'signed-assertion',
 			'structured-api-key',
+			'token-value',
+			'credentials',
 		]) {
 			expect(output).not.toContain(secret)
 		}
 		expect(output).toContain('Using basic authentication; refresh: 30s')
+	})
+
+	it('redacts sensitive JSON keys containing Unicode escapes', () => {
+		const cookieOutput = sanitizeSensitiveString(
+			'{"cook\\u0069e":"session=escaped-cookie-secret"}'
+		)
+		const secretOutput = sanitizeSensitiveString(
+			'{"client_se\\u0063ret":"escaped-client-secret"}'
+		)
+
+		expect(cookieOutput).not.toContain('escaped-cookie-secret')
+		expect(cookieOutput).toContain('[REDACTED]')
+		expect(secretOutput).not.toContain('escaped-client-secret')
+		expect(secretOutput).toContain('[REDACTED]')
+	})
+
+	it('redacts credentials from dotted JSON keys', () => {
+		const output = sanitizeSensitiveString(
+			'{"oauth.client_secret":"echoed-client-secret",' +
+				'"db.password":"echoed-password",' +
+				'"service.oauth.client_secret":"nested-echoed-secret",' +
+				'"tenant.name":"visible"}'
+		)
+
+		for (const secret of [
+			'echoed-client-secret',
+			'echoed-password',
+			'nested-echoed-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('"tenant.name":"visible"')
+	})
+
+	it('redacts authentication-prefixed credentials without suppressing Basic prose', () => {
+		const output = safeStringify({
+			message: [
+				'Bearer authentication',
+				'Bearer authentication.token',
+				'Bearer authentication-secret',
+				'Basic authentication.token',
+				'Basic authentication-secret',
+				'Using basic authentication; refresh: 30s',
+			].join('\n'),
+		})
+
+		expect(output).not.toContain('Bearer authentication')
+		expect(output).not.toContain('authentication.token')
+		expect(output).not.toContain('authentication-secret')
+		expect(output).toContain('Using basic authentication; refresh: 30s')
+	})
+
+	it('redacts URL credentials and query data from error text', () => {
+		const output = sanitizeSensitiveString(
+			'Request failed for https://api-user:url-password@api.example.test/v1/jobs?access_token=query-token#fragment'
+		)
+
+		expect(output).toBe('Request failed for https://api.example.test/v1/jobs')
+	})
+
+	it('redacts all userinfo before the last @ in a URL authority', () => {
+		const output = sanitizeSensitiveString(
+			'Request failed for https://user@name:password@api.example.test/v1/jobs?access_token=query-secret'
+		)
+
+		expect(output).toBe('Request failed for https://api.example.test/v1/jobs')
 	})
 
 	it('reduces an error to its name, code, and sanitized message', () => {
@@ -341,6 +637,113 @@ describe('CamundaSupportLogger redaction', () => {
 		)
 		expect(errorForLogging('client_secret=thrown-secret')).toBe(
 			'client_secret=[REDACTED]'
+		)
+	})
+
+	it('does not throw when a non-Error value cannot be converted to a string', () => {
+		const nullPrototypeValue: object = Object.create(null)
+		const throwingToString = {
+			toString() {
+				throw new Error('coercion-secret')
+			},
+		}
+
+		expect(errorForLogging(nullPrototypeValue)).toBe('[Unserializable error]')
+		expect(errorForLogging(throwingToString)).toBe('[Unserializable error]')
+	})
+
+	it('redacts environment-style credential assignments from error messages', () => {
+		const output = errorForLogging(
+			new Error(
+				'ZEEBE_CLIENT_SECRET=zeebe-secret ' +
+					'CAMUNDA_OAUTH_CLIENT_SECRET=camunda-secret ' +
+					'client_secret=plain-secret ZEEBE_CLIENT_ID=zeebe-client ' +
+					'CAMUNDA__CLIENT_ID=camunda-client'
+			)
+		)
+
+		expect(output).not.toContain('zeebe-secret')
+		expect(output).not.toContain('camunda-secret')
+		expect(output).not.toContain('plain-secret')
+		expect(output).toContain('ZEEBE_CLIENT_ID=zeebe-client')
+		expect(output).toContain('CAMUNDA__CLIENT_ID=camunda-client')
+	})
+
+	it('redacts sensitive assignments after repeated namespace separators', () => {
+		const output = sanitizeSensitiveString(
+			'service-client_secret=single-hyphen-value ' +
+				'service--client_secret=double-hyphen-value ' +
+				'service_client_secret=single-underscore-value ' +
+				'CAMUNDA__CLIENT_SECRET=double-underscore-value ' +
+				'CAMUNDA___CLIENT_SECRET=triple-underscore-value ' +
+				'service_-_client_secret=mixed-separator-value ' +
+				'--secret=option-style-value'
+		)
+
+		for (const secret of [
+			'single-hyphen-value',
+			'double-hyphen-value',
+			'single-underscore-value',
+			'double-underscore-value',
+			'triple-underscore-value',
+			'mixed-separator-value',
+			'option-style-value',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('CAMUNDA__CLIENT_SECRET=[REDACTED]')
+	})
+
+	it('scales linearly when scanning long non-sensitive namespace identifiers', () => {
+		const shortIdentifier = `${'a-'.repeat(2_000)}value`
+		const longIdentifier = `${'a-'.repeat(8_000)}value`
+		const measure = (input: string) => {
+			const start = performance.now()
+			const output = sanitizeSensitiveString(input)
+			const elapsed = performance.now() - start
+			expect(output).toBe(input)
+			return elapsed
+		}
+		const median = (samples: number[]) =>
+			samples.sort((left, right) => left - right)[
+				Math.floor(samples.length / 2)
+			]
+
+		measure(shortIdentifier)
+		measure(longIdentifier)
+		const shortSamples = Array.from({ length: 5 }, () =>
+			measure(shortIdentifier)
+		)
+		const longSamples = Array.from({ length: 5 }, () => measure(longIdentifier))
+
+		expect(median(longSamples)).toBeLessThan(
+			median(shortSamples) * MAX_LINEAR_SCALING_RATIO
+		)
+	})
+
+	it('scales linearly across incomplete private-key markers', () => {
+		const marker = '-----BEGIN PRIVATE KEY-----\n'
+		const shortInput = marker.repeat(1_000)
+		const longInput = marker.repeat(4_000)
+		const measure = (input: string) => {
+			const start = performance.now()
+			const output = sanitizeSensitiveString(input)
+			const elapsed = performance.now() - start
+			expect(output).toBe(input)
+			return elapsed
+		}
+		const median = (samples: number[]) =>
+			samples.sort((left, right) => left - right)[
+				Math.floor(samples.length / 2)
+			]
+
+		measure(shortInput)
+		measure(longInput)
+		const shortSamples = Array.from({ length: 5 }, () => measure(shortInput))
+		const longSamples = Array.from({ length: 5 }, () => measure(longInput))
+
+		expect(median(longSamples)).toBeLessThan(
+			median(shortSamples) * MAX_LINEAR_SCALING_RATIO
 		)
 	})
 })

@@ -88,13 +88,22 @@ describe('vendored lossless-json parse resource usage', () => {
 				Array.from({ length: len / 50 }, () => `${'z'.repeat(49)}\t`).join('')
 			)
 			vendoredParse(text) // warm up
-			const start = process.hrtime.bigint()
-			for (let i = 0; i < 5; i++) vendoredParse(text)
-			return Number(process.hrtime.bigint() - start)
+			const samples: number[] = []
+			for (let sample = 0; sample < 5; sample++) {
+				gc()
+				const parsed: unknown[] = []
+				const start = process.hrtime.bigint()
+				for (let i = 0; i < 10; i++) parsed.push(vendoredParse(text))
+				samples.push(Number(process.hrtime.bigint() - start))
+				expect(parsed).toHaveLength(10)
+			}
+			samples.sort((a, b) => a - b)
+			return samples[Math.floor(samples.length / 2)]
 		}
 		const small = time(200_000)
 		const large = time(400_000)
-		// 2x input should take about 2x time; allow 3x (and some slack) to avoid flakiness.
+		// Use a median batch so one noisy timing sample does not dominate the scaling check.
+		// 2x input should take about 2x time; allow a 3x ratio with fixed timing slack.
 		expect(large).toBeLessThan(small * 3 + 5_000_000)
 	})
 })

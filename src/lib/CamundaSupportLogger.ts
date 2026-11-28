@@ -159,6 +159,39 @@ const SENSITIVE_LOG_KEY_SUFFIXES = [
 	'token',
 ]
 
+const SENSITIVE_LOG_ASSIGNMENT_KEY_SUFFIXES = [
+	'accesstoken',
+	'access_token',
+	'access-token',
+	'apikey',
+	'api_key',
+	'api-key',
+	'authorization',
+	'clientassertion',
+	'client_assertion',
+	'client-assertion',
+	'clientsecret',
+	'client_secret',
+	'client-secret',
+	'cookie',
+	'idtoken',
+	'id_token',
+	'id-token',
+	'password',
+	'passphrase',
+	'refreshtoken',
+	'refresh_token',
+	'refresh-token',
+	'secret',
+	'token',
+]
+const SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN =
+	/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+/y
+const PRIVATE_KEY_BEGIN_PREFIX = '-----BEGIN '
+const PRIVATE_KEY_END_PREFIX = '-----END '
+const PRIVATE_KEY_BEGIN_PATTERN = /-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----/y
+const PRIVATE_KEY_END_PATTERN = /-----END (?:[^-\s]+ )?PRIVATE KEY-----/y
+
 function isSensitiveLogKey(key: string) {
 	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
 	return (
@@ -167,30 +200,540 @@ function isSensitiveLogKey(key: string) {
 	)
 }
 
-export function sanitizeSensitiveString(value: string) {
+function isAsciiAlphaNumeric(character: string | undefined) {
+	if (!character) {
+		return false
+	}
+	const code = character.charCodeAt(0)
 	return (
-		value
-			.replace(
-				/-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[^-\s]+ )?PRIVATE KEY-----/g,
-				REDACTED
-			)
-			// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
-			// so redact a quoted value or the whole remainder of the line.
-			.replace(
-				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
-				`$1$2${REDACTED}`
-			)
-			// Case-sensitive, so prose such as "basic authentication" is kept.
-			.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, `$1 ${REDACTED}`)
-			.replace(
-				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
-				(_match, protocol, _userinfo, path) => `${protocol}${path}`
-			)
-			.replace(
-				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
-				`$1$2${REDACTED}`
-			)
+		(code >= 48 && code <= 57) ||
+		(code >= 65 && code <= 90) ||
+		(code >= 97 && code <= 122)
 	)
+}
+
+function isNamespacePrefix(key: string, start: number, end: number) {
+	let index = start
+	while (index < end) {
+		if (!isAsciiAlphaNumeric(key[index])) {
+			return false
+		}
+		while (index < end && isAsciiAlphaNumeric(key[index])) {
+			index++
+		}
+		while (index < end && (key[index] === '_' || key[index] === '-')) {
+			index++
+		}
+	}
+	return true
+}
+
+function isSensitiveLogAssignmentKey(key: string) {
+	const normalizedKey = key.toLowerCase()
+	for (const suffix of SENSITIVE_LOG_ASSIGNMENT_KEY_SUFFIXES) {
+		if (!normalizedKey.endsWith(suffix)) {
+			continue
+		}
+
+		const suffixStart = key.length - suffix.length
+		if (isNamespacePrefix(key, 0, suffixStart)) {
+			return true
+		}
+
+		const precedingCharacter = key[suffixStart - 1]
+		if (
+			precedingCharacter !== undefined &&
+			!isAsciiAlphaNumeric(precedingCharacter) &&
+			precedingCharacter !== '_'
+		) {
+			return true
+		}
+
+		const previousHyphen = key.lastIndexOf('-', suffixStart - 1)
+		if (
+			previousHyphen !== -1 &&
+			isNamespacePrefix(key, previousHyphen + 1, suffixStart)
+		) {
+			return true
+		}
+	}
+	return false
+}
+
+function isSensitiveHeaderAssignmentKey(key: string) {
+	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
+	return (
+		normalizedKey.endsWith('authorization') || normalizedKey.endsWith('apikey')
+	)
+}
+
+function findPrivateKeyMarkerEnd(
+	value: string,
+	markerStart: number,
+	markerPattern: RegExp
+) {
+	markerPattern.lastIndex = markerStart
+	return markerPattern.exec(value) ? markerPattern.lastIndex : undefined
+}
+
+function findPrivateKeyEnd(value: string, start: number) {
+	let searchFrom = start
+	while (searchFrom < value.length) {
+		const markerStart = value.indexOf(PRIVATE_KEY_END_PREFIX, searchFrom)
+		if (markerStart === -1) {
+			return undefined
+		}
+
+		const markerEnd = findPrivateKeyMarkerEnd(
+			value,
+			markerStart,
+			PRIVATE_KEY_END_PATTERN
+		)
+		if (markerEnd !== undefined) {
+			return markerEnd
+		}
+		searchFrom = markerStart + 1
+	}
+	return undefined
+}
+
+function redactPrivateKeyBlocks(value: string) {
+	let sanitized: string[] | undefined
+	let copiedThrough = 0
+	let searchFrom = 0
+	while (searchFrom < value.length) {
+		const beginStart = value.indexOf(PRIVATE_KEY_BEGIN_PREFIX, searchFrom)
+		if (beginStart === -1) {
+			break
+		}
+
+		const beginEnd = findPrivateKeyMarkerEnd(
+			value,
+			beginStart,
+			PRIVATE_KEY_BEGIN_PATTERN
+		)
+		if (beginEnd === undefined) {
+			searchFrom = beginStart + 1
+			continue
+		}
+
+		const end = findPrivateKeyEnd(value, beginEnd)
+		if (end === undefined) {
+			break
+		}
+
+		sanitized ??= []
+		sanitized.push(value.slice(copiedThrough, beginStart), REDACTED)
+		copiedThrough = end
+		searchFrom = end
+	}
+
+	if (!sanitized) {
+		return value
+	}
+	sanitized.push(value.slice(copiedThrough))
+	return sanitized.join('')
+}
+
+function isWhitespaceCharacter(character: string | undefined) {
+	return character !== undefined && /\s/.test(character)
+}
+
+function isEscapedCharacter(value: string, index: number) {
+	let backslashCount = 0
+	for (
+		let cursor = index - 1;
+		cursor >= 0 && value[cursor] === '\\';
+		cursor--
+	) {
+		backslashCount++
+	}
+	return backslashCount % 2 === 1
+}
+
+function findAssignmentKey(value: string, separatorIndex: number) {
+	let keyEnd = separatorIndex
+	while (keyEnd > 0 && isWhitespaceCharacter(value[keyEnd - 1])) {
+		keyEnd--
+	}
+
+	const quote = value[keyEnd - 1]
+	if (
+		(quote === '"' || quote === "'") &&
+		!isEscapedCharacter(value, keyEnd - 1)
+	) {
+		for (let keyStart = keyEnd - 2; keyStart >= 0; keyStart--) {
+			if (value[keyStart] !== quote || isEscapedCharacter(value, keyStart)) {
+				continue
+			}
+
+			const quotedKey = value.slice(keyStart, keyEnd)
+			if (quote === '"') {
+				try {
+					const decodedKey: unknown = JSON.parse(quotedKey)
+					if (typeof decodedKey === 'string') {
+						return decodedKey
+					}
+				} catch (error) {
+					if (!(error instanceof SyntaxError)) {
+						throw error
+					}
+				}
+			}
+			return value.slice(keyStart + 1, keyEnd - 1)
+		}
+	}
+
+	if (quote === '"' || quote === "'") {
+		keyEnd--
+	}
+	let keyStart = keyEnd
+	while (
+		keyStart > 0 &&
+		(isAsciiAlphaNumeric(value[keyStart - 1]) ||
+			value[keyStart - 1] === '_' ||
+			value[keyStart - 1] === '-')
+	) {
+		keyStart--
+	}
+	return value.slice(keyStart, keyEnd)
+}
+
+// Unquoted newlines end header values unless they are inside structured values or folded lines.
+function findMultilineHeaderValueEnd(value: string, start: number) {
+	let quote: string | undefined
+	let escaped = false
+	let bracketDepth = 0
+	let braceDepth = 0
+	for (let index = start; index < value.length; index++) {
+		const character = value[index]
+		if (quote) {
+			if (escaped) {
+				escaped = false
+			} else if (character === '\\') {
+				escaped = true
+			} else if (character === quote) {
+				quote = undefined
+			}
+			continue
+		}
+
+		if (character === '"' || character === "'") {
+			quote = character
+		} else if (character === '[') {
+			bracketDepth++
+		} else if (character === ']' && bracketDepth > 0) {
+			bracketDepth--
+		} else if (character === '{') {
+			braceDepth++
+		} else if (character === '}' && braceDepth > 0) {
+			braceDepth--
+		} else if (character === '\n' && bracketDepth === 0 && braceDepth === 0) {
+			const nextLineCharacter = value[index + 1]
+			if (nextLineCharacter !== ' ' && nextLineCharacter !== '\t') {
+				return value[index - 1] === '\r' ? index - 1 : index
+			}
+		}
+	}
+	return value.length
+}
+
+function findDelimitedValueEnd(value: string, start: number) {
+	const firstCharacter = value[start]
+	if (firstCharacter === '"' || firstCharacter === "'") {
+		let escaped = false
+		for (let index = start + 1; index < value.length; index++) {
+			if (escaped) {
+				escaped = false
+			} else if (value[index] === '\\') {
+				escaped = true
+			} else if (value[index] === firstCharacter) {
+				return index + 1
+			}
+		}
+		return undefined
+	}
+
+	if (firstCharacter !== '[' && firstCharacter !== '{') {
+		return undefined
+	}
+
+	const closingCharacters = [firstCharacter === '[' ? ']' : '}']
+	let quote: string | undefined
+	let escaped = false
+	for (let index = start + 1; index < value.length; index++) {
+		const character = value[index]
+		if (quote) {
+			if (escaped) {
+				escaped = false
+			} else if (character === '\\') {
+				escaped = true
+			} else if (character === quote) {
+				quote = undefined
+			}
+		} else if (character === '"' || character === "'") {
+			quote = character
+		} else if (character === '[' || character === '{') {
+			closingCharacters.push(character === '[' ? ']' : '}')
+		} else if (character === ']' || character === '}') {
+			if (closingCharacters.pop() !== character) {
+				return undefined
+			}
+			if (closingCharacters.length === 0) {
+				return index + 1
+			}
+		}
+	}
+	return undefined
+}
+
+function findHeaderTerminatorSuffixes(value: string) {
+	const headerTerminatorSuffixes = new Uint8Array(value.length + 1)
+	headerTerminatorSuffixes[value.length] = 1
+	for (let index = value.length - 1; index >= 0; index--) {
+		if (value[index] === ' ' || value[index] === '\t') {
+			headerTerminatorSuffixes[index] = headerTerminatorSuffixes[index + 1]
+		} else if (value[index] === '\n') {
+			headerTerminatorSuffixes[index] =
+				value[index + 1] === ' ' || value[index + 1] === '\t' ? 0 : 1
+		} else if (value[index] === '\r' && value[index + 1] === '\n') {
+			headerTerminatorSuffixes[index] =
+				value[index + 2] === ' ' || value[index + 2] === '\t' ? 0 : 1
+		}
+	}
+	return headerTerminatorSuffixes
+}
+
+function findEnclosingStructures(value: string) {
+	const enclosingDelimiters = new Uint8Array(value.length)
+	const enclosingRootEnds = new Int32Array(value.length)
+	enclosingRootEnds.fill(-1)
+	const headerTerminatorSuffixes = findHeaderTerminatorSuffixes(value)
+	const closingCharacters: string[] = []
+	let quote: string | undefined
+	let escaped = false
+	let rootStart = -1
+	for (let index = 0; index < value.length; index++) {
+		if (quote === undefined && closingCharacters.length > 0) {
+			enclosingDelimiters[index] =
+				closingCharacters[closingCharacters.length - 1].charCodeAt(0)
+		}
+
+		const character = value[index]
+		if (quote) {
+			if (escaped) {
+				escaped = false
+			} else if (character === '\\') {
+				escaped = true
+			} else if (character === quote) {
+				quote = undefined
+			}
+		} else if (character === '"' || character === "'") {
+			quote = character
+		} else if (character === '[' || character === '{') {
+			if (closingCharacters.length === 0) {
+				rootStart = index
+			}
+			closingCharacters.push(character === '[' ? ']' : '}')
+		} else if (character === ']' || character === '}') {
+			if (closingCharacters.pop() !== character) {
+				enclosingDelimiters.fill(0)
+				enclosingRootEnds.fill(-1)
+				return {
+					enclosingDelimiters,
+					enclosingRootEnds,
+					headerTerminatorSuffixes,
+				}
+			}
+			if (closingCharacters.length === 0) {
+				enclosingRootEnds.fill(index, rootStart, index + 1)
+				rootStart = -1
+			}
+		}
+	}
+
+	if (quote !== undefined || closingCharacters.length > 0) {
+		enclosingDelimiters.fill(0)
+		enclosingRootEnds.fill(-1)
+	}
+	return {
+		enclosingDelimiters,
+		enclosingRootEnds,
+		headerTerminatorSuffixes,
+	}
+}
+
+function findSensitiveHeaderValueEnd(
+	value: string,
+	start: number,
+	enclosingStructureDelimiter: number,
+	enclosingRootEnd: number,
+	hasSafeRootSuffix: boolean
+) {
+	const valueEnd = findDelimitedValueEnd(value, start)
+	if (valueEnd === undefined) {
+		return findMultilineHeaderValueEnd(value, start)
+	}
+
+	if (enclosingRootEnd !== -1 && !hasSafeRootSuffix) {
+		return findMultilineHeaderValueEnd(value, start)
+	}
+
+	let lineEnding = valueEnd
+	while (value[lineEnding] === ' ' || value[lineEnding] === '\t') {
+		lineEnding++
+	}
+	const suffix = value[lineEnding]
+	const isHeaderLineEnding =
+		suffix === undefined ||
+		suffix === '\n' ||
+		(suffix === '\r' && value[lineEnding + 1] === '\n')
+	const isEnclosingStructureDelimiter =
+		(suffix === ',' && enclosingStructureDelimiter !== 0) ||
+		((suffix === '}' || suffix === ']') &&
+			suffix.charCodeAt(0) === enclosingStructureDelimiter)
+	if (!isHeaderLineEnding && !isEnclosingStructureDelimiter) {
+		return findMultilineHeaderValueEnd(value, start)
+	}
+	if (value[lineEnding] === '\r' && value[lineEnding + 1] === '\n') {
+		lineEnding++
+	}
+	if (
+		value[lineEnding] === '\n' &&
+		(value[lineEnding + 1] === ' ' || value[lineEnding + 1] === '\t')
+	) {
+		return findMultilineHeaderValueEnd(value, lineEnding + 1)
+	}
+	return valueEnd
+}
+
+function redactCookieHeaders(value: string) {
+	let sanitized: string[] | undefined
+	let copiedThrough = 0
+	const cookieHeaderPattern = /\b(cookie|set-cookie)(["']?[ \t]*[:=][ \t]*)/gi
+	while (cookieHeaderPattern.exec(value)) {
+		const valueStart = cookieHeaderPattern.lastIndex
+		const valueEnd = findMultilineHeaderValueEnd(value, valueStart)
+		if (valueEnd > valueStart) {
+			sanitized ??= []
+			sanitized.push(value.slice(copiedThrough, valueStart), REDACTED)
+			copiedThrough = valueEnd
+			cookieHeaderPattern.lastIndex = valueEnd
+		}
+	}
+
+	if (!sanitized) {
+		return value
+	}
+	sanitized.push(value.slice(copiedThrough))
+	return sanitized.join('')
+}
+
+function redactUrls(value: string) {
+	return value.replace(
+		/(?<![a-z0-9+.-])([0-9+.-]*)([a-z][a-z0-9+.-]*:\/\/)([^/?#\s]*@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
+		(_match, prefix, protocol, _userinfo, path) => `${prefix}${protocol}${path}`
+	)
+}
+
+function redactSensitiveAssignments(value: string) {
+	let sanitized: string[] | undefined
+	let copiedThrough = 0
+	let index = 0
+	let enclosingStructures:
+		| ReturnType<typeof findEnclosingStructures>
+		| undefined
+	// Scan separators once so a long non-sensitive identifier is not retried at every hyphen.
+	while (index < value.length) {
+		if (value[index] !== '=' && value[index] !== ':') {
+			index++
+			continue
+		}
+
+		const assignmentKey = findAssignmentKey(value, index)
+		if (assignmentKey && isSensitiveLogAssignmentKey(assignmentKey)) {
+			let valueStart = index + 1
+			while (
+				valueStart < value.length &&
+				isWhitespaceCharacter(value[valueStart])
+			) {
+				valueStart++
+			}
+			let valueEnd: number | undefined
+			if (assignmentKey.toLowerCase().endsWith('cookie')) {
+				valueEnd = findMultilineHeaderValueEnd(value, valueStart)
+			} else if (isSensitiveHeaderAssignmentKey(assignmentKey)) {
+				const firstCharacter = value[valueStart]
+				if (
+					firstCharacter === '"' ||
+					firstCharacter === "'" ||
+					firstCharacter === '[' ||
+					firstCharacter === '{'
+				) {
+					enclosingStructures ??= findEnclosingStructures(value)
+				}
+				const enclosingStructureDelimiter =
+					enclosingStructures?.enclosingDelimiters[valueStart] ?? 0
+				const enclosingRootEnd =
+					enclosingStructures?.enclosingRootEnds[valueStart] ?? -1
+				valueEnd = findSensitiveHeaderValueEnd(
+					value,
+					valueStart,
+					enclosingStructureDelimiter,
+					enclosingRootEnd,
+					enclosingRootEnd === -1 ||
+						enclosingStructures?.headerTerminatorSuffixes[
+							enclosingRootEnd + 1
+						] === 1
+				)
+			} else {
+				const firstCharacter = value[valueStart]
+				if (
+					firstCharacter === '"' ||
+					firstCharacter === "'" ||
+					firstCharacter === '[' ||
+					firstCharacter === '{'
+				) {
+					valueEnd =
+						findDelimitedValueEnd(value, valueStart) ??
+						findMultilineHeaderValueEnd(value, valueStart)
+				} else {
+					SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
+					if (SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)) {
+						valueEnd = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex
+					}
+				}
+			}
+			if (valueEnd !== undefined && valueEnd > valueStart) {
+				sanitized ??= []
+				sanitized.push(value.slice(copiedThrough, valueStart), REDACTED)
+				copiedThrough = valueEnd
+				index = valueEnd
+				continue
+			}
+		}
+		index++
+	}
+
+	if (!sanitized) {
+		return value
+	}
+	sanitized.push(value.slice(copiedThrough))
+	return sanitized.join('')
+}
+
+export function sanitizeSensitiveString(value: string) {
+	const sanitized = redactCookieHeaders(redactPrivateKeyBlocks(value))
+		// Preserve only the complete Basic prose token; credential suffixes are sensitive.
+		.replace(
+			/\b(Basic|Bearer)\s+([A-Za-z0-9._~+/=-]+)/gi,
+			(match, scheme: string, credential: string) =>
+				scheme.toLowerCase() === 'basic' &&
+				credential.toLowerCase() === 'authentication'
+					? match
+					: `${scheme} ${REDACTED}`
+		)
+	return redactSensitiveAssignments(redactUrls(sanitized))
 }
 
 /**
@@ -199,13 +742,18 @@ export function sanitizeSensitiveString(value: string) {
  * loggers serialize. Enforced by `no-restricted-syntax` in .eslintrc.json.
  */
 export function errorForLogging(error: unknown): string {
-	if (!(error instanceof Error)) {
-		return sanitizeSensitiveString(String(error))
+	try {
+		if (!(error instanceof Error)) {
+			return sanitizeSensitiveString(String(error))
+		}
+		const code = (error as { code?: unknown }).code
+		return sanitizeSensitiveString(
+			`${error.name}${code === undefined ? '' : ` [${code}]`}: ${error.message}`
+		)
+	} catch {
+		// Thrown values can have hostile or missing string-coercion methods.
+		return '[Unserializable error]'
 	}
-	const code = (error as { code?: unknown }).code
-	return sanitizeSensitiveString(
-		`${error.name}${code === undefined ? '' : ` [${code}]`}: ${error.message}`
-	)
 }
 
 export function redactUrlForLogging(url: URL | string | undefined) {

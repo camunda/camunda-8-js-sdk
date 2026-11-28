@@ -15,7 +15,7 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
-import {
+import safeStringify, {
 	CamundaSupportLogger,
 	errorForLogging,
 } from '../../lib/CamundaSupportLogger'
@@ -26,6 +26,10 @@ import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 
 const debug = d('camunda:grpc')
 const supportLogger = CamundaSupportLogger.getInstance()
+
+function normalizeFalsyError(error: unknown) {
+	return error || new Error(errorForLogging(error))
+}
 
 export interface GrpcClientExtendedOptions {
 	longPoll?: MaybeTimeDuration
@@ -351,12 +355,12 @@ export class GrpcClient extends EventEmitter {
 						stream = this.client[methodName](timeNormalisedRequest, metadata)
 						this.setReady()
 					} catch (error: unknown) {
-						const e = error as Error & { code: number }
-						debug(`${methodName}Stream error: ${e.code}`, e.message)
-						this.emit(MiddlewareSignals.Log.Error, e.message)
+						const message = errorForLogging(error)
+						debug(`${methodName}Stream error`, message)
+						this.emit(MiddlewareSignals.Log.Error, message)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
-						return { error }
+						return { error: normalizeFalsyError(error) }
 					}
 
 					let _error: GrpcStreamError | undefined
@@ -381,12 +385,12 @@ export class GrpcClient extends EventEmitter {
 						if (error.message.includes('14 UNAVAILABLE')) {
 							this.emit(
 								MiddlewareSignals.Log.Error,
-								`Grpc Stream Error: ${error.message} - ${host}`
+								`Grpc Stream Error: ${errorForLogging(error)} - ${host}`
 							)
 						} else {
 							this.emit(
 								MiddlewareSignals.Log.Error,
-								`Grpc Stream Error: ${error.message}`
+								`Grpc Stream Error: ${errorForLogging(error)}`
 							)
 						}
 						// Do not handle stream errors the same way
@@ -445,12 +449,15 @@ export class GrpcClient extends EventEmitter {
 
 					stream.on('data', () => (this.gRPCRetryCount = 0))
 					stream.on('metadata', (md) =>
-						this.emit(MiddlewareSignals.Log.Debug, JSON.stringify(md))
+						this.emit(
+							MiddlewareSignals.Log.Debug,
+							safeStringify(md, { indentation: 0 })
+						)
 					)
 					stream.on('status', (s) =>
 						this.emit(
 							MiddlewareSignals.Log.Debug,
-							`gRPC Status event: ${JSON.stringify(s)}`
+							`gRPC Status event: ${safeStringify(s, { indentation: 0 })}`
 						)
 					)
 					stream.on('end', () => clearTimeout(clientSideTimeout))
@@ -483,7 +490,7 @@ export class GrpcClient extends EventEmitter {
 									// This will error on network or business errors
 									if (err) {
 										debug(`${methodName}Sync error: ${err.code}`)
-										debug(err.message)
+										debug(errorForLogging(err))
 										const isNetworkError =
 											err.code === GrpcError.UNAVAILABLE &&
 											!err.message.includes('partition')
@@ -501,7 +508,7 @@ export class GrpcClient extends EventEmitter {
 								}
 							)
 						} catch (e: unknown) {
-							reject(e)
+							reject(normalizeFalsyError(e))
 						}
 					})
 				}
@@ -631,7 +638,7 @@ export class GrpcClient extends EventEmitter {
 						}
 						this.gRPCRetryCount++
 						if (error) {
-							this.emit(MiddlewareSignals.Log.Error, error)
+							this.emit(MiddlewareSignals.Log.Error, errorForLogging(error))
 						}
 						const newState = gRPC
 							.getChannel()
