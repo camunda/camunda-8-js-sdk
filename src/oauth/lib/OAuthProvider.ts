@@ -21,9 +21,13 @@ import {
 } from '../../lib'
 import { Secret, revealSecret, toSecret } from '../../lib/Secret'
 import { IHeadersProvider, Token, TokenError } from '../index'
-import { errorForLogging } from '../../lib/CamundaSupportLogger'
+import {
+	errorForLogging,
+	sanitizeSensitiveString,
+} from '../../lib/CamundaSupportLogger'
 
 import { HeadersPromise, TokenGrantAudienceType } from './IHeadersProvider'
+import { TokenRequestError } from './TokenRequestError'
 
 const trace = debug('camunda:oauth')
 
@@ -488,55 +492,62 @@ export class OAuthProvider implements IHeadersProvider {
 			hasClientCertificate: !!this.mTLSCertChain,
 			hasPrivateKey: !!this.#mTLSPrivateKey,
 		})
-		return this.rest.then((rest) =>
-			rest
-				.post(this.authServerUrl, options)
-				.then((res) => {
-					// If status 401 from SaaS, throw to trigger memoization upstream
-					if (this.isCamundaSaaS && res.statusCode === 401) {
-						const err = new Error(
-							`401 Unauthorized requesting token for Client Id ${clientIdToUse}`
-						)
-						throw err
-					}
-					return JSON.parse(res.body)
-				})
-				.catch((e) => {
-					e.message = `Error requesting token for Client Id ${clientIdToUse}: ${e.message}`
-					this.log.error('Error requesting OAuth token')
-					throw e
-				})
-				.then((t) => {
-					trace(`Got token from OAuth endpoint`)
-					const isTokenError = (t: unknown): t is TokenError =>
-						!!(t as TokenError).error
-					if (isTokenError(t)) {
-						throw new Error(
-							`Failed to get token: ${t.error} - ${t.error_description}`
-						)
-					}
-					if (t.access_token === undefined) {
-						this.log.error(
-							`Failed to get token: no access_token in response for audience ${audienceType}`
-						)
-						throw new Error('Failed to get token: no access_token in response')
-					}
-					const token = { ...(t as Token), audience: audienceType }
-					if (this.useFileCache) {
-						this.sendToFileCache({
-							audience: audienceType,
-							token,
-							clientId: clientIdToUse,
-						})
-					}
-					this.sendToMemoryCache({
+		// Boundary: `options` holds the plain secret, and HTTP client errors keep a
+		// reference to it. Every failure leaves this method as a TokenRequestError
+		// built from allowlisted fields, with no reference to the original.
+		// See https://github.com/camunda/camunda-8-js-sdk/issues/917
+		return this.rest
+			.then((rest) => rest.post(this.authServerUrl, options))
+			.then((res) => {
+				// If status 401 from SaaS, throw to trigger memoization upstream
+				if (this.isCamundaSaaS && res.statusCode === 401) {
+					throw new TokenRequestError('401 Unauthorized', { statusCode: 401 })
+				}
+				return JSON.parse(res.body)
+			})
+			.then((t) => {
+				trace(`Got token from OAuth endpoint`)
+				const isTokenError = (t: unknown): t is TokenError =>
+					!!(t as TokenError).error
+				if (isTokenError(t)) {
+					throw new TokenRequestError(
+						`Failed to get token: ${sanitizeSensitiveString(
+							String(t.error)
+						)} - ${sanitizeSensitiveString(String(t.error_description))}`,
+						{ error: t.error, errorDescription: t.error_description }
+					)
+				}
+				if (t.access_token === undefined) {
+					this.log.error(
+						`Failed to get token: no access_token in response for audience ${audienceType}`
+					)
+					throw new TokenRequestError(
+						'Failed to get token: no access_token in response'
+					)
+				}
+				const token = { ...(t as Token), audience: audienceType }
+				if (this.useFileCache) {
+					this.sendToFileCache({
 						audience: audienceType,
 						token,
 						clientId: clientIdToUse,
 					})
-					return this.addBearer(token.access_token)
+				}
+				this.sendToMemoryCache({
+					audience: audienceType,
+					token,
+					clientId: clientIdToUse,
 				})
-		)
+				return this.addBearer(token.access_token)
+			})
+			.catch((e) => {
+				const clean = TokenRequestError.from(
+					e,
+					`Error requesting token for Client Id ${clientIdToUse}`
+				)
+				this.log.error(`Error requesting OAuth token: ${clean.message}`)
+				throw clean
+			})
 	}
 
 	private sendToMemoryCache({
