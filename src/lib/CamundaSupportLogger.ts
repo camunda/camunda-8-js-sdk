@@ -323,11 +323,12 @@ function isWhitespaceCharacter(character: string | undefined) {
 	return character !== undefined && /\s/.test(character)
 }
 
-// Only an unquoted, unbracketed newline ends a cookie header value.
+// Only an unquoted newline outside square-bracketed or braced values ends a cookie header value.
 function findCookieHeaderValueEnd(value: string, start: number) {
 	let quote: string | undefined
 	let escaped = false
 	let bracketDepth = 0
+	let braceDepth = 0
 	for (let index = start; index < value.length; index++) {
 		const character = value[index]
 		if (quote) {
@@ -347,7 +348,11 @@ function findCookieHeaderValueEnd(value: string, start: number) {
 			bracketDepth++
 		} else if (character === ']' && bracketDepth > 0) {
 			bracketDepth--
-		} else if (character === '\n' && bracketDepth === 0) {
+		} else if (character === '{') {
+			braceDepth++
+		} else if (character === '}' && braceDepth > 0) {
+			braceDepth--
+		} else if (character === '\n' && bracketDepth === 0 && braceDepth === 0) {
 			return index
 		}
 	}

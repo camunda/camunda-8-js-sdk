@@ -330,6 +330,24 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('safe_setting=visible')
 	})
 
+	it('redacts multiline object cookie values through nested objects', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA__COOKIE={"session":"session-secret",\n' +
+				'"nested":{"token":"nested-token-secret"},\n' +
+				'"refresh":"refresh-secret"}\n' +
+				'safe_setting=visible'
+		)
+
+		for (const secret of [
+			'session-secret',
+			'refresh-secret',
+			'nested-token-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('safe_setting=visible')
+	})
+
 	it('redacts quoted header values and API keys without redacting prose', () => {
 		const output = safeStringify({
 			message:
