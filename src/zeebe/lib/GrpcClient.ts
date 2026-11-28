@@ -27,6 +27,10 @@ import { Loglevel, ZBCustomLogger } from './interfaces-published-contract'
 const debug = d('camunda:grpc')
 const supportLogger = CamundaSupportLogger.getInstance()
 
+function normalizeFalsyError(error: unknown) {
+	return error || new Error(errorForLogging(error))
+}
+
 export interface GrpcClientExtendedOptions {
 	longPoll?: MaybeTimeDuration
 	pollInterval?: MaybeTimeDuration
@@ -356,7 +360,7 @@ export class GrpcClient extends EventEmitter {
 						this.emit(MiddlewareSignals.Log.Error, message)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
-						return { error }
+						return { error: normalizeFalsyError(error) }
 					}
 
 					let _error: GrpcStreamError | undefined
@@ -504,7 +508,7 @@ export class GrpcClient extends EventEmitter {
 								}
 							)
 						} catch (e: unknown) {
-							reject(e)
+							reject(normalizeFalsyError(e))
 						}
 					})
 				}

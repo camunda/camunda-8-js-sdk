@@ -59,7 +59,51 @@ describe('GrpcClient auth failure logging', () => {
 		}
 	})
 
-	it('handles non-Error token failures without unsafe property access', async () => {
+	it.each([null, undefined, false, 0, ''])(
+		'normalizes a falsy token failure (%p) before returning a stream error',
+		async (reason) => {
+			const oAuth: IHeadersProvider = {
+				getHeaders: vi.fn().mockRejectedValue(reason),
+			}
+			const client = new GrpcClient({
+				config: CamundaSDKConfiguration,
+				connectionTolerance: Duration.milliseconds.of(0),
+				host: '127.0.0.1:1',
+				loglevel: 'ERROR',
+				namespace: 'security-test',
+				oAuth,
+				options: {},
+				packageName: 'gateway_protocol',
+				protoPath: path.resolve(__dirname, '../../proto/zeebe.proto'),
+				service: 'Gateway',
+				stdout: {
+					debug: vi.fn(),
+					info: vi.fn(),
+					error: vi.fn(),
+				},
+				useTLS: false,
+			})
+			const loggedErrors: unknown[] = []
+			client.on(MiddlewareSignals.Log.Error, (message) => {
+				loggedErrors.push(message)
+			})
+
+			try {
+				const activateJobsStream = Reflect.get(
+					client,
+					'activateJobsStream'
+				) as (request: Record<string, unknown>) => Promise<unknown>
+				const result = await activateJobsStream({})
+
+				expect(result).toEqual({ error: expect.any(Error) })
+				expect(loggedErrors).toEqual([String(reason)])
+			} finally {
+				await client.close()
+			}
+		}
+	)
+
+	it('normalizes a falsy token failure before rejecting a synchronous call', async () => {
 		const oAuth: IHeadersProvider = {
 			getHeaders: vi.fn().mockRejectedValue(null),
 		}
@@ -81,17 +125,13 @@ describe('GrpcClient auth failure logging', () => {
 			},
 			useTLS: false,
 		})
-		const loggedErrors: unknown[] = []
-		client.on(MiddlewareSignals.Log.Error, (message) => {
-			loggedErrors.push(message)
-		})
 
 		try {
-			const activateJobsStream = Reflect.get(client, 'activateJobsStream') as (
-				request: Record<string, unknown>
-			) => Promise<unknown>
-			await expect(activateJobsStream({})).resolves.toEqual({ error: null })
-			expect(loggedErrors).toEqual(['null'])
+			const topologySync = Reflect.get(
+				client,
+				'topologySync'
+			) as () => Promise<unknown>
+			await expect(topologySync()).rejects.toEqual(expect.any(Error))
 		} finally {
 			await client.close()
 		}

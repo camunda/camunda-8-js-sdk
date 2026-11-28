@@ -487,15 +487,113 @@ function findDelimitedValueEnd(value: string, start: number) {
 	return undefined
 }
 
-function findSensitiveHeaderValueEnd(value: string, start: number) {
+function findHeaderTerminatorSuffixes(value: string) {
+	const headerTerminatorSuffixes = new Uint8Array(value.length + 1)
+	headerTerminatorSuffixes[value.length] = 1
+	for (let index = value.length - 1; index >= 0; index--) {
+		if (value[index] === ' ' || value[index] === '\t') {
+			headerTerminatorSuffixes[index] = headerTerminatorSuffixes[index + 1]
+		} else if (value[index] === '\n') {
+			headerTerminatorSuffixes[index] =
+				value[index + 1] === ' ' || value[index + 1] === '\t' ? 0 : 1
+		} else if (value[index] === '\r' && value[index + 1] === '\n') {
+			headerTerminatorSuffixes[index] =
+				value[index + 2] === ' ' || value[index + 2] === '\t' ? 0 : 1
+		}
+	}
+	return headerTerminatorSuffixes
+}
+
+function findEnclosingStructures(value: string) {
+	const enclosingDelimiters = new Uint8Array(value.length)
+	const enclosingRootEnds = new Int32Array(value.length)
+	enclosingRootEnds.fill(-1)
+	const headerTerminatorSuffixes = findHeaderTerminatorSuffixes(value)
+	const closingCharacters: string[] = []
+	let quote: string | undefined
+	let escaped = false
+	let rootStart = -1
+	for (let index = 0; index < value.length; index++) {
+		if (quote === undefined && closingCharacters.length > 0) {
+			enclosingDelimiters[index] =
+				closingCharacters[closingCharacters.length - 1].charCodeAt(0)
+		}
+
+		const character = value[index]
+		if (quote) {
+			if (escaped) {
+				escaped = false
+			} else if (character === '\\') {
+				escaped = true
+			} else if (character === quote) {
+				quote = undefined
+			}
+		} else if (character === '"' || character === "'") {
+			quote = character
+		} else if (character === '[' || character === '{') {
+			if (closingCharacters.length === 0) {
+				rootStart = index
+			}
+			closingCharacters.push(character === '[' ? ']' : '}')
+		} else if (character === ']' || character === '}') {
+			if (closingCharacters.pop() !== character) {
+				enclosingDelimiters.fill(0)
+				enclosingRootEnds.fill(-1)
+				return {
+					enclosingDelimiters,
+					enclosingRootEnds,
+					headerTerminatorSuffixes,
+				}
+			}
+			if (closingCharacters.length === 0) {
+				enclosingRootEnds.fill(index, rootStart, index + 1)
+				rootStart = -1
+			}
+		}
+	}
+
+	if (quote !== undefined || closingCharacters.length > 0) {
+		enclosingDelimiters.fill(0)
+		enclosingRootEnds.fill(-1)
+	}
+	return {
+		enclosingDelimiters,
+		enclosingRootEnds,
+		headerTerminatorSuffixes,
+	}
+}
+
+function findSensitiveHeaderValueEnd(
+	value: string,
+	start: number,
+	enclosingStructureDelimiter: number,
+	enclosingRootEnd: number,
+	hasSafeRootSuffix: boolean
+) {
 	const valueEnd = findDelimitedValueEnd(value, start)
 	if (valueEnd === undefined) {
+		return findMultilineHeaderValueEnd(value, start)
+	}
+
+	if (enclosingRootEnd !== -1 && !hasSafeRootSuffix) {
 		return findMultilineHeaderValueEnd(value, start)
 	}
 
 	let lineEnding = valueEnd
 	while (value[lineEnding] === ' ' || value[lineEnding] === '\t') {
 		lineEnding++
+	}
+	const suffix = value[lineEnding]
+	const isHeaderLineEnding =
+		suffix === undefined ||
+		suffix === '\n' ||
+		(suffix === '\r' && value[lineEnding + 1] === '\n')
+	const isEnclosingStructureDelimiter =
+		(suffix === ',' && enclosingStructureDelimiter !== 0) ||
+		((suffix === '}' || suffix === ']') &&
+			suffix.charCodeAt(0) === enclosingStructureDelimiter)
+	if (!isHeaderLineEnding && !isEnclosingStructureDelimiter) {
+		return findMultilineHeaderValueEnd(value, start)
 	}
 	if (value[lineEnding] === '\r' && value[lineEnding + 1] === '\n') {
 		lineEnding++
@@ -542,6 +640,9 @@ function redactSensitiveAssignments(value: string) {
 	let sanitized: string[] | undefined
 	let copiedThrough = 0
 	let index = 0
+	let enclosingStructures:
+		| ReturnType<typeof findEnclosingStructures>
+		| undefined
 	// Scan separators once so a long non-sensitive identifier is not retried at every hyphen.
 	while (index < value.length) {
 		if (value[index] !== '=' && value[index] !== ':') {
@@ -562,7 +663,29 @@ function redactSensitiveAssignments(value: string) {
 			if (assignmentKey.toLowerCase().endsWith('cookie')) {
 				valueEnd = findMultilineHeaderValueEnd(value, valueStart)
 			} else if (isSensitiveHeaderAssignmentKey(assignmentKey)) {
-				valueEnd = findSensitiveHeaderValueEnd(value, valueStart)
+				const firstCharacter = value[valueStart]
+				if (
+					firstCharacter === '"' ||
+					firstCharacter === "'" ||
+					firstCharacter === '[' ||
+					firstCharacter === '{'
+				) {
+					enclosingStructures ??= findEnclosingStructures(value)
+				}
+				const enclosingStructureDelimiter =
+					enclosingStructures?.enclosingDelimiters[valueStart] ?? 0
+				const enclosingRootEnd =
+					enclosingStructures?.enclosingRootEnds[valueStart] ?? -1
+				valueEnd = findSensitiveHeaderValueEnd(
+					value,
+					valueStart,
+					enclosingStructureDelimiter,
+					enclosingRootEnd,
+					enclosingRootEnd === -1 ||
+						enclosingStructures?.headerTerminatorSuffixes[
+							enclosingRootEnd + 1
+						] === 1
+				)
 			} else {
 				const firstCharacter = value[valueStart]
 				if (

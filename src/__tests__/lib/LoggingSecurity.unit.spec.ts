@@ -418,6 +418,61 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('"tenant":"visible"')
 	})
 
+	it.each([
+		{
+			description: 'objects',
+			header: 'Authorization',
+			structuredValue: '{"token":"inner-secret"}',
+			suffix: ' trailing-secret',
+		},
+		{
+			description: 'arrays',
+			header: 'Proxy-Authorization',
+			structuredValue: '["inner-secret"]',
+			suffix: ' trailing-secret',
+		},
+		{
+			description: 'quoted strings',
+			header: 'X-API-Key',
+			structuredValue: '"inner-secret"',
+			suffix: ' trailing-secret',
+		},
+		{
+			description: 'objects with an unpaired comma suffix',
+			header: 'Authorization',
+			structuredValue: '{"token":"inner-secret"}',
+			suffix: ', trailing-secret',
+		},
+		{
+			description: 'objects with a NUL suffix',
+			header: 'Authorization',
+			structuredValue: '{"token":"inner-secret"}',
+			suffix: '\0 trailing-secret',
+		},
+	])(
+		'fails closed for non-delimiter suffixes after $description',
+		({ header, structuredValue, suffix }) => {
+			const output = sanitizeSensitiveString(
+				`${header}: ${structuredValue}${suffix}\r\n` + 'X-Request-ID: visible'
+			)
+
+			expect(output).not.toContain('inner-secret')
+			expect(output).not.toContain('trailing-secret')
+			expect(output).toContain('X-Request-ID: visible')
+		}
+	)
+
+	it('fails closed when a surrounding JSON object has a trailing suffix', () => {
+		const output = sanitizeSensitiveString(
+			'{"authorization":{"token":"inner-secret"}} trailing-secret\r\n' +
+				'X-Request-ID: visible'
+		)
+
+		expect(output).not.toContain('inner-secret')
+		expect(output).not.toContain('trailing-secret')
+		expect(output).toContain('X-Request-ID: visible')
+	})
+
 	it('redacts complete structured values for non-header credentials', () => {
 		const output = sanitizeSensitiveString(
 			'{"client_secret":{"first":"first-secret",' +
