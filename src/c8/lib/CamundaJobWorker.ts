@@ -304,14 +304,14 @@ export class CamundaJobWorker<
 			)
 		} catch (e) {
 			/** Unhandled exception in the job handler */
+			const loggedError = errorForLogging(e)
 			if (e instanceof Error) {
 				// If err is an instance of Error, we can safely access its properties
-				const loggedError = errorForLogging(e)
 				this.log.error(
 					`Unhandled exception in job handler for job ${job.jobKey}`,
 					this.logMeta()
 				)
-				this.log.error(`Error: ${loggedError}`, {
+				this.log.error(loggedError, {
 					error: loggedError,
 					stack: e.stack && sanitizeSensitiveString(e.stack),
 					...this.logMeta(),
@@ -320,12 +320,12 @@ export class CamundaJobWorker<
 				// If err is not an Error, log it as is
 				this.log.error(
 					'An unknown error occurred while executing a job handler',
-					{ error: errorForLogging(e), ...this.logMeta() }
+					{ error: loggedError, ...this.logMeta() }
 				)
 			}
 			this.log.error(`Failing the job`, this.logMeta())
 			await job.fail({
-				errorMessage: (e as Error).toString(),
+				errorMessage: loggedError,
 				retries: job.retries - 1,
 			})
 		} finally {

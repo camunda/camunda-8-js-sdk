@@ -180,8 +180,11 @@ export function sanitizeSensitiveString(value: string) {
 				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
 				`$1$2${REDACTED}`
 			)
-			// Case-sensitive, so prose such as "basic authentication" is kept.
-			.replace(/\b(Basic|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, `$1 ${REDACTED}`)
+			// Preserve "basic authentication" prose while matching schemes case-insensitively.
+			.replace(
+				/\b(Basic|Bearer)\s+(?!authentication\b)[A-Za-z0-9._~+/=-]+/gi,
+				`$1 ${REDACTED}`
+			)
 			.replace(
 				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
 				(_match, protocol, _userinfo, path) => `${protocol}${path}`
@@ -199,13 +202,18 @@ export function sanitizeSensitiveString(value: string) {
  * loggers serialize. Enforced by `no-restricted-syntax` in .eslintrc.json.
  */
 export function errorForLogging(error: unknown): string {
-	if (!(error instanceof Error)) {
-		return sanitizeSensitiveString(String(error))
+	try {
+		if (!(error instanceof Error)) {
+			return sanitizeSensitiveString(String(error))
+		}
+		const code = (error as { code?: unknown }).code
+		return sanitizeSensitiveString(
+			`${error.name}${code === undefined ? '' : ` [${code}]`}: ${error.message}`
+		)
+	} catch {
+		// Thrown values can have hostile or missing string-coercion methods.
+		return '[Unserializable error]'
 	}
-	const code = (error as { code?: unknown }).code
-	return sanitizeSensitiveString(
-		`${error.name}${code === undefined ? '' : ` [${code}]`}: ${error.message}`
-	)
 }
 
 export function redactUrlForLogging(url: URL | string | undefined) {

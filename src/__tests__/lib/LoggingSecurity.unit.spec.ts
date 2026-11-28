@@ -305,7 +305,8 @@ describe('CamundaSupportLogger redaction', () => {
 				"{'authorization': 'single-quoted-token'} " +
 				'{"client_secret":"before\\"escaped-secret"} ' +
 				'x-api-key: header-api-key api_key=query-api-key ' +
-				'client_assertion=signed-assertion',
+				'client_assertion=signed-assertion ' +
+				'bearer token-value basic credentials',
 			apiKey: 'structured-api-key',
 			prose: 'Using basic authentication; refresh: 30s',
 		})
@@ -319,6 +320,8 @@ describe('CamundaSupportLogger redaction', () => {
 			'query-api-key',
 			'signed-assertion',
 			'structured-api-key',
+			'token-value',
+			'credentials',
 		]) {
 			expect(output).not.toContain(secret)
 		}
@@ -342,6 +345,18 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(errorForLogging('client_secret=thrown-secret')).toBe(
 			'client_secret=[REDACTED]'
 		)
+	})
+
+	it('does not throw when a non-Error value cannot be converted to a string', () => {
+		const nullPrototypeValue: object = Object.create(null)
+		const throwingToString = {
+			toString() {
+				throw new Error('coercion-secret')
+			},
+		}
+
+		expect(errorForLogging(nullPrototypeValue)).toBe('[Unserializable error]')
+		expect(errorForLogging(throwingToString)).toBe('[Unserializable error]')
 	})
 
 	it('redacts environment-style credential assignments from error messages', () => {
