@@ -59,6 +59,44 @@ describe('GrpcClient auth failure logging', () => {
 		}
 	})
 
+	it('handles non-Error token failures without unsafe property access', async () => {
+		const oAuth: IHeadersProvider = {
+			getHeaders: vi.fn().mockRejectedValue(null),
+		}
+		const client = new GrpcClient({
+			config: CamundaSDKConfiguration,
+			connectionTolerance: Duration.milliseconds.of(0),
+			host: '127.0.0.1:1',
+			loglevel: 'ERROR',
+			namespace: 'security-test',
+			oAuth,
+			options: {},
+			packageName: 'gateway_protocol',
+			protoPath: path.resolve(__dirname, '../../proto/zeebe.proto'),
+			service: 'Gateway',
+			stdout: {
+				debug: vi.fn(),
+				info: vi.fn(),
+				error: vi.fn(),
+			},
+			useTLS: false,
+		})
+		const loggedErrors: unknown[] = []
+		client.on(MiddlewareSignals.Log.Error, (message) => {
+			loggedErrors.push(message)
+		})
+
+		try {
+			const activateJobsStream = Reflect.get(client, 'activateJobsStream') as (
+				request: Record<string, unknown>
+			) => Promise<unknown>
+			await expect(activateJobsStream({})).resolves.toEqual({ error: null })
+			expect(loggedErrors).toEqual(['null'])
+		} finally {
+			await client.close()
+		}
+	})
+
 	it('redacts synchronous RPC errors from debug output', async () => {
 		const tokenError = Object.assign(
 			new Error('client_secret=sync-token-secret'),

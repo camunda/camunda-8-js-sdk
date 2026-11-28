@@ -351,9 +351,8 @@ export class GrpcClient extends EventEmitter {
 						stream = this.client[methodName](timeNormalisedRequest, metadata)
 						this.setReady()
 					} catch (error: unknown) {
-						const e = error as Error & { code: number }
 						const message = errorForLogging(error)
-						debug(`${methodName}Stream error: ${e.code}`, message)
+						debug(`${methodName}Stream error`, message)
 						this.emit(MiddlewareSignals.Log.Error, message)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
