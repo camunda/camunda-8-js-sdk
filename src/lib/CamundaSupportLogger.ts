@@ -215,18 +215,15 @@ function isAsciiAlphaNumeric(character: string | undefined) {
 function isNamespacePrefix(key: string, start: number, end: number) {
 	let index = start
 	while (index < end) {
-		const segmentStart = index
+		if (!isAsciiAlphaNumeric(key[index])) {
+			return false
+		}
 		while (index < end && isAsciiAlphaNumeric(key[index])) {
 			index++
 		}
-		if (
-			index === segmentStart ||
-			index === end ||
-			(key[index] !== '_' && key[index] !== '-')
-		) {
-			return false
+		while (index < end && (key[index] === '_' || key[index] === '-')) {
+			index++
 		}
-		index++
 	}
 	return true
 }
@@ -328,7 +325,7 @@ function isWhitespaceCharacter(character: string | undefined) {
 
 function redactUrls(value: string) {
 	return value.replace(
-		/(?<![a-z0-9+.-])([0-9+.-]*)([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
+		/(?<![a-z0-9+.-])([0-9+.-]*)([a-z][a-z0-9+.-]*:\/\/)([^/?#\s]*@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
 		(_match, prefix, protocol, _userinfo, path) => `${prefix}${protocol}${path}`
 	)
 }

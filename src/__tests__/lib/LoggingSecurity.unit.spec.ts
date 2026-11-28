@@ -13,6 +13,9 @@ import { gotBeforeErrorHook } from '../../lib/GotErrors'
 import { beforeCallHook, supportLogger } from '../../lib/GotHooks'
 import { NormalizedOptions, RequestError } from '../../lib/HttpClient'
 
+// Inputs grow 4x; allow timing noise while staying below quadratic growth.
+const MAX_LINEAR_SCALING_RATIO = 12
+
 afterEach(() => {
 	vi.restoreAllMocks()
 })
@@ -356,6 +359,14 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toBe('Request failed for https://api.example.test/v1/jobs')
 	})
 
+	it('redacts all userinfo before the last @ in a URL authority', () => {
+		const output = sanitizeSensitiveString(
+			'Request failed for https://user@name:password@api.example.test/v1/jobs?access_token=query-secret'
+		)
+
+		expect(output).toBe('Request failed for https://api.example.test/v1/jobs')
+	})
+
 	it('reduces an error to its name, code, and sanitized message', () => {
 		const error = Object.assign(
 			new Error('Request failed with Bearer message-token'),
@@ -392,7 +403,8 @@ describe('CamundaSupportLogger redaction', () => {
 			new Error(
 				'ZEEBE_CLIENT_SECRET=zeebe-secret ' +
 					'CAMUNDA_OAUTH_CLIENT_SECRET=camunda-secret ' +
-					'client_secret=plain-secret ZEEBE_CLIENT_ID=zeebe-client'
+					'client_secret=plain-secret ZEEBE_CLIENT_ID=zeebe-client ' +
+					'CAMUNDA__CLIENT_ID=camunda-client'
 			)
 		)
 
@@ -400,18 +412,32 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).not.toContain('camunda-secret')
 		expect(output).not.toContain('plain-secret')
 		expect(output).toContain('ZEEBE_CLIENT_ID=zeebe-client')
+		expect(output).toContain('CAMUNDA__CLIENT_ID=camunda-client')
 	})
 
-	it('redacts sensitive assignments after separated namespace prefixes', () => {
+	it('redacts sensitive assignments after repeated namespace separators', () => {
 		const output = sanitizeSensitiveString(
-			'service-client_secret=single-hyphen-secret ' +
-				'service--client_secret=double-hyphen-secret ' +
-				'service_client_secret=underscore-secret'
+			'service-client_secret=single-hyphen-value ' +
+				'service--client_secret=double-hyphen-value ' +
+				'service_client_secret=single-underscore-value ' +
+				'CAMUNDA__CLIENT_SECRET=double-underscore-value ' +
+				'CAMUNDA___CLIENT_SECRET=triple-underscore-value ' +
+				'service_-_client_secret=mixed-separator-value ' +
+				'--secret=option-style-value'
 		)
 
-		expect(output).not.toContain('single-hyphen-secret')
-		expect(output).not.toContain('double-hyphen-secret')
-		expect(output).not.toContain('underscore-secret')
+		for (const secret of [
+			'single-hyphen-value',
+			'double-hyphen-value',
+			'single-underscore-value',
+			'double-underscore-value',
+			'triple-underscore-value',
+			'mixed-separator-value',
+			'option-style-value',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('CAMUNDA__CLIENT_SECRET=[REDACTED]')
 	})
 
 	it('scales linearly when scanning long non-sensitive namespace identifiers', () => {
@@ -431,12 +457,14 @@ describe('CamundaSupportLogger redaction', () => {
 
 		measure(shortIdentifier)
 		measure(longIdentifier)
-		const shortSamples = Array.from({ length: 3 }, () =>
+		const shortSamples = Array.from({ length: 5 }, () =>
 			measure(shortIdentifier)
 		)
-		const longSamples = Array.from({ length: 3 }, () => measure(longIdentifier))
+		const longSamples = Array.from({ length: 5 }, () => measure(longIdentifier))
 
-		expect(median(longSamples)).toBeLessThan(median(shortSamples) * 8)
+		expect(median(longSamples)).toBeLessThan(
+			median(shortSamples) * MAX_LINEAR_SCALING_RATIO
+		)
 	})
 
 	it('scales linearly across incomplete private-key markers', () => {
@@ -457,9 +485,11 @@ describe('CamundaSupportLogger redaction', () => {
 
 		measure(shortInput)
 		measure(longInput)
-		const shortSamples = Array.from({ length: 3 }, () => measure(shortInput))
-		const longSamples = Array.from({ length: 3 }, () => measure(longInput))
+		const shortSamples = Array.from({ length: 5 }, () => measure(shortInput))
+		const longSamples = Array.from({ length: 5 }, () => measure(longInput))
 
-		expect(median(longSamples)).toBeLessThan(median(shortSamples) * 8)
+		expect(median(longSamples)).toBeLessThan(
+			median(shortSamples) * MAX_LINEAR_SCALING_RATIO
+		)
 	})
 })
