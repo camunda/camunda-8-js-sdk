@@ -343,4 +343,26 @@ describe('CamundaSupportLogger redaction', () => {
 			'client_secret=[REDACTED]'
 		)
 	})
+
+	it('redacts prefixed env-style credential keys like ZEEBE_CLIENT_SECRET=...', () => {
+		const output = safeStringify({
+			message:
+				'ZEEBE_CLIENT_SECRET=env-client-secret ' +
+				'CAMUNDA_OAUTH_CLIENT_SECRET="quoted-env-secret" ' +
+				'MY_API_KEY=env-api-key ' +
+				'SERVICE_TOKEN=env-service-token',
+		})
+
+		for (const secret of [
+			'env-client-secret',
+			'quoted-env-secret',
+			'env-api-key',
+			'env-service-token',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(errorForLogging('ZEEBE_CLIENT_SECRET=thrown-env-secret')).toBe(
+			'ZEEBE_CLIENT_SECRET=[REDACTED]'
+		)
+	})
 })

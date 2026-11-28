@@ -573,7 +573,7 @@ You should call only one job action method in the worker handler. This is a bug 
 				this.CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS,
 				1000 * 2 ** this.backPressureRetryCount++
 			)
-			this.logger.logError({ id, error })
+			this.logger.logError({ id, error: errorForLogging(jobStream.error) })
 			if (doBackoff) {
 				this.emit('backoff', backoffDuration)
 				this.backoffTimeout = setTimeout(() => {
@@ -644,7 +644,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		}
 
 		if (stream.error) {
-			debug('Stream error', stream.error)
+			debug('Stream error', errorForLogging(stream.error))
 			return { error: stream.error as Error }
 		}
 
