@@ -60,4 +60,50 @@ describe('ZBWorkerBase.poll', () => {
 
 		await worker.close()
 	})
+
+	it('redacts token endpoint credentials before logging an auth failure', async () => {
+		const grpcClient = new MockGrpcClient()
+		const tokenError = Object.assign(
+			new Error(
+				'Error requesting token for Client Id zeebe: ' +
+					'client_secret=worker-token-secret'
+			),
+			{ code: 16 }
+		)
+		grpcClient.activateJobsStream.mockResolvedValueOnce({ error: tokenError })
+		const logError = vi.fn()
+
+		const worker = new ZBWorker<never, never, never>({
+			grpcClient: grpcClient as unknown as ZB.ZBGrpc,
+			id: 'unit-test-worker',
+			taskType: 'unit-test-task',
+			options: {
+				pollInterval: Duration.hours.of(1),
+				longPoll: Duration.seconds.of(30),
+				timeout: Duration.seconds.of(60),
+				CAMUNDA_JOB_WORKER_MAX_BACKOFF_MS: 10_000,
+			},
+			idColor: chalk.white,
+			zbClient: {
+				failJob: vi.fn(),
+				cancelProcessInstance: vi.fn(),
+			} as unknown as ZeebeGrpcClient,
+			log: {
+				logDebug: vi.fn(),
+				logInfo: vi.fn(),
+				logError,
+			} as unknown as StatefulLogInterceptor,
+			taskHandler: vi.fn() as ZB.ZBWorkerTaskHandler<never, never, never>,
+			tenantIds: undefined,
+		})
+
+		const privateWorker = worker as unknown as PrivateWorkerView
+		await privateWorker.poll()
+
+		const loggedErrors = JSON.stringify(logError.mock.calls)
+		expect(loggedErrors).not.toContain('worker-token-secret')
+		expect(loggedErrors).toContain('[REDACTED]')
+
+		await worker.close()
+	})
 })

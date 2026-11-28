@@ -352,8 +352,9 @@ export class GrpcClient extends EventEmitter {
 						this.setReady()
 					} catch (error: unknown) {
 						const e = error as Error & { code: number }
-						debug(`${methodName}Stream error: ${e.code}`, e.message)
-						this.emit(MiddlewareSignals.Log.Error, e.message)
+						const message = errorForLogging(error)
+						debug(`${methodName}Stream error: ${e.code}`, message)
+						this.emit(MiddlewareSignals.Log.Error, message)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
 						return { error }
@@ -381,12 +382,12 @@ export class GrpcClient extends EventEmitter {
 						if (error.message.includes('14 UNAVAILABLE')) {
 							this.emit(
 								MiddlewareSignals.Log.Error,
-								`Grpc Stream Error: ${error.message} - ${host}`
+								`Grpc Stream Error: ${errorForLogging(error)} - ${host}`
 							)
 						} else {
 							this.emit(
 								MiddlewareSignals.Log.Error,
-								`Grpc Stream Error: ${error.message}`
+								`Grpc Stream Error: ${errorForLogging(error)}`
 							)
 						}
 						// Do not handle stream errors the same way
@@ -631,7 +632,7 @@ export class GrpcClient extends EventEmitter {
 						}
 						this.gRPCRetryCount++
 						if (error) {
-							this.emit(MiddlewareSignals.Log.Error, error)
+							this.emit(MiddlewareSignals.Log.Error, errorForLogging(error))
 						}
 						const newState = gRPC
 							.getChannel()

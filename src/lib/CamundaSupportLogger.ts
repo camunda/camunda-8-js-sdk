@@ -187,7 +187,7 @@ export function sanitizeSensitiveString(value: string) {
 				(_match, protocol, _userinfo, path) => `${protocol}${path}`
 			)
 			.replace(
-				/\b(access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
+				/\b((?:[a-z0-9]+[_-])*?(?:access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token))(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
 				`$1$2${REDACTED}`
 			)
 	)

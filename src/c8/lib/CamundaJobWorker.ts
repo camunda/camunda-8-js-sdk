@@ -5,6 +5,10 @@ import TypedEmitter from 'typed-emitter'
 
 import { LosslessDto } from '../../lib'
 import {
+	errorForLogging,
+	sanitizeSensitiveString,
+} from '../../lib/CamundaSupportLogger'
+import {
 	ActivateJobsRequest,
 	IProcessVariables,
 	JobCompletionInterfaceRest,
@@ -147,14 +151,11 @@ export class CamundaJobWorker<
 				this.activePoll.cancel('Worker stopped')
 				this.log.debug(`Active poll cancelled`, this.logMeta())
 			} catch (error) {
-				this.log.error(
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					`Error while cancelling active poll: ${(error as any).message}`,
-					{
-						error,
-						...this.logMeta(),
-					}
-				)
+				const loggedError = errorForLogging(error)
+				this.log.error(`Error while cancelling active poll: ${loggedError}`, {
+					error: loggedError,
+					...this.logMeta(),
+				})
 			} finally {
 				this.activePoll = undefined
 			}
@@ -305,19 +306,21 @@ export class CamundaJobWorker<
 			/** Unhandled exception in the job handler */
 			if (e instanceof Error) {
 				// If err is an instance of Error, we can safely access its properties
+				const loggedError = errorForLogging(e)
 				this.log.error(
 					`Unhandled exception in job handler for job ${job.jobKey}`,
 					this.logMeta()
 				)
-				this.log.error(`Error: ${e.message}`, {
-					stack: e.stack,
+				this.log.error(`Error: ${loggedError}`, {
+					error: loggedError,
+					stack: e.stack && sanitizeSensitiveString(e.stack),
 					...this.logMeta(),
 				})
 			} else {
 				// If err is not an Error, log it as is
 				this.log.error(
 					'An unknown error occurred while executing a job handler',
-					{ error: e, ...this.logMeta() }
+					{ error: errorForLogging(e), ...this.logMeta() }
 				)
 			}
 			this.log.error(`Failing the job`, this.logMeta())

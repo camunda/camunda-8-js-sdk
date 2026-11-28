@@ -343,4 +343,19 @@ describe('CamundaSupportLogger redaction', () => {
 			'client_secret=[REDACTED]'
 		)
 	})
+
+	it('redacts environment-style credential assignments from error messages', () => {
+		const output = errorForLogging(
+			new Error(
+				'ZEEBE_CLIENT_SECRET=zeebe-secret ' +
+					'CAMUNDA_OAUTH_CLIENT_SECRET=camunda-secret ' +
+					'client_secret=plain-secret ZEEBE_CLIENT_ID=zeebe-client'
+			)
+		)
+
+		expect(output).not.toContain('zeebe-secret')
+		expect(output).not.toContain('camunda-secret')
+		expect(output).not.toContain('plain-secret')
+		expect(output).toContain('ZEEBE_CLIENT_ID=zeebe-client')
+	})
 })

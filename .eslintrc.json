@@ -26,10 +26,10 @@
 			}
 		],
 		"import/newline-after-import": "error",
-		// Whole-error logging leaks credentials (code scanning alert #13). The
-		// selectors match on argument names, because the rule has no type
-		// information. Keep this list in sync with the src/zeebe override below,
-		// which replaces this rule for those files.
+		// Whole-error logging leaks credentials (code scanning alert #13). This
+		// syntax-only guard cannot follow renamed aliases or every custom logger
+		// method. Always use errorForLogging at the call site for errors, and keep
+		// this list in sync with the src/zeebe override below.
 		"no-restricted-syntax": [
 			"error",
 			{
@@ -37,7 +37,15 @@
 				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
 			},
 			{
+				"selector": "CallExpression[callee.property.name=/^(error|warn|info|debug|trace|log|logError|logInfo|logDebug|logDirect)$/] ObjectExpression > Property[key.name=/^(e|err|error|ex|exception)$/][value.type='Identifier'][value.name=/^(e|err|error|ex|exception)$/]",
+				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+			},
+			{
 				"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+			},
+			{
+				"selector": "CallExpression[callee.name=/^(debug|trace)$/] ObjectExpression > Property[key.name=/^(e|err|error|ex|exception)$/][value.type='Identifier'][value.name=/^(e|err|error|ex|exception)$/]",
 				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
 			}
 		],
@@ -77,7 +85,15 @@
 						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
 					},
 					{
+						"selector": "CallExpression[callee.property.name=/^(error|warn|info|debug|trace|log|logError|logInfo|logDebug|logDirect)$/] ObjectExpression > Property[key.name=/^(e|err|error|ex|exception)$/][value.type='Identifier'][value.name=/^(e|err|error|ex|exception)$/]",
+						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+					},
+					{
 						"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+					},
+					{
+						"selector": "CallExpression[callee.name=/^(debug|trace)$/] ObjectExpression > Property[key.name=/^(e|err|error|ex|exception)$/][value.type='Identifier'][value.name=/^(e|err|error|ex|exception)$/]",
 						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
 					}
 				]
