@@ -414,6 +414,20 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('Using basic authentication; refresh: 30s')
 	})
 
+	it('redacts sensitive JSON keys containing Unicode escapes', () => {
+		const cookieOutput = sanitizeSensitiveString(
+			'{"cook\\u0069e":"session=escaped-cookie-secret"}'
+		)
+		const secretOutput = sanitizeSensitiveString(
+			'{"client_se\\u0063ret":"escaped-client-secret"}'
+		)
+
+		expect(cookieOutput).not.toContain('escaped-cookie-secret')
+		expect(cookieOutput).toContain('[REDACTED]')
+		expect(secretOutput).not.toContain('escaped-client-secret')
+		expect(secretOutput).toContain('[REDACTED]')
+	})
+
 	it('redacts authentication-prefixed credentials without suppressing Basic prose', () => {
 		const output = safeStringify({
 			message: [

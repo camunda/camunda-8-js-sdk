@@ -323,6 +323,66 @@ function isWhitespaceCharacter(character: string | undefined) {
 	return character !== undefined && /\s/.test(character)
 }
 
+function isEscapedCharacter(value: string, index: number) {
+	let backslashCount = 0
+	for (
+		let cursor = index - 1;
+		cursor >= 0 && value[cursor] === '\\';
+		cursor--
+	) {
+		backslashCount++
+	}
+	return backslashCount % 2 === 1
+}
+
+function findAssignmentKey(value: string, separatorIndex: number) {
+	let keyEnd = separatorIndex
+	while (keyEnd > 0 && isWhitespaceCharacter(value[keyEnd - 1])) {
+		keyEnd--
+	}
+
+	const quote = value[keyEnd - 1]
+	if (
+		(quote === '"' || quote === "'") &&
+		!isEscapedCharacter(value, keyEnd - 1)
+	) {
+		for (let keyStart = keyEnd - 2; keyStart >= 0; keyStart--) {
+			if (value[keyStart] !== quote || isEscapedCharacter(value, keyStart)) {
+				continue
+			}
+
+			const quotedKey = value.slice(keyStart, keyEnd)
+			if (quote === '"') {
+				try {
+					const decodedKey: unknown = JSON.parse(quotedKey)
+					if (typeof decodedKey === 'string') {
+						return decodedKey
+					}
+				} catch (error) {
+					if (!(error instanceof SyntaxError)) {
+						throw error
+					}
+				}
+			}
+			return value.slice(keyStart + 1, keyEnd - 1)
+		}
+	}
+
+	if (quote === '"' || quote === "'") {
+		keyEnd--
+	}
+	let keyStart = keyEnd
+	while (
+		keyStart > 0 &&
+		(isAsciiAlphaNumeric(value[keyStart - 1]) ||
+			value[keyStart - 1] === '_' ||
+			value[keyStart - 1] === '-')
+	) {
+		keyStart--
+	}
+	return value.slice(keyStart, keyEnd)
+}
+
 // Unquoted newlines end cookie values unless they are inside structured values or folded lines.
 function findCookieHeaderValueEnd(value: string, start: number) {
 	let quote: string | undefined
@@ -402,25 +462,8 @@ function redactSensitiveAssignments(value: string) {
 			continue
 		}
 
-		let keyEnd = index
-		while (keyEnd > 0 && isWhitespaceCharacter(value[keyEnd - 1])) {
-			keyEnd--
-		}
-		if (value[keyEnd - 1] === '"' || value[keyEnd - 1] === "'") {
-			keyEnd--
-		}
-		let keyStart = keyEnd
-		while (
-			keyStart > 0 &&
-			(isAsciiAlphaNumeric(value[keyStart - 1]) ||
-				value[keyStart - 1] === '_' ||
-				value[keyStart - 1] === '-')
-		) {
-			keyStart--
-		}
-
-		const assignmentKey = value.slice(keyStart, keyEnd)
-		if (keyStart < keyEnd && isSensitiveLogAssignmentKey(assignmentKey)) {
+		const assignmentKey = findAssignmentKey(value, index)
+		if (assignmentKey && isSensitiveLogAssignmentKey(assignmentKey)) {
 			let valueStart = index + 1
 			while (
 				valueStart < value.length &&
