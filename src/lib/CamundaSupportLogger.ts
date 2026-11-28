@@ -180,10 +180,14 @@ export function sanitizeSensitiveString(value: string) {
 				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
 				`$1$2${REDACTED}`
 			)
-			// Preserve "basic authentication" prose while matching schemes case-insensitively.
+			// Preserve only the complete Basic prose token; credential suffixes are sensitive.
 			.replace(
-				/\b(Basic|Bearer)\s+(?!authentication\b)[A-Za-z0-9._~+/=-]+/gi,
-				`$1 ${REDACTED}`
+				/\b(Basic|Bearer)\s+([A-Za-z0-9._~+/=-]+)/gi,
+				(match, scheme: string, credential: string) =>
+					scheme.toLowerCase() === 'basic' &&
+					credential.toLowerCase() === 'authentication'
+						? match
+						: `${scheme} ${REDACTED}`
 			)
 			.replace(
 				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,

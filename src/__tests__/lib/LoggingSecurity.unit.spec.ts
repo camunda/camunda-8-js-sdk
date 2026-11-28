@@ -328,6 +328,24 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('Using basic authentication; refresh: 30s')
 	})
 
+	it('redacts authentication-prefixed credentials without suppressing Basic prose', () => {
+		const output = safeStringify({
+			message: [
+				'Bearer authentication',
+				'Bearer authentication.token',
+				'Bearer authentication-secret',
+				'Basic authentication.token',
+				'Basic authentication-secret',
+				'Using basic authentication; refresh: 30s',
+			].join('\n'),
+		})
+
+		expect(output).not.toContain('Bearer authentication')
+		expect(output).not.toContain('authentication.token')
+		expect(output).not.toContain('authentication-secret')
+		expect(output).toContain('Using basic authentication; refresh: 30s')
+	})
+
 	it('reduces an error to its name, code, and sanitized message', () => {
 		const error = Object.assign(
 			new Error('Request failed with Bearer message-token'),
