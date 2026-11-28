@@ -13,6 +13,7 @@ import { Secret, revealSecret } from '../../lib/Secret'
 import { IHeadersProvider } from '../index'
 
 import { TokenGrantAudienceType } from './IHeadersProvider'
+import { TokenRequestError } from './TokenRequestError'
 
 const trace = debug('camunda:cookie-auth')
 /**
@@ -58,18 +59,22 @@ export class CookieAuthProvider implements IHeadersProvider {
 	public async getHeaders(audienceType: TokenGrantAudienceType) {
 		trace(`Token request for ${audienceType}`)
 		if (!this.cookie) {
-			const rest = await this.rest
-			this.cookie = await rest
-				.post(this.authUrl, {
-					searchParams: {
-						username: this.username,
-						password: revealSecret(this.#password) ?? '',
-					},
-				})
-				.then(
-					(response) =>
-						(this.cookie = response.headers['set-cookie']?.[0].split(';')[0])
+			// Boundary: the password goes in the form body, never the URL, and
+			// failures leave as a TokenRequestError with no reference to the
+			// request. See https://github.com/camunda/camunda-8-js-sdk/issues/917
+			this.cookie = await this.rest
+				.then((rest) =>
+					rest.post(this.authUrl, {
+						form: {
+							username: this.username,
+							password: revealSecret(this.#password) ?? '',
+						},
+					})
 				)
+				.then((response) => response.headers['set-cookie']?.[0].split(';')[0])
+				.catch((e) => {
+					throw TokenRequestError.from(e, 'Error logging in with cookie auth')
+				})
 		}
 		return { cookie: this.cookie! }
 	}
