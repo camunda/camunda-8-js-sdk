@@ -348,6 +348,42 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('safe_setting=visible')
 	})
 
+	it('redacts indented cookie header continuations', () => {
+		const output = sanitizeSensitiveString(
+			'Cookie: session=header-session-secret;\r\n' +
+				'\trefresh=header-refresh-secret\r\n' +
+				'x-request-id: visible'
+		)
+
+		expect(output).not.toContain('header-session-secret')
+		expect(output).not.toContain('header-refresh-secret')
+		expect(output).toContain('x-request-id: visible')
+	})
+
+	it('redacts multiline object cookie headers', () => {
+		const output = sanitizeSensitiveString(
+			'Cookie: {"session":"object-cookie-secret",\n' +
+				'"nested":{"refresh":"nested-object-secret"}}\n' +
+				'safe_setting=visible'
+		)
+
+		expect(output).not.toContain('object-cookie-secret')
+		expect(output).not.toContain('nested-object-secret')
+		expect(output).toContain('safe_setting=visible')
+	})
+
+	it('redacts indented namespaced cookie continuations', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA__COOKIE=session=environment-session-secret;\n' +
+				'  refresh=environment-refresh-secret\n' +
+				'CAMUNDA__CLIENT_ID=visible-client'
+		)
+
+		expect(output).not.toContain('environment-session-secret')
+		expect(output).not.toContain('environment-refresh-secret')
+		expect(output).toContain('CAMUNDA__CLIENT_ID=visible-client')
+	})
+
 	it('redacts quoted header values and API keys without redacting prose', () => {
 		const output = safeStringify({
 			message:

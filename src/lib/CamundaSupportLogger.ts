@@ -323,7 +323,7 @@ function isWhitespaceCharacter(character: string | undefined) {
 	return character !== undefined && /\s/.test(character)
 }
 
-// Only an unquoted newline outside square-bracketed or braced values ends a cookie header value.
+// Unquoted newlines end cookie values unless they are inside structured values or folded lines.
 function findCookieHeaderValueEnd(value: string, start: number) {
 	let quote: string | undefined
 	let escaped = false
@@ -353,10 +353,35 @@ function findCookieHeaderValueEnd(value: string, start: number) {
 		} else if (character === '}' && braceDepth > 0) {
 			braceDepth--
 		} else if (character === '\n' && bracketDepth === 0 && braceDepth === 0) {
-			return index
+			const nextLineCharacter = value[index + 1]
+			if (nextLineCharacter !== ' ' && nextLineCharacter !== '\t') {
+				return value[index - 1] === '\r' ? index - 1 : index
+			}
 		}
 	}
 	return value.length
+}
+
+function redactCookieHeaders(value: string) {
+	let sanitized: string[] | undefined
+	let copiedThrough = 0
+	const cookieHeaderPattern = /\b(cookie|set-cookie)(["']?[ \t]*[:=][ \t]*)/gi
+	while (cookieHeaderPattern.exec(value)) {
+		const valueStart = cookieHeaderPattern.lastIndex
+		const valueEnd = findCookieHeaderValueEnd(value, valueStart)
+		if (valueEnd > valueStart) {
+			sanitized ??= []
+			sanitized.push(value.slice(copiedThrough, valueStart), REDACTED)
+			copiedThrough = valueEnd
+			cookieHeaderPattern.lastIndex = valueEnd
+		}
+	}
+
+	if (!sanitized) {
+		return value
+	}
+	sanitized.push(value.slice(copiedThrough))
+	return sanitized.join('')
 }
 
 function redactUrls(value: string) {
@@ -431,11 +456,10 @@ function redactSensitiveAssignments(value: string) {
 }
 
 export function sanitizeSensitiveString(value: string) {
-	const sanitized = redactPrivateKeyBlocks(value)
-		// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
-		// so redact a quoted value or the whole remainder of the line.
+	const sanitized = redactCookieHeaders(redactPrivateKeyBlocks(value))
+		// Authentication and API-key headers can also contain credentials.
 		.replace(
-			/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
+			/\b(authorization|proxy-authorization|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
 			`$1$2${REDACTED}`
 		)
 		// Preserve only the complete Basic prose token; credential suffixes are sensitive.
