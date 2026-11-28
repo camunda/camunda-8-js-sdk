@@ -484,7 +484,7 @@ export class GrpcClient extends EventEmitter {
 									// This will error on network or business errors
 									if (err) {
 										debug(`${methodName}Sync error: ${err.code}`)
-										debug(err.message)
+										debug(errorForLogging(err))
 										const isNetworkError =
 											err.code === GrpcError.UNAVAILABLE &&
 											!err.message.includes('partition')

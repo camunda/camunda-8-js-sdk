@@ -428,6 +428,24 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(secretOutput).toContain('[REDACTED]')
 	})
 
+	it('redacts credentials from dotted JSON keys', () => {
+		const output = sanitizeSensitiveString(
+			'{"oauth.client_secret":"echoed-client-secret",' +
+				'"db.password":"echoed-password",' +
+				'"service.oauth.client_secret":"nested-echoed-secret",' +
+				'"tenant.name":"visible"}'
+		)
+
+		for (const secret of [
+			'echoed-client-secret',
+			'echoed-password',
+			'nested-echoed-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('"tenant.name":"visible"')
+	})
+
 	it('redacts authentication-prefixed credentials without suppressing Basic prose', () => {
 		const output = safeStringify({
 			message: [

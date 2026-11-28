@@ -240,6 +240,15 @@ function isSensitiveLogAssignmentKey(key: string) {
 			return true
 		}
 
+		const precedingCharacter = key[suffixStart - 1]
+		if (
+			precedingCharacter !== undefined &&
+			!isAsciiAlphaNumeric(precedingCharacter) &&
+			precedingCharacter !== '_'
+		) {
+			return true
+		}
+
 		const previousHyphen = key.lastIndexOf('-', suffixStart - 1)
 		if (
 			previousHyphen !== -1 &&
