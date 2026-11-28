@@ -2,10 +2,10 @@ import { debug } from 'debug'
 
 import {
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
+	CamundaConfigurationInput,
 	RequireConfiguration,
 } from '../../lib'
+import { Secret, toSecret } from '../../lib/Secret'
 import { IHeadersProvider } from '../index'
 
 import { TokenGrantAudienceType } from './IHeadersProvider'
@@ -33,11 +33,9 @@ import { TokenGrantAudienceType } from './IHeadersProvider'
  * ```
  */
 export class BearerAuthProvider implements IHeadersProvider {
-	protected bearerToken: string
+	protected bearerToken: Secret
 
-	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
-	}) {
+	constructor(options?: { config?: CamundaConfigurationInput }) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
@@ -51,7 +49,9 @@ export class BearerAuthProvider implements IHeadersProvider {
 	public async getHeaders(audienceType: TokenGrantAudienceType) {
 		debug(`Token request for ${audienceType}`)
 
-		return Promise.resolve({ authorization: `Bearer ${this.bearerToken}` })
+		return Promise.resolve({
+			authorization: `Bearer ${this.bearerToken.reveal()}`,
+		})
 	}
 
 	/**
@@ -60,7 +60,10 @@ export class BearerAuthProvider implements IHeadersProvider {
 	 * @param bearerToken - The new bearer token to be used. This should be a valid
 	 *                      token string obtained from a trusted source.
 	 */
-	public async setToken(bearerToken: string) {
-		this.bearerToken = bearerToken
+	public async setToken(bearerToken: string | Secret) {
+		this.bearerToken = RequireConfiguration(
+			toSecret(bearerToken),
+			'CAMUNDA_OAUTH_TOKEN'
+		)
 	}
 }

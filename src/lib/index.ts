@@ -1,5 +1,6 @@
 export * from './ClientConstructor'
 export * from './Configuration'
+export { Secret, toSecret } from './Secret'
 export * from './ConstructOAuthProvider'
 export * from './CreateDtoInstance'
 export * from './CreateUserAgentString'

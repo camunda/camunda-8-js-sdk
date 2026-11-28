@@ -22,6 +22,7 @@ import {
 	Camunda8ClientConfiguration,
 	CamundaEnvironmentConfigurator,
 } from './Configuration'
+import { revealSecret } from './Secret'
 
 export interface CamundaClientTranslationOptions {
 	/** Partial explicit SDK configuration object passed by user */
@@ -138,8 +139,8 @@ export function translateToOcaEnvOverrides(
 	const resolvedClientId = deriveClientId()
 	if (resolvedClientId) overrides.CAMUNDA_CLIENT_ID = resolvedClientId
 	const clientSecret =
-		normalizeEmpty(mergedSdk.ZEEBE_CLIENT_SECRET) ??
-		normalizeEmpty(mergedSdk.CAMUNDA_CONSOLE_CLIENT_SECRET)
+		normalizeEmpty(revealSecret(mergedSdk.ZEEBE_CLIENT_SECRET)) ??
+		normalizeEmpty(revealSecret(mergedSdk.CAMUNDA_CONSOLE_CLIENT_SECRET))
 	setIfAbsent('CAMUNDA_CLIENT_SECRET', clientSecret)
 
 	// Audience
@@ -171,7 +172,7 @@ export function translateToOcaEnvOverrides(
 		)
 		setIfAbsent(
 			'CAMUNDA_BASIC_AUTH_PASSWORD',
-			normalizeEmpty(mergedSdk.CAMUNDA_BASIC_AUTH_PASSWORD)
+			normalizeEmpty(revealSecret(mergedSdk.CAMUNDA_BASIC_AUTH_PASSWORD))
 		)
 	}
 

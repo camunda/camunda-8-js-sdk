@@ -12,7 +12,7 @@ import {
 	CamundaEnvironmentConfigurator,
 	CamundaPlatform8Configuration,
 	constructOAuthProvider,
-	DeepPartial,
+	CamundaConfigurationInput,
 	GetCustomCertificateBuffer,
 	LosslessDto,
 	losslessStringify,
@@ -148,7 +148,7 @@ export class ZeebeGrpcClient extends TypedEmitter<
 	private streamWorker?: ZBStreamWorker
 
 	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
+		config?: CamundaConfigurationInput
 		oAuthProvider?: IHeadersProvider
 	}) {
 		super()

@@ -3,8 +3,7 @@ import { debug } from 'debug'
 import { HttpClient, http } from '../../lib/HttpClient'
 import {
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
+	CamundaConfigurationInput,
 	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	RequireConfiguration,
@@ -61,7 +60,7 @@ export class TasklistApiClient {
 	 *
 	 */
 	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
+		config?: CamundaConfigurationInput
 		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
