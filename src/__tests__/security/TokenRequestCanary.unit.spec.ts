@@ -223,7 +223,10 @@ describe('token request failure paths do not leak the client secret', () => {
 	it('malformed token response', async () => {
 		const s = secret()
 		const url = await listen((_req, res) => res.end('<html>not json</html>'))
-		assertNoCanary(s, await failures(provider(url, s)))
+		const errors = await failures(provider(url, s))
+		assertNoCanary(s, errors)
+		// The response body is not echoed into the message.
+		expect((errors[0] as Error).message).not.toContain('<html>')
 	})
 
 	it('200 without access_token', async () => {

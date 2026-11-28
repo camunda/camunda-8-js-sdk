@@ -73,7 +73,12 @@ export class TokenRequestError extends Error {
 							? `: ${sanitizeSensitiveString(errorDescription)}`
 							: ''
 					}`
-				: code ?? (e instanceof Error ? firstLine(e.message) : 'unknown error')
+				: code ??
+					(e instanceof Error && e.name === 'SyntaxError'
+						? 'response is not valid JSON'
+						: e instanceof Error
+							? firstLine(e.message)
+							: 'unknown error')
 		return new TokenRequestError(`${context}: ${reason}`, {
 			statusCode,
 			code,
