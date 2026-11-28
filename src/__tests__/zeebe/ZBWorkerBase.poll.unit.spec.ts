@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events'
 
 import chalk from 'chalk'
-import { describe, expect, it, vi } from 'vitest'
+import d from 'debug'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Duration } from 'typed-duration'
 
 import type { ZeebeGrpcClient } from '../../zeebe'
@@ -19,6 +20,11 @@ type PrivateWorkerView = {
 	poll: () => Promise<void>
 	pollMutex: boolean
 }
+
+afterEach(() => {
+	vi.restoreAllMocks()
+	d.disable()
+})
 
 describe('ZBWorkerBase.poll', () => {
 	it('releases poll mutex after non-backpressure activateJobs error', async () => {
@@ -69,6 +75,11 @@ describe('ZBWorkerBase.poll', () => {
 			),
 		})
 		const logError = vi.fn()
+		const debugLines: string[] = []
+		d.enable('camunda:worker')
+		vi.spyOn(d, 'log').mockImplementation((...args: unknown[]) => {
+			debugLines.push(args.map((arg) => String(arg)).join(' '))
+		})
 
 		const worker = new ZBWorker<never, never, never>({
 			grpcClient: grpcClient as unknown as ZB.ZBGrpc,
@@ -102,6 +113,12 @@ describe('ZBWorkerBase.poll', () => {
 		expect(logged).not.toContain('leaked-env-secret')
 		expect(logged).not.toContain('leaked-bearer-token')
 		expect(logged).toContain('[REDACTED]')
+
+		const streamDebug = debugLines.find((line) => line.includes('Stream error'))
+		expect(streamDebug).toBeDefined()
+		expect(streamDebug).not.toContain('leaked-env-secret')
+		expect(streamDebug).not.toContain('leaked-bearer-token')
+		expect(streamDebug).toContain('[REDACTED]')
 
 		await worker.close()
 	})

@@ -644,7 +644,7 @@ You should call only one job action method in the worker handler. This is a bug 
 		}
 
 		if (stream.error) {
-			debug('Stream error', stream.error)
+			debug('Stream error', errorForLogging(stream.error))
 			return { error: stream.error as Error }
 		}
 
