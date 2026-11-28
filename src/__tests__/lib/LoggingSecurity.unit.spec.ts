@@ -1,10 +1,12 @@
 import fs from 'node:fs'
+import { performance } from 'node:perf_hooks'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import safeStringify, {
 	CamundaSupportLogger,
 	errorForLogging,
+	sanitizeSensitiveString,
 } from '../../lib/CamundaSupportLogger'
 import { CamundaPlatform8Configuration } from '../../lib/Configuration'
 import { gotBeforeErrorHook } from '../../lib/GotErrors'
@@ -346,6 +348,14 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('Using basic authentication; refresh: 30s')
 	})
 
+	it('redacts URL credentials and query data from error text', () => {
+		const output = sanitizeSensitiveString(
+			'Request failed for https://api-user:url-password@api.example.test/v1/jobs?access_token=query-token#fragment'
+		)
+
+		expect(output).toBe('Request failed for https://api.example.test/v1/jobs')
+	})
+
 	it('reduces an error to its name, code, and sanitized message', () => {
 		const error = Object.assign(
 			new Error('Request failed with Bearer message-token'),
@@ -390,5 +400,66 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).not.toContain('camunda-secret')
 		expect(output).not.toContain('plain-secret')
 		expect(output).toContain('ZEEBE_CLIENT_ID=zeebe-client')
+	})
+
+	it('redacts sensitive assignments after separated namespace prefixes', () => {
+		const output = sanitizeSensitiveString(
+			'service-client_secret=single-hyphen-secret ' +
+				'service--client_secret=double-hyphen-secret ' +
+				'service_client_secret=underscore-secret'
+		)
+
+		expect(output).not.toContain('single-hyphen-secret')
+		expect(output).not.toContain('double-hyphen-secret')
+		expect(output).not.toContain('underscore-secret')
+	})
+
+	it('scales linearly when scanning long non-sensitive namespace identifiers', () => {
+		const shortIdentifier = `${'a-'.repeat(2_000)}value`
+		const longIdentifier = `${'a-'.repeat(8_000)}value`
+		const measure = (input: string) => {
+			const start = performance.now()
+			const output = sanitizeSensitiveString(input)
+			const elapsed = performance.now() - start
+			expect(output).toBe(input)
+			return elapsed
+		}
+		const median = (samples: number[]) =>
+			samples.sort((left, right) => left - right)[
+				Math.floor(samples.length / 2)
+			]
+
+		measure(shortIdentifier)
+		measure(longIdentifier)
+		const shortSamples = Array.from({ length: 3 }, () =>
+			measure(shortIdentifier)
+		)
+		const longSamples = Array.from({ length: 3 }, () => measure(longIdentifier))
+
+		expect(median(longSamples)).toBeLessThan(median(shortSamples) * 8)
+	})
+
+	it('scales linearly across incomplete private-key markers', () => {
+		const marker = '-----BEGIN PRIVATE KEY-----\n'
+		const shortInput = marker.repeat(1_000)
+		const longInput = marker.repeat(4_000)
+		const measure = (input: string) => {
+			const start = performance.now()
+			const output = sanitizeSensitiveString(input)
+			const elapsed = performance.now() - start
+			expect(output).toBe(input)
+			return elapsed
+		}
+		const median = (samples: number[]) =>
+			samples.sort((left, right) => left - right)[
+				Math.floor(samples.length / 2)
+			]
+
+		measure(shortInput)
+		measure(longInput)
+		const shortSamples = Array.from({ length: 3 }, () => measure(shortInput))
+		const longSamples = Array.from({ length: 3 }, () => measure(longInput))
+
+		expect(median(longSamples)).toBeLessThan(median(shortSamples) * 8)
 	})
 })

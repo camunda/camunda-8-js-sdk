@@ -159,6 +159,39 @@ const SENSITIVE_LOG_KEY_SUFFIXES = [
 	'token',
 ]
 
+const SENSITIVE_LOG_ASSIGNMENT_KEY_SUFFIXES = [
+	'accesstoken',
+	'access_token',
+	'access-token',
+	'apikey',
+	'api_key',
+	'api-key',
+	'authorization',
+	'clientassertion',
+	'client_assertion',
+	'client-assertion',
+	'clientsecret',
+	'client_secret',
+	'client-secret',
+	'cookie',
+	'idtoken',
+	'id_token',
+	'id-token',
+	'password',
+	'passphrase',
+	'refreshtoken',
+	'refresh_token',
+	'refresh-token',
+	'secret',
+	'token',
+]
+const SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN =
+	/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+/y
+const PRIVATE_KEY_BEGIN_PREFIX = '-----BEGIN '
+const PRIVATE_KEY_END_PREFIX = '-----END '
+const PRIVATE_KEY_BEGIN_PATTERN = /-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----/y
+const PRIVATE_KEY_END_PATTERN = /-----END (?:[^-\s]+ )?PRIVATE KEY-----/y
+
 function isSensitiveLogKey(key: string) {
 	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
 	return (
@@ -167,37 +200,217 @@ function isSensitiveLogKey(key: string) {
 	)
 }
 
-export function sanitizeSensitiveString(value: string) {
+function isAsciiAlphaNumeric(character: string | undefined) {
+	if (!character) {
+		return false
+	}
+	const code = character.charCodeAt(0)
 	return (
-		value
-			.replace(
-				/-----BEGIN (?:[^-\s]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[^-\s]+ )?PRIVATE KEY-----/g,
-				REDACTED
-			)
-			// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
-			// so redact a quoted value or the whole remainder of the line.
-			.replace(
-				/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
-				`$1$2${REDACTED}`
-			)
-			// Preserve only the complete Basic prose token; credential suffixes are sensitive.
-			.replace(
-				/\b(Basic|Bearer)\s+([A-Za-z0-9._~+/=-]+)/gi,
-				(match, scheme: string, credential: string) =>
-					scheme.toLowerCase() === 'basic' &&
-					credential.toLowerCase() === 'authentication'
-						? match
-						: `${scheme} ${REDACTED}`
-			)
-			.replace(
-				/([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
-				(_match, protocol, _userinfo, path) => `${protocol}${path}`
-			)
-			.replace(
-				/\b((?:[a-z0-9]+[_-])*?(?:access[_-]?token|api[_-]?key|authorization|client[_-]?assertion|client[_-]?secret|cookie|id[_-]?token|password|passphrase|refresh[_-]?token|secret|token))(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\s&,;}]+)/gi,
-				`$1$2${REDACTED}`
-			)
+		(code >= 48 && code <= 57) ||
+		(code >= 65 && code <= 90) ||
+		(code >= 97 && code <= 122)
 	)
+}
+
+function isNamespacePrefix(key: string, start: number, end: number) {
+	let index = start
+	while (index < end) {
+		const segmentStart = index
+		while (index < end && isAsciiAlphaNumeric(key[index])) {
+			index++
+		}
+		if (
+			index === segmentStart ||
+			index === end ||
+			(key[index] !== '_' && key[index] !== '-')
+		) {
+			return false
+		}
+		index++
+	}
+	return true
+}
+
+function isSensitiveLogAssignmentKey(key: string) {
+	const normalizedKey = key.toLowerCase()
+	for (const suffix of SENSITIVE_LOG_ASSIGNMENT_KEY_SUFFIXES) {
+		if (!normalizedKey.endsWith(suffix)) {
+			continue
+		}
+
+		const suffixStart = key.length - suffix.length
+		if (isNamespacePrefix(key, 0, suffixStart)) {
+			return true
+		}
+
+		const previousHyphen = key.lastIndexOf('-', suffixStart - 1)
+		if (
+			previousHyphen !== -1 &&
+			isNamespacePrefix(key, previousHyphen + 1, suffixStart)
+		) {
+			return true
+		}
+	}
+	return false
+}
+
+function findPrivateKeyMarkerEnd(
+	value: string,
+	markerStart: number,
+	markerPattern: RegExp
+) {
+	markerPattern.lastIndex = markerStart
+	return markerPattern.exec(value) ? markerPattern.lastIndex : undefined
+}
+
+function findPrivateKeyEnd(value: string, start: number) {
+	let searchFrom = start
+	while (searchFrom < value.length) {
+		const markerStart = value.indexOf(PRIVATE_KEY_END_PREFIX, searchFrom)
+		if (markerStart === -1) {
+			return undefined
+		}
+
+		const markerEnd = findPrivateKeyMarkerEnd(
+			value,
+			markerStart,
+			PRIVATE_KEY_END_PATTERN
+		)
+		if (markerEnd !== undefined) {
+			return markerEnd
+		}
+		searchFrom = markerStart + 1
+	}
+	return undefined
+}
+
+function redactPrivateKeyBlocks(value: string) {
+	let sanitized: string[] | undefined
+	let copiedThrough = 0
+	let searchFrom = 0
+	while (searchFrom < value.length) {
+		const beginStart = value.indexOf(PRIVATE_KEY_BEGIN_PREFIX, searchFrom)
+		if (beginStart === -1) {
+			break
+		}
+
+		const beginEnd = findPrivateKeyMarkerEnd(
+			value,
+			beginStart,
+			PRIVATE_KEY_BEGIN_PATTERN
+		)
+		if (beginEnd === undefined) {
+			searchFrom = beginStart + 1
+			continue
+		}
+
+		const end = findPrivateKeyEnd(value, beginEnd)
+		if (end === undefined) {
+			break
+		}
+
+		sanitized ??= []
+		sanitized.push(value.slice(copiedThrough, beginStart), REDACTED)
+		copiedThrough = end
+		searchFrom = end
+	}
+
+	if (!sanitized) {
+		return value
+	}
+	sanitized.push(value.slice(copiedThrough))
+	return sanitized.join('')
+}
+
+function isWhitespaceCharacter(character: string | undefined) {
+	return character !== undefined && /\s/.test(character)
+}
+
+function redactUrls(value: string) {
+	return value.replace(
+		/(?<![a-z0-9+.-])([0-9+.-]*)([a-z][a-z0-9+.-]*:\/\/)([^/@\s]+@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
+		(_match, prefix, protocol, _userinfo, path) => `${prefix}${protocol}${path}`
+	)
+}
+
+function redactSensitiveAssignments(value: string) {
+	let sanitized: string[] | undefined
+	let copiedThrough = 0
+	let index = 0
+	// Scan separators once so a long non-sensitive identifier is not retried at every hyphen.
+	while (index < value.length) {
+		if (value[index] !== '=' && value[index] !== ':') {
+			index++
+			continue
+		}
+
+		let keyEnd = index
+		while (keyEnd > 0 && isWhitespaceCharacter(value[keyEnd - 1])) {
+			keyEnd--
+		}
+		if (value[keyEnd - 1] === '"' || value[keyEnd - 1] === "'") {
+			keyEnd--
+		}
+		let keyStart = keyEnd
+		while (
+			keyStart > 0 &&
+			(isAsciiAlphaNumeric(value[keyStart - 1]) ||
+				value[keyStart - 1] === '_' ||
+				value[keyStart - 1] === '-')
+		) {
+			keyStart--
+		}
+
+		if (
+			keyStart < keyEnd &&
+			isSensitiveLogAssignmentKey(value.slice(keyStart, keyEnd))
+		) {
+			let valueStart = index + 1
+			while (
+				valueStart < value.length &&
+				isWhitespaceCharacter(value[valueStart])
+			) {
+				valueStart++
+			}
+			SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
+			const assignmentValue = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)
+			if (assignmentValue) {
+				const valueEnd = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex
+				sanitized ??= []
+				sanitized.push(value.slice(copiedThrough, valueStart), REDACTED)
+				copiedThrough = valueEnd
+				index = valueEnd
+				continue
+			}
+		}
+		index++
+	}
+
+	if (!sanitized) {
+		return value
+	}
+	sanitized.push(value.slice(copiedThrough))
+	return sanitized.join('')
+}
+
+export function sanitizeSensitiveString(value: string) {
+	const sanitized = redactPrivateKeyBlocks(value)
+		// Header values can contain multiple credentials (`Cookie: a=1; b=2`),
+		// so redact a quoted value or the whole remainder of the line.
+		.replace(
+			/\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
+			`$1$2${REDACTED}`
+		)
+		// Preserve only the complete Basic prose token; credential suffixes are sensitive.
+		.replace(
+			/\b(Basic|Bearer)\s+([A-Za-z0-9._~+/=-]+)/gi,
+			(match, scheme: string, credential: string) =>
+				scheme.toLowerCase() === 'basic' &&
+				credential.toLowerCase() === 'authentication'
+					? match
+					: `${scheme} ${REDACTED}`
+		)
+	return redactSensitiveAssignments(redactUrls(sanitized))
 }
 
 /**
