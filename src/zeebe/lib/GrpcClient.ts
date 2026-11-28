@@ -15,7 +15,7 @@ import d from 'debug'
 import { Duration, MaybeTimeDuration, TimeDuration } from 'typed-duration'
 
 import { CamundaPlatform8Configuration, createUserAgentString } from '../../lib'
-import {
+import safeStringify, {
 	CamundaSupportLogger,
 	errorForLogging,
 } from '../../lib/CamundaSupportLogger'
@@ -446,12 +446,15 @@ export class GrpcClient extends EventEmitter {
 
 					stream.on('data', () => (this.gRPCRetryCount = 0))
 					stream.on('metadata', (md) =>
-						this.emit(MiddlewareSignals.Log.Debug, JSON.stringify(md))
+						this.emit(
+							MiddlewareSignals.Log.Debug,
+							safeStringify(md, { indentation: 0 })
+						)
 					)
 					stream.on('status', (s) =>
 						this.emit(
 							MiddlewareSignals.Log.Debug,
-							`gRPC Status event: ${JSON.stringify(s)}`
+							`gRPC Status event: ${safeStringify(s, { indentation: 0 })}`
 						)
 					)
 					stream.on('end', () => clearTimeout(clientSideTimeout))
