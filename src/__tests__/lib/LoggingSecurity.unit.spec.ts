@@ -418,6 +418,34 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('"tenant":"visible"')
 	})
 
+	it('redacts complete structured values for non-header credentials', () => {
+		const output = sanitizeSensitiveString(
+			'{"client_secret":{"first":"first-secret",' +
+				'"nested":{"value":"nested-secret"}},' +
+				'"password":["first-password","second-password"],' +
+				'"tenant":"visible"}'
+		)
+
+		for (const secret of [
+			'first-secret',
+			'nested-secret',
+			'first-password',
+			'second-password',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('"tenant":"visible"')
+	})
+
+	it('fails closed for incomplete structured credential values', () => {
+		const output = sanitizeSensitiveString(
+			'client_secret={"first":"first-secret",\n' + '"nested":"nested-secret"\n'
+		)
+
+		expect(output).not.toContain('first-secret')
+		expect(output).not.toContain('nested-secret')
+	})
+
 	it('redacts multiline object cookie headers', () => {
 		const output = sanitizeSensitiveString(
 			'Cookie: {"session":"object-cookie-secret",\n' +

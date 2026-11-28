@@ -564,9 +564,21 @@ function redactSensitiveAssignments(value: string) {
 			} else if (isSensitiveHeaderAssignmentKey(assignmentKey)) {
 				valueEnd = findSensitiveHeaderValueEnd(value, valueStart)
 			} else {
-				SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
-				if (SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)) {
-					valueEnd = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex
+				const firstCharacter = value[valueStart]
+				if (
+					firstCharacter === '"' ||
+					firstCharacter === "'" ||
+					firstCharacter === '[' ||
+					firstCharacter === '{'
+				) {
+					valueEnd =
+						findDelimitedValueEnd(value, valueStart) ??
+						findMultilineHeaderValueEnd(value, valueStart)
+				} else {
+					SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
+					if (SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)) {
+						valueEnd = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex
+					}
 				}
 			}
 			if (valueEnd !== undefined && valueEnd > valueStart) {
