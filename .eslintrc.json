@@ -27,8 +27,10 @@
 		],
 		"import/newline-after-import": "error",
 		// Whole-error logging leaks credentials (code scanning alert #13). The
-		// selectors match on argument names, because the rule has no type
-		// information. Keep this list in sync with the src/zeebe override below,
+		// selectors match on argument names (`e`, `err`, `error`, `ex`, `exception`),
+		// because the rule has no type information; aliased variables or `.message`
+		// strings are not caught by ESLint and must still use `errorForLogging(...)`.
+		// Keep this list in sync with the src/zeebe override below,
 		// which replaces this rule for those files.
 		"no-restricted-syntax": [
 			"error",

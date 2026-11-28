@@ -352,8 +352,9 @@ export class GrpcClient extends EventEmitter {
 						this.setReady()
 					} catch (error: unknown) {
 						const e = error as Error & { code: number }
-						debug(`${methodName}Stream error: ${e.code}`, e.message)
-						this.emit(MiddlewareSignals.Log.Error, e.message)
+						const safeError = errorForLogging(e)
+						debug(`${methodName}Stream error: ${e.code}`, safeError)
+						this.emit(MiddlewareSignals.Log.Error, safeError)
 						this.emit(MiddlewareSignals.Event.Error)
 						this.setNotReady()
 						return { error }
@@ -483,7 +484,7 @@ export class GrpcClient extends EventEmitter {
 									// This will error on network or business errors
 									if (err) {
 										debug(`${methodName}Sync error: ${err.code}`)
-										debug(err.message)
+										debug(errorForLogging(err))
 										const isNetworkError =
 											err.code === GrpcError.UNAVAILABLE &&
 											!err.message.includes('partition')
