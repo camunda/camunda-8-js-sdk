@@ -260,6 +260,13 @@ function isSensitiveLogAssignmentKey(key: string) {
 	return false
 }
 
+function isSensitiveHeaderAssignmentKey(key: string) {
+	const normalizedKey = key.replace(/[^a-z0-9]/gi, '').toLowerCase()
+	return (
+		normalizedKey.endsWith('authorization') || normalizedKey.endsWith('apikey')
+	)
+}
+
 function findPrivateKeyMarkerEnd(
 	value: string,
 	markerStart: number,
@@ -392,8 +399,8 @@ function findAssignmentKey(value: string, separatorIndex: number) {
 	return value.slice(keyStart, keyEnd)
 }
 
-// Unquoted newlines end cookie values unless they are inside structured values or folded lines.
-function findCookieHeaderValueEnd(value: string, start: number) {
+// Unquoted newlines end header values unless they are inside structured values or folded lines.
+function findMultilineHeaderValueEnd(value: string, start: number) {
 	let quote: string | undefined
 	let escaped = false
 	let bracketDepth = 0
@@ -431,13 +438,84 @@ function findCookieHeaderValueEnd(value: string, start: number) {
 	return value.length
 }
 
+function findDelimitedValueEnd(value: string, start: number) {
+	const firstCharacter = value[start]
+	if (firstCharacter === '"' || firstCharacter === "'") {
+		let escaped = false
+		for (let index = start + 1; index < value.length; index++) {
+			if (escaped) {
+				escaped = false
+			} else if (value[index] === '\\') {
+				escaped = true
+			} else if (value[index] === firstCharacter) {
+				return index + 1
+			}
+		}
+		return undefined
+	}
+
+	if (firstCharacter !== '[' && firstCharacter !== '{') {
+		return undefined
+	}
+
+	const closingCharacters = [firstCharacter === '[' ? ']' : '}']
+	let quote: string | undefined
+	let escaped = false
+	for (let index = start + 1; index < value.length; index++) {
+		const character = value[index]
+		if (quote) {
+			if (escaped) {
+				escaped = false
+			} else if (character === '\\') {
+				escaped = true
+			} else if (character === quote) {
+				quote = undefined
+			}
+		} else if (character === '"' || character === "'") {
+			quote = character
+		} else if (character === '[' || character === '{') {
+			closingCharacters.push(character === '[' ? ']' : '}')
+		} else if (character === ']' || character === '}') {
+			if (closingCharacters.pop() !== character) {
+				return undefined
+			}
+			if (closingCharacters.length === 0) {
+				return index + 1
+			}
+		}
+	}
+	return undefined
+}
+
+function findSensitiveHeaderValueEnd(value: string, start: number) {
+	const valueEnd = findDelimitedValueEnd(value, start)
+	if (valueEnd === undefined) {
+		return findMultilineHeaderValueEnd(value, start)
+	}
+
+	let lineEnding = valueEnd
+	while (value[lineEnding] === ' ' || value[lineEnding] === '\t') {
+		lineEnding++
+	}
+	if (value[lineEnding] === '\r' && value[lineEnding + 1] === '\n') {
+		lineEnding++
+	}
+	if (
+		value[lineEnding] === '\n' &&
+		(value[lineEnding + 1] === ' ' || value[lineEnding + 1] === '\t')
+	) {
+		return findMultilineHeaderValueEnd(value, lineEnding + 1)
+	}
+	return valueEnd
+}
+
 function redactCookieHeaders(value: string) {
 	let sanitized: string[] | undefined
 	let copiedThrough = 0
 	const cookieHeaderPattern = /\b(cookie|set-cookie)(["']?[ \t]*[:=][ \t]*)/gi
 	while (cookieHeaderPattern.exec(value)) {
 		const valueStart = cookieHeaderPattern.lastIndex
-		const valueEnd = findCookieHeaderValueEnd(value, valueStart)
+		const valueEnd = findMultilineHeaderValueEnd(value, valueStart)
 		if (valueEnd > valueStart) {
 			sanitized ??= []
 			sanitized.push(value.slice(copiedThrough, valueStart), REDACTED)
@@ -482,7 +560,9 @@ function redactSensitiveAssignments(value: string) {
 			}
 			let valueEnd: number | undefined
 			if (assignmentKey.toLowerCase().endsWith('cookie')) {
-				valueEnd = findCookieHeaderValueEnd(value, valueStart)
+				valueEnd = findMultilineHeaderValueEnd(value, valueStart)
+			} else if (isSensitiveHeaderAssignmentKey(assignmentKey)) {
+				valueEnd = findSensitiveHeaderValueEnd(value, valueStart)
 			} else {
 				SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
 				if (SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)) {
@@ -509,11 +589,6 @@ function redactSensitiveAssignments(value: string) {
 
 export function sanitizeSensitiveString(value: string) {
 	const sanitized = redactCookieHeaders(redactPrivateKeyBlocks(value))
-		// Authentication and API-key headers can also contain credentials.
-		.replace(
-			/\b(authorization|proxy-authorization|x-api-key)(["']?\s*[:=]\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\[[^\]]*\]|[^\n"]*)/gi,
-			`$1$2${REDACTED}`
-		)
 		// Preserve only the complete Basic prose token; credential suffixes are sensitive.
 		.replace(
 			/\b(Basic|Bearer)\s+([A-Za-z0-9._~+/=-]+)/gi,

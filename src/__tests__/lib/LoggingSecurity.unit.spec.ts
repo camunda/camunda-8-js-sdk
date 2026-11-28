@@ -360,6 +360,64 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(output).toContain('x-request-id: visible')
 	})
 
+	it('redacts folded authorization headers without hiding following headers', () => {
+		const output = errorForLogging(
+			new Error(
+				'Authorization: Bearer authorization-header-secret\r\n' +
+					'\tcontinued-authorization-secret\r\n' +
+					'Proxy-Authorization: Basic proxy-header-secret\n' +
+					'  continued-proxy-secret\n' +
+					'X-API-Key: api-header-secret\n' +
+					'\tcontinued-api-secret\n' +
+					'X-Request-ID: visible'
+			)
+		)
+
+		for (const secret of [
+			'authorization-header-secret',
+			'continued-authorization-secret',
+			'proxy-header-secret',
+			'continued-proxy-secret',
+			'api-header-secret',
+			'continued-api-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('X-Request-ID: visible')
+	})
+
+	it('redacts complete namespaced authorization and API-key assignments', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA_AUTHORIZATION=Digest username="digest-user", ' +
+				'response="digest-response"\r\n' +
+				'  realm="continued-realm"\r\n' +
+				'CAMUNDA_X_API_KEY=first-line-api-secret\n' +
+				'\tcontinued-api-key-secret\n' +
+				'CAMUNDA_CLIENT_ID=visible-client'
+		)
+
+		for (const secret of [
+			'digest-user',
+			'digest-response',
+			'continued-realm',
+			'first-line-api-secret',
+			'continued-api-key-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('CAMUNDA_CLIENT_ID=visible-client')
+	})
+
+	it('redacts structured authorization values without hiding adjacent fields', () => {
+		const output = sanitizeSensitiveString(
+			'{"authorization":{"credential":"nested-auth-secret"},' +
+				'"tenant":"visible"}'
+		)
+
+		expect(output).not.toContain('nested-auth-secret')
+		expect(output).toContain('"tenant":"visible"')
+	})
+
 	it('redacts multiline object cookie headers', () => {
 		const output = sanitizeSensitiveString(
 			'Cookie: {"session":"object-cookie-secret",\n' +
