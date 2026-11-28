@@ -303,6 +303,33 @@ describe('CamundaSupportLogger redaction', () => {
 		expect(sanitized).not.toContain('embedded-secret')
 	})
 
+	it('redacts complete namespaced cookie assignments', () => {
+		const output = sanitizeSensitiveString(
+			'CAMUNDA__COOKIE=session=first-cookie-secret; refresh=second-cookie-secret\n' +
+				'service-cookie: session=third-cookie-secret; custom=fourth-cookie-secret\n' +
+				'service_-_cookie=session=fifth-cookie-secret; arbitrary=sixth-cookie-secret\n' +
+				'service-cookie=; empty=seventh-cookie-secret\n' +
+				'service_cookie: "session=eighth-cookie-secret;\n' +
+				'refresh=ninth-cookie-secret"\n' +
+				'safe_setting=visible'
+		)
+
+		for (const secret of [
+			'first-cookie-secret',
+			'second-cookie-secret',
+			'third-cookie-secret',
+			'fourth-cookie-secret',
+			'fifth-cookie-secret',
+			'sixth-cookie-secret',
+			'seventh-cookie-secret',
+			'eighth-cookie-secret',
+			'ninth-cookie-secret',
+		]) {
+			expect(output).not.toContain(secret)
+		}
+		expect(output).toContain('safe_setting=visible')
+	})
+
 	it('redacts quoted header values and API keys without redacting prose', () => {
 		const output = safeStringify({
 			message:

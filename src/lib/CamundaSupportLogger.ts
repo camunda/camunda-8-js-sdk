@@ -323,6 +323,37 @@ function isWhitespaceCharacter(character: string | undefined) {
 	return character !== undefined && /\s/.test(character)
 }
 
+// Only an unquoted, unbracketed newline ends a cookie header value.
+function findCookieHeaderValueEnd(value: string, start: number) {
+	let quote: string | undefined
+	let escaped = false
+	let bracketDepth = 0
+	for (let index = start; index < value.length; index++) {
+		const character = value[index]
+		if (quote) {
+			if (escaped) {
+				escaped = false
+			} else if (character === '\\') {
+				escaped = true
+			} else if (character === quote) {
+				quote = undefined
+			}
+			continue
+		}
+
+		if (character === '"' || character === "'") {
+			quote = character
+		} else if (character === '[') {
+			bracketDepth++
+		} else if (character === ']' && bracketDepth > 0) {
+			bracketDepth--
+		} else if (character === '\n' && bracketDepth === 0) {
+			return index
+		}
+	}
+	return value.length
+}
+
 function redactUrls(value: string) {
 	return value.replace(
 		/(?<![a-z0-9+.-])([0-9+.-]*)([a-z][a-z0-9+.-]*:\/\/)([^/?#\s]*@)?([^\s?#]+)(\?[^\s#]*)?(#[^\s]*)?/gi,
@@ -358,10 +389,8 @@ function redactSensitiveAssignments(value: string) {
 			keyStart--
 		}
 
-		if (
-			keyStart < keyEnd &&
-			isSensitiveLogAssignmentKey(value.slice(keyStart, keyEnd))
-		) {
+		const assignmentKey = value.slice(keyStart, keyEnd)
+		if (keyStart < keyEnd && isSensitiveLogAssignmentKey(assignmentKey)) {
 			let valueStart = index + 1
 			while (
 				valueStart < value.length &&
@@ -369,10 +398,16 @@ function redactSensitiveAssignments(value: string) {
 			) {
 				valueStart++
 			}
-			SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
-			const assignmentValue = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)
-			if (assignmentValue) {
-				const valueEnd = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex
+			let valueEnd: number | undefined
+			if (assignmentKey.toLowerCase().endsWith('cookie')) {
+				valueEnd = findCookieHeaderValueEnd(value, valueStart)
+			} else {
+				SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex = valueStart
+				if (SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.exec(value)) {
+					valueEnd = SENSITIVE_LOG_ASSIGNMENT_VALUE_PATTERN.lastIndex
+				}
+			}
+			if (valueEnd !== undefined && valueEnd > valueStart) {
 				sanitized ??= []
 				sanitized.push(value.slice(copiedThrough, valueStart), REDACTED)
 				copiedThrough = valueEnd
