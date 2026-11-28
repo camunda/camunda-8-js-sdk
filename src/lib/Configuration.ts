@@ -8,6 +8,7 @@ import { Logger } from '../c8/lib/C8Logger'
 import type { IHeadersProvider } from '../oauth' // eslint-disable-line @typescript-eslint/no-unused-vars
 
 import type { BeforeRequestHook } from './HttpClient'
+import { Secret, SecretConfigKey, wrapSecretConfig } from './Secret'
 import {
 	emitConflictWarnings,
 	emitDeprecationWarnings,
@@ -524,12 +525,25 @@ const zeebeEnv = createEnv({
  * Note that although some values are passed to the constructor in the subkey `zeebeGrpcSettings`, they need no special treatment as environment variables.
  * Simply use the same name as the key in the `zeebeGrpcSettings` object for the environment variable, and the SDK will pick it up.
  */
-export const CamundaSDKConfiguration = {
-	...mainEnv,
+type SecretConfig = { [K in SecretConfigKey]: Secret | undefined }
+
+type Mutable<T> = { -readonly [K in keyof T]: T[K] }
+
+export type CamundaPlatform8Configuration = Mutable<
+	Omit<typeof mainEnv, SecretConfigKey>
+> &
+	SecretConfig & {
+		zeebeGrpcSettings: Mutable<typeof zeebeEnv>
+	}
+
+/**
+ * Credentials read from the environment (for example `ZEEBE_CLIENT_SECRET`) are
+ * held as {@link Secret} values, never as plain strings.
+ */
+export const CamundaSDKConfiguration: CamundaPlatform8Configuration = {
+	...wrapSecretConfig(mainEnv as unknown as CamundaPlatform8Configuration),
 	zeebeGrpcSettings: { ...zeebeEnv },
 }
-
-export type CamundaPlatform8Configuration = typeof CamundaSDKConfiguration
 
 type ConfigWithMiddleware = CamundaPlatform8Configuration & {
 	middleware?: BeforeRequestHook[]
@@ -537,9 +551,11 @@ type ConfigWithMiddleware = CamundaPlatform8Configuration & {
 
 export class CamundaEnvironmentConfigurator {
 	public static readonly mergeConfigWithEnvironment = (
-		config: DeepPartial<ConfigWithMiddleware>
+		config: CamundaConfigurationInput & { middleware?: BeforeRequestHook[] }
 	): ConfigWithMiddleware => {
-		const mergedConfig = mergeWith({}, CamundaSDKConfiguration, config)
+		const mergedConfig: ConfigWithMiddleware = wrapSecretConfig(
+			mergeWith({}, CamundaSDKConfiguration, config)
+		)
 
 		// Set default ZEEBE_GRPC_ADDRESS if neither it nor ZEEBE_ADDRESS are explicitly set
 		if (!mergedConfig.ZEEBE_GRPC_ADDRESS && !mergedConfig.ZEEBE_ADDRESS) {
@@ -573,14 +589,26 @@ export class CamundaEnvironmentConfigurator {
 }
 
 export type DeepPartial<T> = {
-	[K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
+	[K in keyof T]?: T[K] extends Secret | undefined
+		? T[K]
+		: T[K] extends object
+			? DeepPartial<T[K]>
+			: T[K]
 }
 
-export type Camunda8ClientConfiguration =
-	DeepPartial<CamundaPlatform8Configuration> & {
-		/** An optional logger. If no logger is supplied, [winston](https://github.com/winstonjs/winston) will be used. */
-		logger?: Logger
-	}
+/**
+ * Configuration as accepted from callers: credentials may be given as plain
+ * strings or as {@link Secret} values. They are wrapped in a `Secret` when the
+ * configuration is merged.
+ */
+export type CamundaConfigurationInput = DeepPartial<
+	Omit<CamundaPlatform8Configuration, SecretConfigKey>
+> & { [K in SecretConfigKey]?: string | Secret }
+
+export type Camunda8ClientConfiguration = CamundaConfigurationInput & {
+	/** An optional logger. If no logger is supplied, [winston](https://github.com/winstonjs/winston) will be used. */
+	logger?: Logger
+}
 
 /**
  * This section creates a type-safe runtime dictionary of environment variables. This is used for Require Configuration.

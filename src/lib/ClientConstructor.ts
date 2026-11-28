@@ -1,8 +1,8 @@
 import { IHeadersProvider } from '../oauth'
 
-import { CamundaPlatform8Configuration, DeepPartial } from './Configuration'
+import { CamundaConfigurationInput } from './Configuration'
 
 export interface ClientConstructor {
-	config?: DeepPartial<CamundaPlatform8Configuration>
+	config?: CamundaConfigurationInput
 	oAuthProvider?: IHeadersProvider
 }

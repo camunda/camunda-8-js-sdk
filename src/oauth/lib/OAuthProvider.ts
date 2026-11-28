@@ -11,15 +11,15 @@ import { getLogger, Logger } from '../../c8/lib/C8Logger'
 import {
 	beforeCallHook,
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
 	createUserAgentString,
-	DeepPartial,
+	CamundaConfigurationInput,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
 	gotBeforeRetryHook,
 	GotRetryConfig,
 	RequireConfiguration,
 } from '../../lib'
+import { Secret, revealSecret, toSecret } from '../../lib/Secret'
 import { IHeadersProvider, Token, TokenError } from '../index'
 import { errorForLogging } from '../../lib/CamundaSupportLogger'
 
@@ -59,10 +59,10 @@ export class OAuthProvider implements IHeadersProvider {
 	private static instances: OAuthProvider[] = []
 	private cacheDir: string
 	private authServerUrl: string
-	private mTLSPrivateKey: string | undefined
+	readonly #mTLSPrivateKey: Secret | undefined
 	private mTLSCertChain: string | undefined
 	private clientId: string | undefined
-	private clientSecret: string | undefined
+	readonly #clientSecret: Secret | undefined
 	private useFileCache: boolean
 	public tokenCache: { [key: string]: Token } = {}
 	private failed = false
@@ -78,7 +78,7 @@ export class OAuthProvider implements IHeadersProvider {
 	private scope: string | undefined
 	private audienceMap: { [K in TokenGrantAudienceType]: string }
 	private consoleClientId: string | undefined
-	private consoleClientSecret: string | undefined
+	readonly #consoleClientSecret: Secret | undefined
 	private isCamundaSaaS: boolean
 	private camundaModelerOAuthAudience: string | undefined
 	private refreshWindow: number
@@ -100,9 +100,7 @@ export class OAuthProvider implements IHeadersProvider {
 			})
 		}
 	}
-	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
-	}) {
+	constructor(options?: { config?: CamundaConfigurationInput }) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
@@ -113,16 +111,18 @@ export class OAuthProvider implements IHeadersProvider {
 		)
 
 		this.clientId = config.ZEEBE_CLIENT_ID
-		this.clientSecret = config.ZEEBE_CLIENT_SECRET
-		this.mTLSPrivateKey = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
-			? fs.readFileSync(config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH).toString()
+		this.#clientSecret = config.ZEEBE_CLIENT_SECRET
+		this.#mTLSPrivateKey = config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH
+			? toSecret(
+					fs.readFileSync(config.CAMUNDA_CUSTOM_PRIVATE_KEY_PATH).toString()
+				)
 			: undefined
 		this.mTLSCertChain = config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH
 			? fs.readFileSync(config.CAMUNDA_CUSTOM_CERT_CHAIN_PATH).toString()
 			: undefined
 
 		this.consoleClientId = config.CAMUNDA_CONSOLE_CLIENT_ID
-		this.consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
+		this.#consoleClientSecret = config.CAMUNDA_CONSOLE_CLIENT_SECRET
 
 		this.refreshWindow = config.CAMUNDA_OAUTH_TOKEN_REFRESH_THRESHOLD_MS
 
@@ -139,7 +139,7 @@ export class OAuthProvider implements IHeadersProvider {
 				`You need to supply a value for at at least one of ZEEBE_CLIENT_ID or CAMUNDA_CONSOLE_CLIENT_ID`
 			)
 		}
-		if (!this.clientSecret && !this.consoleClientSecret) {
+		if (!this.#clientSecret && !this.#consoleClientSecret) {
 			throw new Error(
 				`You need to supply a value for at least one of ZEEBE_CLIENT_SECRET or CAMUNDA_CONSOLE_CLIENT_SECRET`
 			)
@@ -147,8 +147,8 @@ export class OAuthProvider implements IHeadersProvider {
 
 		if (
 			!(
-				(!!this.clientId && !!this.clientSecret) ||
-				(!!this.consoleClientId && !!this.consoleClientSecret)
+				(!!this.clientId && !!this.#clientSecret) ||
+				(!!this.consoleClientId && !!this.#consoleClientSecret)
 			)
 		) {
 			throw new Error('You need to supply both a client ID and a client secret')
@@ -266,10 +266,10 @@ export class OAuthProvider implements IHeadersProvider {
 
 		const clientSecretToUse = requestingFromSaaSConsole
 			? RequireConfiguration(
-					this.consoleClientSecret,
+					this.#consoleClientSecret,
 					'CAMUNDA_CONSOLE_CLIENT_SECRET'
 				)
-			: RequireConfiguration(this.clientSecret, 'ZEEBE_CLIENT_SECRET')
+			: RequireConfiguration(this.#clientSecret, 'ZEEBE_CLIENT_SECRET')
 
 		const key = this.getCacheKey(clientIdToUse, audienceType)
 
@@ -455,14 +455,14 @@ export class OAuthProvider implements IHeadersProvider {
 	}: {
 		audienceType: TokenGrantAudienceType
 		clientIdToUse: string
-		clientSecretToUse: string
+		clientSecretToUse: Secret
 	}) {
 		const body = `${this.addAudienceIfNeeded(
 			audienceType
 		)}client_id=${encodeURIComponent(
 			clientIdToUse
 		)}&client_secret=${encodeURIComponent(
-			clientSecretToUse
+			clientSecretToUse.reveal()
 		)}&grant_type=client_credentials`
 		/* Add a scope to the token request, if one is set */
 		const bodyWithScope = this.scope ? `${body}&scope=${this.scope}` : body
@@ -475,7 +475,7 @@ export class OAuthProvider implements IHeadersProvider {
 				accept: '*/*',
 			},
 			https: {
-				key: this.mTLSPrivateKey,
+				key: revealSecret(this.#mTLSPrivateKey),
 				cert: this.mTLSCertChain,
 			},
 		}
@@ -486,7 +486,7 @@ export class OAuthProvider implements IHeadersProvider {
 			url: this.authServerUrl,
 			body: this.redactClientSecret(bodyWithScope),
 			hasClientCertificate: !!this.mTLSCertChain,
-			hasPrivateKey: !!this.mTLSPrivateKey,
+			hasPrivateKey: !!this.#mTLSPrivateKey,
 		})
 		return this.rest.then((rest) =>
 			rest
@@ -785,7 +785,7 @@ export class OAuthProvider implements IHeadersProvider {
 		audienceType,
 	}: {
 		clientId: string
-		clientSecret: string
+		clientSecret: Secret
 		audienceType: TokenGrantAudienceType
 	}) {
 		const hash = this.hashSecret(clientSecret)
@@ -799,14 +799,14 @@ export class OAuthProvider implements IHeadersProvider {
 		return this.tarpit401.has(file) && fs.existsSync(file)
 	}
 
-	private hashSecret(secret: string) {
+	private hashSecret(secret: Secret) {
 		// Deterministic, computationally expensive derivation using PBKDF2.
 		// We use a constant salt for filename determinism while increasing cost via iterations.
 		// Output truncated to 16 hex chars (same length as previous SHA-256 truncation) to keep filename compact.
 		// NOTE: This is not for security storage of the secret (never store raw secret); just obfuscation + cost hardening.
 		const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
 		try {
-			const derived = pbkdf2Sync(secret, SALT, 100_000, 32, 'sha256')
+			const derived = pbkdf2Sync(secret.reveal(), SALT, 100_000, 32, 'sha256')
 			return derived.toString('hex').slice(0, 16)
 		} catch (err) {
 			// Fail if PBKDF2 is unavailable; do not fall back to insecure hash.
@@ -824,7 +824,7 @@ export class OAuthProvider implements IHeadersProvider {
 		reason,
 	}: {
 		clientId: string
-		clientSecret: string
+		clientSecret: Secret
 		audienceType: TokenGrantAudienceType
 		reason: string
 	}) {
@@ -863,13 +863,19 @@ export class OAuthProvider implements IHeadersProvider {
 	}: {
 		cacheDir?: string
 		clientId: string
-		clientSecret: string
+		clientSecret: string | Secret
 		audienceType: TokenGrantAudienceType
 	}) {
 		try {
 			// Reuse instance hashing logic deterministically (without needing an instance): replicate PBKDF2 parameters.
 			const SALT = 'camunda-oauth-tarpit-filename-salt-v1'
-			const hash = pbkdf2Sync(clientSecret, SALT, 100_000, 32, 'sha256')
+			const hash = pbkdf2Sync(
+				revealSecret(clientSecret) ?? '',
+				SALT,
+				100_000,
+				32,
+				'sha256'
+			)
 				.toString('hex')
 				.slice(0, 16)
 

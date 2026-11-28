@@ -29,7 +29,8 @@
 		// Whole-error logging leaks credentials (code scanning alert #13). The
 		// selectors match on argument names, because the rule has no type
 		// information. Keep this list in sync with the src/zeebe override below,
-		// which replaces this rule for those files.
+		// which replaces this rule for those files. The reveal selectors keep
+		// plain credentials (src/lib/Secret.ts) inside the allowlist override below.
 		"no-restricted-syntax": [
 			"error",
 			{
@@ -39,6 +40,14 @@
 			{
 				"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
 				"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+			},
+			{
+				"selector": "CallExpression[callee.property.name='reveal']",
+				"message": "Secret.reveal() is allowed only where a credential is sent or hashed. See the reveal allowlist override in .eslintrc.json and https://github.com/camunda/camunda-8-js-sdk/issues/917."
+			},
+			{
+				"selector": "CallExpression[callee.name='revealSecret']",
+				"message": "revealSecret() is allowed only where a credential is sent or hashed. See the reveal allowlist override in .eslintrc.json and https://github.com/camunda/camunda-8-js-sdk/issues/917."
 			}
 		],
 		"prettier/prettier": "error"
@@ -79,6 +88,14 @@
 					{
 						"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
 						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+					},
+					{
+						"selector": "CallExpression[callee.property.name='reveal']",
+						"message": "Secret.reveal() is allowed only where a credential is sent or hashed. See the reveal allowlist override in .eslintrc.json and https://github.com/camunda/camunda-8-js-sdk/issues/917."
+					},
+					{
+						"selector": "CallExpression[callee.name='revealSecret']",
+						"message": "revealSecret() is allowed only where a credential is sent or hashed. See the reveal allowlist override in .eslintrc.json and https://github.com/camunda/camunda-8-js-sdk/issues/917."
 					}
 				]
 			}
@@ -127,6 +144,33 @@
 			"rules": {
 				"no-console": "error",
 				"@typescript-eslint/no-floating-promises": "error"
+			}
+		},
+		{
+			// Secret.reveal() allowlist: the only places a plain credential may
+			// exist, because it is sent on the wire, hashed for a cache key, or
+			// handed to the orchestration-cluster-api client, which needs strings.
+			// Design: https://github.com/camunda/camunda-8-js-sdk/issues/917
+			"files": [
+				"src/lib/Secret.ts",
+				"src/lib/CamundaClientConfigTranslator.ts",
+				"src/oauth/lib/OAuthProvider.ts",
+				"src/oauth/lib/BasicAuthProvider.ts",
+				"src/oauth/lib/BearerAuthProvider.ts",
+				"src/oauth/lib/CookieAuthProvider.ts"
+			],
+			"rules": {
+				"no-restricted-syntax": [
+					"error",
+					{
+						"selector": "CallExpression[callee.property.name=/^(error|warn|info|debug|trace|log|logError|logInfo|logDebug|logDirect)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+					},
+					{
+						"selector": "CallExpression[callee.name=/^(debug|trace)$/] > Identifier.arguments[name=/^(e|err|error|ex|exception)$/]",
+						"message": "Do not pass a whole error to a logger: HTTP errors carry request options with credentials. Log errorForLogging(e) from src/lib/CamundaSupportLogger.ts instead."
+					}
+				]
 			}
 		},
 		{

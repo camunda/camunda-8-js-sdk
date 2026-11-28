@@ -4,12 +4,12 @@ import { HttpClient, http } from '../../lib/HttpClient'
 import {
 	beforeCallHook,
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
+	CamundaConfigurationInput,
 	GetCustomCertificateBuffer,
 	gotBeforeErrorHook,
 	GotRetryConfig,
 } from '../../lib'
+import { Secret, revealSecret } from '../../lib/Secret'
 import { IHeadersProvider } from '../index'
 
 import { TokenGrantAudienceType } from './IHeadersProvider'
@@ -28,19 +28,17 @@ export class CookieAuthProvider implements IHeadersProvider {
 	rest: Promise<HttpClient>
 	cookie?: string
 	username: string
-	password: string
+	readonly #password: Secret | undefined
 	authUrl: string
 
-	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
-	}) {
+	constructor(options?: { config?: CamundaConfigurationInput }) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
 
 		this.authUrl = config.CAMUNDA_COOKIE_AUTH_URL
 		this.username = config.CAMUNDA_COOKIE_AUTH_USERNAME
-		this.password = config.CAMUNDA_COOKIE_AUTH_PASSWORD
+		this.#password = config.CAMUNDA_COOKIE_AUTH_PASSWORD
 
 		this.rest = GetCustomCertificateBuffer(config).then(
 			(certificateAuthority) =>
@@ -63,7 +61,10 @@ export class CookieAuthProvider implements IHeadersProvider {
 			const rest = await this.rest
 			this.cookie = await rest
 				.post(this.authUrl, {
-					searchParams: { username: this.username, password: this.password },
+					searchParams: {
+						username: this.username,
+						password: revealSecret(this.#password) ?? '',
+					},
 				})
 				.then(
 					(response) =>

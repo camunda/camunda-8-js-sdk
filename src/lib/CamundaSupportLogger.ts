@@ -6,8 +6,7 @@ import { packageVersion } from '../lib/GetPackageVersion'
 
 import {
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
+	CamundaConfigurationInput,
 } from './Configuration'
 
 export class CamundaSupportLogger {
@@ -15,7 +14,7 @@ export class CamundaSupportLogger {
 	private readonly enabled: boolean | undefined
 	private readonly filepath: string
 
-	private constructor(config?: DeepPartial<CamundaPlatform8Configuration>) {
+	private constructor(config?: CamundaConfigurationInput) {
 		const mergedConfig =
 			CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(config || {})
 		this.enabled = mergedConfig?.CAMUNDA_SUPPORT_LOG_ENABLED

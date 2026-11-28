@@ -2,10 +2,10 @@ import debug from 'debug'
 
 import {
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
+	CamundaConfigurationInput,
 	RequireConfiguration,
 } from '../../lib'
+import { Secret } from '../../lib/Secret'
 
 import { IHeadersProvider, TokenGrantAudienceType } from './IHeadersProvider'
 
@@ -18,10 +18,8 @@ const trace = debug('camunda:oauth')
  */
 export class BasicAuthProvider implements IHeadersProvider {
 	private username: string | undefined
-	private password: string | undefined
-	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
-	}) {
+	readonly #password: Secret
+	constructor(options?: { config?: CamundaConfigurationInput }) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(
 			options?.config ?? {}
 		)
@@ -29,16 +27,16 @@ export class BasicAuthProvider implements IHeadersProvider {
 			config.CAMUNDA_BASIC_AUTH_USERNAME,
 			'CAMUNDA_BASIC_AUTH_USERNAME'
 		)
-		this.password = RequireConfiguration(
+		this.#password = RequireConfiguration(
 			config.CAMUNDA_BASIC_AUTH_PASSWORD,
 			'CAMUNDA_BASIC_AUTH_PASSWORD'
 		)
 	}
 	getHeaders(audience: TokenGrantAudienceType) {
 		trace(`Requesting token for audience ${audience}`)
-		const token = Buffer.from(`${this.username}:${this.password}`).toString(
-			'base64'
-		)
+		const token = Buffer.from(
+			`${this.username}:${this.#password.reveal()}`
+		).toString('base64')
 		return Promise.resolve({ authorization: `Basic ${token}` })
 	}
 }

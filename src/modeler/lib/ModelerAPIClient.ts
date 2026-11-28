@@ -3,8 +3,7 @@ import d from 'debug'
 import { HttpClient, Response, http } from '../../lib/HttpClient'
 import {
 	CamundaEnvironmentConfigurator,
-	CamundaPlatform8Configuration,
-	DeepPartial,
+	CamundaConfigurationInput,
 	GetCustomCertificateBuffer,
 	GotRetryConfig,
 	beforeCallHook,
@@ -57,7 +56,7 @@ export class ModelerApiClient {
 	private rest: Promise<HttpClient>
 
 	constructor(options?: {
-		config?: DeepPartial<CamundaPlatform8Configuration>
+		config?: CamundaConfigurationInput
 		oAuthProvider?: IHeadersProvider
 	}) {
 		const config = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment(

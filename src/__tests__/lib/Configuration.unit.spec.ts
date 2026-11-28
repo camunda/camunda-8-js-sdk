@@ -36,7 +36,9 @@ describe('CamundaEnvironmentConfigurator', () => {
 		)) as any
 		const creds = CamundaEnvironmentConfigurator.mergeConfigWithEnvironment({})
 		expect(creds.ZEEBE_ADDRESS).toBe('address')
-		expect(creds.ZEEBE_CLIENT_SECRET).toBe('secret')
+		// Credentials are wrapped in a Secret: https://github.com/camunda/camunda-8-js-sdk/issues/917
+		expect(String(creds.ZEEBE_CLIENT_SECRET)).toBe('[REDACTED]')
+		expect(creds.ZEEBE_CLIENT_SECRET.reveal()).toBe('secret')
 		expect(creds.ZEEBE_CLIENT_ID).toBe('clientid')
 	})
 
